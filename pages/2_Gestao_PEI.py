@@ -24,7 +24,7 @@ st.set_page_config(
 if 'banco_estudantes' not in st.session_state:
     st.session_state.banco_estudantes = []
 
-# --- ESTILO VISUAL (SEU DESIGN ORIGINAL) ---
+# --- ESTILO VISUAL ---
 st.markdown("""
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -35,7 +35,7 @@ st.markdown("""
     .stTabs [data-baseweb="tab-list"] { gap: 10px; background-color: transparent; padding: 10px 0; justify-content: flex-start; flex-wrap: wrap; }
     .stTabs [data-baseweb="tab"] { height: 42px; background-color: #FFFFFF; border-radius: 20px; border: 1px solid #CBD5E0; color: #4A5568; padding: 0 20px; font-weight: 700; font-size: 0.9rem; flex-grow: 0; }
     .stTabs [aria-selected="true"] { background-color: var(--brand-coral) !important; color: white !important; border-color: var(--brand-coral) !important; }
-    .feature-card { background: white; padding: 25px; border-radius: 20px; border: 1px solid #EDF2F7; height: 100%; }
+    .feature-card { background: white; padding: 25px; border-radius: 20px; border: 1px solid #EDF2F7; height: 100%; display: flex; flex-direction: column; }
     .icon-box { width: 45px; height: 45px; background: #E3F2FD; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
     .icon-box i { font-size: 22px; color: var(--brand-blue); }
     .stTextInput input, .stTextArea textarea { border-radius: 12px !important; border: 1px solid #CBD5E0 !important; }
@@ -70,13 +70,12 @@ def calcular_idade(data_nasc):
     hoje = date.today()
     return str(hoje.year - data_nasc.year - ((hoje.month, hoje.day) < (data_nasc.month, data_nasc.day)))
 
-# --- INTEGRAÇÃO DIRETA (REST API) - SEM BIBLIOTECA GOOGLE ---
-def consultar_ia_direta(api_key, dados, contexto_pdf=""):
-    if not api_key: return None, "⚠️ Chave API faltando."
+# --- INTELIGÊNCIA V2.24 (GEMINI PRO PURO) ---
+def consultar_ia_universal(api_key, dados, contexto_pdf=""):
+    if not api_key: return None, "⚠️ Chave API faltando no Secrets."
     
-    # URL Direta do Google (Infalível)
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-    
+    # URL DO GEMINI PRO (O MAIS ESTÁVEL)
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
     headers = {'Content-Type': 'application/json'}
     
     serie = dados['serie'] if dados['serie'] else ""
@@ -98,23 +97,18 @@ def consultar_ia_direta(api_key, dados, contexto_pdf=""):
     5. DIRETRIZES PARA O ADAPTADOR DE PROVAS (Instruções técnicas para adaptar avaliações deste aluno).
     """
     
-    payload = {
-        "contents": [{
-            "parts": [{"text": prompt_text}]
-        }]
-    }
+    payload = {"contents": [{"parts": [{"text": prompt_text}]}]}
     
     try:
         response = requests.post(url, headers=headers, data=json.dumps(payload))
         
         if response.status_code == 200:
-            resultado = response.json()
             try:
-                texto_final = resultado['candidates'][0]['content']['parts'][0]['text']
-                return texto_final, None
+                return response.json()['candidates'][0]['content']['parts'][0]['text'], None
             except:
-                return None, "Erro ao ler resposta do Google. Tente novamente."
+                return None, "A IA respondeu, mas não foi possível ler o texto. Tente novamente."
         else:
+            # Mensagem de erro detalhada para a gente saber o que houve
             return None, f"Erro Google ({response.status_code}): {response.text}"
             
     except Exception as e:
@@ -161,8 +155,8 @@ if 'pdf_text' not in st.session_state: st.session_state.pdf_text = ""
 # --- SIDEBAR ---
 with st.sidebar:
     if os.path.exists("360.png"): st.image("360.png", width=120)
-    if 'GOOGLE_API_KEY' in st.secrets: api_key = st.secrets['GOOGLE_API_KEY']; st.success("✅ Gemini Conectado")
-    else: api_key = st.text_input("Google API Key:", type="password")
+    if 'GOOGLE_API_KEY' in st.secrets: api_key = st.secrets['GOOGLE_API_KEY']; st.success("✅ Chave Conectada")
+    else: api_key = st.text_input("Cole a Google API Key:", type="password")
 
 # --- CABEÇALHO ---
 if os.path.exists("360.png"):
@@ -175,8 +169,8 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["Início", "Estudante", "Map
 
 with tab1:
     c1, c2 = st.columns(2)
-    c1.markdown('<div class="feature-card"><div class="icon-box"><i class="ri-book-open-line"></i></div><h4>O que é o PEI?</h4><p>Acessibilidade oficial.</p></div>', unsafe_allow_html=True)
-    c2.markdown('<div class="feature-card"><div class="icon-box"><i class="ri-scales-3-line"></i></div><h4>Legislação</h4><p>Garantia de direitos.</p></div>', unsafe_allow_html=True)
+    c1.markdown('<div class="feature-card"><div class="icon-box"><i class="ri-book-open-line"></i></div><h4>O que é o PEI?</h4><p>Documento oficial de flexibilização escolar.</p></div>', unsafe_allow_html=True)
+    c2.markdown('<div class="feature-card"><div class="icon-box"><i class="ri-scales-3-line"></i></div><h4>Base Legal</h4><p>Garantia de direitos de aprendizagem.</p></div>', unsafe_allow_html=True)
 
 with tab2:
     st.session_state.dados['nome'] = st.text_input("Nome")
@@ -197,12 +191,14 @@ with tab4:
     st.session_state.dados['estrategias_acesso'] = st.multiselect("Acesso", ["Tempo estendido", "Ledor", "Sala Silenciosa"])
 
 with tab5:
+    st.markdown("### <i class='ri-robot-line'></i> Consultor Inteligente", unsafe_allow_html=True)
     if st.button("✨ Gerar Parecer IA", type="primary"):
-        # CHAMA A NOVA FUNÇÃO DIRETA
-        res, err = consultar_ia_direta(api_key, st.session_state.dados, st.session_state.pdf_text)
+        res, err = consultar_ia_universal(api_key, st.session_state.dados, st.session_state.pdf_text)
         if err: st.error(err)
-        else: st.session_state.dados['ia_sugestao'] = res; st.success("Gerado!")
-    if st.session_state.dados['ia_sugestao']: st.markdown(f"<div style='background:white; padding:20px; border-radius:10px;'>{st.session_state.dados['ia_sugestao'].replace(chr(10), '<br>')}</div>", unsafe_allow_html=True)
+        else: st.session_state.dados['ia_sugestao'] = res; st.success("Gerado com Sucesso!")
+    
+    if st.session_state.dados['ia_sugestao']:
+        st.markdown(f"<div style='background:white; padding:20px; border-radius:10px;'>{st.session_state.dados['ia_sugestao'].replace(chr(10), '<br>')}</div>", unsafe_allow_html=True)
 
 with tab6:
     if st.session_state.dados['nome']: 
@@ -211,9 +207,14 @@ with tab6:
         c2.download_button("📥 Word", gerar_docx(st.session_state.dados), "pei.docx")
 
 with tab7:
-    st.info(f"Salvar {st.session_state.dados['nome']} para o Adaptador.")
-    if st.button("💾 Salvar", type="primary"):
+    st.markdown("### <i class='ri-save-3-line'></i> Integração", unsafe_allow_html=True)
+    st.info(f"Salvar **{st.session_state.dados['nome']}** para o Adaptador de Provas.")
+    if st.button("💾 Salvar Aluno", type="primary"):
         if st.session_state.dados['nome']:
-            st.session_state.banco_estudantes.append(st.session_state.dados.copy())
+            perfil = st.session_state.dados.copy()
+            perfil['idade_calculada'] = calcular_idade(st.session_state.dados.get('nasc'))
+            st.session_state.banco_estudantes.append(perfil)
             st.success("Salvo!")
         else: st.warning("Preencha o nome.")
+
+st.markdown("""<div style="text-align: center; margin-top: 50px; color: #A0AEC0; font-size: 0.85rem; border-top: 1px solid #E2E8F0; padding-top: 20px;">V2.24 Gemini Pro (Stable)</div>""", unsafe_allow_html=True)
