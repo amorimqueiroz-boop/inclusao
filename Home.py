@@ -1,14 +1,19 @@
 import streamlit as st
 import os
 
+# --- FUNÇÃO FAVICON ---
+def get_favicon():
+    if os.path.exists("iconeaba.png"): return "iconeaba.png"
+    return "💠"
+
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
     page_title="Ecossistema Inclusão 360º",
-    page_icon="💠",
+    page_icon=get_favicon(),
     layout="wide"
 )
 
-# --- ESTILO VISUAL (O MESMO DO PEI V2.18 PARA CONSISTÊNCIA) ---
+# --- ESTILO VISUAL ---
 st.markdown("""
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -36,12 +41,23 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- CABEÇALHO ---
-st.markdown("""
-<div style="text-align: center; padding: 40px 20px;">
-    <h1 style="color: #004E92; font-size: 3rem; margin-bottom: 10px;">Ecossistema Inclusão 360º</h1>
-    <p style="font-size: 1.2rem; color: #718096;">Uma plataforma completa para gestão, adaptação e conexão escolar.</p>
-</div>
-""", unsafe_allow_html=True)
+c_logo, c_title = st.columns([1, 5])
+with c_logo:
+    if os.path.exists("360.png"):
+        st.image("360.png", width=100)
+    else:
+        st.markdown("<div style='font-size: 4rem; text-align: center;'>💠</div>", unsafe_allow_html=True)
+
+with c_title:
+    st.markdown("""
+    <div style="padding-top: 10px;">
+        <h1 style="color: #004E92; font-size: 3rem; margin-bottom: 10px; margin-top: 0;">Ecossistema Inclusão 360º</h1>
+        <p style="font-size: 1.2rem; color: #718096;">Uma plataforma completa para gestão, adaptação e conexão escolar.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.write("")
+st.write("")
 
 # --- MÓDULOS ---
 c1, c2 = st.columns(2)
