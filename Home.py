@@ -1,20 +1,20 @@
 import streamlit as st
 import os
 
-# --- FUNÇÃO FAVICON ---
+# --- CONFIGURAÇÃO DA PÁGINA ---
 def get_favicon():
     if os.path.exists("iconeaba.png"): return "iconeaba.png"
     return "💠"
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
     page_title="Ecossistema Inclusão 360º",
     page_icon=get_favicon(),
     layout="wide"
 )
 
-# --- ESTILO VISUAL ---
-st.markdown("""
+# --- ESTILO VISUAL BLINDADO ---
+# Colocamos o CSS dentro desta variável para não vazar na tela
+css_style = """
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -38,7 +38,8 @@ st.markdown("""
     h3 { color: var(--brand-blue); font-weight: 800; }
     p { color: #718096; line-height: 1.6; }
     </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(css_style, unsafe_allow_html=True)
 
 # --- CABEÇALHO ---
 c_logo, c_title = st.columns([1, 5])
