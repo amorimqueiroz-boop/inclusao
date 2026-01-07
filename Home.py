@@ -1,45 +1,50 @@
 import streamlit as st
 import os
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
+# --- FUNÇÃO FAVICON ---
 def get_favicon():
     if os.path.exists("iconeaba.png"): return "iconeaba.png"
     return "💠"
 
+# --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
     page_title="Ecossistema Inclusão 360º",
     page_icon=get_favicon(),
     layout="wide"
 )
 
-# --- ESTILO VISUAL BLINDADO ---
-# Colocamos o CSS dentro desta variável para não vazar na tela
-css_style = """
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-    html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
-    :root { --brand-blue: #004E92; --brand-coral: #FF6B6B; }
-    
-    .hub-card {
-        background: white; padding: 30px; border-radius: 20px;
-        border: 1px solid #EDF2F7; border-left: 6px solid var(--brand-blue);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.03); transition: all 0.3s ease; height: 100%;
-        cursor: pointer;
-    }
-    .hub-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.08); border-color: var(--brand-coral); }
-    
-    .icon-box {
-        width: 60px; height: 60px; background: #E3F2FD; border-radius: 15px;
-        display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
-    }
-    .icon-box i { font-size: 30px; color: var(--brand-blue); }
-    
-    h3 { color: var(--brand-blue); font-weight: 800; }
-    p { color: #718096; line-height: 1.6; }
-    </style>
-"""
-st.markdown(css_style, unsafe_allow_html=True)
+# --- FUNÇÃO DE ESTILO (BLINDAGEM CONTRA ERRO VISUAL) ---
+def carregar_estilo():
+    # Colocamos o CSS aqui dentro para ele não "vazar" na tela
+    estilo = """
+        <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+        <style>
+        html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
+        :root { --brand-blue: #004E92; --brand-coral: #FF6B6B; }
+        
+        .hub-card {
+            background: white; padding: 30px; border-radius: 20px;
+            border: 1px solid #EDF2F7; border-left: 6px solid var(--brand-blue);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03); transition: all 0.3s ease; height: 100%;
+            cursor: pointer;
+        }
+        .hub-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.08); border-color: var(--brand-coral); }
+        
+        .icon-box {
+            width: 60px; height: 60px; background: #E3F2FD; border-radius: 15px;
+            display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+        }
+        .icon-box i { font-size: 30px; color: var(--brand-blue); }
+        
+        h3 { color: var(--brand-blue); font-weight: 800; }
+        p { color: #718096; line-height: 1.6; }
+        </style>
+    """
+    st.markdown(estilo, unsafe_allow_html=True)
+
+# Chamamos a função para aplicar o estilo
+carregar_estilo()
 
 # --- CABEÇALHO ---
 c_logo, c_title = st.columns([1, 5])
