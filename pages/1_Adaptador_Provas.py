@@ -5,8 +5,8 @@ import os
 # --- CONFIGURAÇÃO ---
 st.set_page_config(page_title="Adaptador de Avaliações", page_icon="📝", layout="wide")
 
-# --- ESTILO VISUAL (MANTENDO A IDENTIDADE) ---
-st.markdown("""
+# --- ESTILO VISUAL BLINDADO ---
+css_adaptador = """
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -32,7 +32,8 @@ st.markdown("""
         background: #E3F2FD; padding: 15px; border-radius: 10px; color: #004E92; font-size: 0.9rem; margin-bottom: 20px;
     }
     </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(css_adaptador, unsafe_allow_html=True)
 
 # --- CABEÇALHO ---
 st.markdown("""
