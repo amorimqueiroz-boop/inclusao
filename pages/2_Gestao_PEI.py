@@ -99,8 +99,8 @@ def consultar_ia(api_key, dados, contexto_pdf=""):
     if not api_key: return None, "⚠️ A chave Google API não foi detectada."
     try:
         # Configura o Gemini
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        genai.configure(api_key=api_key)m
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
         
         serie = dados['serie'] if dados['serie'] else ""
         idade = calcular_idade(dados.get('nasc'))
