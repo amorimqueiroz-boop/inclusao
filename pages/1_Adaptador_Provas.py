@@ -9,9 +9,10 @@ from streamlit_cropper import st_cropper
 import re
 import requests
 import json
+import base64
 
 # --- 1. CONFIGURAÇÃO ---
-st.set_page_config(page_title="Adaptador 360º | V9.1", page_icon="🧩", layout="wide")
+st.set_page_config(page_title="Adaptador 360º | V9.2", page_icon="🧩", layout="wide")
 
 # --- 2. BANCO DE DADOS ---
 ARQUIVO_DB = "banco_alunos.json"
@@ -90,9 +91,9 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
         tag_match = re.search(r'\[\[IMG_(\d+)\]\]', parte)
         if tag_match:
             num = int(tag_match.group(1))
-            # Busca imagem no mapa (pelo numero da questao ou indice sequencial)
+            # Busca imagem no mapa
             img_bytes = mapa_imgs.get(num)
-            # Se for imagem única (recorte), usa ela independente do número
+            # Fallback para imagem única (recorte)
             if not img_bytes and len(mapa_imgs) == 1:
                 img_bytes = list(mapa_imgs.values())[0]
 
@@ -116,10 +117,13 @@ def gerar_dalle_prompt(api_key, prompt_text):
         return resp.data[0].url
     except: return None
 
-# MÓDULO ADAPTAR (ESTRATÉGIA SANDUÍCHE)
+# MÓDULO ADAPTAR (ESTRATÉGIA SANDUÍCHE REFORÇADA)
 def adaptar_conteudo(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, remover_resp, questoes_mapeadas):
     client = OpenAI(api_key=api_key)
     
+    # Validação de Segurança
+    if conteudo is None: return "Erro: Conteúdo vazio.", ""
+
     lista_q = ", ".join([str(n) for n in questoes_mapeadas])
     
     prompt = f"""
@@ -127,19 +131,18 @@ def adaptar_conteudo(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, re
     
     REGRA CRÍTICA DE IMAGENS (ESTRATÉGIA SANDUÍCHE):
     O professor indicou que existem imagens para as questões: {lista_q}.
-    Ao escrever essas questões, você DEVE seguir esta ordem estrita:
     
+    Ao escrever essas questões, siga estritamente esta ordem:
     1. Número e Enunciado da Questão.
-    2. A tag [[IMG_número]] (EXATAMENTE AQUI, NO MEIO).
-    3. As Alternativas (A, B, C...) ou linhas de resposta.
+    2. A tag [[IMG_número]] (EXATAMENTE AQUI, NO MEIO, ANTES DAS ALTERNATIVAS).
+    3. As Alternativas (A, B, C...).
     
-    ERRADO: Enunciado -> Alternativas -> [[IMG_1]] (NÃO FAÇA ISSO!)
-    CERTO: Enunciado -> [[IMG_1]] -> Alternativas.
+    NUNCA coloque a imagem no final da questão. Ela é o suporte visual para responder.
     
     ESTRUTURA DE SAÍDA:
-    [RACIONAL] (Breve explicação)
+    [RACIONAL] (Explique brevemente)
     ---DIVISOR---
-    [ATIVIDADE] (Conteúdo pronto para o aluno)
+    [ATIVIDADE] (Conteúdo limpo)
     
     PEI DO ALUNO: {aluno.get('ia_sugestao', '')[:1500]}
     {"REMOVA TODAS AS RESPOSTAS." if remover_resp else ""}
@@ -149,9 +152,13 @@ def adaptar_conteudo(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, re
     
     msgs = [{"role": "user", "content": []}]
     if tipo == "imagem":
-        b64 = base64.b64encode(conteudo).decode('utf-8')
-        msgs[0]["content"].append({"type": "text", "text": prompt})
-        msgs[0]["content"].append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}})
+        # Garante que conteudo é bytes
+        if isinstance(conteudo, bytes):
+            b64 = base64.b64encode(conteudo).decode('utf-8')
+            msgs[0]["content"].append({"type": "text", "text": prompt})
+            msgs[0]["content"].append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}})
+        else:
+            return "Erro: Formato de imagem inválido.", ""
     else:
         msgs[0]["content"].append({"type": "text", "text": prompt + "\n" + str(conteudo)})
 
@@ -172,13 +179,14 @@ def criar_duas_opcoes(api_key, aluno, materia, objeto, qtd, tipo_q):
     PEI: {aluno.get('ia_sugestao', '')[:1000]}
     
     --- OPÇÃO A: LÚDICA (Imersão Total) ---
-    Use o hiperfoco ({hiperfoco}) como narrativa principal. O aluno é o protagonista nesse mundo.
+    Use o hiperfoco ({hiperfoco}) como narrativa principal.
     
     --- OPÇÃO B: ESTRUTURADA (Foco Conteúdo) ---
-    Use o hiperfoco apenas como contexto leve, priorizando a estrutura acadêmica clara.
+    Use o hiperfoco apenas como contexto leve.
     
     REGRAS PARA AMBAS:
     1. A cada 5 questões, coloque uma tag [[GEN_IMG: descrição]] onde couber uma imagem.
+    2. Garanta que a imagem venha ANTES das alternativas.
     
     SAÍDA:
     [RACIONAL]
@@ -200,22 +208,11 @@ def criar_duas_opcoes(api_key, aluno, materia, objeto, qtd, tipo_q):
         except: return "Erro formato.", full, full
     except Exception as e: return str(e), "", ""
 
-# MÓDULO CONTEXTUALIZAR (O RETORNO)
+# MÓDULO CONTEXTUALIZAR
 def gerar_contextualizacao(api_key, aluno, assunto, tema_extra=""):
     client = OpenAI(api_key=api_key)
     tema = tema_extra if tema_extra else aluno.get('hiperfoco', 'Geral')
-    
-    prompt = f"""
-    VOCÊ É UM CONSULTOR DE INCLUSÃO.
-    Objetivo: Ajudar o professor a explicar '{assunto}' para o aluno {aluno['nome']} (Série: {aluno.get('serie')}).
-    Hiperfoco/Interesse: {tema}.
-    PEI: {aluno.get('ia_sugestao', '')[:800]}
-    
-    GERE UM GUIA RÁPIDO:
-    1. 🧊 **Quebra-Gelo:** Uma pergunta ou curiosidade sobre {tema} que ligue ao assunto.
-    2. 🔗 **Analogia de Ouro:** Como explicar o conceito difícil usando a lógica de {tema}?
-    3. 🧠 **Dica Sensorial:** Uma estratégia baseada no PEI para manter o foco durante essa explicação.
-    """
+    prompt = f"Explique '{assunto}' para {aluno['nome']} usando a lógica de {tema}. PEI: {aluno.get('ia_sugestao','')[:500]}."
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
         return resp.choices[0].message.content
@@ -232,7 +229,7 @@ with st.sidebar:
             if k not in ['banco_estudantes', 'OPENAI_API_KEY']: del st.session_state[k]
         st.rerun()
 
-st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V9.1: Hub Completo</p></div></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V9.2: Blindado</p></div></div>""", unsafe_allow_html=True)
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Cadastre um aluno no PEI 360º primeiro.")
@@ -250,7 +247,6 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# 4 ABAS RESTAURADAS
 tab_adapt, tab_create, tab_visual, tab_ctx = st.tabs(["📂 Adaptar Arquivo", "✨ Criar (Opções A/B)", "🎨 Estúdio Visual", "💡 Contextualizador"])
 
 # 1. ADAPTAR
@@ -262,34 +258,41 @@ with tab_adapt:
 
     arquivo = st.file_uploader("Arquivo (FOTO ou DOCX)", type=["png","jpg","jpeg","docx"], key="af")
     
-    if 'adapt_imgs' not in st.session_state: st.session_state.adapt_imgs = []
-    if 'adapt_txt' not in st.session_state: st.session_state.adapt_txt = None
+    if 'adapt_content' not in st.session_state: st.session_state.adapt_content = None # Renomeado para evitar confusão
     if 'adapt_type' not in st.session_state: st.session_state.adapt_type = None
+    if 'adapt_imgs' not in st.session_state: st.session_state.adapt_imgs = []
 
     if arquivo:
         if arquivo.file_id != st.session_state.get('a_last_id'):
             st.session_state.a_last_id = arquivo.file_id
             st.session_state.adapt_imgs = []
+            
             if "image" in arquivo.type:
                 st.session_state.adapt_type = "imagem"
                 st.markdown("<div class='crop-instruction'>✂️ <b>TESOURA DIGITAL:</b> Recorte e confirme.</div>", unsafe_allow_html=True)
                 img = Image.open(arquivo).convert("RGB")
-                buf = BytesIO(); img.save(buf, format="JPEG"); st.session_state.adapt_txt = buf.getvalue()
+                buf = BytesIO(); img.save(buf, format="JPEG"); st.session_state.adapt_content = buf.getvalue()
+                
                 img.thumbnail((1000, 1000))
                 cropped = st_cropper(img, realtime_update=False, box_color='#FF0000', aspect_ratio=None, key="crop1")
                 if st.button("✂️ CONFIRMAR RECORTE", key="cut_btn"):
                     buf_c = BytesIO(); cropped.save(buf_c, format="JPEG")
+                    # Na imagem recortada, o 'conteúdo' para a IA é a própria imagem recortada
+                    st.session_state.adapt_content = buf_c.getvalue() 
                     st.session_state.adapt_imgs = [buf_c.getvalue()]
+                    st.success("✅ Imagem recortada pronta!")
                     st.rerun()
             elif "word" in arquivo.type:
                 st.session_state.adapt_type = "docx"
                 txt, imgs = extrair_dados_docx(arquivo)
-                st.session_state.adapt_txt = txt
+                st.session_state.adapt_content = txt
                 st.session_state.adapt_imgs = imgs
                 st.success(f"DOCX: {len(imgs)} imagens encontradas.")
 
     adapt_map = {}
     adapt_qs = []
+    
+    # Configuração de Imagens (DOCX ou Foto)
     if st.session_state.adapt_imgs:
         if st.session_state.adapt_type == "docx":
             st.info("Mapeamento: Digite o número da questão para cada imagem (0 para ignorar).")
@@ -300,13 +303,23 @@ with tab_adapt:
                     q = st.number_input(f"Q:", 0, 50, key=f"qmap_{i}")
                     if q > 0: adapt_map[int(q)] = img; adapt_qs.append(int(q))
         else:
+            # Foto única = Questão 1
             adapt_map[1] = st.session_state.adapt_imgs[0]
+            adapt_qs = [1]
 
-    if st.button("🚀 GERAR ADAPTAÇÃO", type="primary", key="btn_adapt"):
-        with st.spinner("Adaptando com regra 'sanduíche' de imagens..."):
-            rac, txt = adaptar_conteudo(api_key, aluno, st.session_state.adapt_txt, st.session_state.adapt_type, materia, tema, tipo_atv, True, adapt_qs)
-            st.session_state['res_adapt'] = {'rac': rac, 'txt': txt, 'map': adapt_map}
-            st.rerun()
+    c_opt, c_act = st.columns([1, 1])
+    with c_opt:
+        modo_prof = st.checkbox("Remover Respostas", value=True, key="mprof") if st.session_state.adapt_type == "imagem" else False
+    
+    with c_act:
+        if st.button("🚀 GERAR ADAPTAÇÃO", type="primary", key="btn_adapt"):
+            if not st.session_state.adapt_content:
+                st.warning("⚠️ Aguardando conteúdo (Faça upload e, se for foto, confirme o recorte).")
+            else:
+                with st.spinner("Adaptando com regra 'sanduíche' de imagens..."):
+                    rac, txt = adaptar_conteudo(api_key, aluno, st.session_state.adapt_content, st.session_state.adapt_type, materia, tema, tipo_atv, modo_prof, adapt_qs)
+                    st.session_state['res_adapt'] = {'rac': rac, 'txt': txt, 'map': adapt_map}
+                    st.rerun()
 
     if 'res_adapt' in st.session_state:
         res = st.session_state['res_adapt']
@@ -319,6 +332,7 @@ with tab_adapt:
                 tag = re.search(r'\[\[IMG_(\d+)\]\]', p)
                 if tag:
                     i = int(tag.group(1))
+                    # Fallback para imagem única se não achar index
                     im = res['map'].get(i)
                     if not im and len(res['map']) == 1: im = list(res['map'].values())[0]
                     if im: st.image(im, width=300)
