@@ -15,7 +15,7 @@ import zipfile
 import json
 
 # --- 1. CONFIGURAÇÃO ---
-st.set_page_config(page_title="Adaptador 360º | V7.2", page_icon="🧩", layout="wide")
+st.set_page_config(page_title="Adaptador 360º | V7.3", page_icon="🧩", layout="wide")
 
 # --- 2. BANCO DE DADOS ---
 ARQUIVO_DB = "banco_alunos.json"
@@ -59,12 +59,9 @@ def extrair_dados_docx(uploaded_file):
     try:
         doc = Document(uploaded_file)
         texto = "\n".join([p.text for p in doc.paragraphs if p.text.strip() != ""])
-        
-        # Varre XML para pegar imagens na ordem correta
         for rel in doc.part.rels.values():
             if "image" in rel.target_ref:
                 img_data = rel.target_part.blob
-                # Filtro reduzido para 1KB (pega quase tudo, evita sumir imagens pequenas)
                 if len(img_data) > 1024: 
                     imagens.append(img_data)
     except Exception as e:
@@ -80,7 +77,6 @@ def baixar_imagem_url(url):
 
 def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tipo_atv):
     doc = Document(); style = doc.styles['Normal']; style.font.name = 'Arial'; style.font.size = Pt(12)
-    
     doc.add_heading(f'{tipo_atv.upper()} ADAPTADA - {materia.upper()}', 0).alignment = WD_ALIGN_PARAGRAPH.CENTER
     doc.add_paragraph(f"Estudante: {aluno['nome']}").alignment = WD_ALIGN_PARAGRAPH.CENTER
     doc.add_paragraph("_"*50)
@@ -88,30 +84,24 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
     if img_dalle_url:
         img_io = baixar_imagem_url(img_dalle_url)
         if img_io:
-            doc.add_heading('Apoio Visual', level=3)
+            doc.add_heading('Contexto Visual (Hiperfoco)', level=3)
             doc.add_picture(img_io, width=Inches(4.5))
             doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
             doc.add_paragraph("")
 
     doc.add_heading('Atividades', level=2)
-    
-    # Processa tags de imagem [[IMG_Qx]]
     partes = re.split(r'(\[\[IMG_Q\d+\]\])', texto_ia)
     
     for parte in partes:
         tag_match = re.match(r'\[\[IMG_Q(\d+)\]\]', parte)
-        
         if tag_match:
             num_q = int(tag_match.group(1))
-            # Se for modo CROP (lista com 1 item), usa índice 0 para a imagem única
             if len(mapa_imgs) == 1 and 0 in mapa_imgs:
                  try:
                     doc.add_picture(BytesIO(mapa_imgs[0]), width=Inches(5.0))
                     doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
                     doc.add_paragraph("")
                  except: pass
-            
-            # Se for modo DOCX (mapa real), usa o número da questão
             elif num_q in mapa_imgs:
                 try:
                     doc.add_picture(BytesIO(mapa_imgs[num_q]), width=Inches(5.0))
@@ -125,38 +115,45 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
 
-# --- 5. IA (ADAPTAÇÃO E CRIAÇÃO) ---
-def gerar_dalle(api_key, tema, aluno):
+# --- 5. IA (SUPER INTELIGÊNCIA V7.3) ---
+def gerar_dalle(api_key, tema, aluno, contexto_extra=""):
     client = OpenAI(api_key=api_key)
-    prompt = f"Educational illustration about '{tema}'. Simple, clear, white background. {aluno.get('hiperfoco','')} style. No text."
+    # Prompt DALL-E refinado para ser uma prancha de apoio
+    prompt = f"Educational illustration about '{tema}'. Context: {aluno.get('hiperfoco','')} universe. {contexto_extra}. Clear, colorful, autism-friendly design, white background. No text."
     try:
         resp = client.images.generate(model="dall-e-3", prompt=prompt, size="1024x1024", quality="standard", n=1)
         return resp.data[0].url, None
     except Exception as e: return None, str(e)
 
-# MÓDULO 1: ADAPTAR EXISTENTE
+# MÓDULO 1: ADAPTAR
 def adaptar_conteudo(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, remover_resp, questoes_mapeadas):
     client = OpenAI(api_key=api_key)
     
-    # Instrução de Imagem (Separada por Tipo)
     if tipo == "docx":
         lista_q = ", ".join([str(n) for n in questoes_mapeadas])
         instrucao_imgs = f"""
-        DIAGRAMAÇÃO OBRIGATÓRIA (DOCX):
-        Existem imagens para as questões: {lista_q}.
-        Se a Questão X tiver imagem, insira a tag [[IMG_QX]] LOGO APÓS o enunciado, antes das alternativas.
-        Exemplo: "Questão 5: ... (texto) ... [[IMG_Q5]] ... a) ..."
+        DIAGRAMAÇÃO (DOCX):
+        Imagens disponíveis para as questões: {lista_q}.
+        Se a Questão X tiver imagem, insira [[IMG_QX]] LOGO APÓS o enunciado.
         """
     else:
-        instrucao_imgs = "Use a tag [[IMG_Q1]] para inserir a imagem recortada logo após o enunciado principal."
+        instrucao_imgs = "Use a tag [[IMG_Q1]] para a imagem recortada logo após o enunciado."
 
     instrucao_prof = "REMOVA TODAS AS RESPOSTAS (azul/rosa)." if remover_resp else ""
-    hiperfoco = f"Adapte usando o HIPERFOCO: {aluno.get('hiperfoco', 'livre')}."
-    pei_contexto = f"DIRETRIZES PEI:\n{aluno.get('ia_sugestao', '')[:1500]}"
+    
+    # PEI PROFUNDO
+    pei_data = aluno.get('ia_sugestao', 'Sem dados PEI.')
+    instrucao_pei = f"""
+    CONSULTE O PEI DO ALUNO PARA ADAPTAR:
+    {pei_data[:2000]}
+    
+    Respeite rigorosamente as barreiras cognitivas e estratégias de ensino listadas acima.
+    Use o Hiperfoco ({aluno.get('hiperfoco')}) para contextualizar.
+    """
 
     prompt = f"""
-    Especialista em DUA. [RACIONAL PEDAGÓGICO curto + ---DIVISOR---].
-    {instrucao_prof} {instrucao_imgs} {hiperfoco} {pei_contexto}
+    Especialista em DUA e PEI. [RACIONAL PEDAGÓGICO curto + ---DIVISOR---].
+    {instrucao_prof} {instrucao_imgs} {instrucao_pei}
     CONTEXTO: {materia} | {tema} | {tipo_atv}
     CONTEÚDO:
     """
@@ -175,26 +172,31 @@ def adaptar_conteudo(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, re
         return (parts[0].strip(), parts[1].strip(), None) if len(parts)>1 else ("Adaptado.", resp.choices[0].message.content, None)
     except Exception as e: return None, None, str(e)
 
-# MÓDULO 2: CRIAR DO ZERO (NOVO!)
+# MÓDULO 2: CRIAR DO ZERO (TURBINADO)
 def criar_do_zero(api_key, aluno, materia, objeto, qtd, tipo_q):
     client = OpenAI(api_key=api_key)
     
+    # Lógica de Especialista no Fandom
+    hiperfoco = aluno.get('hiperfoco', 'Geral')
+    pei_completo = aluno.get('ia_sugestao', 'Sem PEI.')
+    
     prompt = f"""
-    CRIE UMA ATIVIDADE DO ZERO PARA ESTE ALUNO:
-    Aluno: {aluno['nome']} | Diagnóstico: {aluno.get('diagnostico')}
-    Hiperfoco: {aluno.get('hiperfoco', 'Geral')} (USE ISSO PARA CONTEXTUALIZAR TUDO!)
+    VOCÊ É UM MESTRE NO UNIVERSO: {hiperfoco}.
+    Sua missão é criar uma atividade escolar de {materia} ({objeto}) que pareça uma aventura desse universo.
     
-    CONFIGURAÇÃO:
-    - Componente: {materia}
-    - Objeto de Conhecimento: {objeto}
-    - Quantidade: {qtd} questões
-    - Tipo: {tipo_q}
+    DADOS DO ALUNO (PEI - SIGA RIGOROSAMENTE):
+    {pei_completo[:2000]}
     
-    DIRETRIZES:
-    1. Inicie com um [RACIONAL PEDAGÓGICO] curto explicando como o hiperfoco foi usado.
-    2. Use ---DIVISOR---.
-    3. Crie as questões. Se usar o hiperfoco (ex: Minecraft), use nomes, itens e lógicas desse universo.
-    4. Linguagem acessível e direta.
+    REGRAS DE OURO:
+    1. NÃO SEJA RASO. O aluno é especialista em {hiperfoco}. Use termos específicos, personagens reais e lógicas desse mundo (ex: se for Minecraft, fale de crafting, biomas, mobs; se for Patrulha Canina, use os nomes e veículos corretos).
+    2. A atividade deve ter {qtd} questões do tipo {tipo_q}.
+    3. Conecte o conceito de {objeto} com a lógica de {hiperfoco} de forma inteligente.
+    
+    ESTRUTURA:
+    1. [RACIONAL PEDAGÓGICO]: Explique como conectou o PEI + Hiperfoco ao conteúdo.
+    2. ---DIVISOR---
+    3. Título Temático e Engajador.
+    4. As Questões (Use linguagem adequada às barreiras do aluno).
     """
     
     try:
@@ -213,7 +215,7 @@ with st.sidebar:
             if k.startswith('res_') or k.startswith('imgs_'): del st.session_state[k]
         st.rerun()
 
-st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V7.2: Criação & Adaptação</p></div></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V7.3: Mestre do Hiperfoco</p></div></div>""", unsafe_allow_html=True)
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Cadastre um aluno no PEI 360º primeiro.")
@@ -225,7 +227,7 @@ nome_aluno = st.selectbox("📂 Estudante:", lista)
 aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
 
 # --- ABAS PRINCIPAIS ---
-tab_adapt, tab_criar = st.tabs(["📂 Adaptar Arquivo Existente", "✨ Criar do Zero"])
+tab_adapt, tab_criar = st.tabs(["📂 Adaptar Arquivo", "✨ Criar do Zero"])
 
 # ABA 1: ADAPTAR
 with tab_adapt:
@@ -236,7 +238,6 @@ with tab_adapt:
 
     arquivo = st.file_uploader("Arquivo (FOTO ou DOCX)", type=["png","jpg","jpeg","docx"])
     
-    # Estado Local
     if 'imgs_extraidas' not in st.session_state: st.session_state.imgs_extraidas = []
     if 'tipo_arq' not in st.session_state: st.session_state.tipo_arq = None
     if 'txt_orig' not in st.session_state: st.session_state.txt_orig = None
@@ -248,7 +249,7 @@ with tab_adapt:
             
             if "image" in arquivo.type:
                 st.session_state.tipo_arq = "imagem"
-                st.markdown("<div class='crop-instruction'>✂️ <b>TESOURA DIGITAL:</b> Recorte a figura. O texto será lido da imagem completa.</div>", unsafe_allow_html=True)
+                st.markdown("<div class='crop-instruction'>✂️ <b>TESOURA DIGITAL:</b> Recorte a figura.</div>", unsafe_allow_html=True)
                 img = Image.open(arquivo).convert("RGB")
                 buf = BytesIO(); img.save(buf, format="JPEG"); st.session_state.txt_orig = buf.getvalue()
                 
@@ -264,7 +265,6 @@ with tab_adapt:
                 st.session_state.imgs_extraidas = imgs
                 st.success(f"DOCX: {len(imgs)} imagens encontradas.")
 
-    # Mapeamento Condicional (SÓ PARA DOCX)
     mapa_imgs = {}
     questoes_ativas = []
     
@@ -278,12 +278,9 @@ with tab_adapt:
                 if q > 0:
                     mapa_imgs[q] = img
                     questoes_ativas.append(q)
-    
-    # Se for IMAGEM, o mapa é simples (índice 0)
     elif st.session_state.imgs_extraidas and st.session_state.tipo_arq == "imagem":
-        mapa_imgs[0] = st.session_state.imgs_extraidas[0] # Chave 0 para imagem única
+        mapa_imgs[0] = st.session_state.imgs_extraidas[0]
 
-    # Botões Adaptar
     c_opt, c_act = st.columns([1, 1])
     with c_opt:
         modo_prof = st.checkbox("Remover Respostas", value=True) if st.session_state.tipo_arq == "imagem" else False
@@ -293,7 +290,7 @@ with tab_adapt:
         if st.button("🚀 GERAR ADAPTAÇÃO", type="primary"):
             if not materia or not tema: st.warning("Preencha os dados.")
             else:
-                with st.spinner("Processando..."):
+                with st.spinner("Lendo PEI e Adaptando..."):
                     rac, txt, err = adaptar_conteudo(
                         api_key, aluno, st.session_state.txt_orig, st.session_state.tipo_arq,
                         materia, tema, tipo_atv, modo_prof, questoes_ativas
@@ -308,7 +305,7 @@ with tab_adapt:
 
 # ABA 2: CRIAR DO ZERO
 with tab_criar:
-    st.info(f"O sistema usará o hiperfoco **{aluno.get('hiperfoco', 'Geral')}** para criar questões engajadoras.")
+    st.info(f"O sistema usará o **PEI COMPLETO** e o hiperfoco **{aluno.get('hiperfoco')}** para criar uma experiência profunda.")
     
     cc1, cc2 = st.columns(2)
     mat_c = cc1.selectbox("Componente Curricular", ["Matemática", "Língua Portuguesa", "Ciências", "História", "Geografia"], key="mc")
@@ -318,16 +315,22 @@ with tab_criar:
     qtd_c = cc3.slider("Quantidade de Questões", 1, 10, 5)
     tipo_c = cc4.selectbox("Formato", ["Múltipla Escolha", "Discursiva", "Mista (Objetiva + Aberta)"])
     
+    usar_dalle_criar = st.toggle("Gerar Prancha Visual (Capa)", value=True, key="d2", help="Gera uma imagem de apoio contextualizada com o conteúdo.")
+
     if st.button("✨ CRIAR PROVA DO ZERO", type="primary"):
         if not obj_c: st.warning("Informe o conteúdo.")
         else:
-            with st.spinner(f"Criando questões sobre {obj_c} com tema {aluno.get('hiperfoco')}..."):
+            with st.spinner(f"Consultando o PEI e criando universo {aluno.get('hiperfoco')}..."):
                 rac, txt, err = criar_do_zero(api_key, aluno, mat_c, obj_c, qtd_c, tipo_c)
-                img_d = gerar_dalle(api_key, obj_c, aluno)[0]
+                
+                img_d = None
+                if usar_dalle_criar:
+                    # Gera capa com contexto específico da aula criada
+                    img_d = gerar_dalle(api_key, obj_c, aluno, contexto_extra="Visual support related to the questions")[0]
                 
                 st.session_state['res_racional'] = rac
                 st.session_state['res_texto'] = txt
-                st.session_state['res_mapa'] = {} # Sem imagens anexas na criação
+                st.session_state['res_mapa'] = {}
                 st.session_state['res_dalle'] = img_d
                 st.rerun()
 
@@ -335,10 +338,10 @@ with tab_criar:
 if 'res_texto' in st.session_state:
     st.markdown("---")
     if st.session_state.get('res_racional'):
-        st.markdown(f"<div class='racional-box'><b>🧠 Racional Pedagógico:</b><br>{st.session_state['res_racional']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='racional-box'><b>🧠 Racional Pedagógico (Baseado no PEI):</b><br>{st.session_state['res_racional']}</div>", unsafe_allow_html=True)
 
     with st.container(border=True):
-        if st.session_state.get('res_dalle'): st.image(st.session_state['res_dalle'], width=200, caption="Capa Sensorial")
+        if st.session_state.get('res_dalle'): st.image(st.session_state['res_dalle'], width=200, caption="Prancha de Apoio (IA)")
         
         txt = st.session_state['res_texto']
         partes = re.split(r'(\[\[IMG_Q\d+\]\])', txt)
@@ -348,9 +351,7 @@ if 'res_texto' in st.session_state:
             tag = re.match(r'\[\[IMG_Q(\d+)\]\]', parte)
             if tag:
                 q = int(tag.group(1))
-                # Tenta achar no mapa (para DOCX) ou usa a única imagem (para CROP)
                 img_show = mapa.get(q) if q in mapa else (mapa.get(0) if 0 in mapa else None)
-                
                 if img_show: st.image(img_show, width=300)
             else:
                 clean = parte.replace("Utilize a tag", "").strip()
