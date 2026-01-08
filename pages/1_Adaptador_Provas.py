@@ -15,9 +15,9 @@ import zipfile
 import json
 
 # --- 1. CONFIGURAÇÃO ---
-st.set_page_config(page_title="Adaptador 360º | Final", page_icon="🧩", layout="wide")
+st.set_page_config(page_title="Adaptador 360º | Híbrido", page_icon="🧩", layout="wide")
 
-# --- 2. BANCO DE DADOS COMPARTILHADO ---
+# --- 2. BANCO DE DADOS ---
 ARQUIVO_DB = "banco_alunos.json"
 
 def carregar_banco():
@@ -77,25 +77,28 @@ def construir_docx_final(texto_ia, aluno, materia, lista_imgs, img_dalle_url, ti
             doc.add_paragraph("")
 
     doc.add_heading('Questões', level=2)
+    
+    # Processamento do texto da IA
     partes = re.split(r'(\[\[IMG_\d+\]\])', texto_ia)
     for parte in partes:
         if "[[IMG_" in parte:
             try:
-                idx = 0 if len(lista_imgs) == 1 else int(re.search(r'\d+', parte).group()) - 1
+                # Se usou tesoura digital, a lista_imgs tem 1 item (o recorte)
+                # O índice será sempre 0
+                idx = 0 
                 if 0 <= idx < len(lista_imgs):
                     doc.add_picture(BytesIO(lista_imgs[idx]), width=Inches(5.5))
                     doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
                     doc.add_paragraph("")
             except: pass
         elif parte.strip():
-            # Remove frases residuais da IA se ainda escaparem
-            texto_limpo = parte.replace("Utilize a tag para inserir a imagem.", "").strip()
-            if texto_limpo: doc.add_paragraph(texto_limpo)
+            clean_text = parte.replace("Utilize a tag", "").strip()
+            if clean_text: doc.add_paragraph(clean_text)
             
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
 
-# --- 5. IA (PROMPT CORRIGIDO) ---
+# --- 5. IA (LÓGICA HÍBRIDA) ---
 def gerar_dalle(api_key, tema, aluno):
     client = OpenAI(api_key=api_key)
     prompt = f"Educational illustration about '{tema}'. Simple, clear, white background. {aluno.get('hiperfoco','')} style. No text."
@@ -104,15 +107,20 @@ def gerar_dalle(api_key, tema, aluno):
         return resp.data[0].url, None
     except Exception as e: return None, str(e)
 
-def adaptar_v6(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, remover_respostas):
+def adaptar_hibrido(api_key, aluno, conteudo_visual_completo, tipo, materia, tema, tipo_atv, remover_respostas):
+    """
+    Recebe a imagem COMPLETA (conteudo_visual_completo) para ler o texto,
+    mas sabe que no Word final usaremos o recorte.
+    """
     client = OpenAI(api_key=api_key)
     
-    # PROMPT BLINDADO CONTRA "TEXTO EXPLICATIVO"
     instrucao_imgs = """
-    REGRA DE OURO PARA IMAGENS:
-    Apenas insira a tag [[IMG_1]] no local correto. 
-    NÃO escreva frases como "Utilize a tag..." ou "Aqui está a imagem".
-    Seja invisível. O aluno deve ver apenas a imagem, não a sua instrução.
+    A imagem original contém um mapa/figura e texto.
+    Eu já recortei a figura para usar no documento final.
+    SUA TAREFA:
+    1. Leia o texto da imagem completa.
+    2. Adapte as questões.
+    3. Insira a tag [[IMG_1]] no lugar onde a figura (que eu recortei) deve entrar.
     """
     
     instrucao_prof = "REMOVA TODAS AS RESPOSTAS (azul/rosa/itálico). Mantenha apenas perguntas." if remover_respostas else ""
@@ -127,11 +135,12 @@ def adaptar_v6(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, remover_
     msgs = [{"role": "system", "content": prompt_sys}, {"role": "user", "content": []}]
     
     if tipo == "imagem":
-        b64 = base64.b64encode(conteudo).decode('utf-8')
+        # Envia a IMAGEM ORIGINAL COMPLETA para leitura do texto
+        b64 = base64.b64encode(conteudo_visual_completo).decode('utf-8')
         msgs[1]["content"].append({"type": "text", "text": prompt_user})
         msgs[1]["content"].append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}})
     else:
-        msgs[1]["content"].append({"type": "text", "text": prompt_user + str(conteudo)})
+        msgs[1]["content"].append({"type": "text", "text": prompt_user + str(conteudo_visual_completo)})
 
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=msgs, temperature=0.3, max_tokens=4000)
@@ -143,71 +152,58 @@ with st.sidebar:
     if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']; st.success("✅ Conectado")
     else: api_key = st.text_input("Chave OpenAI:", type="password")
     st.markdown("---")
-    st.info("✂️ Use a Tesoura Digital para recortar mapas e figuras.")
+    st.info("✂️ Recorte a imagem para limpar. O texto original será lido automaticamente.")
 
-st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V6.3: Final</p></div></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V6.4: Híbrido</p></div></div>""", unsafe_allow_html=True)
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Nenhum aluno no banco. Vá em 'PEI 360º' e salve um aluno primeiro.")
     st.stop()
 
-# SELEÇÃO
 lista = [a['nome'] for a in st.session_state.banco_estudantes]
 nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista)
 aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
 
-with st.expander(f"ℹ️ Perfil de {aluno['nome']}"):
-    st.write(f"**Hiperfoco:** {aluno.get('hiperfoco', 'Não informado')}")
-    st.write(f"**Diagnóstico:** {aluno.get('diagnostico', 'Não informado')}")
-
 c1, c2, c3 = st.columns(3)
 materia = c1.selectbox("Matéria", ["Matemática", "Português", "Ciências", "História", "Geografia", "Inglês", "Artes"])
 tema = c2.text_input("Tema", placeholder="Ex: Frações")
+tipo_atv = c3.selectbox("Tipo", ["Prova / Avaliação", "Tarefa de Casa", "Atividade de Sala", "Trabalho em Grupo", "Atividade Lúdica", "Resumo"])
 
-# --- LISTA DE ATIVIDADES RESTAURADA ---
-tipo_atv = c3.selectbox("Tipo de Atividade", [
-    "Prova / Avaliação", 
-    "Tarefa de Casa", 
-    "Atividade de Sala", 
-    "Trabalho em Grupo", 
-    "Atividade Lúdica",
-    "Resumo / Esquema"
-])
-
-# UPLOAD E RECORTE
+# UPLOAD
 arquivo = st.file_uploader("Arquivo (FOTO ou DOCX)", type=["png","jpg","jpeg","docx"])
-img_processada = None
+
+img_original_bytes = None # Imagem cheia para a IA ler
+lista_recortes_final = [] # Recorte limpo para o Word
 tipo_arq = None
-lista_imgs_final = [] 
 
 if arquivo:
     if "image" in arquivo.type:
         tipo_arq = "imagem"
-        st.markdown("<div class='crop-instruction'>✂️ <b>TESOURA DIGITAL:</b> Selecione apenas a questão/imagem que deseja usar.</div>", unsafe_allow_html=True)
-        img_original = Image.open(arquivo)
-        # Otimização prévia para tela
-        img_original.thumbnail((1200, 1200)) 
+        st.markdown("<div class='crop-instruction'>✂️ <b>TESOURA DIGITAL:</b> Recorte APENAS a figura/mapa. O sistema lerá o texto da página inteira automaticamente.</div>", unsafe_allow_html=True)
         
-        cropped_img = st_cropper(img_original, realtime_update=True, box_color='#FF0000', aspect_ratio=None)
+        img_pil = Image.open(arquivo)
+        # Salva a original completa em bytes para mandar pra IA ler o texto
+        buf_full = BytesIO(); img_pil.save(buf_full, format="JPEG"); 
+        img_original_bytes = buf_full.getvalue()
         
-        st.caption("Prévia do Recorte:")
+        # Otimização visual para o cropper
+        img_pil.thumbnail((1000, 1000)) 
+        cropped_img = st_cropper(img_pil, realtime_update=True, box_color='#FF0000', aspect_ratio=None)
+        st.caption("Este recorte será usado no Word final:")
         st.image(cropped_img, width=250)
         
-        # Correção do erro de transparência (RGBA -> RGB)
+        # Salva o recorte limpo
         if cropped_img.mode in ("RGBA", "P"): cropped_img = cropped_img.convert("RGB")
-        
-        buf = BytesIO(); cropped_img.save(buf, format="JPEG"); 
-        img_processada = buf.getvalue()
-        lista_imgs_final = [img_processada]
+        buf_crop = BytesIO(); cropped_img.save(buf_crop, format="JPEG"); 
+        lista_recortes_final = [buf_crop.getvalue()]
         
     elif "word" in arquivo.type:
         tipo_arq = "docx"
-        txt_docx, imgs_docx = extrair_dados_docx(arquivo)
-        img_processada = txt_docx 
-        lista_imgs_final = imgs_docx
-        st.success(f"DOCX lido com {len(imgs_docx)} imagens.")
+        txt, imgs = extrair_dados_docx(arquivo)
+        img_original_bytes = txt 
+        lista_recortes_final = imgs
+        st.success("DOCX carregado.")
 
-# AÇÃO
 st.markdown("<div class='action-bar'>", unsafe_allow_html=True)
 c_opt, c_act = st.columns([1, 1])
 with c_opt:
@@ -223,20 +219,20 @@ st.markdown("</div>", unsafe_allow_html=True)
 if btn_gerar:
     if not materia or not tema or not arquivo: st.warning("Preencha tudo.")
     else:
-        with st.spinner("IA processando recorte e adaptando..."):
-            texto_adaptado, err = adaptar_v6(api_key, aluno, img_processada, tipo_arq, materia, tema, tipo_atv, modo_prof)
+        with st.spinner("IA lendo página completa e usando seu recorte..."):
+            # Envia a IMAGEM ORIGINAL COMPLETA para a IA ler o texto
+            texto_adaptado, err = adaptar_hibrido(api_key, aluno, img_original_bytes, tipo_arq, materia, tema, tipo_atv, modo_prof)
             
             img_dalle = None
             if usar_dalle and not err: img_dalle, _ = gerar_dalle(api_key, tema, aluno)
             
             if not err:
                 st.session_state['res_texto'] = texto_adaptado
-                st.session_state['res_imgs'] = lista_imgs_final
+                st.session_state['res_imgs'] = lista_recortes_final
                 st.session_state['res_dalle'] = img_dalle
                 st.rerun()
             else: st.error(f"Erro: {err}")
 
-# RESULTADO
 if 'res_texto' in st.session_state:
     st.markdown("---")
     st.subheader("👁️ Resultado Final")
@@ -246,7 +242,7 @@ if 'res_texto' in st.session_state:
         partes = re.split(r'(\[\[IMG_\d+\]\])', txt)
         for parte in partes:
             if "[[IMG_" in parte:
-                if st.session_state['res_imgs']: st.image(st.session_state['res_imgs'][0], width=300, caption="Imagem da Questão")
+                if st.session_state['res_imgs']: st.image(st.session_state['res_imgs'][0], width=300, caption="Seu Recorte Limpo")
             else:
                 if parte.strip(): st.markdown(parte)
 
