@@ -15,13 +15,12 @@ import zipfile
 import json
 
 # --- 1. CONFIGURAÇÃO ---
-st.set_page_config(page_title="Adaptador 360º | Blindado", page_icon="🧩", layout="wide")
+st.set_page_config(page_title="Adaptador 360º | Final", page_icon="🧩", layout="wide")
 
 # --- 2. BANCO DE DADOS COMPARTILHADO ---
 ARQUIVO_DB = "banco_alunos.json"
 
 def carregar_banco():
-    """Lê o banco de dados que o PEI criou"""
     if os.path.exists(ARQUIVO_DB):
         try:
             with open(ARQUIVO_DB, "r", encoding="utf-8") as f:
@@ -89,12 +88,14 @@ def construir_docx_final(texto_ia, aluno, materia, lista_imgs, img_dalle_url, ti
                     doc.add_paragraph("")
             except: pass
         elif parte.strip():
-            doc.add_paragraph(parte.strip())
+            # Remove frases residuais da IA se ainda escaparem
+            texto_limpo = parte.replace("Utilize a tag para inserir a imagem.", "").strip()
+            if texto_limpo: doc.add_paragraph(texto_limpo)
             
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
 
-# --- 5. IA ---
+# --- 5. IA (PROMPT CORRIGIDO) ---
 def gerar_dalle(api_key, tema, aluno):
     client = OpenAI(api_key=api_key)
     prompt = f"Educational illustration about '{tema}'. Simple, clear, white background. {aluno.get('hiperfoco','')} style. No text."
@@ -106,21 +107,26 @@ def gerar_dalle(api_key, tema, aluno):
 def adaptar_v6(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, remover_respostas):
     client = OpenAI(api_key=api_key)
     
-    instrucao_imgs = "Insira a tag [[IMG_1]] onde a imagem deve aparecer."
-    instrucao_prof = "REMOVA TODAS AS RESPOSTAS (azul/rosa). Mantenha apenas perguntas." if remover_respostas else ""
+    # PROMPT BLINDADO CONTRA "TEXTO EXPLICATIVO"
+    instrucao_imgs = """
+    REGRA DE OURO PARA IMAGENS:
+    Apenas insira a tag [[IMG_1]] no local correto. 
+    NÃO escreva frases como "Utilize a tag..." ou "Aqui está a imagem".
+    Seja invisível. O aluno deve ver apenas a imagem, não a sua instrução.
+    """
     
-    # Recupera diretrizes salvas no PEI se existirem
+    instrucao_prof = "REMOVA TODAS AS RESPOSTAS (azul/rosa/itálico). Mantenha apenas perguntas." if remover_respostas else ""
+    
     diretrizes_pei = ""
     if 'ia_sugestao' in aluno:
-        diretrizes_pei = f"\nDIRETRIZES TÉCNICAS DO PEI:\n{aluno['ia_sugestao'][:2000]}..." # Envia parte do PEI como contexto
+        diretrizes_pei = f"\nDIRETRIZES DO PEI:\n{aluno['ia_sugestao'][:2000]}..."
 
-    prompt_sys = f"Você é um Especialista em Adaptação. {instrucao_prof}. {diretrizes_pei}"
-    prompt_user = f"CONTEXTO: {materia} | {tema} | {tipo_atv}\n{instrucao_imgs}\nCONTEÚDO:"
+    prompt_sys = f"Você é um Especialista em Adaptação. {instrucao_prof}. {instrucao_imgs}. {diretrizes_pei}"
+    prompt_user = f"CONTEXTO: {materia} | {tema} | {tipo_atv}\nCONTEÚDO:"
     
     msgs = [{"role": "system", "content": prompt_sys}, {"role": "user", "content": []}]
     
     if tipo == "imagem":
-        # CONTEUDO aqui já é o bytes da imagem recortada ou otimizada
         b64 = base64.b64encode(conteudo).decode('utf-8')
         msgs[1]["content"].append({"type": "text", "text": prompt_user})
         msgs[1]["content"].append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}})
@@ -139,39 +145,47 @@ with st.sidebar:
     st.markdown("---")
     st.info("✂️ Use a Tesoura Digital para recortar mapas e figuras.")
 
-st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V6.2: Tesoura Blindada</p></div></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V6.3: Final</p></div></div>""", unsafe_allow_html=True)
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Nenhum aluno no banco. Vá em 'PEI 360º' e salve um aluno primeiro.")
     st.stop()
 
-# SELEÇÃO COM ALUNOS DO BANCO
+# SELEÇÃO
 lista = [a['nome'] for a in st.session_state.banco_estudantes]
 nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista)
 aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
 
-# EXIBE DICA DE HIPERFOCO
 with st.expander(f"ℹ️ Perfil de {aluno['nome']}"):
     st.write(f"**Hiperfoco:** {aluno.get('hiperfoco', 'Não informado')}")
     st.write(f"**Diagnóstico:** {aluno.get('diagnostico', 'Não informado')}")
 
 c1, c2, c3 = st.columns(3)
-materia = c1.selectbox("Matéria", ["Matemática", "Português", "Ciências", "História", "Geografia"])
+materia = c1.selectbox("Matéria", ["Matemática", "Português", "Ciências", "História", "Geografia", "Inglês", "Artes"])
 tema = c2.text_input("Tema", placeholder="Ex: Frações")
-tipo_atv = c3.selectbox("Tipo", ["Prova", "Tarefa", "Trabalho"])
+
+# --- LISTA DE ATIVIDADES RESTAURADA ---
+tipo_atv = c3.selectbox("Tipo de Atividade", [
+    "Prova / Avaliação", 
+    "Tarefa de Casa", 
+    "Atividade de Sala", 
+    "Trabalho em Grupo", 
+    "Atividade Lúdica",
+    "Resumo / Esquema"
+])
 
 # UPLOAD E RECORTE
 arquivo = st.file_uploader("Arquivo (FOTO ou DOCX)", type=["png","jpg","jpeg","docx"])
 img_processada = None
 tipo_arq = None
-lista_imgs_final = [] # Lista que vai pro Word
+lista_imgs_final = [] 
 
 if arquivo:
     if "image" in arquivo.type:
         tipo_arq = "imagem"
         st.markdown("<div class='crop-instruction'>✂️ <b>TESOURA DIGITAL:</b> Selecione apenas a questão/imagem que deseja usar.</div>", unsafe_allow_html=True)
         img_original = Image.open(arquivo)
-        # OTIMIZAÇÃO PRÉVIA (Evita travar o navegador com imagens 4k)
+        # Otimização prévia para tela
         img_original.thumbnail((1200, 1200)) 
         
         cropped_img = st_cropper(img_original, realtime_update=True, box_color='#FF0000', aspect_ratio=None)
@@ -179,12 +193,9 @@ if arquivo:
         st.caption("Prévia do Recorte:")
         st.image(cropped_img, width=250)
         
-        # --- AQUI ESTÁ A CORREÇÃO DO ERRO OSERROR ---
-        # Verifica se tem transparência (RGBA) e converte para RGB antes de salvar como JPEG
-        if cropped_img.mode in ("RGBA", "P"):
-            cropped_img = cropped_img.convert("RGB")
+        # Correção do erro de transparência (RGBA -> RGB)
+        if cropped_img.mode in ("RGBA", "P"): cropped_img = cropped_img.convert("RGB")
         
-        # Converte o recorte para bytes para enviar pra IA e pro Word
         buf = BytesIO(); cropped_img.save(buf, format="JPEG"); 
         img_processada = buf.getvalue()
         lista_imgs_final = [img_processada]
@@ -192,7 +203,7 @@ if arquivo:
     elif "word" in arquivo.type:
         tipo_arq = "docx"
         txt_docx, imgs_docx = extrair_dados_docx(arquivo)
-        img_processada = txt_docx # Para DOCX, o 'conteudo' é o texto
+        img_processada = txt_docx 
         lista_imgs_final = imgs_docx
         st.success(f"DOCX lido com {len(imgs_docx)} imagens.")
 
