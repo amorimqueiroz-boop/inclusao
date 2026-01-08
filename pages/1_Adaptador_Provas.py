@@ -5,6 +5,7 @@ from docx import Document
 from docx.shared import Pt, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from pypdf import PdfReader
+from fpdf import FPDF
 import base64
 import os
 import re
@@ -12,7 +13,7 @@ import requests
 import zipfile
 
 # --- 1. CONFIGURAÇÃO ---
-st.set_page_config(page_title="Adaptador 360º V4.8", page_icon="🧩", layout="wide")
+st.set_page_config(page_title="Adaptador 360º V4.9", page_icon="🧩", layout="wide")
 
 if 'banco_estudantes' not in st.session_state:
     st.session_state.banco_estudantes = []
@@ -28,74 +29,61 @@ st.markdown("""
         margin-bottom: 25px; display: flex; align-items: center; gap: 20px;
     }
     
-    .preview-card {
-        background: white; border: 1px solid #E2E8F0; padding: 20px; 
-        border-radius: 12px; margin-top: 20px;
-    }
-
-    div[data-testid="stFileUploader"] section { 
-        background-color: #F7FAFC; border: 2px dashed #CBD5E0; border-radius: 16px; 
+    .action-bar {
+        background-color: #F7FAFC; padding: 20px; border-radius: 16px;
+        border: 1px solid #E2E8F0; margin-top: 20px; margin-bottom: 20px;
     }
     
     div[data-testid="column"] .stButton button {
         border-radius: 12px !important; font-weight: 800 !important; height: 50px !important; width: 100%;
     }
+    
+    /* Botão de Limpeza com cor diferente */
+    div[data-testid="column"]:nth-of-type(3) .stButton button {
+        background-color: white !important;
+        color: #E53E3E !important;
+        border: 1px solid #E53E3E !important;
+    }
+    div[data-testid="column"]:nth-of-type(3) .stButton button:hover {
+        background-color: #FFF5F5 !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # --- 3. FUNÇÕES DE ARQUIVO ---
-
 def extrair_dados_docx(uploaded_file):
     uploaded_file.seek(0)
-    texto_completo = ""
+    texto = ""
     imagens = []
-    
     try:
-        # 1. Extração de Texto
         doc = Document(uploaded_file)
-        texto_completo = "\n".join([p.text for p in doc.paragraphs if p.text.strip() != ""])
-        
-        # 2. Extração de Imagens (Ordenação Refinada)
+        texto = "\n".join([p.text for p in doc.paragraphs if p.text.strip() != ""])
         uploaded_file.seek(0)
         with zipfile.ZipFile(uploaded_file) as z:
             all_files = z.namelist()
-            # Pega arquivos da pasta media
             media_files = [f for f in all_files if f.startswith('word/media/') and f.endswith(('.png', '.jpg', '.jpeg'))]
-            
-            # ORDENAÇÃO CRÍTICA:
-            # O Word numera sequencialmente: image1.png, image2.png...
-            # Isso garante que a lista 'imagens' esteja na ordem exata de aparição no documento.
             media_files.sort(key=lambda f: int(re.search(r'image(\d+)', f).group(1)) if re.search(r'image(\d+)', f) else 0)
-            
             for media in media_files:
                 imagens.append(z.read(media))
-                
-    except Exception as e:
-        return f"Erro: {e}", []
-        
-    return texto_completo, imagens
+    except: pass
+    return texto, imagens
 
 def ler_arquivo(uploaded_file):
     if uploaded_file is None: return None, None, []
     texto, imgs, tipo = "", [], "indefinido"
-    
     try:
         if uploaded_file.type == "application/pdf":
             reader = PdfReader(uploaded_file)
             for page in reader.pages: texto += page.extract_text() + "\n"
             tipo = "pdf"
-            
         elif "word" in uploaded_file.type:
             texto, imgs = extrair_dados_docx(uploaded_file)
             tipo = "docx"
-            
         elif "image" in uploaded_file.type:
-            # Se for foto, tratamos como uma lista de 1 imagem
             imgs = [uploaded_file.getvalue()]
-            texto = "Conteúdo visual (foto da atividade)"
+            texto = "Conteúdo visual (foto)."
             tipo = "imagem"
     except: pass
-    
     return texto, tipo, imgs
 
 def baixar_imagem_url(url):
@@ -106,12 +94,12 @@ def baixar_imagem_url(url):
     return None
 
 # --- 4. CONSTRUTOR DE DOCX ---
-def construir_docx_final(texto_ia, aluno, materia, lista_imgs, img_dalle_url):
+def construir_docx_final(texto_ia, aluno, materia, lista_imgs, img_dalle_url, tipo_atv):
     doc = Document()
     style = doc.styles['Normal']; style.font.name = 'Arial'; style.font.size = Pt(12)
     
     # Cabeçalho
-    head = doc.add_heading(f'ATIVIDADE ADAPTADA - {materia.upper()}', 0)
+    head = doc.add_heading(f'{tipo_atv.upper()} ADAPTADA - {materia.upper()}', 0)
     head.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p = doc.add_paragraph(f"Estudante: {aluno}")
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -128,42 +116,34 @@ def construir_docx_final(texto_ia, aluno, materia, lista_imgs, img_dalle_url):
                 doc.add_paragraph("")
             except: pass
 
-    # 2. Atividade com Imagens Inseridas
-    doc.add_heading('Atividade', level=2)
-    
-    # Divide pelas tags [[IMG_X]]
+    # 2. Atividade
+    doc.add_heading('Questões', level=2)
     partes = re.split(r'(\[\[IMG_\d+\]\])', texto_ia)
-    
     imagens_usadas = set()
 
     for parte in partes:
         tag_match = re.match(r'\[\[IMG_(\d+)\]\]', parte)
-        
         if tag_match:
             try:
-                # O índice que a IA retornou (Ex: 1 para a primeira imagem)
                 idx_ia = int(tag_match.group(1)) - 1
-                
-                # Proteção: Verifica se essa imagem existe na lista extraída
                 if 0 <= idx_ia < len(lista_imgs):
                     doc.add_picture(BytesIO(lista_imgs[idx_ia]), width=Inches(5.0))
                     doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
                     doc.add_paragraph("") 
                     imagens_usadas.add(idx_ia)
                 else:
-                    doc.add_paragraph(f"[Imagem {idx_ia+1} solicitada, mas não encontrada no arquivo]")
+                    doc.add_paragraph(f"[Imagem {idx_ia+1} não encontrada]")
             except: pass
         else:
             if parte.strip():
-                # Limpeza de quebras extras
                 texto_limpo = re.sub(r'\n{3,}', '\n\n', parte.strip())
                 doc.add_paragraph(texto_limpo)
 
-    # 3. Anexos (Sobras)
+    # 3. Anexos
     sobras = [i for i in range(len(lista_imgs)) if i not in imagens_usadas]
     if sobras:
         doc.add_page_break()
-        doc.add_heading("Anexos (Imagens Extras)", level=2)
+        doc.add_heading("Anexos Visuais", level=2)
         for idx in sobras:
             try:
                 doc.add_paragraph(f"Figura {idx+1}:")
@@ -184,70 +164,62 @@ def gerar_dalle(api_key, tema, aluno_dados):
         return resp.data[0].url, None
     except Exception as e: return None, str(e)
 
-def adaptar_atividade_v48(api_key, aluno, conteudo, tipo, materia, tema, total_imagens):
+def adaptar_atividade_v49(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, total_imagens):
     if not api_key: return None, "Sem chave."
     client = OpenAI(api_key=api_key)
     
-    # Instrução EXPLÍCITA sobre posicionamento
     instrucao_imgs = ""
     if total_imagens > 0:
         instrucao_imgs = f"""
-        O ARQUIVO ORIGINAL CONTÉM {total_imagens} IMAGENS EM SEQUÊNCIA.
-        
-        REGRA DE OURO PARA POSICIONAMENTO:
-        A 'Imagem 1' (do arquivo original) pertence à primeira questão que tem figura.
-        A 'Imagem 2' pertence à segunda, e assim por diante.
-        
-        SUA TAREFA:
-        Ao reescrever a questão, insira a tag [[IMG_1]] no lugar exato da primeira imagem, [[IMG_2]] na segunda, etc.
-        NÃO MISTURE A ORDEM. A primeira imagem que aparece no texto original é a [[IMG_1]].
+        O arquivo original tem {total_imagens} imagens sequenciais (Imagem 1, Imagem 2...).
+        REGRA DE OURO: Ao encontrar uma questão que usa imagem, insira a tag [[IMG_1]] (para a primeira), [[IMG_2]] (para a segunda) EXATAMENTE onde a imagem deve aparecer no texto.
         """
     elif tipo == "imagem":
-        instrucao_imgs = "O conteúdo é uma foto. Use [[IMG_1]] para inseri-la no início."
+        instrucao_imgs = "O conteúdo é uma foto. Use [[IMG_1]] no início."
 
-    prompt_sys = "Você é um Especialista em Adaptação de Provas. Gere apenas o texto da atividade final."
+    prompt_sys = f"Você é um Especialista em Adaptação de {tipo_atv}. Gere a atividade adaptada com linguagem adequada."
     
     prompt_user = f"""
     ALUNO: {aluno['nome']} | DIAG: {aluno.get('diagnostico')}
-    MATÉRIA: {materia} | TEMA: {tema}
+    CONTEXTO: {materia} | {tema} | TIPO: {tipo_atv}
     
     {instrucao_imgs}
     
-    Adapte o conteúdo abaixo para ser acessível, mantendo as questões e inserindo as tags de imagem CORRETAS:
-    
+    CONTEÚDO PARA ADAPTAR:
     {conteudo}
     """
     
     msgs = [{"role": "system", "content": prompt_sys}, {"role": "user", "content": []}]
     
     if tipo == "imagem":
-        # Se for upload de imagem única, manda pro GPT ver
-        # Nota: Se for DOCX, o GPT vê o texto extraído e confiamos na ordem das tags
         msgs[1]["content"].append({"type": "text", "text": prompt_user})
         msgs[1]["content"].append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64.b64encode(conteudo[0]).decode('utf-8')}"}})
     else:
         msgs[1]["content"].append({"type": "text", "text": prompt_user})
 
     try:
-        resp = client.chat.completions.create(model="gpt-4o-mini", messages=msgs, temperature=0.3) # Temp baixa para ser preciso
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=msgs, temperature=0.4)
         return resp.choices[0].message.content, None
     except Exception as e: return None, str(e)
 
 # --- 6. INTERFACE ---
 with st.sidebar:
     st.markdown("### Configuração")
-    api_key = st.secrets.get('OPENAI_API_KEY', st.text_input("Chave OpenAI:", type="password"))
-    if api_key: st.success("✅ Conectado")
+    if 'OPENAI_API_KEY' in st.secrets:
+        api_key = st.secrets['OPENAI_API_KEY']
+        st.success("✅ OpenAI Ativa")
+    else:
+        api_key = st.text_input("Chave OpenAI:", type="password")
+    
     st.markdown("---")
-    usar_dalle = st.toggle("🎨 Gerar Imagem Capa (IA)", value=True)
-    if st.button("🗑️ Limpar"): st.session_state.pop('res_texto', None); st.rerun()
+    st.info("💡 **Dica:** Para provas com imagens, use sempre arquivo **DOCX**.")
 
 st.markdown("""
     <div class="header-clean">
-        <div style="font-size: 2.5rem;">🧩</div>
+        <div style="font-size: 3rem;">🧩</div>
         <div>
-            <p style="margin: 0; color: #004E92; font-size: 1.4rem; font-weight: 800;">Adaptador V4.8: Correção de Ordem</p>
-            <p style="margin: 0; color: #718096;">Foco total na sincronia entre Texto e Imagem.</p>
+            <p style="margin: 0; color: #004E92; font-size: 1.5rem; font-weight: 800;">Adaptador V4.9: Painel de Controle</p>
+            <p style="margin: 0; color: #718096;">Fluxo otimizado com controles integrados.</p>
         </div>
     </div>
 """, unsafe_allow_html=True)
@@ -256,78 +228,101 @@ if not st.session_state.banco_estudantes:
     st.warning("⚠️ Crie um aluno no PEI 360º primeiro.")
     st.stop()
 
+# --- SELEÇÃO ---
 lista = [a['nome'] for a in st.session_state.banco_estudantes]
 aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == st.selectbox("📂 Estudante:", lista, index=len(lista)-1))
 
-c1, c2 = st.columns(2)
+c1, c2, c3 = st.columns([1, 1, 1])
 with c1:
-    materia = st.selectbox("Matéria:", ["Matemática", "Português", "Ciências", "História", "Geografia"])
-    tema = st.text_input("Tema:", placeholder="Ex: Frações")
+    materia = st.selectbox("Matéria:", ["Matemática", "Português", "Ciências", "História", "Geografia", "Inglês", "Artes"])
 with c2:
-    arquivo = st.file_uploader("Arquivo (DOCX é ideal)", type=["docx","pdf","png","jpg"])
-    texto_orig, tipo_arq, lista_imgs = ler_arquivo(arquivo)
-    
-    if tipo_arq == "docx":
-        st.success(f"DOCX: {len(lista_imgs)} imagens extraídas na ordem.")
-        # Pequeno preview das imagens para conferência
-        if lista_imgs:
-            st.caption("Conferência de Ordem (1, 2, 3...):")
-            cols = st.columns(min(len(lista_imgs), 6))
-            for i, img in enumerate(lista_imgs[:6]):
-                cols[i].image(img, caption=f"Img {i+1}", width=60)
-                
-    elif tipo_arq: st.success("Arquivo carregado.")
+    tema = st.text_input("Tema:", placeholder="Ex: Frações")
+with c3:
+    # BOTÃO RESTAURADO E REPOSICIONADO
+    tipo_atv = st.selectbox("Tipo de Atividade:", ["Prova / Avaliação", "Tarefa de Casa", "Atividade de Sala", "Trabalho em Grupo", "Atividade Lúdica"])
 
-if st.button("✨ GERAR ATIVIDADE", type="primary"):
-    if not materia or not tema or not texto_orig: st.warning("Preencha tudo.")
+arquivo = st.file_uploader("Arquivo Original (DOCX, PDF, FOTO)", type=["docx","pdf","png","jpg"])
+texto_orig, tipo_arq, lista_imgs = ler_arquivo(arquivo)
+
+if tipo_arq == "docx": st.success(f"📎 DOCX lido com {len(lista_imgs)} imagens.")
+elif tipo_arq: st.success("📎 Arquivo carregado.")
+
+# --- BARRA DE AÇÃO (CENTRALIZADA) ---
+st.markdown("<div class='action-bar'>", unsafe_allow_html=True)
+col_toggle, col_btn, col_clean = st.columns([1, 2, 1])
+
+with col_toggle:
+    # CHAVE PARA GERAR IMAGEM (DENTRO DA PÁGINA)
+    st.write("") # Espaçamento
+    usar_dalle = st.toggle("🎨 Criar Capa Visual (IA)", value=True, help="Usa DALL-E 3 para gerar uma imagem de contexto.")
+
+with col_btn:
+    btn_gerar = st.button("✨ ADAPTAR ATIVIDADE", type="primary")
+
+with col_clean:
+    # BOTÃO DE LIMPEZA
+    if st.button("🗑️ Nova Atividade"):
+        st.session_state.pop('res_texto', None)
+        st.rerun()
+st.markdown("</div>", unsafe_allow_html=True)
+
+# --- LÓGICA ---
+if btn_gerar:
+    if not materia or not tema or not texto_orig: st.warning("Preencha todos os campos acima.")
     else:
-        with st.spinner("Processando..."):
+        with st.spinner(f"Adaptando {tipo_atv} para {aluno['nome']}..."):
             qtd = len(lista_imgs)
-            texto_adaptado, err = adaptar_atividade_v48(api_key, aluno, texto_orig if tipo_arq!="imagem" else lista_imgs, tipo_arq, materia, tema, qtd)
+            texto_adaptado, err = adaptar_atividade_v49(api_key, aluno, texto_orig if tipo_arq!="imagem" else lista_imgs, tipo_arq, materia, tema, tipo_atv, qtd)
             
             img_dalle = None
-            if usar_dalle: img_dalle, _ = gerar_dalle(api_key, tema, aluno)
+            if usar_dalle and not err:
+                img_dalle, _ = gerar_dalle(api_key, tema, aluno)
             
             if not err:
                 st.session_state['res_texto'] = texto_adaptado
                 st.session_state['res_imgs'] = lista_imgs
                 st.session_state['res_dalle'] = img_dalle
+                st.session_state['tipo_selecionado'] = tipo_atv # Salva para o título do Word
                 st.rerun()
 
-# --- ÁREA DE RESULTADO (PREVIEW) ---
+# --- RESULTADOS ---
 if 'res_texto' in st.session_state:
     st.markdown("---")
     
-    # Monta a prévia visual na tela (Simulando o Word)
-    st.subheader("👁️ Prévia do Documento")
+    # Preview Visual
+    st.subheader(f"👁️ Resultado: {st.session_state.get('tipo_selecionado', 'Atividade')}")
     with st.container(border=True):
-        # 1. Capa
         if st.session_state.get('res_dalle'):
-            st.image(st.session_state['res_dalle'], width=300, caption="Contexto Visual")
+            st.image(st.session_state['res_dalle'], width=250, caption="Capa Visual")
         
-        # 2. Texto + Imagens
-        texto_final = st.session_state['res_texto']
-        partes = re.split(r'(\[\[IMG_\d+\]\])', texto_final)
-        
+        # Renderização Inteligente
+        txt = st.session_state['res_texto']
+        partes = re.split(r'(\[\[IMG_\d+\]\])', txt)
         for parte in partes:
-            tag_match = re.match(r'\[\[IMG_(\d+)\]\]', parte)
-            if tag_match:
-                idx = int(tag_match.group(1)) - 1
-                imgs = st.session_state['res_imgs']
-                if 0 <= idx < len(imgs):
-                    st.image(imgs[idx], width=400, caption=f"Imagem da Questão (Img {idx+1})")
-                else:
-                    st.warning(f"[Imagem {idx+1} não encontrada]")
+            if "[[IMG_" in parte:
+                try:
+                    idx = int(re.search(r'\d+', parte).group()) - 1
+                    imgs = st.session_state['res_imgs']
+                    if 0 <= idx < len(imgs): st.image(imgs[idx], width=300)
+                except: pass
             else:
                 if parte.strip(): st.markdown(parte)
 
-    # DOWNLOAD
-    st.markdown("---")
+    # Download
     docx = construir_docx_final(
         st.session_state['res_texto'], 
         aluno['nome'], 
         materia, 
         st.session_state['res_imgs'], 
-        st.session_state.get('res_dalle')
+        st.session_state.get('res_dalle'),
+        st.session_state.get('tipo_selecionado', 'Atividade')
     )
-    st.download_button("📥 BAIXAR WORD PRONTO", docx, "atividade.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", type="primary", use_container_width=True)
+    
+    st.download_button(
+        label="📥 BAIXAR ARQUIVO WORD PRONTO",
+        data=docx,
+        file_name=f"Atividade_{aluno['nome']}.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        type="primary",
+        use_container_width=True
+    )
