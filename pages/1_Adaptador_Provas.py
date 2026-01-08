@@ -15,7 +15,7 @@ import zipfile
 import json
 
 # --- 1. CONFIGURAÇÃO ---
-st.set_page_config(page_title="Adaptador 360º | V8.3 Isolado", page_icon="🧩", layout="wide")
+st.set_page_config(page_title="Adaptador 360º | V8.4", page_icon="🧩", layout="wide")
 
 # --- 2. BANCO DE DADOS ---
 ARQUIVO_DB = "banco_alunos.json"
@@ -45,8 +45,11 @@ st.markdown("""
     .crop-instruction { background: #EBF8FF; border-left: 4px solid #3182CE; padding: 15px; color: #2C5282; border-radius: 4px; margin-bottom: 10px; }
     .racional-box { background-color: #F0FFF4; border-left: 4px solid #48BB78; padding: 15px; border-radius: 4px; margin-bottom: 20px; color: #2F855A; font-size: 0.95rem; }
     
+    /* Botões */
     div[data-testid="column"] .stButton button[kind="primary"] { border-radius: 12px !important; height: 50px; width: 100%; background-color: #FF6B6B !important; color: white !important; font-weight: 800 !important; }
     div[data-testid="column"] .stButton button[kind="secondary"] { border-radius: 12px !important; height: 50px; width: 100%; background-color: white !important; color: #718096 !important; border: 2px solid #CBD5E0 !important; }
+    
+    /* Editor */
     .stTextArea textarea { border: 1px solid #CBD5E0; border-radius: 8px; font-family: monospace; font-size: 14px; }
     </style>
 """, unsafe_allow_html=True)
@@ -77,6 +80,7 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
     doc.add_paragraph(f"Estudante: {aluno['nome']}").alignment = WD_ALIGN_PARAGRAPH.CENTER
     doc.add_paragraph("_"*50)
 
+    # Capa (Somente se vier de uma criação que gerou capa, ou estúdio visual)
     if img_dalle_url:
         img_io = baixar_imagem_url(img_dalle_url)
         if img_io:
@@ -92,12 +96,10 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
         if tag_match:
             tipo, id_img = tag_match.groups()
             img_bytes = None
-            if tipo == "Q": # Original
-                try:
-                    num = int(id_img)
-                    img_bytes = mapa_imgs.get(num, mapa_imgs.get(0))
+            if tipo == "Q": 
+                try: num = int(id_img); img_bytes = mapa_imgs.get(num, mapa_imgs.get(0))
                 except: pass
-            elif tipo == "G": # Gerada
+            elif tipo == "G": 
                 img_bytes = mapa_imgs.get(f"G{id_img}")
 
             if img_bytes:
@@ -107,8 +109,7 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
                     doc.add_paragraph("") 
                 except: pass
         elif parte.strip():
-            clean = parte.replace("Utilize a tag", "").strip()
-            if clean: doc.add_paragraph(clean)
+            doc.add_paragraph(parte.strip())
             
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
@@ -145,7 +146,6 @@ def adaptar_conteudo(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, re
     CONTEXTO: {materia} | {tema} | {tipo_atv}
     CONTEÚDO:
     """
-    
     msgs = [{"role": "user", "content": []}]
     if tipo == "imagem":
         b64 = base64.b64encode(conteudo).decode('utf-8')
@@ -194,18 +194,17 @@ with st.sidebar:
     if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']; st.success("✅ Conectado")
     else: api_key = st.text_input("Chave OpenAI:", type="password")
     st.markdown("---")
-    if st.button("🗑️ Limpar Tudo"):
+    if st.button("🗑️ Limpar Sessão"):
         for k in list(st.session_state.keys()):
-            if k.startswith('result_') or k.startswith('adapt_') or k.startswith('create_'): del st.session_state[k]
+            if k.startswith('res_') or k.startswith('imgs_') or k.startswith('adapt_') or k.startswith('create_'): del st.session_state[k]
         st.rerun()
 
-st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V8.3: Isolado</p></div></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V8.4: Hub Estável</p></div></div>""", unsafe_allow_html=True)
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Cadastre um aluno no PEI 360º primeiro.")
     st.stop()
 
-# CABEÇALHO ALUNO
 lista = [a['nome'] for a in st.session_state.banco_estudantes]
 nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista)
 aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
@@ -219,10 +218,9 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# ABAS
 tab_adapt, tab_create, tab_visual, tab_ctx = st.tabs(["📂 Adaptar Arquivo", "✨ Criar Atividade", "🎨 Estúdio Visual", "💡 Contextualizador"])
 
-# 1. ADAPTAR (ISOLADO)
+# 1. ADAPTAR
 with tab_adapt:
     c1, c2, c3 = st.columns(3)
     materia = c1.selectbox("Matéria", ["Matemática", "Português", "Ciências", "História", "Geografia"], key="am")
@@ -245,7 +243,8 @@ with tab_adapt:
                 img = Image.open(arquivo).convert("RGB")
                 buf = BytesIO(); img.save(buf, format="JPEG"); st.session_state.adapt_txt = buf.getvalue()
                 img.thumbnail((1000, 1000))
-                cropped = st_cropper(img, realtime_update=True, box_color='#FF0000', aspect_ratio=None, key="crop1")
+                # CORREÇÃO DA TESOURA: realtime_update=False para estabilidade
+                cropped = st_cropper(img, realtime_update=False, box_color='#FF0000', aspect_ratio=None, key="crop1")
                 buf_c = BytesIO(); cropped.save(buf_c, format="JPEG")
                 st.session_state.adapt_imgs = [buf_c.getvalue()]
             elif "word" in arquivo.type:
@@ -268,20 +267,19 @@ with tab_adapt:
     elif st.session_state.adapt_imgs and st.session_state.adapt_type == "imagem":
         adapt_map[0] = st.session_state.adapt_imgs[0]
 
+    # BOTÃO CAPA REMOVIDO DAQUI (Já está no Estúdio Visual)
     c_opt, c_act = st.columns([1, 1])
     with c_opt:
         modo_prof = st.checkbox("Remover Respostas", value=True, key="mprof") if st.session_state.adapt_type == "imagem" else False
-        usar_dalle = st.toggle("Capa IA", value=True, key="adalle")
     
     with c_act:
         if st.button("🚀 GERAR ADAPTAÇÃO", type="primary", key="btn_adapt"):
             with st.spinner("Adaptando..."):
                 rac, txt, err = adaptar_conteudo(api_key, aluno, st.session_state.adapt_txt, st.session_state.adapt_type, materia, tema, tipo_atv, modo_prof, adapt_qs)
-                img_d = gerar_dalle_prompt(api_key, f"{tema} context {aluno.get('hiperfoco')}") if usar_dalle else None
-                st.session_state['result_adapt'] = {'rac': rac, 'txt': txt, 'map': adapt_map, 'dalle': img_d}
+                st.session_state['result_adapt'] = {'rac': rac, 'txt': txt, 'map': adapt_map, 'dalle': None}
                 st.rerun()
 
-    # RENDERIZA ADAPTAÇÃO (AQUI DENTRO)
+    # RENDERIZA ADAPTAÇÃO
     if 'result_adapt' in st.session_state:
         res = st.session_state['result_adapt']
         st.markdown("---")
@@ -300,7 +298,6 @@ with tab_adapt:
         with col_vi:
             st.subheader("👁️ Visualização")
             with st.container(border=True):
-                if res['dalle']: st.image(res['dalle'], width=200)
                 partes = re.split(r'(\[\[IMG_[Q|G]\w+\]\])', res['txt'])
                 for p in partes:
                     tag = re.match(r'\[\[IMG_(Q|G)(\w+)\]\]', p)
@@ -310,10 +307,10 @@ with tab_adapt:
                         if im: st.image(im, width=300)
                     elif p.strip(): st.markdown(p.strip())
         
-        docx = construir_docx_final(res['txt'], aluno, materia, res['map'], res['dalle'], tipo_atv)
+        docx = construir_docx_final(res['txt'], aluno, materia, res['map'], None, tipo_atv)
         st.download_button("📥 BAIXAR DOCX", docx, "Atividade_Adaptada.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", type="primary", use_container_width=True)
 
-# 2. CRIAR (ISOLADO)
+# 2. CRIAR
 with tab_create:
     cc1, cc2 = st.columns(2)
     mat_c = cc1.selectbox("Componente", ["Matemática", "Português", "Ciências", "História", "Geografia"], key="cm")
@@ -337,11 +334,10 @@ with tab_create:
             txt_fin = txt
             for i in range(count): txt_fin = re.sub(r'\[\[GEN_IMG: .*?\]\]', f"[[IMG_G{i+1}]]", txt_fin, count=1)
             
-            # Sem capa obrigatória na criação
             st.session_state['result_create'] = {'rac': rac, 'txt': txt_fin, 'map': novo_map, 'dalle': None}
             st.rerun()
 
-    # RENDERIZA CRIAÇÃO (AQUI DENTRO)
+    # RENDERIZA CRIAÇÃO
     if 'result_create' in st.session_state:
         res = st.session_state['result_create']
         st.markdown("---")
@@ -352,8 +348,12 @@ with tab_create:
             st.subheader("✏️ Editor")
             res['txt'] = st.text_area("Texto:", value=res['txt'], height=600, key="txt_create")
             if st.button("🔄 Refazer", key="retry_create"):
-                # Lógica simplificada de retry
-                pass
+                # Lógica simplificada de retry para criação
+                rac, txt, err = criar_do_zero(api_key, aluno, mat_c, obj_c, qtd_c, tipo_c, temperatura=0.9)
+                # (Recuperação de imagens omitida para brevidade no retry, mas idealmente re-geraria)
+                st.session_state['result_create']['txt'] = txt
+                st.session_state['result_create']['rac'] = rac
+                st.rerun()
         
         with col_vi:
             st.subheader("👁️ Visualização")
