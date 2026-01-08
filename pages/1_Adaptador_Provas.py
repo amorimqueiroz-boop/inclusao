@@ -12,7 +12,7 @@ import json
 import base64
 
 # --- 1. CONFIGURAÇÃO ---
-st.set_page_config(page_title="Adaptador 360º | V9.3", page_icon="🧩", layout="wide")
+st.set_page_config(page_title="Adaptador 360º | V9.4", page_icon="🧩", layout="wide")
 
 # --- 2. BANCO DE DADOS ---
 ARQUIVO_DB = "banco_alunos.json"
@@ -38,7 +38,6 @@ st.markdown("""
     .student-value { font-size: 1.1rem; color: #2C5282; font-weight: 800; }
     .crop-instruction { background: #EBF8FF; border-left: 4px solid #3182CE; padding: 15px; color: #2C5282; border-radius: 4px; margin-bottom: 10px; }
     
-    /* Abas */
     .stTabs [data-baseweb="tab-list"] { gap: 8px; }
     .stTabs [data-baseweb="tab"] { border-radius: 4px; padding: 10px 20px; background-color: white; border: 1px solid #E2E8F0; }
     .stTabs [aria-selected="true"] { background-color: #3182CE !important; color: white !important; }
@@ -54,10 +53,13 @@ def extrair_dados_docx(uploaded_file):
     try:
         doc = Document(uploaded_file)
         texto = "\n".join([p.text for p in doc.paragraphs if p.text.strip() != ""])
+        # Varre XML para pegar imagens na ordem correta
         for rel in doc.part.rels.values():
             if "image" in rel.target_ref:
                 img_data = rel.target_part.blob
-                if len(img_data) > 1024: imagens.append(img_data)
+                # Filtro: ignora imagens muito pequenas (ícones)
+                if len(img_data) > 2000: 
+                    imagens.append(img_data)
     except: pass
     return texto, imagens
 
@@ -93,7 +95,8 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
             num = int(tag_match.group(1))
             # Busca imagem no mapa
             img_bytes = mapa_imgs.get(num)
-            # Fallback para imagem única (recorte)
+            
+            # Se não achar e for a única imagem (caso do recorte), usa ela
             if not img_bytes and len(mapa_imgs) == 1:
                 img_bytes = list(mapa_imgs.values())[0]
 
@@ -117,47 +120,44 @@ def gerar_dalle_prompt(api_key, prompt_text):
         return resp.data[0].url
     except: return None
 
-# MÓDULO ADAPTAR (ESTRATÉGIA SANDUÍCHE REFORÇADA)
 def adaptar_conteudo(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, remover_resp, questoes_mapeadas):
     client = OpenAI(api_key=api_key)
     
-    if conteudo is None: return "Erro: Conteúdo vazio.", ""
+    # Validação de Segurança
+    if not conteudo: return "Erro: Conteúdo vazio.", ""
 
     lista_q = ", ".join([str(n) for n in questoes_mapeadas])
     
     prompt = f"""
     ADAPTADOR DE ATIVIDADE ESCOLAR.
     
-    REGRA CRÍTICA DE IMAGENS (ESTRATÉGIA SANDUÍCHE):
-    O professor indicou que existem imagens para as questões: {lista_q}.
+    REGRA CRÍTICA DE IMAGENS (SANDUÍCHE):
+    O professor indicou imagens para as questões: {lista_q}.
+    ESTRUTURA OBRIGATÓRIA PARA CADA QUESTÃO COM IMAGEM:
+    1. Texto do Enunciado.
+    2. A tag [[IMG_número]] (COLADA ABAIXO DO ENUNCIADO).
+    3. As Alternativas.
     
-    Ao escrever essas questões, siga estritamente esta ordem:
-    1. Número e Enunciado da Questão.
-    2. A tag [[IMG_número]] (EXATAMENTE AQUI, NO MEIO, ANTES DAS ALTERNATIVAS).
-    3. As Alternativas (A, B, C...).
+    NUNCA coloque a imagem no final. Ela é o meio do sanduíche.
     
-    NUNCA coloque a imagem no final da questão. Ela é o suporte visual para responder.
-    
-    ESTRUTURA DE SAÍDA:
-    [RACIONAL] (Explique brevemente)
+    SAÍDA:
+    [RACIONAL] (Resumo)
     ---DIVISOR---
     [ATIVIDADE] (Conteúdo limpo)
     
-    PEI DO ALUNO: {aluno.get('ia_sugestao', '')[:1500]}
-    {"REMOVA TODAS AS RESPOSTAS." if remover_resp else ""}
+    PEI: {aluno.get('ia_sugestao', '')[:1000]}
+    {"REMOVA RESPOSTAS." if remover_resp else ""}
     CONTEXTO: {materia} | {tema}
     CONTEÚDO ORIGINAL:
     """
     
     msgs = [{"role": "user", "content": []}]
     if tipo == "imagem":
-        # Garante que conteudo é bytes
         if isinstance(conteudo, bytes):
             b64 = base64.b64encode(conteudo).decode('utf-8')
             msgs[0]["content"].append({"type": "text", "text": prompt})
             msgs[0]["content"].append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}})
-        else:
-            return "Erro: Formato de imagem inválido.", ""
+        else: return "Erro img", ""
     else:
         msgs[0]["content"].append({"type": "text", "text": prompt + "\n" + str(conteudo)})
 
@@ -167,25 +167,20 @@ def adaptar_conteudo(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, re
         return (parts[0].strip(), parts[1].strip()) if len(parts)>1 else ("Adaptado.", resp.choices[0].message.content)
     except Exception as e: return str(e), ""
 
-# MÓDULO CRIAR (OPÇÃO DUPLA)
 def criar_duas_opcoes(api_key, aluno, materia, objeto, qtd, tipo_q):
     client = OpenAI(api_key=api_key)
     hiperfoco = aluno.get('hiperfoco', 'Geral')
     
     prompt = f"""
-    CRIE DUAS VERSÕES DE UMA ATIVIDADE DE {materia} ({objeto}) PARA {aluno.get('serie')}.
+    CRIE 2 VERSÕES DE ATIVIDADE ({materia} - {objeto}) PARA {aluno.get('serie')}.
     QTD: {qtd} questões ({tipo_q}).
     PEI: {aluno.get('ia_sugestao', '')[:1000]}
     
-    --- OPÇÃO A: LÚDICA (Imersão Total) ---
-    Use o hiperfoco ({hiperfoco}) como narrativa principal.
+    --- OPÇÃO A: LÚDICA (Mergulho no {hiperfoco}) ---
+    --- OPÇÃO B: ESTRUTURADA (Foco acadêmico) ---
     
-    --- OPÇÃO B: ESTRUTURADA (Foco Conteúdo) ---
-    Use o hiperfoco apenas como contexto leve.
-    
-    REGRAS PARA AMBAS:
-    1. A cada 5 questões, coloque uma tag [[GEN_IMG: descrição]] onde couber uma imagem.
-    2. Garanta que a imagem venha ANTES das alternativas.
+    REGRAS:
+    1. A cada 5 questões, coloque uma tag [[GEN_IMG: descrição]] onde couber imagem.
     
     SAÍDA:
     [RACIONAL]
@@ -194,7 +189,6 @@ def criar_duas_opcoes(api_key, aluno, materia, objeto, qtd, tipo_q):
     ---SPLIT_B---
     [CONTEUDO_B]
     """
-    
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
         full = resp.choices[0].message.content
@@ -207,7 +201,6 @@ def criar_duas_opcoes(api_key, aluno, materia, objeto, qtd, tipo_q):
         except: return "Erro formato.", full, full
     except Exception as e: return str(e), "", ""
 
-# MÓDULO CONTEXTUALIZAR
 def gerar_contextualizacao(api_key, aluno, assunto, tema_extra=""):
     client = OpenAI(api_key=api_key)
     tema = tema_extra if tema_extra else aluno.get('hiperfoco', 'Geral')
@@ -223,12 +216,12 @@ with st.sidebar:
     else: api_key = st.text_input("Chave OpenAI:", type="password")
     
     st.markdown("---")
-    if st.button("🗑️ Nova Sessão (Limpar Tudo)"):
+    if st.button("🗑️ Nova Sessão"):
         for k in list(st.session_state.keys()):
             if k not in ['banco_estudantes', 'OPENAI_API_KEY']: del st.session_state[k]
         st.rerun()
 
-st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V9.3: Fluxo Direto</p></div></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V9.4: Recorte Sincronizado</p></div></div>""", unsafe_allow_html=True)
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Cadastre um aluno no PEI 360º primeiro.")
@@ -257,12 +250,11 @@ with tab_adapt:
 
     arquivo = st.file_uploader("Arquivo (FOTO ou DOCX)", type=["png","jpg","jpeg","docx"], key="af")
     
-    # Variáveis de Estado da Aba
+    # Variáveis de Estado
     if 'adapt_content' not in st.session_state: st.session_state.adapt_content = None 
     if 'adapt_type' not in st.session_state: st.session_state.adapt_type = None
     if 'adapt_imgs' not in st.session_state: st.session_state.adapt_imgs = []
     
-    # Processamento do Arquivo
     if arquivo:
         if arquivo.file_id != st.session_state.get('a_last_id'):
             st.session_state.a_last_id = arquivo.file_id
@@ -270,31 +262,34 @@ with tab_adapt:
             
             if "image" in arquivo.type:
                 st.session_state.adapt_type = "imagem"
-                # Carrega a imagem original na memória
+                # Carrega ORIGINAL para memória
                 img = Image.open(arquivo).convert("RGB")
                 buf = BytesIO(); img.save(buf, format="JPEG"); 
-                st.session_state.adapt_content = buf.getvalue() # Salva a ORIGINAL por segurança
+                st.session_state.adapt_content = buf.getvalue()
             
             elif "word" in arquivo.type:
                 st.session_state.adapt_type = "docx"
                 txt, imgs = extrair_dados_docx(arquivo)
                 st.session_state.adapt_content = txt
-                st.session_state.adapt_imgs = imgs # DOCX já extrai as imagens na hora
+                st.session_state.adapt_imgs = imgs
                 st.success(f"DOCX: {len(imgs)} imagens encontradas.")
 
-    # WIDGET DE RECORTE (Só aparece se for imagem)
-    cropped_pil = None
+    # WIDGET DE RECORTE (Realtime = True, mas com Imagem Otimizada)
+    cropped_pil_result = None
     if st.session_state.adapt_type == "imagem" and st.session_state.adapt_content:
-        st.markdown("<div class='crop-instruction'>✂️ <b>TESOURA DIGITAL:</b> Selecione a área. O recorte será feito automaticamente ao clicar em GERAR.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='crop-instruction'>✂️ <b>TESOURA DIGITAL:</b> Ajuste a caixa vermelha. O que você vê é o que a IA vai ler.</div>", unsafe_allow_html=True)
         img_original = Image.open(BytesIO(st.session_state.adapt_content))
-        img_original.thumbnail((1000, 1000))
-        # realtime_update=False é o segredo para não travar
-        cropped_pil = st_cropper(img_original, realtime_update=False, box_color='#FF0000', aspect_ratio=None, key="cropper_widget")
+        # OTIMIZAÇÃO CRÍTICA: Reduz para 800px para o cropper fluir sem travar
+        img_original.thumbnail((800, 800))
         
-        st.caption("Prévia do que será enviado:")
-        st.image(cropped_pil, width=200)
+        # Realtime TRUE: Atualização visual imediata
+        cropped_pil_result = st_cropper(img_original, realtime_update=True, box_color='#FF0000', aspect_ratio=None, key="cropper_v9")
+        
+        st.caption("Prévia do Recorte (Isto será enviado):")
+        if cropped_pil_result:
+            st.image(cropped_pil_result, width=200)
 
-    # MAPEAMENTO (Se tiver imagens do DOCX)
+    # MAPEAMENTO (DOCX)
     adapt_map = {}
     adapt_qs = []
     if st.session_state.adapt_imgs and st.session_state.adapt_type == "docx":
@@ -312,25 +307,28 @@ with tab_adapt:
     
     with c_act:
         if st.button("🚀 GERAR ADAPTAÇÃO", type="primary", key="btn_adapt"):
-            # LÓGICA DE CAPTURA DO RECORTE NO MOMENTO DO CLIQUE
-            content_final = st.session_state.adapt_content # Padrão (Texto DOCX ou Imagem Full)
+            
+            # CAPTURA FINAL DO CONTEÚDO
+            final_content = st.session_state.adapt_content
             
             if st.session_state.adapt_type == "imagem":
-                if cropped_pil:
-                    buf_crop = BytesIO()
-                    cropped_pil.save(buf_crop, format="JPEG")
-                    content_final = buf_crop.getvalue() # Substitui pela imagem recortada
-                    # Atualiza o mapa para imagem única
-                    adapt_map = {1: content_final}
+                if cropped_pil_result:
+                    # Converte o resultado do cropper para bytes
+                    buf_c = BytesIO()
+                    cropped_pil_result.save(buf_c, format="JPEG")
+                    final_content = buf_c.getvalue()
+                    # Atualiza mapa para imagem única
+                    adapt_map = {1: final_content}
                     adapt_qs = [1]
                 else:
-                    st.warning("Erro no recorte. Usando imagem original.")
+                    st.warning("Aguarde o carregamento do recorte...")
+                    st.stop()
 
-            if not content_final:
-                st.warning("⚠️ Nenhum conteúdo detectado.")
+            if not final_content:
+                st.warning("Conteúdo vazio.")
             else:
-                with st.spinner("Adaptando com regra 'sanduíche' de imagens..."):
-                    rac, txt = adaptar_conteudo(api_key, aluno, content_final, st.session_state.adapt_type, materia, tema, tipo_atv, modo_prof, adapt_qs)
+                with st.spinner("Adaptando..."):
+                    rac, txt = adaptar_conteudo(api_key, aluno, final_content, st.session_state.adapt_type, materia, tema, tipo_atv, modo_prof, adapt_qs)
                     st.session_state['res_adapt'] = {'rac': rac, 'txt': txt, 'map': adapt_map}
                     st.rerun()
 
@@ -353,7 +351,7 @@ with tab_adapt:
         docx = construir_docx_final(res['txt'], aluno, materia, res['map'], None, tipo_atv)
         st.download_button("📥 BAIXAR DOCX", docx, "Atividade_Adaptada.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", type="primary", use_container_width=True)
 
-# 2. CRIAR DO ZERO
+# 2. CRIAR
 with tab_create:
     cc1, cc2 = st.columns(2)
     mat_c = cc1.selectbox("Componente", ["Matemática", "Português", "Ciências", "História", "Geografia"], key="cm")
@@ -363,7 +361,7 @@ with tab_create:
     tipo_c = cc4.selectbox("Formato", ["Múltipla Escolha", "Discursiva", "Mista"], key="ct")
     
     if st.button("✨ CRIAR (GERAR OPÇÕES)", type="primary", key="btn_create"):
-        with st.spinner(f"Criando opções A e B..."):
+        with st.spinner(f"Criando..."):
             rac, opt_a, opt_b = criar_duas_opcoes(api_key, aluno, mat_c, obj_c, qtd_c, tipo_c)
             st.session_state['create_opts'] = {'rac': rac, 'A': opt_a, 'B': opt_b}
             st.rerun()
