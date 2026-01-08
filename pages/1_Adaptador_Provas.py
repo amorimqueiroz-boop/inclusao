@@ -94,7 +94,7 @@ def construir_docx_final(texto_ia, aluno, materia, lista_imgs, img_dalle_url, ti
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
 
-# --- 5. IA (HÍBRIDA) ---
+# --- 5. IA (LÓGICA HÍBRIDA + POSICIONAMENTO) ---
 def gerar_dalle(api_key, tema, aluno):
     client = OpenAI(api_key=api_key)
     prompt = f"Educational illustration about '{tema}'. Simple, clear, white background. {aluno.get('hiperfoco','')} style. No text."
@@ -106,14 +106,19 @@ def gerar_dalle(api_key, tema, aluno):
 def adaptar_hibrido(api_key, aluno, conteudo_visual_completo, tipo, materia, tema, tipo_atv, remover_respostas):
     client = OpenAI(api_key=api_key)
     
+    # --- PROMPT REFINADO PARA POSICIONAMENTO ---
     instrucao_imgs = """
-    A imagem original contém um mapa/figura e texto.
-    Eu já recortei a figura para usar no documento final.
-    SUA TAREFA:
-    1. Leia o texto da imagem completa.
-    2. Adapte as questões.
-    3. Insira a tag [[IMG_1]] no lugar onde a figura (que eu recortei) deve entrar.
-    4. NÃO escreva instruções como "Aqui está a imagem".
+    A imagem original contém um mapa/figura. Eu já recortei essa figura.
+    
+    REGRA CRÍTICA DE POSICIONAMENTO:
+    Você deve inserir a tag [[IMG_1]] ANTES das perguntas começarem.
+    
+    Ordem Correta:
+    1. Título ou Enunciado (Ex: "Observe a imagem:")
+    2. [[IMG_1]] (Aqui entra a imagem)
+    3. Perguntas (a, b, c...)
+    
+    NUNCA coloque a tag [[IMG_1]] no final do texto. Ela é o suporte visual da questão.
     """
     
     instrucao_prof = "REMOVA TODAS AS RESPOSTAS (azul/rosa/itálico). Mantenha apenas perguntas." if remover_respostas else ""
@@ -123,7 +128,7 @@ def adaptar_hibrido(api_key, aluno, conteudo_visual_completo, tipo, materia, tem
         diretrizes_pei = f"\nDIRETRIZES DO PEI:\n{aluno['ia_sugestao'][:2000]}..."
 
     prompt_sys = f"Você é um Especialista em Adaptação. {instrucao_prof}. {instrucao_imgs}. {diretrizes_pei}"
-    prompt_user = f"CONTEXTO: {materia} | {tema} | {tipo_atv}\nCONTEÚDO:"
+    prompt_user = f"CONTEXTO: {materia} | {tema} | {tipo_atv}\nCONTEÚDO PARA ADAPTAR:"
     
     msgs = [{"role": "system", "content": prompt_sys}, {"role": "user", "content": []}]
     
@@ -146,7 +151,7 @@ with st.sidebar:
     st.markdown("---")
     st.info("✂️ Recorte a imagem para limpar. O texto original será lido automaticamente.")
 
-st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V6.5: Final Blindado</p></div></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V6.6: Final</p></div></div>""", unsafe_allow_html=True)
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Nenhum aluno no banco. Vá em 'PEI 360º' e salve um aluno primeiro.")
@@ -186,23 +191,19 @@ if arquivo:
         
         img_pil = Image.open(arquivo)
         
-        # --- AQUI ESTÁ A CORREÇÃO CRÍTICA (V6.5) ---
-        # Converte a imagem ORIGINAL para RGB antes de qualquer coisa
-        # Isso evita o erro ao salvar no buffer 'buf_full'
-        if img_pil.mode in ("RGBA", "P"): 
-            img_pil = img_pil.convert("RGB")
+        # Converte para RGB (blindagem contra erro OSError)
+        if img_pil.mode in ("RGBA", "P"): img_pil = img_pil.convert("RGB")
             
-        # Salva a original completa (agora segura em RGB) para mandar pra IA
+        # Salva original para IA
         buf_full = BytesIO(); img_pil.save(buf_full, format="JPEG"); 
         img_original_bytes = buf_full.getvalue()
         
-        # Otimização visual para o cropper
-        img_pil.thumbnail((1000, 1000)) 
+        # Recorte
+        img_pil.thumbnail((1200, 1200)) 
         cropped_img = st_cropper(img_pil, realtime_update=True, box_color='#FF0000', aspect_ratio=None)
-        st.caption("Este recorte será usado no Word final:")
+        st.caption("Recorte Final:")
         st.image(cropped_img, width=250)
         
-        # O recorte herda o RGB, então pode salvar direto
         buf_crop = BytesIO(); cropped_img.save(buf_crop, format="JPEG"); 
         lista_recortes_final = [buf_crop.getvalue()]
         
@@ -228,8 +229,8 @@ st.markdown("</div>", unsafe_allow_html=True)
 if btn_gerar:
     if not materia or not tema or not arquivo: st.warning("Preencha tudo.")
     else:
-        with st.spinner("IA lendo página completa e usando seu recorte..."):
-            # Envia a IMAGEM ORIGINAL COMPLETA para a IA ler o texto
+        with st.spinner("IA diagramando a atividade..."):
+            # Envia a IMAGEM ORIGINAL para leitura, mas usa o RECORTE no final
             texto_adaptado, err = adaptar_hibrido(api_key, aluno, img_original_bytes, tipo_arq, materia, tema, tipo_atv, modo_prof)
             
             img_dalle = None
@@ -251,7 +252,7 @@ if 'res_texto' in st.session_state:
         partes = re.split(r'(\[\[IMG_\d+\]\])', txt)
         for parte in partes:
             if "[[IMG_" in parte:
-                if st.session_state['res_imgs']: st.image(st.session_state['res_imgs'][0], width=300, caption="Seu Recorte Limpo")
+                if st.session_state['res_imgs']: st.image(st.session_state['res_imgs'][0], width=300, caption="Seu Recorte")
             else:
                 if parte.strip(): st.markdown(parte)
 
