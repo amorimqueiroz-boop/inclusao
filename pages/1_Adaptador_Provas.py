@@ -86,9 +86,11 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
             doc.add_paragraph("")
 
     doc.add_heading('Atividades', level=2)
-    partes = re.split(r'(\[\[IMG_[Q|G]\w+\]\])', texto_ia)
+    # Regex robusto para pegar [[IMG_Q1]] ou [[IMG_Q 1]]
+    partes = re.split(r'(\[\[IMG_[Q|G]\s*\w+\]\])', texto_ia)
+    
     for parte in partes:
-        tag_match = re.match(r'\[\[IMG_(Q|G)(\w+)\]\]', parte)
+        tag_match = re.match(r'\[\[IMG_(Q|G)\s*(\w+)\]\]', parte)
         if tag_match:
             tipo, id_img = tag_match.groups()
             img_bytes = None
@@ -136,19 +138,17 @@ def adaptar_conteudo(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, re
     prompt = f"""
     Especialista em BNCC. 
     ESTRUTURA DE SAÍDA OBRIGATÓRIA:
-    [RACIONAL PEDAGÓGICO - Explique aqui o que fez]
+    [RACIONAL PEDAGÓGICO]
     ---DIVISOR---
-    [ATIVIDADE - Apenas o conteúdo para o aluno]
+    [ATIVIDADE]
     
     REGRAS DE OURO:
-    1. A parte [ATIVIDADE] deve conter APENAS as questões. NÃO inclua dados do PEI, diagnósticos ou explicações pedagógicas aqui.
+    1. A parte [ATIVIDADE] deve conter APENAS as questões. NÃO inclua resumo do PEI ou o racional aqui.
     2. {"REMOVA TODAS AS RESPOSTAS." if remover_resp else ""}
     3. {instrucao_imgs}
     4. {get_hiperfoco_instruction(aluno)}
     
-    DADOS DO ALUNO (Para sua consulta interna, NÃO COPIE ISSO NA PROVA):
-    {aluno.get('ia_sugestao', '')[:1000]}
-    
+    PEI (Consulta): {aluno.get('ia_sugestao', '')[:1000]}
     CONTEXTO: {materia} | {tema} | {tipo_atv}
     CONTEÚDO ORIGINAL:
     """
@@ -178,12 +178,12 @@ def criar_do_zero(api_key, aluno, materia, objeto, qtd, tipo_q, temperatura=0.7)
     SAÍDA: [RACIONAL] ---DIVISOR--- [ATIVIDADE]
     
     REGRAS:
-    1. A parte [ATIVIDADE] deve ser LIMPA, pronta para impressão. Sem comentários do professor.
+    1. A parte [ATIVIDADE] deve ser LIMPA. Sem comentários.
     2. RIGOR BNCC.
     3. A cada 5 questões, 1 deve ter imagem gerada: [[GEN_IMG: descrição]].
     4. {get_hiperfoco_instruction(aluno)}
     
-    PEI (Consulta interna): {aluno.get('ia_sugestao', '')[:1000]}
+    PEI: {aluno.get('ia_sugestao', '')[:1000]}
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=temperatura)
@@ -207,16 +207,21 @@ def gerar_contextualizacao(api_key, aluno, assunto, tema_extra=""):
 with st.sidebar:
     if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']; st.success("✅ Conectado")
     else: api_key = st.text_input("Chave OpenAI:", type="password")
-    
     st.markdown("---")
-    # BOTÃO LIMPAR CORRIGIDO (Limpa as chaves corretas)
-    if st.button("🗑️ Limpar Tudo (Nova Sessão)"):
-        keys_to_clear = ['result_adapt', 'result_create', 'adapt_imgs', 'adapt_txt', 'adapt_type', 'imgs_extraidas', 'txt_orig']
+    
+    # BOTÃO LIMPAR GERAL (CORRIGIDO)
+    if st.button("🗑️ Nova Atividade (Limpar Tudo)"):
+        # Limpa todas as variáveis de sessão usadas
+        keys_to_clear = [
+            'result_adapt', 'result_create', 
+            'adapt_imgs', 'adapt_txt', 'adapt_type', 'a_last_id', 
+            'imgs_extraidas', 'txt_orig'
+        ]
         for k in keys_to_clear:
             if k in st.session_state: del st.session_state[k]
         st.rerun()
 
-st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V8.5: Final</p></div></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V8.5: Final Blindado</p></div></div>""", unsafe_allow_html=True)
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Cadastre um aluno no PEI 360º primeiro.")
@@ -303,7 +308,8 @@ with tab_adapt:
         st.markdown("---")
         with st.expander("🧠 Racional Pedagógico", expanded=False): st.info(res['rac'])
         
-        col_ed, col_vi = st.columns([1, 1])
+        # CORREÇÃO DO ERRO DE NOME DE VARIÁVEL AQUI
+        col_ed, col_vi = st.columns([1, 1]) 
         with col_ed:
             st.subheader("✏️ Editor")
             res['txt'] = st.text_area("Texto:", value=res['txt'], height=600, key="txt_adapt")
@@ -316,9 +322,9 @@ with tab_adapt:
         with col_vi:
             st.subheader("👁️ Visualização")
             with st.container(border=True):
-                partes = re.split(r'(\[\[IMG_[Q|G]\w+\]\])', res['txt'])
+                partes = re.split(r'(\[\[IMG_[Q|G]\s*\w+\]\])', res['txt'])
                 for p in partes:
-                    tag = re.match(r'\[\[IMG_(Q|G)(\w+)\]\]', p)
+                    tag = re.match(r'\[\[IMG_(Q|G)\s*(\w+)\]\]', p)
                     if tag:
                         t, i = tag.groups()
                         im = res['map'].get(int(i), res['map'].get(0)) if t=="Q" else None
@@ -352,7 +358,6 @@ with tab_create:
             
             txt_fin = txt
             for i in range(count): txt_fin = re.sub(r'\[\[GEN_IMG: .*?\]\]', f"[[IMG_G{i+1}]]", txt_fin, count=1)
-            
             st.session_state['result_create'] = {'rac': rac, 'txt': txt_fin, 'map': novo_map, 'dalle': None}
             st.rerun()
             
@@ -376,9 +381,9 @@ with tab_create:
         with col_vi:
             st.subheader("👁️ Visualização")
             with st.container(border=True):
-                partes = re.split(r'(\[\[IMG_[Q|G]\w+\]\])', res['txt'])
+                partes = re.split(r'(\[\[IMG_[Q|G]\s*\w+\]\])', res['txt'])
                 for p in partes:
-                    tag = re.match(r'\[\[IMG_(Q|G)(\w+)\]\]', p)
+                    tag = re.match(r'\[\[IMG_(Q|G)\s*(\w+)\]\]', p)
                     if tag:
                         t, i = tag.groups()
                         im = res['map'].get(f"G{i}")
