@@ -13,7 +13,7 @@ import requests
 import zipfile
 
 # --- 1. CONFIGURAÇÃO ---
-st.set_page_config(page_title="Adaptador 360º V4.9", page_icon="🧩", layout="wide")
+st.set_page_config(page_title="Adaptador 360º V5.0", page_icon="🧩", layout="wide")
 
 if 'banco_estudantes' not in st.session_state:
     st.session_state.banco_estudantes = []
@@ -34,18 +34,13 @@ st.markdown("""
         border: 1px solid #E2E8F0; margin-top: 20px; margin-bottom: 20px;
     }
     
+    /* Destaque para o Modo Professor */
+    .teacher-mode-box {
+        border: 2px solid #FFD700; background-color: #FFFFF0; padding: 10px; border-radius: 10px; margin-bottom: 15px;
+    }
+
     div[data-testid="column"] .stButton button {
         border-radius: 12px !important; font-weight: 800 !important; height: 50px !important; width: 100%;
-    }
-    
-    /* Botão de Limpeza com cor diferente */
-    div[data-testid="column"]:nth-of-type(3) .stButton button {
-        background-color: white !important;
-        color: #E53E3E !important;
-        border: 1px solid #E53E3E !important;
-    }
-    div[data-testid="column"]:nth-of-type(3) .stButton button:hover {
-        background-color: #FFF5F5 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -132,7 +127,7 @@ def construir_docx_final(texto_ia, aluno, materia, lista_imgs, img_dalle_url, ti
                     doc.add_paragraph("") 
                     imagens_usadas.add(idx_ia)
                 else:
-                    doc.add_paragraph(f"[Imagem {idx_ia+1} não encontrada]")
+                    doc.add_paragraph(f"[Imagem {idx_ia+1} original aqui]")
             except: pass
         else:
             if parte.strip():
@@ -164,20 +159,31 @@ def gerar_dalle(api_key, tema, aluno_dados):
         return resp.data[0].url, None
     except Exception as e: return None, str(e)
 
-def adaptar_atividade_v49(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, total_imagens):
+def adaptar_atividade_v5(api_key, aluno, conteudo, tipo, materia, tema, tipo_atv, total_imagens, remover_respostas):
     if not api_key: return None, "Sem chave."
     client = OpenAI(api_key=api_key)
     
+    # 1. Instrução de Imagens
     instrucao_imgs = ""
     if total_imagens > 0:
-        instrucao_imgs = f"""
-        O arquivo original tem {total_imagens} imagens sequenciais (Imagem 1, Imagem 2...).
-        REGRA DE OURO: Ao encontrar uma questão que usa imagem, insira a tag [[IMG_1]] (para a primeira), [[IMG_2]] (para a segunda) EXATAMENTE onde a imagem deve aparecer no texto.
-        """
+        instrucao_imgs = f"O arquivo original tem {total_imagens} imagens sequenciais. Insira a tag [[IMG_1]], [[IMG_2]] onde a imagem deve aparecer."
     elif tipo == "imagem":
-        instrucao_imgs = "O conteúdo é uma foto. Use [[IMG_1]] no início."
+        instrucao_imgs = "O conteúdo é uma foto. Insira a tag [[IMG_1]] no início para mostrar a foto original."
 
-    prompt_sys = f"Você é um Especialista em Adaptação de {tipo_atv}. Gere a atividade adaptada com linguagem adequada."
+    # 2. Instrução de "Limpeza" (O Segredo)
+    instrucao_professor = ""
+    if remover_respostas:
+        instrucao_professor = """
+        🚨 MODO LIVRO DO PROFESSOR ATIVADO 🚨
+        A imagem ou texto fornecido contém RESPOSTAS ou GABARITOS (geralmente em azul, rosa, itálico ou entre parênteses).
+        SUA MISSÃO CRÍTICA:
+        1. Identificar e REMOVER todas as respostas.
+        2. Manter apenas os enunciados, textos de apoio e as perguntas.
+        3. Se houver lacunas preenchidas, substitua o texto da resposta por "__________".
+        4. O aluno NÃO pode ver a resposta em hipótese alguma.
+        """
+
+    prompt_sys = f"Você é um Especialista em Adaptação Escolar. {instrucao_professor}"
     
     prompt_user = f"""
     ALUNO: {aluno['nome']} | DIAG: {aluno.get('diagnostico')}
@@ -192,13 +198,14 @@ def adaptar_atividade_v49(api_key, aluno, conteudo, tipo, materia, tema, tipo_at
     msgs = [{"role": "system", "content": prompt_sys}, {"role": "user", "content": []}]
     
     if tipo == "imagem":
+        # Se for imagem, mandamos a foto para a IA analisar visualmente
         msgs[1]["content"].append({"type": "text", "text": prompt_user})
         msgs[1]["content"].append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64.b64encode(conteudo[0]).decode('utf-8')}"}})
     else:
         msgs[1]["content"].append({"type": "text", "text": prompt_user})
 
     try:
-        resp = client.chat.completions.create(model="gpt-4o-mini", messages=msgs, temperature=0.4)
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=msgs, temperature=0.3)
         return resp.choices[0].message.content, None
     except Exception as e: return None, str(e)
 
@@ -212,14 +219,14 @@ with st.sidebar:
         api_key = st.text_input("Chave OpenAI:", type="password")
     
     st.markdown("---")
-    st.info("💡 **Dica:** Para provas com imagens, use sempre arquivo **DOCX**.")
+    st.info("Para remover respostas em azul, ative o 'Modo Livro do Professor' abaixo.")
 
 st.markdown("""
     <div class="header-clean">
         <div style="font-size: 3rem;">🧩</div>
         <div>
-            <p style="margin: 0; color: #004E92; font-size: 1.5rem; font-weight: 800;">Adaptador V4.9: Painel de Controle</p>
-            <p style="margin: 0; color: #718096;">Fluxo otimizado com controles integrados.</p>
+            <p style="margin: 0; color: #004E92; font-size: 1.5rem; font-weight: 800;">Adaptador V5.0: Modo Professor</p>
+            <p style="margin: 0; color: #718096;">Remove respostas automáticas de fotos de livros didáticos.</p>
         </div>
     </div>
 """, unsafe_allow_html=True)
@@ -238,41 +245,52 @@ with c1:
 with c2:
     tema = st.text_input("Tema:", placeholder="Ex: Frações")
 with c3:
-    # BOTÃO RESTAURADO E REPOSICIONADO
-    tipo_atv = st.selectbox("Tipo de Atividade:", ["Prova / Avaliação", "Tarefa de Casa", "Atividade de Sala", "Trabalho em Grupo", "Atividade Lúdica"])
+    tipo_atv = st.selectbox("Tipo de Atividade:", ["Prova / Avaliação", "Tarefa de Casa", "Atividade de Sala", "Trabalho em Grupo"])
 
-arquivo = st.file_uploader("Arquivo Original (DOCX, PDF, FOTO)", type=["docx","pdf","png","jpg"])
+# UPLOAD
+arquivo = st.file_uploader("Arquivo Original (FOTO DO LIVRO, PDF ou DOCX)", type=["png","jpg","jpeg","pdf","docx"])
 texto_orig, tipo_arq, lista_imgs = ler_arquivo(arquivo)
 
-if tipo_arq == "docx": st.success(f"📎 DOCX lido com {len(lista_imgs)} imagens.")
-elif tipo_arq: st.success("📎 Arquivo carregado.")
+if tipo_arq: st.success(f"Arquivo carregado ({tipo_arq}).")
 
-# --- BARRA DE AÇÃO (CENTRALIZADA) ---
+# --- BARRA DE AÇÃO V5 ---
 st.markdown("<div class='action-bar'>", unsafe_allow_html=True)
-col_toggle, col_btn, col_clean = st.columns([1, 2, 1])
 
-with col_toggle:
-    # CHAVE PARA GERAR IMAGEM (DENTRO DA PÁGINA)
-    st.write("") # Espaçamento
-    usar_dalle = st.toggle("🎨 Criar Capa Visual (IA)", value=True, help="Usa DALL-E 3 para gerar uma imagem de contexto.")
+# Checkbox Mágico
+c_prof, c_img = st.columns(2)
+with c_prof:
+    modo_professor = st.checkbox("🕵️ Modo Livro do Professor (Remover Respostas)", value=False, help="Se ativado, a IA tentará identificar e remover respostas escritas em azul/rosa na imagem.")
+with c_img:
+    usar_dalle = st.toggle("🎨 Criar Capa Visual (IA)", value=True)
 
-with col_btn:
-    btn_gerar = st.button("✨ ADAPTAR ATIVIDADE", type="primary")
-
-with col_clean:
-    # BOTÃO DE LIMPEZA
-    if st.button("🗑️ Nova Atividade"):
+st.markdown("---")
+c_btn, c_cls = st.columns([3, 1])
+with c_btn:
+    btn_gerar = st.button("✨ ADAPTAR E LIMPAR", type="primary")
+with c_cls:
+    if st.button("🗑️ Limpar"):
         st.session_state.pop('res_texto', None)
         st.rerun()
 st.markdown("</div>", unsafe_allow_html=True)
 
 # --- LÓGICA ---
 if btn_gerar:
-    if not materia or not tema or not texto_orig: st.warning("Preencha todos os campos acima.")
+    if not materia or not tema or not texto_orig: st.warning("Preencha todos os campos.")
     else:
-        with st.spinner(f"Adaptando {tipo_atv} para {aluno['nome']}..."):
-            qtd = len(lista_imgs)
-            texto_adaptado, err = adaptar_atividade_v49(api_key, aluno, texto_orig if tipo_arq!="imagem" else lista_imgs, tipo_arq, materia, tema, tipo_atv, qtd)
+        with st.spinner(f"Lendo imagem e removendo respostas (Modo Professor: {'ON' if modo_professor else 'OFF'})..."):
+            qtd = len(lista_imgs) if tipo_arq == "docx" else len(lista_imgs) # Para foto é 1
+            
+            texto_adaptado, err = adaptar_atividade_v5(
+                api_key, 
+                aluno, 
+                texto_orig if tipo_arq!="imagem" else lista_imgs, 
+                tipo_arq, 
+                materia, 
+                tema, 
+                tipo_atv, 
+                qtd,
+                modo_professor # Passa a flag
+            )
             
             img_dalle = None
             if usar_dalle and not err:
@@ -282,28 +300,27 @@ if btn_gerar:
                 st.session_state['res_texto'] = texto_adaptado
                 st.session_state['res_imgs'] = lista_imgs
                 st.session_state['res_dalle'] = img_dalle
-                st.session_state['tipo_selecionado'] = tipo_atv # Salva para o título do Word
+                st.session_state['tipo_selecionado'] = tipo_atv
                 st.rerun()
 
 # --- RESULTADOS ---
 if 'res_texto' in st.session_state:
     st.markdown("---")
     
-    # Preview Visual
-    st.subheader(f"👁️ Resultado: {st.session_state.get('tipo_selecionado', 'Atividade')}")
+    st.subheader("👁️ Resultado Final")
     with st.container(border=True):
         if st.session_state.get('res_dalle'):
             st.image(st.session_state['res_dalle'], width=250, caption="Capa Visual")
         
-        # Renderização Inteligente
         txt = st.session_state['res_texto']
         partes = re.split(r'(\[\[IMG_\d+\]\])', txt)
         for parte in partes:
             if "[[IMG_" in parte:
                 try:
-                    idx = int(re.search(r'\d+', parte).group()) - 1
+                    # Para foto única, é sempre a primeira
+                    idx = 0 if len(st.session_state['res_imgs']) == 1 else int(re.search(r'\d+', parte).group()) - 1
                     imgs = st.session_state['res_imgs']
-                    if 0 <= idx < len(imgs): st.image(imgs[idx], width=300)
+                    if 0 <= idx < len(imgs): st.image(imgs[idx], width=400, caption="Imagem Original (Verifique se a resposta saiu)")
                 except: pass
             else:
                 if parte.strip(): st.markdown(parte)
@@ -319,7 +336,7 @@ if 'res_texto' in st.session_state:
     )
     
     st.download_button(
-        label="📥 BAIXAR ARQUIVO WORD PRONTO",
+        label="📥 BAIXAR ATIVIDADE LIMPA (WORD)",
         data=docx,
         file_name=f"Atividade_{aluno['nome']}.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
