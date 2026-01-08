@@ -1,20 +1,3 @@
-Rodrigo, chegamos à **Versão V8.1 (Blindada & Organizada)**. 🛡️✨
-
-Você tocou num ponto fundamental de **Arquitetura de Informação**:
-
-1. **Isolamento Total:** O que acontece na aba "Adaptar" fica na aba "Adaptar". O que acontece na aba "Criar" fica na aba "Criar". Nada de misturar resultados no final da página.
-2. **Cabeçalho do Aluno:** Agora, ao selecionar o estudante, aparece um **Card de Identificação** elegante com Nome, Idade, Série e Turma (puxados direto do PEI/Banco de Dados).
-3. **Manutenção das Funcionalidades:**
-* **Adaptar:** Mantém o mapeamento manual de imagens para DOCX e a Tesoura Digital para fotos.
-* **Criar:** Mantém a regra de "1 imagem a cada 5 questões" e o rigor da BNCC.
-
-
-
-Aqui está o código definitivo.
-
-### 📋 Substitua o arquivo `pages/1_Adaptador_Atividades.py`
-
-```python
 import streamlit as st
 from openai import OpenAI
 from io import BytesIO
@@ -399,3 +382,4 @@ with tab_ctx:
         with st.spinner("Pensando..."):
             st.write(gerar_contextualizacao(api_key, aluno, assunto))
 
+```
