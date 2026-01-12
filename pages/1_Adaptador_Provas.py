@@ -11,10 +11,9 @@ import requests
 import json
 import base64
 import os
-import random
 
 # --- 1. CONFIGURAÇÃO ---
-st.set_page_config(page_title="Adaptador 360º | V14.0", page_icon="🧩", layout="wide")
+st.set_page_config(page_title="Adaptador 360º | V15.0", page_icon="🧩", layout="wide")
 
 # --- 2. BANCO DE DADOS ---
 ARQUIVO_DB = "banco_alunos.json"
@@ -46,6 +45,8 @@ st.markdown("""
 
     div[data-testid="column"] .stButton button[kind="primary"] { border-radius: 12px !important; height: 50px; width: 100%; background-color: #FF6B6B !important; color: white !important; font-weight: 800 !important; }
     div[data-testid="column"] .stButton button[kind="secondary"] { border-radius: 12px !important; height: 50px; width: 100%; background-color: white !important; color: #718096 !important; border: 2px solid #CBD5E0 !important; }
+    
+    .analise-box { background-color: #F0FFF4; border: 1px solid #C6F6D5; border-radius: 8px; padding: 15px; margin-bottom: 20px; color: #276749; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -104,31 +105,22 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
 
     doc.add_heading('Atividades', level=2)
     
-    # Processa o texto linha a linha para garantir o posicionamento
     linhas = texto_ia.split('\n')
-    
     for linha in linhas:
-        # Tenta encontrar tags de imagem [[IMG...]]
         tag_match = re.search(r'\[\[IMG.*?(\d+)\]\]', linha, re.IGNORECASE)
-        
         if tag_match:
-            # Se a linha tem tag, divide para inserir a imagem no lugar certo
             partes = re.split(r'(\[\[IMG.*?\d+\]\])', linha, flags=re.IGNORECASE)
             for parte in partes:
                 sub_match = re.search(r'(\d+)', parte)
-                # Se for a tag
                 if "IMG" in parte.upper() and sub_match:
                     num = int(sub_match.group(1))
                     img_bytes = mapa_imgs.get(num)
-                    # Fallback
                     if not img_bytes and len(mapa_imgs) == 1: img_bytes = list(mapa_imgs.values())[0]
-                    
                     if img_bytes:
                         try:
                             doc.add_picture(BytesIO(img_bytes), width=Inches(4.5))
                             doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
                         except: pass
-                # Se for texto normal
                 elif parte.strip():
                     doc.add_paragraph(parte.strip())
         else:
@@ -143,7 +135,6 @@ def gerar_imagem_hibrida(api_key, prompt, unsplash_key=None):
         termo = prompt.split('.')[0] if '.' in prompt else prompt
         url = buscar_imagem_unsplash(termo, unsplash_key)
         if url: return url
-    
     client = OpenAI(api_key=api_key)
     try:
         didactic_prompt = f"Educational illustration, clear diagram style, white background: {prompt}"
@@ -151,81 +142,99 @@ def gerar_imagem_hibrida(api_key, prompt, unsplash_key=None):
         return resp.data[0].url
     except: return None
 
-# ADAPTAR DOCX
+# ADAPTAR DOCX (Com Análise Pedagógica)
 def adaptar_conteudo_docx(api_key, aluno, texto, materia, tema, tipo_atv, remover_resp, questoes_mapeadas):
     client = OpenAI(api_key=api_key)
     lista_q = ", ".join([str(n) for n in questoes_mapeadas])
     prompt = f"""
-    ESPECIALISTA EM DUA.
-    O professor indicou imagens nas questões: {lista_q}.
+    VOCÊ É UM ESPECIALISTA EM DUA E INCLUSÃO.
     
-    REGRA DE OURO (IMAGEM NO MEIO):
-    Para as questões listadas, use a estrutura:
-    1. Enunciado
-    2. [[IMG_número]] (Em linha separada)
-    3. Alternativas
+    1. ANALISE O PERFIL: {aluno.get('ia_sugestao', '')[:1000]}
+    2. ADAPTE A PROVA: Use o hiperfoco ({aluno.get('hiperfoco', 'Geral')}) em 30% das questões.
     
-    PERFIL: Hiperfoco: {aluno.get('hiperfoco', 'Geral')} (Use em 30% das questões). PEI: {aluno.get('ia_sugestao', '')[:1000]}
+    REGRA DE IMAGEM: O professor indicou imagens nas questões: {lista_q}.
+    Nessas questões, use: Enunciado -> [[IMG_número]] -> Alternativas.
+    
+    SAÍDA OBRIGATÓRIA:
+    [ANÁLISE PEDAGÓGICA]
+    - Perfil do Aluno: (Resumo de como o PEI foi aplicado)
+    - Alinhamento BNCC: (Quais habilidades estão sendo trabalhadas)
+    - Estratégias: (O que foi modificado e porquê)
+    ---DIVISOR---
+    [ATIVIDADE]
+    (Coloque aqui APENAS o conteúdo da prova adaptada, pronto para impressão)
+    
     CONTEXTO: {materia} | {tema}. {"REMOVA GABARITO." if remover_resp else ""}
-    TEXTO: {texto}
+    TEXTO ORIGINAL: {texto}
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.4)
         parts = resp.choices[0].message.content.split("---DIVISOR---")
-        return (parts[0].strip(), parts[1].strip()) if len(parts)>1 else ("Adaptado.", resp.choices[0].message.content)
+        return (parts[0].strip(), parts[1].strip()) if len(parts)>1 else ("Análise indisponível.", resp.choices[0].message.content)
     except Exception as e: return str(e), ""
 
-# ADAPTAR IMAGEM (OCR)
-def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_atv, remover_resp):
+# ADAPTAR IMAGEM (OCR + Livro do Professor)
+def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_atv, livro_professor):
     client = OpenAI(api_key=api_key)
     if not imagem_bytes: return "Erro: Imagem vazia", ""
     b64 = base64.b64encode(imagem_bytes).decode('utf-8')
     
-    prompt = f"""
-    ATUAR COMO: Especialista em Acessibilidade.
-    TAREFA: OCR e Adaptação Inclusiva.
-    1. Transcreva o texto pedagógico da imagem.
-    2. Adapte para o aluno (PEI abaixo).
-    3. Insira a tag [[IMG_1]] logo após o enunciado principal.
+    instrucao_livro = ""
+    if livro_professor:
+        instrucao_livro = """
+        ATENÇÃO CRÍTICA: ESTA IMAGEM É DO LIVRO DO PROFESSOR.
+        Ela contém respostas, gabaritos em rosa/azul ou anotações de correção.
+        SUA MISSÃO: Remover TOTALMENTE qualquer resposta ou dica de gabarito. Entregue apenas as perguntas limpas para o aluno responder.
+        """
     
-    PERFIL: {aluno.get('ia_sugestao', '')[:1000]}
-    SAÍDA: [RACIONAL] ---DIVISOR--- [ATIVIDADE]
+    prompt = f"""
+    ATUAR COMO: Especialista em Acessibilidade e OCR.
+    1. Transcreva o texto da imagem. {instrucao_livro}
+    2. Adapte para o aluno (PEI: {aluno.get('ia_sugestao', '')[:800]}).
+    3. Hiperfoco ({aluno.get('hiperfoco')}): Conecte levemente se possível.
+    4. Insira a tag [[IMG_1]] logo após o enunciado principal.
+    
+    SAÍDA OBRIGATÓRIA:
+    [ANÁLISE PEDAGÓGICA]
+    - Adaptações Realizadas: (Explique como lidou com a imagem e o texto)
+    - BNCC: (Habilidades)
+    ---DIVISOR---
+    [ATIVIDADE]
+    (Conteúdo limpo e adaptado)
     """
     msgs = [{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}}]}]
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=msgs, temperature=0.4)
         parts = resp.choices[0].message.content.split("---DIVISOR---")
-        return (parts[0].strip(), parts[1].strip()) if len(parts)>1 else ("Adaptado.", resp.choices[0].message.content)
+        return (parts[0].strip(), parts[1].strip()) if len(parts)>1 else ("Análise indisponível.", resp.choices[0].message.content)
     except Exception as e: return str(e), ""
 
-# CRIAR PROFISSIONAL (V14 - COM CONTROLE DE IMAGEM)
+# CRIAR PROFISSIONAL (Com Análise)
 def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, pct_img):
     client = OpenAI(api_key=api_key)
     hiperfoco = aluno.get('hiperfoco', 'Geral')
     
-    # Calcula quantas imagens gerar
     qtd_imgs = int(qtd * (pct_img / 100))
-    instrucao_img = f"Você deve incluir EXATAMENTE {qtd_imgs} imagens no total. Distribua-as nas questões que mais precisarem de contexto visual." if qtd_imgs > 0 else "NÃO gere nenhuma imagem."
+    instrucao_img = f"Incluir {qtd_imgs} imagens (use [[GEN_IMG: termo]])." if qtd_imgs > 0 else "Sem imagens."
     
     prompt = f"""
     VOCÊ É UMA BANCA EXAMINADORA (SÊNIOR).
-    Crie uma prova de {materia} ({objeto}) para {aluno.get('serie')}.
+    Crie prova de {materia} ({objeto}). QTD: {qtd} ({tipo_q}).
     
-    CONFIGURAÇÃO:
-    - QTD: {qtd} questões.
-    - TIPO: {tipo_q}.
-    - IMAGENS: {instrucao_img} Use a tag [[GEN_IMG: termo de busca em inglês]] ENTRE o enunciado e as alternativas.
+    DIRETRIZES:
+    1. Contextualização Real.
+    2. Hiperfoco ({hiperfoco}) em 30% das questões.
+    3. Distratores Inteligentes.
+    4. {instrucao_img}
     
-    DIRETRIZES DE QUALIDADE:
-    1. **Contextualização:** Use situações-problema reais.
-    2. **Hiperfoco ({hiperfoco}):** Integre à lógica de 30% das questões.
-    3. **Distratores:** Alternativas erradas devem ser plausíveis (erros comuns).
-    4. **Rigor:** Alinhado à BNCC.
-    
-    SAÍDA:
-    [RACIONAL]
+    SAÍDA OBRIGATÓRIA:
+    [ANÁLISE PEDAGÓGICA]
+    - Intencionalidade Educativa: (Objetivos da prova)
+    - Conexão com PEI: (Como o hiperfoco foi usado)
+    - BNCC: (Códigos e Competências)
     ---DIVISOR---
     [ATIVIDADE]
+    (Conteúdo da prova)
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
@@ -233,7 +242,7 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, pct_img):
         return (parts[0].strip(), parts[1].strip()) if len(parts)>1 else ("Criado.", resp.choices[0].message.content)
     except Exception as e: return str(e), ""
 
-# OUTRAS (Mantidas)
+# OUTRAS (Mantidas V14)
 def gerar_roteiro_aula(api_key, aluno, assunto):
     client = OpenAI(api_key=api_key)
     prompt = f"Roteiro de aula {assunto} para {aluno['nome']}. PEI: {aluno.get('ia_sugestao','')[:500]}."
@@ -271,18 +280,15 @@ def sugerir_imagem_pei(api_key, aluno):
 with st.sidebar:
     if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']; st.success("✅ OpenAI OK")
     else: api_key = st.text_input("Chave OpenAI:", type="password")
-    
     st.markdown("---")
-    st.caption("📷 Banco de Imagens")
-    unsplash_key = st.text_input("Chave Unsplash (Opcional):", type="password", help="Para fotos reais.")
-    
+    unsplash_key = st.text_input("Chave Unsplash (Opcional):", type="password")
     st.markdown("---")
     if st.button("🗑️ Nova Sessão"):
         for k in list(st.session_state.keys()):
             if k not in ['banco_estudantes', 'OPENAI_API_KEY']: del st.session_state[k]
         st.rerun()
 
-st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V14.0: Padrão Ouro</p></div></div>""", unsafe_allow_html=True)
+st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🧩</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Adaptador V15.0: Análise & Ação</p></div></div>""", unsafe_allow_html=True)
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Cadastre um aluno no PEI 360º primeiro.")
@@ -317,7 +323,7 @@ with tabs[0]:
         st.session_state.last_d = arquivo_d.file_id
         txt, imgs = extrair_dados_docx(arquivo_d)
         st.session_state.docx_txt = txt; st.session_state.docx_imgs = imgs
-        st.success(f"{len(imgs)} imagens.")
+        st.success(f"{len(imgs)} imagens encontradas.")
 
     map_d = {}; qs_d = []
     if st.session_state.docx_imgs:
@@ -329,23 +335,19 @@ with tabs[0]:
                 q = st.number_input(f"Questão:", 0, 50, key=f"dq_{i}")
                 if q > 0: map_d[int(q)] = img; qs_d.append(int(q))
 
-    c_go, c_redo = st.columns([3, 1])
-    if c_go.button("🚀 ADAPTAR PROVA", type="primary", key="btn_d"):
+    if st.button("🚀 ADAPTAR PROVA", type="primary", key="btn_d"):
         if not st.session_state.docx_txt: st.warning("Envie arquivo."); st.stop()
-        with st.spinner("Adaptando..."):
+        with st.spinner("Analisando e Adaptando..."):
             rac, txt = adaptar_conteudo_docx(api_key, aluno, st.session_state.docx_txt, materia_d, tema_d, tipo_d, True, qs_d)
             st.session_state['res_docx'] = {'rac': rac, 'txt': txt, 'map': map_d}
             st.rerun()
 
     if 'res_docx' in st.session_state:
         res = st.session_state['res_docx']
-        if c_redo.button("🔄 Refazer", key="redo_d"):
-            with st.spinner("Refazendo..."):
-                rac, txt = adaptar_conteudo_docx(api_key, aluno, st.session_state.docx_txt, materia_d, tema_d, tipo_d, True, qs_d, temperatura=0.8)
-                st.session_state['res_docx'] = {'rac': rac, 'txt': txt, 'map': map_d}
-                st.rerun()
-        with st.expander("🧠 Racional"): st.info(res['rac'])
+        st.markdown(f"<div class='analise-box'><h3>🧠 Relatório Pedagógico</h3>{res['rac']}</div>", unsafe_allow_html=True)
+        
         with st.container(border=True):
+            st.caption("Visualização da Atividade:")
             partes = re.split(r'(\[\[IMG.*?\d+\]\])', res['txt'], flags=re.IGNORECASE)
             for p in partes:
                 tag = re.search(r'(\d+)', p)
@@ -355,17 +357,19 @@ with tabs[0]:
                     if im: st.image(im, width=300)
                 elif p.strip(): st.markdown(p.strip())
         docx = construir_docx_final(res['txt'], aluno, materia_d, res['map'], None, tipo_d)
-        st.download_button("📥 BAIXAR DOCX", docx, "Prova.docx", "primary")
+        st.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Prova_Adaptada.docx", "primary")
 
 # 2. ADAPTAR ATIVIDADE
 with tabs[1]:
-    st.info("Adaptar de Imagem (OCR Inclusivo).")
+    st.info("Adaptar de Imagem/Foto.")
     c1, c2, c3 = st.columns(3)
     discip = ["Matemática", "Português", "Ciências", "História", "Geografia", "Artes", "Ed. Física", "Inglês", "Filosofia", "Sociologia"]
     materia_i = c1.selectbox("Matéria", discip, key="im")
     tema_i = c2.text_input("Tema", key="it")
     tipo_i = c3.selectbox("Tipo", ["Atividade", "Tarefa"], key="itp")
     arquivo_i = st.file_uploader("Upload", type=["png","jpg","jpeg"], key="fi")
+    
+    livro_prof = st.checkbox("📖 É Livro do Professor? (Remover Respostas)", value=False)
     
     if 'img_raw' not in st.session_state: st.session_state.img_raw = None
     if arquivo_i and arquivo_i.file_id != st.session_state.get('last_i'):
@@ -378,33 +382,23 @@ with tabs[1]:
         img_pil = Image.open(BytesIO(st.session_state.img_raw))
         img_pil.thumbnail((800, 800))
         cropped_res = st_cropper(img_pil, realtime_update=True, box_color='#FF0000', aspect_ratio=None, key="crop_i")
-        if cropped_res: st.image(cropped_res, width=200, caption="Prévia")
+        if cropped_res: st.image(cropped_res, width=200, caption="Prévia do Recorte")
 
-    c_go_i, c_redo_i = st.columns([3, 1])
-    if c_go_i.button("🚀 ADAPTAR RECORTE", type="primary", key="btn_i"):
-        if not st.session_state.img_raw:
-            st.warning("Envie uma imagem primeiro."); st.stop()
-        if not cropped_res:
-            st.warning("Recorte inválido."); st.stop()
-            
-        with st.spinner("Lendo e Adaptando..."):
+    if st.button("🚀 ADAPTAR RECORTE", type="primary", key="btn_i"):
+        if not st.session_state.img_raw: st.warning("Envie imagem."); st.stop()
+        with st.spinner("Analisando Perfil e BNCC..."):
             buf_c = BytesIO()
             cropped_res.convert('RGB').save(buf_c, format="JPEG", quality=90)
             img_bytes = buf_c.getvalue()
-            rac, txt = adaptar_conteudo_imagem(api_key, aluno, img_bytes, materia_i, tema_i, tipo_i, True)
+            
+            rac, txt = adaptar_conteudo_imagem(api_key, aluno, st.session_state.img_raw, materia_i, tema_i, tipo_i, livro_prof)
             st.session_state['res_img'] = {'rac': rac, 'txt': txt, 'map': {1: img_bytes}}
             st.rerun()
 
     if 'res_img' in st.session_state:
         res = st.session_state['res_img']
-        if c_redo_i.button("🔄 Refazer", key="redo_i"):
-             with st.spinner("Refazendo..."):
-                img_bytes = res['map'][1]
-                rac, txt = adaptar_conteudo_imagem(api_key, aluno, img_bytes, materia_i, tema_i, tipo_i, True, temperatura=0.9)
-                st.session_state['res_img']['rac'] = rac
-                st.session_state['res_img']['txt'] = txt
-                st.rerun()
-        with st.expander("🧠 Racional"): st.info(res['rac'])
+        st.markdown(f"<div class='analise-box'><h3>🧠 Relatório Pedagógico</h3>{res['rac']}</div>", unsafe_allow_html=True)
+        
         with st.container(border=True):
             partes = re.split(r'(\[\[IMG.*?\]\])', res['txt'], flags=re.IGNORECASE)
             for p in partes:
@@ -413,27 +407,25 @@ with tabs[1]:
                     if im: st.image(im, width=300)
                 elif p.strip(): st.markdown(p.strip())
         docx = construir_docx_final(res['txt'], aluno, materia_i, res['map'], None, tipo_i)
-        st.download_button("📥 BAIXAR DOCX", docx, "Atividade.docx", "primary")
+        st.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Atividade.docx", "primary")
 
 # 3. CRIAR DO ZERO
 with tabs[2]:
-    st.info("Criação Profissional (Bloom + Distratores).")
+    st.info("Criação Profissional.")
     cc1, cc2 = st.columns(2)
     mat_c = cc1.selectbox("Componente", discip, key="cm")
     obj_c = cc2.text_input("Assunto", key="co")
     
     cc3, cc4 = st.columns(2)
-    qtd_c = cc3.slider("Qtd Questões", 1, 10, 5, key="cq")
+    qtd_c = cc3.slider("Qtd", 1, 10, 5, key="cq")
     tipo_quest = cc4.selectbox("Tipo", ["Objetiva", "Discursiva", "Mista"], key="ctq")
     
-    st.write("---")
     col_img_opt, col_img_pct = st.columns([1, 2])
     usar_img = col_img_opt.checkbox("📸 Incluir Imagens?", value=True)
     pct_img = col_img_pct.slider("Porcentagem com Imagem", 0, 100, 30, disabled=not usar_img)
     
-    c_go_c, c_redo_c = st.columns([3, 1])
-    if c_go_c.button("✨ CRIAR ATIVIDADE", type="primary", key="btn_c"):
-        with st.spinner("Criando..."):
+    if st.button("✨ CRIAR ATIVIDADE", type="primary", key="btn_c"):
+        with st.spinner("Elaborando e Analisando..."):
             pct_final = pct_img if usar_img else 0
             rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, pct_final)
             
@@ -453,16 +445,8 @@ with tabs[2]:
 
     if 'res_create' in st.session_state:
         res = st.session_state['res_create']
-        if c_redo_c.button("🔄 Refazer", key="redo_c"):
-             with st.spinner("Reescrevendo..."):
-                # Para refazer, mantemos os parametros anteriores
-                pct_final = pct_img if usar_img else 0
-                rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, pct_final) 
-                # (Nota: Em produção, idealmente re-geraria imagens também, mas para economizar API mantemos o mapa se possivel ou limpamos)
-                st.session_state['res_create']['rac'] = rac
-                st.session_state['res_create']['txt'] = txt
-                st.rerun()
-        with st.expander("🧠 Racional"): st.info(res['rac'])
+        st.markdown(f"<div class='analise-box'><h3>🧠 Relatório Pedagógico</h3>{res['rac']}</div>", unsafe_allow_html=True)
+        
         with st.container(border=True):
             partes = re.split(r'(\[\[IMG_G\d+\]\])', res['txt'])
             for p in partes:
@@ -473,7 +457,7 @@ with tabs[2]:
                     if im: st.image(im, width=300)
                 elif p.strip(): st.markdown(p.strip())
         docx = construir_docx_final(res['txt'], aluno, mat_c, {}, None, "Criada")
-        st.download_button("📥 BAIXAR DOCX", docx, "Criada.docx", "primary")
+        st.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Criada.docx", "primary")
 
 # 4. ESTÚDIO VISUAL
 with tabs[3]:
@@ -488,28 +472,20 @@ with tabs[3]:
         url = gerar_imagem_hibrida(api_key, f"{desc} style {aluno.get('hiperfoco')}", unsplash_key)
         if url: st.image(url)
 
-# 5. ROTEIRO DE AULA
+# 5. ROTEIRO, 6. PAPO, 7. DINÂMICA (Iguais V14)
 with tabs[4]:
-    st.info("Planejamento.")
     ass = st.text_input("Assunto:", key="rot_ass")
     if st.button("📝 CRIAR ROTEIRO", type="primary"):
-        with st.spinner("Planejando..."):
-            st.markdown(gerar_roteiro_aula(api_key, aluno, ass))
+        with st.spinner("Planejando..."): st.markdown(gerar_roteiro_aula(api_key, aluno, ass))
 
-# 6. PAPO DE MESTRE
 with tabs[5]:
-    st.info(f"Conexão: {aluno.get('hiperfoco')}")
     c1, c2 = st.columns(2)
     ass_q = c1.text_input("Assunto:", key="qg_ass")
     tema_q = c2.text_input("Tema:", value=aluno.get('hiperfoco'), key="qg_tema")
     if st.button("🗣️ GERAR CONVERSA", type="primary"):
-        with st.spinner("Pensando..."):
-            st.markdown(gerar_quebra_gelo_profundo(api_key, aluno, ass_q, tema_q))
+        with st.spinner("Pensando..."): st.markdown(gerar_quebra_gelo_profundo(api_key, aluno, ass_q, tema_q))
 
-# 7. DINÂMICA
 with tabs[6]:
-    st.info("Atividade em Grupo.")
     ass_d = st.text_input("Tema:", key="din_ass")
     if st.button("🤝 CRIAR DINÂMICA", type="primary"):
-        with st.spinner("Adaptando..."):
-            st.markdown(gerar_dinamica_inclusiva(api_key, aluno, ass_d))
+        with st.spinner("Adaptando..."): st.markdown(gerar_dinamica_inclusiva(api_key, aluno, ass_d))
