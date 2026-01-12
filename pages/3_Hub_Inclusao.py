@@ -1,5 +1,16 @@
 import streamlit as st
+from openai import OpenAI
+from datetime import date
+from io import BytesIO
+from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Pt
+from pypdf import PdfReader
+from fpdf import FPDF
+import base64
 import os
+import re
+import json  # <--- NOVA IMPORTAÇÃO ESSENCIAL
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Omnisfera | Hub", page_icon="🚀", layout="wide")
