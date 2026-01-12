@@ -1,110 +1,153 @@
 import streamlit as st
+from openai import OpenAI
+from io import BytesIO
+from docx import Document
+from docx.shared import Pt, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from PIL import Image
+from streamlit_cropper import st_cropper
+import re
+import requests
+import json
+import base64
 import os
+from datetime import date
 
-# --- FUNÇÃO FAVICON ---
-def get_favicon():
-    if os.path.exists("iconeaba.png"): return "iconeaba.png"
-    return "💠"
+# --- 1. CONFIGURAÇÃO INICIAL (Obrigatório ser a primeira linha) ---
+st.set_page_config(page_title="Omnisfera | Ecossistema Inclusivo", page_icon="🌐", layout="wide")
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(
-    page_title="Ecossistema Inclusão 360º",
-    page_icon=get_favicon(),
-    layout="wide"
-)
+# ==============================================================================
+# 🔐 MÓDULO DE SEGURANÇA OMNISFERA
+# ==============================================================================
+def sistema_seguranca():
+    # 1. CSS BASE: Limpa o topo, rodapé e ajusta o visual
+    st.markdown("""
+        <style>
+            [data-testid="stHeader"] {visibility: hidden !important; height: 0px !important;}
+            div[data-testid="stStatusWidget"] {display: none !important;}
+            footer {visibility: hidden !important;}
+            .stImage {display: flex; justify-content: center; margin-bottom: 20px;}
+            
+            /* Estilo do Termo de Aceite */
+            .termo-box {
+                background-color: #f8f9fa; 
+                padding: 20px; 
+                border-radius: 10px; 
+                height: 200px; 
+                overflow-y: scroll; 
+                font-size: 0.9rem;
+                border: 1px solid #e9ecef;
+                margin-bottom: 15px;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
-# --- ESTILO VISUAL (CSS SIMPLIFICADO E BLINDADO) ---
-st.markdown("""
-<style>
-    /* Estilo Geral */
-    .stApp { background-color: #F7FAFC; }
-    
-    /* Cards */
-    .hub-card {
-        background-color: white;
-        padding: 2rem;
-        border-radius: 15px;
-        border: 1px solid #E2E8F0;
-        border-left: 6px solid #004E92;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
-        height: 250px;
-    }
-    
-    /* Ícones */
-    .icon-box {
-        font-size: 2rem;
-        color: #004E92;
-        margin-bottom: 1rem;
-    }
-    
-    /* Títulos */
-    h3 { color: #004E92 !important; font-weight: 800; }
-    p { color: #4A5568; font-size: 1rem; }
-    
-    /* Botões */
-    .stButton button {
-        width: 100%;
-        background-color: #FF6B6B !important;
-        color: white !important;
-        font-weight: bold;
-        border-radius: 10px;
-        border: none;
-        padding: 0.5rem 1rem;
-        transition: 0.3s;
-    }
-    .stButton button:hover {
-        background-color: #E53E3E !important;
-        transform: scale(1.02);
-    }
-</style>
-<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
-""", unsafe_allow_html=True)
+    if "autenticado" not in st.session_state:
+        st.session_state["autenticado"] = False
 
-# --- CABEÇALHO ---
-c_logo, c_title = st.columns([1, 5])
-with c_logo:
-    if os.path.exists("360.png"):
-        st.image("360.png", width=100)
+    # 2. SE NÃO ESTIVER LOGADO (Tela de Login Estreita)
+    if not st.session_state["autenticado"]:
+        st.markdown("""
+            <style>
+                /* Força largura estreita e centralizada para o Login */
+                .block-container {max-width: 800px !important; padding-top: 3rem !important;}
+                /* Esconde Sidebar no Login */
+                section[data-testid="stSidebar"] {display: none !important;}
+            </style>
+        """, unsafe_allow_html=True)
+        
+        # --- Interface de Login ---
+        # Tenta carregar o logo da Omnisfera
+        try:
+            # Certifique-se que o arquivo se chama 'ominisfera.png' ou ajuste aqui
+            st.image("ominisfera.png", width=250) 
+        except:
+            st.markdown("<h1 style='text-align:center;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
+
+        st.markdown("<h3 style='text-align: center; color: #4A5568;'>Ecossistema de Gestão da Inclusão</h3>", unsafe_allow_html=True)
+        st.markdown("---")
+        
+        st.info("""
+        **Bem-vindo(a) à revolução da inclusão.**
+        
+        A Omnisfera foi desenvolvida para garantir que a inclusão real aconteça de forma individualizada e eficiente.
+        Conforme a **Resolução do CNE (Dez/2025)**, o PEI é obrigatório e independente de laudo. Nós facilitamos essa jornada.
+        """)
+
+        # Termo com Rolagem
+        st.markdown("##### 🛡️ Termo de Confidencialidade e Uso")
+        termo_html = """
+        <div class="termo-box">
+            <strong>AMBIENTE PROTEGIDO OMNISFERA</strong><br><br>
+            Ao acessar este sistema, você concorda que:<br>
+            1. <strong>Propriedade Intelectual:</strong> Toda a lógica, prompts ("Engenharia de Prompt") e arquitetura do Ecossistema Omnisfera são propriedade exclusiva de <strong>Rodrigo A. Queiroz</strong>.<br>
+            2. <strong>Sigilo:</strong> As metodologias aqui aplicadas são confidenciais.<br>
+            3. <strong>Proibições:</strong> É estritamente proibido copiar, tirar prints (screenshots), realizar engenharia reversa ou compartilhar o acesso com terceiros não autorizados.<br>
+            4. <strong>Proteção Legal:</strong> O uso indevido está sujeito às penalidades da Lei de Direitos Autorais (Lei nº 9.610/98) e medidas judiciais cabíveis.<br><br>
+            <em>Este software está em fase de testes controlados.</em>
+        </div>
+        """
+        st.markdown(termo_html, unsafe_allow_html=True)
+        
+        concordo = st.checkbox("Li, compreendi e aceito os termos de propriedade intelectual.")
+        
+        st.write("")
+        
+        c1, c2 = st.columns([3, 1])
+        with c1:
+            senha_digitada = st.text_input("Chave de Acesso:", type="password", placeholder="Digite sua credencial...")
+        with c2:
+            st.write(" ") 
+            st.write(" ")
+            if st.button("🚀 ACESSAR", type="primary", use_container_width=True):
+                # Lógica de Senha (Data de Validade)
+                hoje = date.today()
+                # A senha muda automaticamente após 19/01/2026 para segurança
+                senha_correta = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNISFERA_PRO"
+                
+                if not concordo:
+                    st.warning("⚠️ É necessário aceitar os termos para prosseguir.")
+                elif senha_digitada == senha_correta:
+                    st.session_state["autenticado"] = True
+                    st.toast("Acesso Liberado! Bem-vindo à Omnisfera.", icon="✅")
+                    st.rerun()
+                else:
+                    st.error("🚫 Chave de acesso inválida.")
+        return False
+
+    # 3. SE ESTIVER LOGADO (Libera o App Completo)
     else:
-        st.header("💠")
+        st.markdown("""
+            <style>
+                /* Libera largura total para o App (Wide Mode) */
+                .block-container {max-width: 95% !important; padding-top: 1rem !important;}
+                /* Mostra a Sidebar novamente */
+                section[data-testid="stSidebar"] {display: flex !important;}
+            </style>
+        """, unsafe_allow_html=True)
+        return True
 
-with c_title:
-    st.title("Ecossistema Inclusão 360º")
-    st.markdown("Plataforma Integrada de Gestão, Adaptação e Inteligência Pedagógica.")
+# --- EXECUTA A SEGURANÇA ANTES DE TUDO ---
+if not sistema_seguranca():
+    st.stop() # Para o carregamento aqui se não estiver logado
 
-st.divider()
+# ==============================================================================
+# 🚀 AQUI COMEÇA O SEU APP OMNISFERA (V18.1)
+# ==============================================================================
 
-# --- MÓDULOS (COM BOTÕES QUE FUNCIONAM) ---
-c1, c2 = st.columns(2)
+# --- 2. BANCO DE DADOS ---
+ARQUIVO_DB = "banco_alunos.json"
 
-# CARD 1: PEI
-with c1:
-    st.markdown("""
-    <div class="hub-card">
-        <div class="icon-box"><i class="ri-file-user-line"></i></div>
-        <h3>1. Gestão de PEI</h3>
-        <p>O módulo clássico. Crie Planos de Ensino Individualizados cruzando LBI, Neurociência e BNCC.</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Botão de Navegação
-    if st.button("Acessar Módulo PEI 🚀", key="btn_pei", use_container_width=True):
-        st.switch_page("pages/2_Gestao_PEI.py")
+def carregar_banco():
+    if os.path.exists(ARQUIVO_DB):
+        try:
+            with open(ARQUIVO_DB, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except: return []
+    return []
 
-# CARD 2: ADAPTADOR
-with c2:
-    st.markdown("""
-    <div class="hub-card">
-        <div class="icon-box"><i class="ri-pencil-ruler-2-line"></i></div>
-        <h3>2. Adaptador de Avaliações</h3>
-        <p><b>NOVO!</b> Utilize IA para transformar questões complexas em formatos acessíveis.</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Botão de Navegação
-    if st.button("Acessar Adaptador ✨", key="btn_adapt", use_container_width=True):
-        st.switch_page("pages/1_Adaptador_Provas.py")
+if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
+    st.session_state.banco_estudantes = carregar_banco()
 
-st.divider()
-st.markdown("<div style='text-align:center; color:#A0AEC0;'>Versão 3.0 Alpha | Desenvolvido por Rodrigo Queiroz</div>", unsafe_allow_html=True)
+# ... (O RESTANTE DO CÓDIGO DA V18.1 CONTINUA EXATAMENTE AQUI) ...
+# ... (Copie e cole todo o código da V18.1 abaixo desta linha) ...
