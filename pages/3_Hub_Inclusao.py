@@ -240,7 +240,7 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
 
-# --- IA FUNCTIONS (ATUALIZADAS E BLINDADAS CONTRA TEXTO) ---
+# --- IA FUNCTIONS (BLINDADAS CONTRA TEXTO) ---
 
 def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anterior=""):
     """
@@ -251,12 +251,12 @@ def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anteri
     
     prompt_final = prompt
     if feedback_anterior:
-        prompt_final = f"{prompt}. Refinement needed: {feedback_anterior}"
+        prompt_final = f"{prompt}. Adjustment requested: {feedback_anterior}"
 
-    # 1. TENTATIVA PRINCIPAL: IA (DALL-E 3) - BLINDADO CONTRA TEXTO
+    # 1. TENTATIVA PRINCIPAL: IA (DALL-E 3) - BLINDAGEM AGRESSIVA CONTRA TEXTO
     try:
         # Prompt com TRAVA DE TEXTO ("STRICTLY NO TEXT")
-        didactic_prompt = f"Educational textbook illustration, clean flat vector style, white background. STRICTLY NO TEXT, NO LETTERS, NO WORDS, NO LABELS inside the image. visual representation only: {prompt_final}"
+        didactic_prompt = f"Educational textbook illustration, clean flat vector style, white background. CRITICAL RULE: STRICTLY NO TEXT, NO TYPOGRAPHY, NO ALPHABET, NO NUMBERS, NO LABELS inside the image. Just the visual representation of: {prompt_final}"
         resp = client.images.generate(model="dall-e-3", prompt=didactic_prompt, size="1024x1024", quality="standard", n=1)
         return resp.data[0].url
     except Exception as e:
@@ -276,16 +276,17 @@ def gerar_pictograma_caa(api_key, conceito, feedback_anterior=""):
     
     ajuste = f" CORREÇÃO PEDIDA: {feedback_anterior}" if feedback_anterior else ""
     
+    # Prompt otimizado para Símbolos Mudos
     prompt_caa = f"""
-    Crie um SÍMBOLO DE COMUNICAÇÃO (CAA/PECS) para a palavra/conceito: '{conceito}'. {ajuste}
-    ESTILO OBRIGATÓRIO:
-    - Desenho vetorial plano (Flat Design) no estilo ARASAAC.
-    - Fundo 100% BRANCO sólido.
-    - Contorno PRETO GROSSO em volta do desenho.
-    - Cores primárias e alto contraste.
-    - Sem sombras, sem cenários, sem detalhes desnecessários.
-    - Apenas o objeto ou ação centralizado.
-    - REGRA CRÍTICA: NÃO inclua nenhum texto, letra ou palavra na imagem. Apenas o ícone visual.
+    Create a COMMUNICATION SYMBOL (AAC/PECS) for the concept: '{conceito}'. {ajuste}
+    STYLE GUIDE:
+    - Flat vector icon (ARASAAC/Noun Project style).
+    - Solid WHITE background.
+    - Thick BLACK outlines.
+    - High contrast primary colors.
+    - No background details, no shadows.
+    - CRITICAL MANDATORY RULE: MUTE IMAGE. NO TEXT. NO WORDS. NO LETTERS. NO NUMBERS. 
+    - The image must be a purely visual symbol.
     """
     try:
         resp = client.images.generate(model="dall-e-3", prompt=prompt_caa, size="1024x1024", quality="standard", n=1)
