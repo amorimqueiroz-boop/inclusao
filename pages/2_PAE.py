@@ -4,7 +4,7 @@ from openai import OpenAI
 import json
 import pandas as pd
 from datetime import date
-import base64  # <--- Adicionado para processar a imagem no HTML
+import base64
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
@@ -57,21 +57,21 @@ if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estu
 # --- CSS PERSONALIZADO ---
 st.markdown("""
     <style>
-    /* Ajustei o header-pae para centralizar o conteúdo verticalmente */
+    /* LAYOUT DO BANNER: Flexbox Horizontal */
     .header-pae { 
         background: white; 
-        padding: 20px; 
+        padding: 10px 30px; /* Mais espaço lateral */
         border-radius: 12px; 
         border-left: 6px solid #805AD5; 
         box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
         margin-bottom: 20px; 
-        display: flex; 
-        flex-direction: column; /* Organiza logo em cima, subtítulo embaixo */
-        align-items: center; 
-        justify-content: center;
-        text-align: center;
-        gap: 10px;
+        
+        display: flex;             /* Habilita Flexbox */
+        flex-direction: row;       /* Itens lado a lado */
+        align-items: center;       /* Centraliza verticalmente */
+        gap: 20px;                 /* Espaço entre logo e texto */
     }
+    
     .student-header { background-color: #F3E8FF; border: 1px solid #D6BCFA; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; }
     .student-label { font-size: 0.8rem; color: #553C9A; font-weight: 700; text-transform: uppercase; }
     .student-value { font-size: 1.1rem; color: #44337A; font-weight: 800; }
@@ -82,23 +82,24 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- CABEÇALHO (LOGO PAE + SUBTÍTULO NO BANNER) ---
-# Função auxiliar para carregar imagem local dentro do HTML
+# --- CABEÇALHO (LOGO ESQUERDA + SUBTÍTULO CENTRO) ---
 def get_img_tag(file_path, width):
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
             data = base64.b64encode(f.read()).decode("utf-8")
         return f'<img src="data:image/png;base64,{data}" width="{width}">'
-    return "🧩" # Fallback se a imagem não existir
+    return "🧩"
 
-img_html = get_img_tag("pae.png", "350") # Logo grande (350px)
+img_html = get_img_tag("pae.png", "350") # Logo grande
 
 st.markdown(f"""
     <div class="header-pae">
-        {img_html}
-        <p style="margin:0; color:#666; font-size: 1.2rem; font-weight: 500;">
-            Sala de Recursos & Eliminação de Barreiras
-        </p>
+        <div style="flex-shrink: 0;"> {img_html}
+        </div>
+        <div style="flex-grow: 1; text-align: center;"> <p style="margin:0; color:#666; font-size: 1.5rem; font-weight: 500;">
+                Sala de Recursos & Eliminação de Barreiras
+            </p>
+        </div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -115,7 +116,7 @@ with col_sel:
 
 aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
 
-# Exibe Resumo do PEI (A "Alimentação Inicial")
+# Exibe Resumo do PEI
 st.markdown(f"""
     <div class="student-header">
         <div><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div>
@@ -135,20 +136,17 @@ else: api_key = st.sidebar.text_input("Chave OpenAI:", type="password")
 def gerar_diagnostico_barreiras(api_key, aluno, obs_prof):
     client = OpenAI(api_key=api_key)
     prompt = f"""
-    ATUAR COMO: Especialista em AEE (Atendimento Educacional Especializado).
-    OBJETIVO: Analisar o PEI do aluno e o relato do professor para mapear BARREIRAS (não deficiências).
-    
+    ATUAR COMO: Especialista em AEE.
     ALUNO: {aluno['nome']} | HIPERFOCO: {aluno.get('hiperfoco')}
     RESUMO PEI: {aluno.get('ia_sugestao', '')[:1000]}
-    OBSERVAÇÃO ATUAL DO PROFESSOR AEE: {obs_prof}
+    OBSERVAÇÃO ATUAL: {obs_prof}
     
-    CLASSIFIQUE AS BARREIRAS ENCONTRADAS (Lei Brasileira de Inclusão):
-    1. **Barreiras Comunicacionais:** (Ex: falta de Libras, escrita, comunicação alternativa)
-    2. **Barreiras Metodológicas:** (Ex: métodos de ensino que não atingem o aluno)
-    3. **Barreiras Atitudinais:** (Ex: isolamento, bullying, descrença da capacidade)
-    4. **Barreiras Tecnológicas/Instrumentais:** (Ex: falta de engrossador, material adaptado)
-    
-    SAÍDA: Tabela Markdown clara e direta.
+    CLASSIFIQUE AS BARREIRAS (Lei Brasileira de Inclusão):
+    1. **Barreiras Comunicacionais**
+    2. **Barreiras Metodológicas**
+    3. **Barreiras Atitudinais**
+    4. **Barreiras Tecnológicas/Instrumentais**
+    SAÍDA: Tabela Markdown.
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.5)
@@ -158,17 +156,11 @@ def gerar_diagnostico_barreiras(api_key, aluno, obs_prof):
 def gerar_plano_habilidades(api_key, aluno, foco_treino):
     client = OpenAI(api_key=api_key)
     prompt = f"""
-    CRIE UM PLANO DE INTERVENÇÃO PARA SALA DE RECURSOS (AEE).
-    FOCO: Desenvolvimento de Habilidades (Não reforço escolar).
-    ÁREA DO TREINO: {foco_treino}
+    CRIE UM PLANO DE INTERVENÇÃO AEE (Sala de Recursos).
+    FOCO: Desenvolvimento de Habilidades ({foco_treino}).
+    ALUNO: {aluno['nome']} | HIPERFOCO: {aluno.get('hiperfoco')}
     
-    ALUNO: {aluno['nome']}
-    HIPERFOCO: {aluno.get('hiperfoco')} (USE O HIPERFOCO COMO ESTRATÉGIA DE ENGAJAMENTO).
-    
-    GERE 3 METAS SMART:
-    1. **Meta de Longo Prazo:** (O que queremos em 6 meses?)
-    2. **Estratégia com Hiperfoco:** (Como usar {aluno.get('hiperfoco')} para treinar isso?)
-    3. **Recurso Necessário:** (O que construir ou usar?)
+    GERE 3 METAS SMART (Longo Prazo, Estratégia com Hiperfoco, Recurso).
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
@@ -178,13 +170,9 @@ def gerar_plano_habilidades(api_key, aluno, foco_treino):
 def sugerir_tecnologia_assistiva(api_key, aluno, dificuldade):
     client = OpenAI(api_key=api_key)
     prompt = f"""
-    SUGESTÃO DE TECNOLOGIA ASSISTIVA E RECURSOS.
-    Aluno: {aluno['nome']}. Dificuldade Específica relatada: {dificuldade}.
-    
-    Sugira 3 Níveis de Solução:
-    1. **Baixa Tecnologia (DIY):** Algo que o professor pode fazer com papelão, velcro, garrafa PET.
-    2. **Média Tecnologia:** Materiais pedagógicos estruturados ou adaptações físicas simples.
-    3. **Alta Tecnologia:** Apps, softwares ou hardware específico.
+    SUGESTÃO DE TECNOLOGIA ASSISTIVA.
+    Aluno: {aluno['nome']}. Dificuldade: {dificuldade}.
+    Sugira: Baixa Tecnologia (DIY), Média Tecnologia, Alta Tecnologia.
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
@@ -195,15 +183,9 @@ def gerar_documento_articulacao(api_key, aluno, frequencia, acoes):
     client = OpenAI(api_key=api_key)
     prompt = f"""
     ESCREVA UMA CARTA DE ARTICULAÇÃO (AEE -> SALA REGULAR).
-    De: Professor do AEE.
-    Para: Professores da Sala Regular.
-    Aluno: {aluno['nome']}.
-    
-    Conteúdo:
-    - Informe que o aluno será atendido {frequencia}.
-    - Explique que no AEE estamos trabalhando: {acoes}.
-    - Dê 3 dicas práticas de como o professor da sala regular pode ajudar a generalizar essas conquistas na aula dele.
-    - Tom: Colaborativo, profissional e parceiro.
+    Aluno: {aluno['nome']}. Frequência: {frequencia}.
+    Ações no AEE: {acoes}.
+    Dê 3 dicas para o professor regente. Tom colaborativo.
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
@@ -218,54 +200,43 @@ tab_barreiras, tab_plano, tab_tec, tab_ponte = st.tabs([
     "🌉 Cronograma & Articulação"
 ])
 
-# 1. BARREIRAS (Diagnóstico)
+# 1. BARREIRAS
 with tab_barreiras:
     st.write("### 🔍 Diagnóstico de Acessibilidade")
     st.info("O PAE começa identificando o que impede o aluno de participar, não a doença dele.")
-    
-    obs_aee = st.text_area("Observações Iniciais do AEE (Opcional):", placeholder="Ex: O aluno se recusa a escrever, mas fala muito sobre dinossauros. Tem dificuldade motora fina.", height=100)
-    
+    obs_aee = st.text_area("Observações Iniciais do AEE (Opcional):", placeholder="Ex: O aluno se recusa a escrever...", height=100)
     if st.button("Analisar Barreiras via IA", type="primary"):
         if not api_key: st.error("Insira a chave OpenAI."); st.stop()
-        with st.spinner("Cruzando dados do PEI com Observações..."):
-            res_barreiras = gerar_diagnostico_barreiras(api_key, aluno, obs_aee)
-            st.markdown(res_barreiras)
+        with st.spinner("Analisando..."):
+            st.markdown(gerar_diagnostico_barreiras(api_key, aluno, obs_aee))
 
-# 2. PLANO DE HABILIDADES (Treino)
+# 2. PLANO
 with tab_plano:
-    st.write("### 🎯 Treino de Habilidades (Não Curricular)")
-    st.info(f"Vamos usar o hiperfoco **({aluno.get('hiperfoco')})** para desenvolver funções mentais superiores.")
-    
-    foco = st.selectbox("Qual o foco do atendimento agora?", 
-        ["Funções Executivas (Atenção/Memória)", "Autonomia e AVDs", "Coordenação Motora", "Comunicação Alternativa", "Habilidades Sociais"])
-    
-    if st.button("Gerar Plano de Intervenção", type="primary"):
-        with st.spinner("Criando estratégias engajadoras..."):
-            res_plano = gerar_plano_habilidades(api_key, aluno, foco)
-            st.markdown(res_plano)
+    st.write("### 🎯 Treino de Habilidades")
+    st.info(f"Hiperfoco Ativo: **{aluno.get('hiperfoco')}**")
+    foco = st.selectbox("Foco do atendimento:", ["Funções Executivas", "Autonomia", "Coordenação Motora", "Comunicação", "Habilidades Sociais"])
+    if st.button("Gerar Plano", type="primary"):
+        with st.spinner("Planejando..."):
+            st.markdown(gerar_plano_habilidades(api_key, aluno, foco))
 
-# 3. TECNOLOGIA ASSISTIVA
+# 3. T.A.
 with tab_tec:
-    st.write("### 🛠️ Caixa de Ferramentas")
-    dif_especifica = st.text_input("Qual a dificuldade específica a ser superada?", placeholder="Ex: Não consegue segurar o lápis / Não consegue ler textos longos")
-    
+    st.write("### 🛠️ Tecnologia Assistiva")
+    dif_especifica = st.text_input("Dificuldade Específica:", placeholder="Ex: Não segura o lápis")
     if st.button("Sugerir Recursos", type="primary"):
-        with st.spinner("Buscando soluções no banco de dados de TA..."):
-            res_ta = sugerir_tecnologia_assistiva(api_key, aluno, dif_especifica)
-            st.markdown(res_ta)
+        with st.spinner("Buscando T.A..."):
+            st.markdown(sugerir_tecnologia_assistiva(api_key, aluno, dif_especifica))
 
-# 4. ARTICULAÇÃO (A Ponte)
+# 4. ARTICULAÇÃO
 with tab_ponte:
-    st.write("### 🌉 A Ponte com a Sala Regular")
+    st.write("### 🌉 Ponte com a Sala Regular")
     c1, c2 = st.columns(2)
-    freq = c1.selectbox("Frequência do Atendimento:", ["1x por semana", "2x por semana", "3x por semana", "Diário"])
-    turno = c2.selectbox("Turno:", ["Contraturno Manhã", "Contraturno Tarde"])
-    
-    acoes_resumo = st.text_area("O que está sendo trabalhado no AEE?", placeholder="Ex: Uso de prancha de comunicação e treino de foco.", height=70)
-    
-    if st.button("Gerar Carta de Articulação", type="primary"):
-        with st.spinner("Redigindo documento oficial..."):
+    freq = c1.selectbox("Frequência:", ["1x/sem", "2x/sem", "3x/sem", "Diário"])
+    turno = c2.selectbox("Turno:", ["Manhã", "Tarde"])
+    acoes_resumo = st.text_area("Trabalho no AEE:", placeholder="Ex: Comunicação alternativa...", height=70)
+    if st.button("Gerar Carta", type="primary"):
+        with st.spinner("Escrevendo..."):
             carta = gerar_documento_articulacao(api_key, aluno, f"{freq} ({turno})", acoes_resumo)
             st.markdown("### 📄 Documento Gerado")
             st.markdown(carta)
-            st.download_button("📥 Baixar Carta (.txt)", carta, "Carta_Articulacao.txt")
+            st.download_button("📥 Baixar Carta", carta, "Carta_Articulacao.txt")
