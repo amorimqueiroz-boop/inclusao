@@ -21,31 +21,120 @@ from streamlit_cropper import st_cropper
 st.set_page_config(page_title="[TESTE] Omnisfera | Hub", page_icon="🚀", layout="wide")
 
 # ==============================================================================
-# ### INICIO BLOCO TESTE: VISUAL DE ALERTA ###
+# ### BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA & ALERTA DE TESTE ###
 # ==============================================================================
-st.markdown("""
+import os
+import base64
+import streamlit as st
+
+# 1. Detecção Automática de Ambiente (Via st.secrets)
+try:
+    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
+except:
+    IS_TEST_ENV = False
+
+# 2. Função para carregar a logo em Base64
+def get_logo_base64():
+    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
+    for c in caminhos:
+        if os.path.exists(c):
+            with open(c, "rb") as f:
+                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
+
+src_logo_giratoria = get_logo_base64()
+
+# 3. Definição Dinâmica de Cores (Card Branco ou Amarelo)
+if IS_TEST_ENV:
+    # Amarelo Vibrante (Aviso de Teste)
+    card_bg = "rgba(255, 220, 50, 0.95)" 
+    card_border = "rgba(200, 160, 0, 0.5)"
+else:
+    # Branco Gelo Transparente (Original)
+    card_bg = "rgba(255, 255, 255, 0.85)"
+    card_border = "rgba(255, 255, 255, 0.6)"
+
+# 4. Renderização do CSS Global e Header Flutuante
+st.markdown(f"""
 <style>
-    /* Faixa de aviso no topo */
-    .test-environment-bar {
-        position: fixed; top: 0; left: 0; width: 100%; height: 12px;
-        background: repeating-linear-gradient(45deg, #FFC107, #FFC107 10px, #FF9800 10px, #FF9800 20px);
-        z-index: 9999999;
-    }
-    /* Selo de Teste */
-    .test-badge {
-        position: fixed; top: 20px; right: 20px; 
-        background-color: #FF9800; color: white;
-        padding: 5px 12px; border-radius: 8px;
-        font-weight: 800; font-size: 0.8rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        z-index: 9999999; pointer-events: none;
-    }
+    /* --- AJUSTE CRÍTICO: MENU LATERAL VISÍVEL --- */
+    
+    /* 1. Header principal transparente (permite ver o botão da sidebar) */
+    header[data-testid="stHeader"] {{
+        background-color: transparent !important;
+        z-index: 9999 !important; /* Garante que fique acessível */
+    }}
+    
+    /* 2. Esconde APENAS a barra de ferramentas da direita (Share, Deploy, etc) */
+    [data-testid="stToolbar"] {{
+        visibility: hidden !important;
+        display: none !important;
+    }}
+    
+    /* 3. Garante que o botão de abrir/fechar a sidebar esteja visível e clicável */
+    [data-testid="stSidebarCollapsedControl"] {{
+        visibility: visible !important;
+        display: block !important;
+        color: #2D3748 !important; /* Cor do ícone */
+    }}
+    
+    /* -------------------------------------------- */
+
+    /* CARD FLUTUANTE (OMNISFERA) */
+    .omni-badge {{
+        position: fixed;
+        top: 15px; 
+        right: 15px;
+        
+        /* COR DINÂMICA (Mudança aqui) */
+        background: {card_bg};
+        border: 1px solid {card_border};
+        
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        
+        /* Dimensões: Fino e Largo */
+        padding: 4px 30px;
+        min-width: 260px;
+        justify-content: center;
+        
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        z-index: 999990; /* Acima do conteúdo */
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        pointer-events: none; /* Deixa passar clique se necessário */
+    }}
+
+    .omni-text {{
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: 0.9rem;
+        color: #2D3748;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }}
+
+    @keyframes spin-slow {{
+        from {{ transform: rotate(0deg); }}
+        to {{ transform: rotate(360deg); }}
+    }}
+    
+    .omni-logo-spin {{
+        height: 26px; width: 26px; 
+        animation: spin-slow 10s linear infinite;
+    }}
+
 </style>
-<div class="test-environment-bar"></div>
-<div class="test-badge">🛠️ AMBIENTE DE TESTES</div>
+
+<div class="omni-badge">
+    <img src="{src_logo_giratoria}" class="omni-logo-spin">
+    <span class="omni-text">OMNISFERA</span>
+</div>
 """, unsafe_allow_html=True)
 # ==============================================================================
-# ### FIM BLOCO TESTE ###
+# ### FIM BLOCO VISUAL INTELIGENTE ###
 # ==============================================================================
 
 def verificar_acesso():
