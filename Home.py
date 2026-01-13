@@ -3,6 +3,7 @@ from datetime import date
 from openai import OpenAI
 import base64
 import os
+import time
 
 # --- 1. CONFIGURAÇÃO INICIAL ---
 st.set_page_config(
@@ -37,7 +38,7 @@ def sistema_seguranca():
         c1, c2, c3 = st.columns([1, 2, 1])
         with c2:
             st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-            # VOLTOU PARA A LOGO COMPLETA OMNISFERA.PNG NO LOGIN
+            # LOGO DO LOGIN
             try: 
                 if os.path.exists("ominisfera.png"): st.image("ominisfera.png", width=250)
                 else: st.markdown("# 🌐 OMNISFERA")
@@ -64,7 +65,7 @@ def sistema_seguranca():
 if not sistema_seguranca(): st.stop()
 
 # ==============================================================================
-# 🏠 HOME - DASHBOARD OMNISFERA (STABLE V11)
+# 🏠 HOME - DASHBOARD OMNISFERA (V12 - LEFT ALIGN BANNER)
 # ==============================================================================
 
 # CSS GERAL
@@ -102,11 +103,11 @@ st.markdown("""
         width: auto;
     }
 
-    /* --- HERO BANNER (ESTÁTICO & SLIM) --- */
+    /* --- HERO BANNER (SLIM & ESQUERDA) --- */
     .dash-hero { 
         background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); 
         border-radius: 12px;
-        margin-bottom: 15px; /* Espaço para o texto conceito */
+        margin-bottom: 15px;
         box-shadow: 0 4px 10px rgba(15, 82, 186, 0.2);
         color: white;
         position: relative;
@@ -114,17 +115,23 @@ st.markdown("""
         height: 80px; /* Altura fixa fina */
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start; /* ALINHAMENTO À ESQUERDA */
+        padding-left: 40px; /* Margem esquerda para o texto */
     }
     
+    .hero-text-block {
+        z-index: 2;
+        text-align: left; /* TEXTO À ESQUERDA */
+    }
+
     .hero-title {
         color: white; 
+        font-family: 'Nunito', sans-serif;
         font-weight: 700; 
         font-size: 1.5rem; 
         margin: 0; 
         line-height: 1.1;
         letter-spacing: 0.5px;
-        z-index: 2;
     }
     .hero-subtitle {
         color: rgba(255,255,255,0.9);
@@ -132,8 +139,6 @@ st.markdown("""
         margin-top: 2px; 
         font-weight: 300; 
         font-style: italic;
-        z-index: 2;
-        text-align: center;
     }
     
     .hero-bg-icon {
@@ -217,11 +222,10 @@ else:
     st.markdown("<h1 style='text-align: center; color: #0F52BA; font-size: 3rem; margin-bottom:10px;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
 
 
-# --- 2. HERO BANNER (SLIM & ESTÁTICO) ---
-# Aqui o HTML está simplificado para não quebrar.
+# --- 2. HERO BANNER (SLIM & LEFT ALIGNED) ---
 st.markdown("""
 <div class="dash-hero">
-    <div style="text-align: center; z-index: 2;">
+    <div class="hero-text-block">
         <div class="hero-title">Olá, Educador(a)!</div>
         <div class="hero-subtitle">"Cada criança é única; seu potencial, ilimitado!"</div>
     </div>
@@ -267,7 +271,7 @@ with col2:
             <div class="tool-title"><i class="ri-puzzle-line" style="color:#805AD5; margin-right:5px;"></i> PAE</div>
             <div class="tool-desc">
                 <strong>Plano de AEE</strong><br>
-                Focado na Sala de Recursos. Tecnologia assistiva.
+                Focado na Sala de Recursos. Identifique barreiras e tecnologias assistivas.
             </div>
         </div>
     </div>
