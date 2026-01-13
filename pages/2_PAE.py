@@ -10,11 +10,39 @@ import base64
 # 1. CONFIGURAÇÃO E SEGURANÇA
 # ==============================================================================
 st.set_page_config(
-    page_title="Omnisfera | PAEE", 
-    page_icon="🧩", 
+    page_title="[TESTE] Omnisfera | PAEE", 
+    page_icon="🛠️", 
     layout="wide",
     initial_sidebar_state="expanded" # Garante que a barra lateral inicie aberta
 )
+
+# ==============================================================================
+# ### INICIO BLOCO TESTE: VISUAL DE ALERTA ###
+# ==============================================================================
+st.markdown("""
+<style>
+    /* Faixa de aviso no topo */
+    .test-environment-bar {
+        position: fixed; top: 0; left: 0; width: 100%; height: 12px;
+        background: repeating-linear-gradient(45deg, #FFC107, #FFC107 10px, #FF9800 10px, #FF9800 20px);
+        z-index: 9999999;
+    }
+    /* Selo de Teste */
+    .test-badge {
+        position: fixed; top: 20px; right: 20px; 
+        background-color: #FF9800; color: white;
+        padding: 5px 12px; border-radius: 8px;
+        font-weight: 800; font-size: 0.8rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        z-index: 9999999; pointer-events: none;
+    }
+</style>
+<div class="test-environment-bar"></div>
+<div class="test-badge">🛠️ AMBIENTE DE TESTES</div>
+""", unsafe_allow_html=True)
+# ==============================================================================
+# ### FIM BLOCO TESTE ###
+# ==============================================================================
 
 def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
@@ -57,10 +85,21 @@ with st.sidebar:
 ARQUIVO_DB = "banco_alunos.json"
 
 def carregar_banco():
+    # --- BLINDAGEM DE DADOS (Multitenancy) ---
+    usuario_atual = st.session_state.get("usuario_nome", "")
+    # -----------------------------------------
+
     if os.path.exists(ARQUIVO_DB):
         try:
             with open(ARQUIVO_DB, "r", encoding="utf-8") as f:
-                return json.load(f)
+                todos_alunos = json.load(f)
+                
+                # FILTRAGEM: Retorna apenas alunos deste usuário
+                meus_alunos = [
+                    aluno for aluno in todos_alunos 
+                    if aluno.get('responsavel') == usuario_atual
+                ]
+                return meus_alunos
         except: return []
     return []
 
@@ -123,7 +162,7 @@ st.markdown(f"""
 
 
 if not st.session_state.banco_estudantes:
-    st.warning("⚠️ Nenhum aluno com PEI encontrado. Cadastre no módulo PEI primeiro.")
+    st.warning("⚠️ Nenhum aluno encontrado para o seu usuário. Cadastre no módulo PEI primeiro.")
     st.stop()
 
 # --- SELEÇÃO DE ALUNO ---
