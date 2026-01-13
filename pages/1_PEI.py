@@ -66,7 +66,7 @@ st.markdown(f"""
     
     /* -------------------------------------------- */
 
-    /* Faixa de Teste */
+   /* Faixa de Teste */
     {css_faixa_teste}
 
     /* CARD FLUTUANTE (OMNISFERA) */
