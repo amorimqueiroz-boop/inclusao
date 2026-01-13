@@ -21,7 +21,6 @@ def get_base64_image(image_path):
         return base64.b64encode(img_file.read()).decode()
 
 def sistema_seguranca():
-    # CSS para esconder elementos padrão e estilizar login
     st.markdown("""
         <style>
             [data-testid="stHeader"] {visibility: hidden !important; height: 0px !important;}
@@ -38,8 +37,9 @@ def sistema_seguranca():
         c1, c2, c3 = st.columns([1, 2, 1])
         with c2:
             st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-            try: st.image("ominisfera.png", width=250)
-            except: st.markdown("# 🌐 OMNISFERA")
+            # Tenta carregar a logo completa ou o ícone para o login
+            if os.path.exists("omni_icone.png"):
+                st.image("omni_icone.png", width=100)
             st.markdown("### Acesso Restrito")
             st.markdown("---")
             st.markdown("##### 🛡️ Termo de Confidencialidade")
@@ -61,76 +61,86 @@ def sistema_seguranca():
 if not sistema_seguranca(): st.stop()
 
 # ==============================================================================
-# 🏠 HOME - DASHBOARD OMNISFERA (LEFT ALIGN LOGO)
+# 🏠 HOME - DASHBOARD OMNISFERA (ANIMATED HEADER)
 # ==============================================================================
 
-# CSS GERAL E CARDS
+# CSS GERAL, CARDS E ANIMAÇÃO
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
     html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
     
-    /* LOGO HEADER ALINHADA À ESQUERDA */
-    .left-header-logo {
-        display: flex;
-        justify-content: flex-start; /* Alinha à esquerda */
-        align-items: center;
-        margin-bottom: 25px;
-        padding-top: 10px;
-        padding-bottom: 10px;
+    /* --- ANIMAÇÃO DE ROTAÇÃO --- */
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
-    .left-header-logo img {
-        max-width: 100%;     
-        max-height: 280px;   /* Altura máxima imponente */
-        height: auto;
-        object-fit: contain;
-        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    
+    .logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px; /* Espaço entre o círculo e o texto */
+        margin-bottom: 25px;
+        padding: 10px;
+    }
+    
+    .logo-icon-spin {
+        height: 90px; /* Tamanho do círculo */
+        width: auto;
+        animation: spin 20s linear infinite; /* Gira devagar e infinito */
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+    
+    .logo-text-static {
+        height: 60px; /* Tamanho do texto (ajuste proporcional) */
+        width: auto;
     }
 
-    /* HERO BANNER - AZUL CLÁSSICO */
+    /* --- HERO BANNER (MAIS ESTREITO/SLIM) --- */
     .dash-hero { 
         background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); 
-        border-radius: 20px; 
-        padding: 30px; 
+        border-radius: 16px; 
+        padding: 15px 30px; /* Padding reduzido na vertical (15px) */
         margin-bottom: 30px; 
-        box-shadow: 0 8px 20px rgba(15, 82, 186, 0.2);
+        box-shadow: 0 4px 12px rgba(15, 82, 186, 0.2);
         color: white;
         position: relative;
         overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        min-height: 100px; /* Altura mínima reduzida */
     }
     
     .hero-title {
         color: white;
         font-weight: 800;
-        font-size: 2.5rem;
+        font-size: 1.8rem; /* Fonte um pouco menor para o banner slim */
         margin: 0;
-        line-height: 1.2;
+        line-height: 1.1;
     }
     .hero-subtitle {
-        color: white;
-        opacity: 0.9;
-        font-size: 1.1rem;
-        margin-top: 10px;
+        color: rgba(255,255,255,0.9);
+        font-size: 0.95rem;
+        margin-top: 5px;
         font-weight: 600;
     }
     
     .hero-bg-icon {
         position: absolute;
-        right: 30px;
-        font-size: 6rem;
+        right: 20px;
+        font-size: 4rem;
         opacity: 0.15;
         color: white;
         transform: rotate(-15deg);
     }
 
-    /* BOTÕES DE FERRAMENTA */
+    /* --- BOTÕES DE FERRAMENTA --- */
     .tool-card {
         background-color: white;
         border-radius: 15px;
-        padding: 25px;
+        padding: 20px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         border: 1px solid #E2E8F0;
         height: 100%;
@@ -144,26 +154,26 @@ st.markdown("""
         border-color: #3182CE; 
         box-shadow: 0 15px 30px rgba(0,0,0,0.1);
     }
-    .tool-title { font-size: 1.4rem; font-weight: 800; color: #2D3748; margin-bottom: 5px; }
-    .tool-desc { font-size: 0.9rem; color: #718096; margin-bottom: 20px; line-height: 1.4; }
+    .tool-title { font-size: 1.3rem; font-weight: 800; color: #2D3748; margin-bottom: 5px; }
+    .tool-desc { font-size: 0.85rem; color: #718096; margin-bottom: 15px; line-height: 1.4; }
     
-    .border-blue { border-top: 6px solid #3182CE; }
-    .border-purple { border-top: 6px solid #805AD5; }
-    .border-teal { border-top: 6px solid #38B2AC; }
+    .border-blue { border-top: 5px solid #3182CE; }
+    .border-purple { border-top: 5px solid #805AD5; }
+    .border-teal { border-top: 5px solid #38B2AC; }
 
-    /* INSIGHT CARD */
+    /* --- INSIGHT CARD --- */
     .insight-card {
         background-color: #FFFFF0;
         border-radius: 12px;
-        padding: 20px;
+        padding: 15px 20px;
         color: #2D3748;
         display: flex;
         align-items: center;
         gap: 15px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         border-left: 5px solid #D69E2E;
-        margin-top: 20px;
-        margin-bottom: 40px;
+        margin-top: 15px;
+        margin-bottom: 30px;
     }
     .insight-icon {
         font-size: 1.5rem;
@@ -174,7 +184,7 @@ st.markdown("""
         display: flex; align-items: center; justify-content: center;
     }
 
-    /* CARDS INFORMATIVOS (RODAPÉ) */
+    /* --- CARDS INFORMATIVOS --- */
     .home-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -217,28 +227,28 @@ if 'OPENAI_API_KEY' in st.secrets:
         noticia = st.session_state['home_insight']
     except: pass
 
-# --- 1. LOGO ALINHADA À ESQUERDA ---
-logo_b64 = get_base64_image("ominisfera.png")
-if logo_b64:
+# --- 1. CABEÇALHO COM ANIMAÇÃO ---
+icone_b64 = get_base64_image("omni_icone.png")
+texto_b64 = get_base64_image("omni_texto.png")
+
+# Se os arquivos existirem, monta o header animado. Se não, fallback texto.
+if icone_b64 and texto_b64:
     st.markdown(f"""
-    <div class="left-header-logo">
-        <img src="data:image/png;base64,{logo_b64}">
+    <div class="logo-container">
+        <img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">
+        <img src="data:image/png;base64,{texto_b64}" class="logo-text-static">
     </div>
     """, unsafe_allow_html=True)
 else:
-    # Fallback se a imagem não existir (Texto Esquerda)
-    st.markdown("<h1 style='text-align: left; color: #0F52BA; font-size: 3rem;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #0F52BA; font-size: 3rem;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
 
 
-# --- 2. HERO BANNER (AZUL CLÁSSICO) ---
+# --- 2. HERO BANNER (SLIM & AZUL) ---
 st.markdown(f"""
 <div class="dash-hero">
     <div style="z-index: 2;">
         <h1 class="hero-title">Olá, Educador(a)!</h1>
         <p class="hero-subtitle">"Cada criança é única; seu potencial, ilimitado!"</p>
-        <div style="margin-top: 20px; display: inline-block; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 20px; color: white; font-weight: 700; font-size: 0.9rem;">
-            🚀 Sistema Operacional Omnisfera V2.0
-        </div>
     </div>
     <i class="ri-heart-pulse-fill hero-bg-icon"></i>
 </div>
