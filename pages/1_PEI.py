@@ -80,7 +80,12 @@ def salvar_aluno_integrado(dados):
         "serie": dados.get('serie', ''),
         "hiperfoco": dados.get('hiperfoco', ''),
         "ia_sugestao": dados.get('ia_sugestao', ''), # Cérebro do aluno
-        "diagnostico": dados.get('diagnostico', '')
+        "diagnostico": dados.get('diagnostico', ''),
+        
+        # --- BLINDAGEM DE DADOS (INSERÇÃO CIRÚRGICA) ---
+        "responsavel": st.session_state.get("usuario_nome", "Desconhecido"),
+        "data_criacao": str(date.today())
+        # -----------------------------------------------
     }
     st.session_state.banco_estudantes.append(novo_registro)
     
@@ -414,7 +419,9 @@ def aplicar_estilo_visual():
             background: rgba(214, 158, 46, 0.15);
             width: 40px; height: 40px;
             border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* 3. CARDS DA HOME */
@@ -1013,7 +1020,7 @@ abas = [
     "ESTUDANTE", 
     "EVIDÊNCIAS", 
     "REDE DE APOIO", 
-    "MAPEAMENTO",
+    "MAPEAMENTO", 
     "PLANO DE AÇÃO", 
     "MONITORAMENTO", 
     "CONSULTORIA IA", 
