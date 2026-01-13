@@ -64,7 +64,33 @@ def sistema_seguranca():
 if not sistema_seguranca(): st.stop()
 
 # ==============================================================================
-# 🏠 HOME - DASHBOARD OMNISFERA (V18 - FINAL POLISH)
+# 🧠 GERAÇÃO DE CONTEÚDO (IA)
+# ==============================================================================
+# 1. Mensagem do Banner (Saudação + Manifesto)
+mensagem_banner = "Que bom ter você aqui! Na Omnisfera, unimos ciência e afeto para revelar o potencial de cada estudante."
+if 'OPENAI_API_KEY' in st.secrets:
+    try:
+        if 'banner_msg' not in st.session_state:
+            client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
+            prompt_banner = "Crie uma frase de boas-vindas calorosa para um professor, unindo o conceito de neurociência/inclusão com o potencial do aluno. Máximo 25 palavras."
+            res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt_banner}])
+            st.session_state['banner_msg'] = res.choices[0].message.content
+        mensagem_banner = st.session_state['banner_msg']
+    except: pass
+
+# 2. Curiosidade do Insight (Para o final da página)
+noticia_insight = "A neuroplasticidade permite que o cérebro crie novos caminhos de aprendizado durante toda a vida."
+if 'OPENAI_API_KEY' in st.secrets:
+    try:
+        if 'home_insight_end' not in st.session_state:
+            client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
+            res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": "Uma curiosidade científica curta e inspiradora sobre aprendizagem e cérebro."}])
+            st.session_state['home_insight_end'] = res.choices[0].message.content
+        noticia_insight = st.session_state['home_insight_end']
+    except: pass
+
+# ==============================================================================
+# 🏠 HOME - DASHBOARD OMNISFERA (V20 - FINE TUNED)
 # ==============================================================================
 
 # CSS GERAL
@@ -94,7 +120,7 @@ st.markdown("""
     }
     .logo-text-static { height: 85px; width: auto; }
 
-    /* --- HERO BANNER (MAIS ALTO E ACOLHEDOR) --- */
+    /* --- HERO BANNER (MAIS ESTREITO) --- */
     .dash-hero { 
         background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); 
         border-radius: 16px;
@@ -103,7 +129,7 @@ st.markdown("""
         color: white;
         position: relative;
         overflow: hidden;
-        padding: 50px 60px; /* Aumentei a altura (padding) */
+        padding: 30px 50px; /* REDUZIDO AQUI (era 50px 60px) */
         display: flex; align-items: center; justify-content: flex-start;
     }
     
@@ -117,7 +143,7 @@ st.markdown("""
     .hero-subtitle {
         color: rgba(255,255,255,0.95);
         font-family: 'Inter', sans-serif;
-        font-size: 1.15rem; 
+        font-size: 1.1rem; 
         font-weight: 400; 
         line-height: 1.5;
         font-style: italic;
@@ -125,10 +151,10 @@ st.markdown("""
     
     .hero-bg-icon {
         position: absolute; right: 40px; font-size: 6rem;
-        opacity: 0.1; color: white; transform: rotate(-15deg); top: 30px;
+        opacity: 0.1; color: white; transform: rotate(-15deg); top: 20px;
     }
 
-    /* --- CARDS DE FERRAMENTA (SÓ LOGO) --- */
+    /* --- CARDS DE FERRAMENTA (COM TEXTO CURTO) --- */
     .tool-card { 
         background: white; border-radius: 20px; padding: 30px 20px; 
         box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; 
@@ -141,17 +167,27 @@ st.markdown("""
     }
     
     .card-logo-box {
-        height: 120px; /* Espaço amplo para a logo */
+        height: 110px; 
         display: flex; align-items: center; justify-content: center;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }
     .card-logo-img {
-        max-height: 100px; /* Logo Gigante */
+        max-height: 95px; 
         width: auto; object-fit: contain;
         filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
     }
     
-    /* Botão Acessar Integrado */
+    /* Texto curto no card */
+    .tool-desc-short {
+        font-size: 0.9rem;
+        color: #4A5568;
+        font-weight: 600;
+        margin-bottom: 20px;
+        min-height: 40px; /* Garante alinhamento */
+        display: flex; align-items: center; justify-content: center;
+    }
+    
+    /* Botão Acessar */
     div[data-testid="column"] .stButton button {
         width: 100%; border-radius: 12px; border: 1px solid #3182CE;
         background-color: white; color: #3182CE;
@@ -168,33 +204,31 @@ st.markdown("""
     .border-purple { border-bottom: 8px solid #805AD5; } 
     .border-teal { border-bottom: 8px solid #38B2AC; }
 
-    /* --- RODAPÉ --- */
-    .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+    /* --- RODAPÉ E INSIGHT FINAL --- */
+    .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
     .rich-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s; text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden; height: 100%; }
     .rich-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.06); border-color: #CBD5E0; }
     .rich-card-top { width: 100%; height: 4px; position: absolute; top: 0; left: 0; }
     .rc-icon { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 12px; }
     .rc-title { font-weight: 700; font-size: 1rem; color: #2D3748; margin-bottom: 5px; }
     .rc-desc { font-size: 0.8rem; color: #718096; line-height: 1.3; }
+
+    /* Insight Card Final */
+    .insight-card-end {
+        background-color: #FFFFF0;
+        border-radius: 12px;
+        padding: 20px 25px;
+        color: #2D3748;
+        display: flex; align-items: center; gap: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border-left: 5px solid #F6E05E; 
+        margin-bottom: 20px;
+    }
+    .insight-icon-end { font-size: 1.8rem; color: #D69E2E; }
+
 </style>
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 """, unsafe_allow_html=True)
-
-# GERAÇÃO DA MENSAGEM DO BANNER (SAUDAÇÃO + MANIFESTO)
-mensagem_banner = "Que bom ter você aqui! Na Omnisfera, unimos a ciência do cérebro ao coração da pedagogia para transformar a inclusão em potência."
-
-if 'OPENAI_API_KEY' in st.secrets:
-    try:
-        if 'banner_msg' not in st.session_state:
-            client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
-            prompt = """
-            Crie uma frase acolhedora para um professor (máximo 25 palavras).
-            A frase deve começar com uma saudação calorosa e depois explicar poeticamente que a Omnisfera une Neurociência, Dados e Amor/Empatia para revelar o potencial dos alunos.
-            """
-            res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
-            st.session_state['banner_msg'] = res.choices[0].message.content
-        mensagem_banner = st.session_state['banner_msg']
-    except: pass
 
 # --- 1. CABEÇALHO LOGO GIGANTE ANIMADA ---
 icone_b64 = get_base64_image("omni_icone.png")
@@ -211,7 +245,7 @@ else:
     st.markdown("<h1 style='text-align: center; color: #0F52BA; font-size: 3rem; margin-bottom:10px;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
 
 
-# --- 2. HERO BANNER (TEXTO FUNDIDO) ---
+# --- 2. HERO BANNER (MAIS ESTREITO + TEXTO IA) ---
 st.markdown(f"""
 <div class="dash-hero">
     <div class="hero-text-block">
@@ -222,86 +256,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- 3. FERRAMENTAS DE ACESSO (SÓ LOGOS) ---
+# --- 3. FERRAMENTAS DE ACESSO (LOGOS + TEXTO CURTO) ---
 st.markdown("### 🎯 Acesso Rápido")
 
-# Preparar logos
-logo_pei = get_base64_image("360.png")
-logo_pae = get_base64_image("pae.png")
-logo_hub = get_base64_image("hub.png")
-
-# Fallback icons
-icon_pei = f'<img src="data:image/png;base64,{logo_pei}" class="card-logo-img">' if logo_pei else '<i class="ri-book-read-line" style="font-size:4rem; color:#3182CE;"></i>'
-icon_pae = f'<img src="data:image/png;base64,{logo_pae}" class="card-logo-img">' if logo_pae else '<i class="ri-puzzle-line" style="font-size:4rem; color:#805AD5;"></i>'
-icon_hub = f'<img src="data:image/png;base64,{logo_hub}" class="card-logo-img">' if logo_hub else '<i class="ri-rocket-line" style="font-size:4rem; color:#38B2AC;"></i>'
-
-col1, col2, col3 = st.columns(3)
-
-# PEI (Card Limpo)
-with col1:
-    st.markdown(f"""
-    <div class="tool-card border-blue">
-        <div class="card-logo-box">{icon_pei}</div>
-        <div style="flex-grow: 1;"></div>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.button("Acessar", key="btn_pei", use_container_width=True):
-        st.switch_page("pages/1_PEI.py")
-
-# PAE (Card Limpo)
-with col2:
-    st.markdown(f"""
-    <div class="tool-card border-purple">
-        <div class="card-logo-box">{icon_pae}</div>
-        <div style="flex-grow: 1;"></div>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.button("Acessar", key="btn_pae", use_container_width=True):
-        st.switch_page("pages/2_PAE.py")
-
-# HUB (Card Limpo)
-with col3:
-    st.markdown(f"""
-    <div class="tool-card border-teal">
-        <div class="card-logo-box">{icon_hub}</div>
-        <div style="flex-grow: 1;"></div>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.button("Acessar", key="btn_hub", use_container_width=True):
-        st.switch_page("pages/3_Hub_Inclusao.py")
-
-st.markdown("---")
-
-# --- 4. RECURSOS EDUCATIVOS (RODAPÉ) ---
-st.markdown("### 📚 Base de Conhecimento")
-st.markdown("""
-<div class="home-grid">
-    <a href="#" class="rich-card">
-        <div class="rich-card-top" style="background-color: #3182CE;"></div>
-        <div class="rc-icon" style="background-color:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
-        <div class="rc-title">PEI vs PAE</div>
-        <div class="rc-desc">Diferenças fundamentais.</div>
-    </a>
-    <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="rich-card">
-        <div class="rich-card-top" style="background-color: #D69E2E;"></div>
-        <div class="rc-icon" style="background-color:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
-        <div class="rc-title">Legislação</div>
-        <div class="rc-desc">Lei Brasileira de Inclusão (2025).</div>
-    </a>
-    <a href="https://institutoneurosaber.com.br/" target="_blank" class="rich-card">
-        <div class="rich-card-top" style="background-color: #D53F8C;"></div>
-        <div class="rc-icon" style="background-color:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
-        <div class="rc-title">Neurociência</div>
-        <div class="rc-desc">Desenvolvimento atípico.</div>
-    </a>
-    <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="rich-card">
-        <div class="rich-card-top" style="background-color: #38A169;"></div>
-        <div class="rc-icon" style="background-color:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
-        <div class="rc-title">BNCC</div>
-        <div class="rc-desc">Currículo oficial.</div>
-    </a>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("---")
-st.markdown("<div style='text-align: center; color: #A0AEC0; font-size: 0.8rem;'>Omnisfera © 2026 - Todos os direitos reservados.</div>", unsafe_allow_html=True)
+#
