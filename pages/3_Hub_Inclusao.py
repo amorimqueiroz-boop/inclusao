@@ -494,12 +494,19 @@ if is_ei:
             url = gerar_imagem_hibrida(api_key, f"{desc_m} {aluno.get('hiperfoco')}", unsplash_key)
             if url: st.image(url)
 
-    # 3. ROTINA (Adaptada para EI)
+    # 3. ROTINA (Adaptada para EI - COM TEXT AREA AGORA!)
     with tabs[2]:
-        st.markdown("### 📝 Rotina & Atividades de Vida Diária (AVD)")
-        topico = st.text_input("Momento da Rotina:", placeholder="Ex: Hora do sono, Lanche, Chegada", key="rota_ei")
-        if st.button("📝 GERAR ADAPTAÇÃO DE ROTINA"): 
-            st.markdown(gerar_roteiro_aula(api_key, aluno, f"Adaptação de rotina para: {topico}"))
+        st.markdown("### 📝 Adaptação de Rotina & AVD")
+        st.caption("Descreva a rotina completa da turma para receber sugestões de antecipação e suporte.")
+        
+        # MUDANÇA SOLICITADA: Text Area para colar a rotina inteira
+        rotina_detalhada = st.text_area("Descreva a Rotina da Turma:", height=200, placeholder="Ex: \n8:00 - Chegada e Acolhida\n8:30 - Roda de Conversa\n9:00 - Lanche\n...")
+        topico_foco = st.text_input("Ponto de Atenção (Opcional):", placeholder="Ex: Transição para o parque")
+        
+        if st.button("📝 ANALISAR E ADAPTAR ROTINA", type="primary"):
+            with st.spinner("Analisando rotina..."):
+                prompt_rotina = f"Analise esta rotina de Educação Infantil e sugira adaptações sensoriais e visuais:\n\n{rotina_detalhada}\n\nFoco específico: {topico_foco}"
+                st.markdown(gerar_roteiro_aula(api_key, aluno, prompt_rotina))
 
     # 4. INCLUSÃO NO BRINCAR
     with tabs[3]:
