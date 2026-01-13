@@ -220,7 +220,7 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
         if tag_match:
             partes = re.split(r'(\[\[(?:IMG|GEN_IMG).*?\d+\]\])', linha, flags=re.IGNORECASE)
             for parte in partes:
-                sub_match = re.search(r'(\d+)', part)
+                sub_match = re.search(r'(\d+)', parte)
                 if ("IMG" in parte.upper() or "GEN_IMG" in parte.upper()) and sub_match:
                     num = int(sub_match.group(1))
                     img_bytes = mapa_imgs.get(num)
@@ -240,7 +240,7 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
 
-# --- IA FUNCTIONS (ATUALIZADAS PARA LÓGICA DE FEEDBACK) ---
+# --- IA FUNCTIONS (ATUALIZADAS E BLINDADAS CONTRA TEXTO) ---
 
 def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anterior=""):
     """
@@ -249,14 +249,14 @@ def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anteri
     """
     client = OpenAI(api_key=api_key)
     
-    # Adiciona feedback ao prompt se houver
     prompt_final = prompt
     if feedback_anterior:
         prompt_final = f"{prompt}. Refinement needed: {feedback_anterior}"
 
-    # 1. TENTATIVA PRINCIPAL: IA (DALL-E 3)
+    # 1. TENTATIVA PRINCIPAL: IA (DALL-E 3) - BLINDADO CONTRA TEXTO
     try:
-        didactic_prompt = f"Educational textbook illustration, clean flat vector style, white background, no text labels: {prompt_final}"
+        # Prompt com TRAVA DE TEXTO ("STRICTLY NO TEXT")
+        didactic_prompt = f"Educational textbook illustration, clean flat vector style, white background. STRICTLY NO TEXT, NO LETTERS, NO WORDS, NO LABELS inside the image. visual representation only: {prompt_final}"
         resp = client.images.generate(model="dall-e-3", prompt=didactic_prompt, size="1024x1024", quality="standard", n=1)
         return resp.data[0].url
     except Exception as e:
@@ -285,6 +285,7 @@ def gerar_pictograma_caa(api_key, conceito, feedback_anterior=""):
     - Cores primárias e alto contraste.
     - Sem sombras, sem cenários, sem detalhes desnecessários.
     - Apenas o objeto ou ação centralizado.
+    - REGRA CRÍTICA: NÃO inclua nenhum texto, letra ou palavra na imagem. Apenas o ícone visual.
     """
     try:
         resp = client.images.generate(model="dall-e-3", prompt=prompt_caa, size="1024x1024", quality="standard", n=1)
@@ -927,7 +928,7 @@ else:
         col_scene, col_caa = st.columns(2)
         
         with col_scene:
-            st.markdown("#### 🖼️ Ilustração de Cena")
+            st.markdown("#### 🖼️ Ilustração")
             desc_m = st.text_area("Descreva a imagem:", height=100, key="vdm_padrao", placeholder="Ex: Sistema Solar simplificado com planetas coloridos...")
             
             if st.button("🎨 Gerar Imagem", key="btn_cena_padrao"):
@@ -936,7 +937,6 @@ else:
                     st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key)
                     st.session_state.valid_scene = False
 
-            # Exibição Cena
             if st.session_state.res_scene_url:
                 st.image(st.session_state.res_scene_url)
                 if st.session_state.valid_scene:
@@ -961,7 +961,6 @@ else:
                     st.session_state.res_caa_url = gerar_pictograma_caa(api_key, palavra_chave)
                     st.session_state.valid_caa = False
 
-            # Exibição CAA
             if st.session_state.res_caa_url:
                 st.image(st.session_state.res_caa_url, width=300)
                 if st.session_state.valid_caa:
