@@ -259,4 +259,94 @@ st.markdown(f"""
 # --- 3. FERRAMENTAS DE ACESSO (LOGOS + TEXTO CURTO) ---
 st.markdown("### 🎯 Acesso Rápido")
 
-#
+# Preparar logos
+logo_pei = get_base64_image("360.png")
+logo_pae = get_base64_image("pae.png")
+logo_hub = get_base64_image("hub.png")
+
+# Fallback icons
+icon_pei = f'<img src="data:image/png;base64,{logo_pei}" class="card-logo-img">' if logo_pei else '<i class="ri-book-read-line" style="font-size:4rem; color:#3182CE;"></i>'
+icon_pae = f'<img src="data:image/png;base64,{logo_pae}" class="card-logo-img">' if logo_pae else '<i class="ri-puzzle-line" style="font-size:4rem; color:#805AD5;"></i>'
+icon_hub = f'<img src="data:image/png;base64,{logo_hub}" class="card-logo-img">' if logo_hub else '<i class="ri-rocket-line" style="font-size:4rem; color:#38B2AC;"></i>'
+
+col1, col2, col3 = st.columns(3)
+
+# PEI
+with col1:
+    st.markdown(f"""
+    <div class="tool-card border-blue">
+        <div class="card-logo-box">{icon_pei}</div>
+        <div class="tool-desc-short">Avaliação e plano oficial do aluno.</div>
+    </div>
+    """, unsafe_allow_html=True)
+    if st.button("Acessar", key="btn_pei", use_container_width=True):
+        st.switch_page("pages/1_PEI.py")
+
+# PAE
+with col2:
+    st.markdown(f"""
+    <div class="tool-card border-purple">
+        <div class="card-logo-box">{icon_pae}</div>
+        <div class="tool-desc-short">Mapeamento de barreiras e recursos.</div>
+    </div>
+    """, unsafe_allow_html=True)
+    if st.button("Acessar", key="btn_pae", use_container_width=True):
+        st.switch_page("pages/2_PAE.py")
+
+# HUB
+with col3:
+    st.markdown(f"""
+    <div class="tool-card border-teal">
+        <div class="card-logo-box">{icon_hub}</div>
+        <div class="tool-desc-short">Adaptação de atividades e provas.</div>
+    </div>
+    """, unsafe_allow_html=True)
+    if st.button("Acessar", key="btn_hub", use_container_width=True):
+        st.switch_page("pages/3_Hub_Inclusao.py")
+
+st.markdown("---")
+
+# --- 4. RECURSOS EDUCATIVOS (RODAPÉ) ---
+st.markdown("### 📚 Base de Conhecimento")
+st.markdown("""
+<div class="home-grid">
+    <a href="#" class="rich-card">
+        <div class="rich-card-top" style="background-color: #3182CE;"></div>
+        <div class="rc-icon" style="background-color:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
+        <div class="rc-title">PEI vs PAE</div>
+        <div class="rc-desc">Diferenças fundamentais.</div>
+    </a>
+    <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="rich-card">
+        <div class="rich-card-top" style="background-color: #D69E2E;"></div>
+        <div class="rc-icon" style="background-color:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
+        <div class="rc-title">Legislação</div>
+        <div class="rc-desc">LBI e Decretos.</div>
+    </a>
+    <a href="https://institutoneurosaber.com.br/" target="_blank" class="rich-card">
+        <div class="rich-card-top" style="background-color: #D53F8C;"></div>
+        <div class="rc-icon" style="background-color:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
+        <div class="rc-title">Neurociência</div>
+        <div class="rc-desc">Desenvolvimento atípico.</div>
+    </a>
+    <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="rich-card">
+        <div class="rich-card-top" style="background-color: #38A169;"></div>
+        <div class="rc-icon" style="background-color:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
+        <div class="rc-title">BNCC</div>
+        <div class="rc-desc">Currículo oficial.</div>
+    </a>
+</div>
+""", unsafe_allow_html=True)
+
+# --- 5. INSIGHT DO DIA (FINAL) ---
+st.markdown(f"""
+<div class="insight-card-end">
+    <div class="insight-icon-end"><i class="ri-lightbulb-flash-line"></i></div>
+    <div>
+        <div style="font-weight: 700; font-size: 0.9rem; color: #D69E2E;">Insight do Dia (IA):</div>
+        <p style="margin:2px 0 0 0; font-size:0.95rem; opacity:0.9; color:#4A5568; font-style: italic;">"{noticia_insight}"</p>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("---")
+st.markdown("<div style='text-align: center; color: #A0AEC0; font-size: 0.8rem;'>Omnisfera © 2026 - Todos os direitos reservados.</div>", unsafe_allow_html=True)
