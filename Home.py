@@ -15,100 +15,102 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ### VISUAL INTELIGENTE: HEADER OMNISFERA & ALERTA DE TESTE ###
+# ### BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA (TEXT ONLY) ###
 # ==============================================================================
 import os
-import base64
+import streamlit as st
 
 # 1. Detecção Automática de Ambiente (Via st.secrets)
-# Se você colocar ENV = "TESTE" nos secrets do Streamlit, a faixa amarela aparece.
-# Se não colocar nada, ele assume que é Produção (Oficial) e esconde a faixa.
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
 except:
     IS_TEST_ENV = False
 
-# 2. Função para carregar a logo em Base64 (para usar no HTML)
-def get_logo_base64():
-    # Tente carregar a imagem local, senão usa um ícone genérico da web
-    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"] # Seus arquivos possíveis
-    for c in caminhos:
-        if os.path.exists(c):
-            with open(c, "rb") as f:
-                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
-    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png" # Fallback
+# 2. Definição Dinâmica de Cores e Texto
+if IS_TEST_ENV:
+    # Ambiente de Teste: Amarelo
+    card_bg = "rgba(255, 220, 50, 0.95)" 
+    card_border = "rgba(200, 160, 0, 0.5)"
+    display_text = "OMNISFERA | TESTE"
+else:
+    # Ambiente Oficial: Branco Gelo (Vidro)
+    card_bg = "rgba(255, 255, 255, 0.85)"
+    card_border = "rgba(255, 255, 255, 0.6)"
+    display_text = "OMNISFERA 360º"
 
-src_logo_giratoria = get_logo_base64()
-
-# 3. CSS Condicional (Faixa Amarela)
-css_faixa_teste = """
-    .test-stripe {
-        position: fixed; top: 0; left: 0; width: 100%; height: 8px;
-        background: repeating-linear-gradient(45deg, #FFC107, #FFC107 10px, #FF9800 10px, #FF9800 20px);
-        z-index: 99999999; pointer-events: none;
-    }
-""" if IS_TEST_ENV else ""
-
-html_faixa_teste = '<div class="test-stripe"></div>' if IS_TEST_ENV else ""
-
-# 4. Renderização do CSS Global e Header Flutuante
+# 3. Renderização do CSS Global e Header Flutuante
 st.markdown(f"""
 <style>
-    
-    
-    /* Faixa de Teste (Só aparece se IS_TEST_ENV for True) */
-    {css_faixa_teste}
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
-    /* CARD FLUTUANTE (GLASSMORPHISM) */
+    /* --- AJUSTE CRÍTICO: MENU LATERAL VISÍVEL --- */
+    
+    /* 1. Header principal transparente */
+    header[data-testid="stHeader"] {{
+        background-color: transparent !important;
+        z-index: 9999 !important;
+    }}
+    
+    /* 2. Esconde Toolbar (Share, Deploy, etc) */
+    [data-testid="stToolbar"] {{
+        visibility: hidden !important;
+        display: none !important;
+    }}
+    
+    /* 3. Botão da Sidebar visível e reposicionado */
+    [data-testid="stSidebarCollapsedControl"] {{
+        visibility: visible !important;
+        display: block !important;
+        color: #2D3748 !important;
+    }}
+    
+    /* -------------------------------------------- */
+
+    /* CARD FLUTUANTE (TEXTO CHIQUE) */
     .omni-badge {{
         position: fixed;
         top: 15px; 
         right: 15px;
-        background: rgba(255, 255, 255, 0.85); /* Branco Gelo Transparente */
-        backdrop-filter: blur(8px);             /* Desfoque do fundo */
+        
+        /* COR DINÂMICA */
+        background: {card_bg};
+        border: 1px solid {card_border};
+        
+        backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        padding: 8px 16px;
-        border-radius: 20px;                    /* Formato Pílula */
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        z-index: 999990;                        /* Fica acima dos botões do Streamlit */
+        
+        /* Layout */
+        padding: 6px 25px;
+        min-width: 220px;          /* Largura suficiente para cobrir os botões */
+        border-radius: 12px;       /* Bordas levemente arredondadas (mais elegante que pílula total) */
+        
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        z-index: 999990;
+        
         display: flex;
         align-items: center;
-        gap: 10px;
-        pointer-events: none;                   /* Deixa clicar através dele se necessário, ou use auto */
+        justify-content: center;
+        pointer-events: none;
     }}
 
-    /* Texto do Card */
+    /* Tipografia Discreta e Elegante */
     .omni-text {{
-        font-family: 'Nunito', sans-serif;
-        font-weight: 700;
-        font-size: 0.85rem;
-        color: #2D3748;
-        letter-spacing: 0.5px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 700;          /* Negrito na medida */
+        font-size: 0.75rem;        /* Tamanho discreto */
+        color: #2D3748;            /* Cinza Chumbo */
+        letter-spacing: 2px;       /* Espaçamento "Chique" */
         text-transform: uppercase;
-    }}
-
-    /* Animação de Rotação da Logo */
-    @keyframes spin-slow {{
-        from {{ transform: rotate(0deg); }}
-        to {{ transform: rotate(360deg); }}
-    }}
-    
-    .omni-logo-spin {{
-        height: 24px; 
-        width: 24px; 
-        animation: spin-slow 10s linear infinite; /* Gira devagar */
     }}
 
 </style>
 
-{html_faixa_teste}
-
 <div class="omni-badge">
-    <img src="{src_logo_giratoria}" class="omni-logo-spin">
-    <span class="omni-text">OMNISFERA</span>
+    <span class="omni-text">{display_text}</span>
 </div>
 """, unsafe_allow_html=True)
+# ==============================================================================
+# ### FIM BLOCO VISUAL INTELIGENTE ###
 # ==============================================================================
 
 
