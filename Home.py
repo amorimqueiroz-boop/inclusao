@@ -20,28 +20,48 @@ st.set_page_config(
 import os
 import streamlit as st
 
+# 0. Configuração da Versão
+APP_VERSION = "v116.0"
+
 # 1. Detecção Automática de Ambiente (Via st.secrets)
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
 except:
     IS_TEST_ENV = False
 
-# 2. Definição Dinâmica de Cores e Texto
+# 2. Definição Dinâmica de Cores, Texto e Rodapé
 if IS_TEST_ENV:
-    # Ambiente de Teste: Amarelo
+    # --- AMBIENTE DE TESTE ---
+    # Cor: Amarelo
     card_bg = "rgba(255, 220, 50, 0.95)" 
     card_border = "rgba(200, 160, 0, 0.5)"
     display_text = "OMNISFERA | TESTE"
+    
+    # Rodapé/Manage App: VISÍVEL (para debug)
+    footer_visibility = "visible" 
 else:
-    # Ambiente Oficial: Branco Gelo (Vidro)
+    # --- AMBIENTE PÚBLICO (PRODUÇÃO) ---
+    # Cor: Branco Gelo (Vidro)
     card_bg = "rgba(255, 255, 255, 0.85)"
     card_border = "rgba(255, 255, 255, 0.6)"
-    display_text = "OMNISFERA 360º"
+    display_text = f"OMNISFERA {APP_VERSION}"
+    
+    # Rodapé/Manage App: ESCONDIDO (limpeza visual)
+    footer_visibility = "hidden"
 
 # 3. Renderização do CSS Global e Header Flutuante
 st.markdown(f"""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+    /* --- CONTROLE DO RODAPÉ (MANAGE APP) --- */
+    footer {{
+        visibility: {footer_visibility} !important;
+    }}
+    
+    /* Caso queira esconder também o hamburguer menu (opcional, mas recomendado em prod) */
+    /* #MainMenu {{ visibility: {footer_visibility} !important; }} */
+
 
     /* --- AJUSTE CRÍTICO: MENU LATERAL VISÍVEL --- */
     
@@ -51,7 +71,7 @@ st.markdown(f"""
         z-index: 9999 !important;
     }}
     
-    /* 2. Esconde Toolbar (Share, Deploy, etc) */
+    /* 2. Esconde Toolbar (Share, Deploy, etc) - Sempre escondido pois temos o card */
     [data-testid="stToolbar"] {{
         visibility: hidden !important;
         display: none !important;
@@ -82,7 +102,7 @@ st.markdown(f"""
         /* Layout */
         padding: 6px 25px;
         min-width: 220px;          /* Largura suficiente para cobrir os botões */
-        border-radius: 12px;       /* Bordas levemente arredondadas (mais elegante que pílula total) */
+        border-radius: 12px;       /* Bordas levemente arredondadas */
         
         box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         z-index: 999990;
