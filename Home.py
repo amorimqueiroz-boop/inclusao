@@ -5,13 +5,48 @@ import base64
 import os
 import time
 
-# --- 1. CONFIGURAÇÃO INICIAL ---
+# --- 1. CONFIGURAÇÃO INICIAL (ADAPTADA PARA TESTE) ---
 st.set_page_config(
-    page_title="Omnisfera | Ecossistema Inclusivo", 
-    page_icon="🌐", 
+    page_title="[TESTE] Omnisfera", # Alterado para identificar na aba
+    page_icon="🛠️", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# ==============================================================================
+# ### INICIO BLOCO TESTE: VISUAL DE ALERTA ###
+# ==============================================================================
+# Este bloco CSS cria a faixa amarela e o selo de teste.
+# Para voltar para produção, basta APAGAR ou COMENTAR este bloco inteiro.
+st.markdown("""
+<style>
+    /* Faixa de aviso no topo */
+    .test-environment-bar {
+        position: fixed; top: 0; left: 0; width: 100%; height: 12px;
+        background: repeating-linear-gradient(45deg, #FFC107, #FFC107 10px, #FF9800 10px, #FF9800 20px);
+        z-index: 9999999;
+    }
+    /* Selo de Teste */
+    .test-badge {
+        position: fixed; top: 20px; right: 20px; 
+        background-color: #FF9800; color: white;
+        padding: 5px 12px; border-radius: 8px;
+        font-weight: 800; font-size: 0.8rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        z-index: 9999999; pointer-events: none;
+    }
+    /* Alterar bordas do login para laranja */
+    .login-container {
+        border: 2px dashed #FF9800 !important;
+    }
+</style>
+<div class="test-environment-bar"></div>
+<div class="test-badge">🛠️ AMBIENTE DE TESTES</div>
+""", unsafe_allow_html=True)
+# ==============================================================================
+# ### FIM BLOCO TESTE: VISUAL DE ALERTA ###
+# ==============================================================================
+
 
 # ==============================================================================
 # 🔐 SEGURANÇA, LOGIN E UTILITÁRIOS
@@ -39,7 +74,6 @@ def sistema_seguranca():
             /* Container Centralizado - COM TOPO ZERADO */
             .login-container { 
                 background-color: white; 
-                /* AQUI ESTAVA O ERRO: Reduzi o topo para 5px apenas */
                 padding: 5px 40px 40px 40px; 
                 border-radius: 20px; 
                 box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
@@ -172,25 +206,39 @@ def sistema_seguranca():
             
             concordo = st.checkbox("Li, compreendi e concordo com os termos.")
             st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
-            senha = st.text_input("senha_fake", type="password", placeholder="Chave de Acesso", label_visibility="collapsed")
             
+            # --- ### INICIO BLOCO TESTE: SENHA OPCIONAL ### ---
+            # Mudei o placeholder e removi a lógica de checagem obrigatória no botão
+            senha = st.text_input("senha_fake", type="password", placeholder="Senha (Opcional no Teste)", label_visibility="collapsed")
+            st.caption("🔓 Ambiente de Teste: Senha liberada")
+            # --- ### FIM BLOCO TESTE ### ---
+
             st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
             
-            if st.button("🚀 ACESSAR ECOSSISTEMA"):
-                hoje = date.today()
-                senha_correta = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
+            # --- ### INICIO BLOCO TESTE: LÓGICA DO BOTÃO ### ---
+            if st.button("🚀 ACESSAR (MODO TESTE)"):
+                # Para produção, você deve descomentar a linha de data e senha_correta
+                # hoje = date.today()
+                # senha_correta = "PEI_START_2026" if ...
                 
                 if not concordo:
                     st.warning("⚠️ Aceite os termos para continuar.")
                 elif not nome_user or not cargo_user:
                     st.warning("⚠️ Preencha Nome e Cargo para prosseguir.")
-                elif senha == senha_correta:
+                
+                # AQUI ESTÁ A MUDANÇA: Aceitamos qualquer senha (ou nenhuma)
+                else: 
                     st.session_state["autenticado"] = True
                     st.session_state["usuario_nome"] = nome_user
                     st.session_state["usuario_cargo"] = cargo_user
                     st.rerun()
-                else:
-                    st.error("🚫 Senha inválida.")
+                
+                # Para produção, a lógica seria:
+                # elif senha == senha_correta:
+                #    ...loga...
+                # else:
+                #    st.error("Senha inválida")
+            # --- ### FIM BLOCO TESTE ### ---
             
             # Fecha container HTML
             st.markdown("</div>", unsafe_allow_html=True)
