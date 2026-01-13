@@ -4,6 +4,7 @@ from openai import OpenAI
 import json
 import pandas as pd
 from datetime import date
+import base64  # <--- Adicionado para processar a imagem no HTML
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
@@ -56,6 +57,21 @@ if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estu
 # --- CSS PERSONALIZADO ---
 st.markdown("""
     <style>
+    /* Ajustei o header-pae para centralizar o conteúdo verticalmente */
+    .header-pae { 
+        background: white; 
+        padding: 20px; 
+        border-radius: 12px; 
+        border-left: 6px solid #805AD5; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+        margin-bottom: 20px; 
+        display: flex; 
+        flex-direction: column; /* Organiza logo em cima, subtítulo embaixo */
+        align-items: center; 
+        justify-content: center;
+        text-align: center;
+        gap: 10px;
+    }
     .student-header { background-color: #F3E8FF; border: 1px solid #D6BCFA; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; }
     .student-label { font-size: 0.8rem; color: #553C9A; font-weight: 700; text-transform: uppercase; }
     .student-value { font-size: 1.1rem; color: #44337A; font-weight: 800; }
@@ -66,12 +82,26 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- CABEÇALHO (LOGO PAE) ---
-# Substituindo o título textual pela Logo conforme solicitado
-try:
-    st.image("pae.png", width=350) # Logo grande
-except:
-    st.warning("⚠️ Logo 'pae.png' não encontrada. Verifique o arquivo.")
+# --- CABEÇALHO (LOGO PAE + SUBTÍTULO NO BANNER) ---
+# Função auxiliar para carregar imagem local dentro do HTML
+def get_img_tag(file_path, width):
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            data = base64.b64encode(f.read()).decode("utf-8")
+        return f'<img src="data:image/png;base64,{data}" width="{width}">'
+    return "🧩" # Fallback se a imagem não existir
+
+img_html = get_img_tag("pae.png", "350") # Logo grande (350px)
+
+st.markdown(f"""
+    <div class="header-pae">
+        {img_html}
+        <p style="margin:0; color:#666; font-size: 1.2rem; font-weight: 500;">
+            Sala de Recursos & Eliminação de Barreiras
+        </p>
+    </div>
+""", unsafe_allow_html=True)
+
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Nenhum aluno com PEI encontrado. Cadastre no módulo PEI primeiro.")
