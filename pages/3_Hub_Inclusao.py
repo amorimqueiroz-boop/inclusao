@@ -1,33 +1,22 @@
 import streamlit as st
+import os
 from openai import OpenAI
 from datetime import date
 from io import BytesIO
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.shared import Pt
+from docx.shared import Pt, Inches
 from pypdf import PdfReader
 from fpdf import FPDF
 import base64
-import os
 import re
-import json  # <--- NOVA IMPORTAÇÃO ESSENCIAL
-
-import streamlit as st
-import os  # <--- OBRIGATÓRIO PARA O BANCO DE DADOS
-from openai import OpenAI
-from io import BytesIO
-from docx import Document
-from docx.shared import Pt, Inches
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+import json
+import requests
 from PIL import Image
 from streamlit_cropper import st_cropper
-import re
-import requests
-import json
-import base64
 
 # ==============================================================================
-# 1. CONFIGURAÇÃO E SEGURANÇA (ESTE BLOCO VEM PRIMEIRO)
+# 1. CONFIGURAÇÃO E SEGURANÇA
 # ==============================================================================
 st.set_page_config(page_title="Omnisfera | Hub", page_icon="🚀", layout="wide")
 
@@ -61,7 +50,7 @@ with st.sidebar:
     st.markdown("---")
 
 # ==============================================================================
-# 2. O CÓDIGO DO HUB DE INCLUSÃO (V18.1) COMEÇA AQUI
+# 2. O CÓDIGO DO HUB DE INCLUSÃO
 # ==============================================================================
 
 # --- BANCO DE DADOS ---
@@ -78,12 +67,25 @@ def carregar_banco():
 if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
     st.session_state.banco_estudantes = carregar_banco()
 
-# --- ESTILO VISUAL ---
+# --- ESTILO VISUAL (CSS) ---
 st.markdown("""
     <style>
     html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
     
-    .header-clean { background: white; padding: 25px; border-radius: 16px; border: 1px solid #EDF2F7; margin-bottom: 20px; display: flex; gap: 20px; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    /* HEADER PERSONALIZADO (Estilo Banner com Logo) */
+    .header-hub { 
+        background: white; 
+        padding: 15px 25px; 
+        border-radius: 12px; 
+        border-left: 6px solid #3182CE; /* Azul do Hub */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+        margin-bottom: 20px; 
+        
+        display: flex;             
+        flex-direction: row;       
+        align-items: center;       
+        gap: 20px;                
+    }
     
     .student-header { background-color: #EBF8FF; border: 1px solid #BEE3F8; border-radius: 12px; padding: 15px 25px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
     .student-label { font-size: 0.85rem; color: #718096; font-weight: 700; text-transform: uppercase; }
@@ -110,6 +112,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- FUNÇÕES DE UTILIDADE ---
+
+def get_img_tag(file_path, width):
+    """Lê a imagem local e converte para HTML Base64"""
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            data = base64.b64encode(f.read()).decode("utf-8")
+        return f'<img src="data:image/png;base64,{data}" width="{width}">'
+    return "🚀" # Fallback
 
 def extrair_dados_docx(uploaded_file):
     uploaded_file.seek(0); imagens = []; texto = ""
@@ -346,7 +356,27 @@ with st.sidebar:
             if key not in ['banco_estudantes', 'OPENAI_API_KEY', 'UNSPLASH_ACCESS_KEY', 'autenticado']: del st.session_state[key]
         st.rerun()
 
-st.markdown("""<div class="header-clean"><div style="font-size:3rem;">🚀</div><div><p style="margin:0;color:#004E92;font-size:1.5rem;font-weight:800;">Hub de Inclusão</p></div></div>""", unsafe_allow_html=True)
+# --- HEADER COM LOGO HUB (ESTILO BANNER) ---
+# Substituindo o título textual pela estrutura HTML com Logo (hub.png) e Subtítulo
+
+img_hub_html = get_img_tag("hub.png", "160") # Logo tamanho 160px
+
+st.markdown(f"""
+    <div class="header-hub">
+        <div style="flex-shrink: 0;">
+            {img_hub_html}
+        </div>
+        <div style="flex-grow: 1; text-align: center;">
+            <p style="margin:0; color:#2C5282; font-size: 1.6rem; font-weight: 800;">
+                Hub de Inclusão
+            </p>
+            <p style="margin:0; color:#4A5568; font-size: 1.0rem; font-weight: 500;">
+                Adaptação de Materiais & Criação
+            </p>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
+
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Cadastre um aluno no PEI 360º primeiro.")
