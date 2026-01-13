@@ -54,10 +54,7 @@ html_faixa_teste = '<div class="test-stripe"></div>' if IS_TEST_ENV else ""
 # 4. Renderização do CSS Global e Header Flutuante
 st.markdown(f"""
 <style>
-    /* Esconde o Header padrão do Streamlit (Botões Share, Deploy, etc) */
-    header[data-testid="stHeader"] {{
-        visibility: hidden;
-    }}
+    
     
     /* Faixa de Teste (Só aparece se IS_TEST_ENV for True) */
     {css_faixa_teste}
