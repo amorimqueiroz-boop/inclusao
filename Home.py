@@ -116,104 +116,112 @@ st.markdown(f"""
 
 
 # ==============================================================================
-# 🔐 SEGURANÇA, LOGIN E UTILITÁRIOS
+# 1. DETECÇÃO AUTOMÁTICA DE AMBIENTE
+# ==============================================================================
+# Se ENV = "TESTE" estiver configurado nos secrets do Streamlit, ativa modo teste.
+try:
+    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
+except:
+    IS_TEST_ENV = False
+
+# ==============================================================================
+# 2. CONFIGURAÇÃO INICIAL
+# ==============================================================================
+titulo_pag = "[TESTE] Omnisfera" if IS_TEST_ENV else "Omnisfera | Ecossistema"
+icone_pag = "🛠️" if IS_TEST_ENV else "🌐"
+
+st.set_page_config(
+    page_title=titulo_pag,
+    page_icon=icone_pag,
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ==============================================================================
+# 3. UTILITÁRIOS (IMAGENS)
 # ==============================================================================
 def get_base64_image(image_path):
     if not os.path.exists(image_path): return ""
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
+b64_icone = get_base64_image("omni_icone.png")
+src_logo = f"data:image/png;base64,{b64_icone}" if b64_icone else "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
+
+# ==============================================================================
+# 4. ESTILO GLOBAL & HEADER "GLASSMORPHISM"
+# ==============================================================================
+css_faixa_teste = """
+    .test-stripe {
+        position: fixed; top: 0; left: 0; width: 100%; height: 8px;
+        background: repeating-linear-gradient(45deg, #FFC107, #FFC107 10px, #FF9800 10px, #FF9800 20px);
+        z-index: 99999999; pointer-events: none;
+    }
+""" if IS_TEST_ENV else ""
+
+html_faixa_teste = '<div class="test-stripe"></div>' if IS_TEST_ENV else ""
+
+st.markdown(f"""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Nunito:wght@400;600;700&display=swap');
+    
+    header[data-testid="stHeader"] {{ visibility: hidden; }}
+    footer {{ visibility: hidden !important; }}
+    .block-container {{ padding-top: 120px !important; }}
+
+    {css_faixa_teste}
+
+    .glass-header {{
+        position: fixed; top: 0; left: 0; width: 100%; height: 80px;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        z-index: 999990;
+        display: flex; align-items: center; justify-content: center;
+        padding: 0 20px;
+    }}
+    .header-content {{ display: flex; align-items: center; gap: 15px; }}
+    @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
+    .header-logo {{ height: 45px; width: auto; animation: spin-slow 20s linear infinite; }}
+    .header-title {{
+        font-family: 'Inter', sans-serif; font-weight: 800; font-size: 1.4rem;
+        background: linear-gradient(90deg, #0F52BA 0%, #3182CE 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        letter-spacing: 1px;
+    }}
+    .badge-mod {{
+        background-color: #EBF8FF; color: #3182CE; padding: 2px 8px; 
+        border-radius: 10px; font-size: 0.6rem; font-weight: 700; 
+        margin-left: 5px; vertical-align: middle; border: 1px solid #BEE3F8;
+    }}
+</style>
+
+{html_faixa_teste}
+<div class="glass-header">
+    <div class="header-content">
+        <img src="{src_logo}" class="header-logo">
+        <div class="header-title">OMNISFERA <span class="badge-mod">BETA</span></div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+
+# ==============================================================================
+# 5. SISTEMA DE LOGIN (INTELIGENTE & CONDICIONAL)
+# ==============================================================================
 def sistema_seguranca():
-    # CSS Específico para a Tela de Login
     st.markdown("""
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Nunito:wght@400;600;700&display=swap');
-            
-            [data-testid="stHeader"] {visibility: hidden !important; height: 0px !important;}
-            footer {visibility: hidden !important;}
-            
-            /* Remove espaços extras do topo da página */
-            .block-container {
-                padding-top: 1rem !important;
-                margin-top: 0rem !important;
-            }
-            
-            /* Container Centralizado - COM TOPO ZERADO */
             .login-container { 
-                background-color: white; 
-                padding: 5px 40px 40px 40px; 
-                border-radius: 20px; 
-                box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-                text-align: center; 
-                border: 1px solid #E2E8F0;
-                max-width: 550px;
-                margin: 0 auto;
-                margin-top: 20px;
+                background-color: white; padding: 40px; border-radius: 20px; 
+                box-shadow: 0 10px 40px rgba(0,0,0,0.08); text-align: center; 
+                border: 1px solid #F7FAFC; max-width: 500px; margin: 0 auto; margin-top: 40px;
             }
-
-            /* Animação da Logo */
-            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-            .login-logo-spin {
-                height: 110px; width: auto;
-                animation: spin 45s linear infinite; 
-                filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
-            }
-            .login-logo-static { height: 75px; width: auto; margin-left: 10px; }
-            
-            /* Wrapper da Logo - Margem negativa se precisar subir mais */
-            .logo-wrapper { 
-                display: flex; justify-content: center; align-items: center; 
-                margin-bottom: 20px; 
-                margin-top: 10px; /* Pequeno respiro */
-            }
-
-            /* Manifesto */
-            .manifesto-login {
-                font-family: 'Nunito', sans-serif;
-                font-size: 0.9rem;
-                color: #4A5568;
-                font-style: italic;
-                line-height: 1.5;
-                margin-bottom: 30px;
-                padding: 0 15px;
-            }
-
-            /* Inputs */
-            .stTextInput input {
-                border-radius: 8px !important;
-                border: 1px solid #CBD5E0 !important;
-                padding: 10px !important;
-                background-color: #F8FAFC !important;
-            }
-
-            /* Termo */
-            .termo-box { 
-                background-color: #F8FAFC; 
-                padding: 15px; 
-                border-radius: 8px; 
-                height: 120px; 
-                overflow-y: scroll; 
-                font-size: 0.75rem; 
-                border: 1px solid #E2E8F0; 
-                margin-bottom: 20px; 
-                text-align: left; 
-                color: #4A5568;
-                line-height: 1.4;
-            }
-            
-            /* Botão */
-            div[data-testid="column"] .stButton button {
-                width: 100%;
-                background-color: #0F52BA !important;
-                color: white !important;
-                border-radius: 8px !important;
-                font-weight: 700 !important;
-                height: 50px !important;
-                border: none !important;
-            }
-            div[data-testid="column"] .stButton button:hover {
-                background-color: #0A3D8F !important;
-            }
+            .border-test { border: 2px dashed #FF9800 !important; }
+            .stTextInput input { border-radius: 10px !important; padding: 12px !important; border: 1px solid #E2E8F0 !important; }
+            .stButton button { width: 100%; border-radius: 10px !important; height: 50px !important; font-weight: 700 !important; }
+            .termo-box { background-color: #F8FAFC; padding: 15px; border-radius: 8px; height: 100px; overflow-y: scroll; font-size: 0.75rem; border: 1px solid #E2E8F0; text-align: left; color: #4A5568; margin-bottom: 15px; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -221,99 +229,146 @@ def sistema_seguranca():
         st.session_state["autenticado"] = False
 
     if not st.session_state["autenticado"]:
-        # Layout de colunas para centralizar
-        c_vazio1, c_login, c_vazio2 = st.columns([1, 2, 1])
+        c_vazio1, c_login, c_vazio2 = st.columns([1, 1.5, 1])
         
         with c_login:
-            # Abre o container visualmente (HTML)
-            st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+            cls_extra = "border-test" if IS_TEST_ENV else ""
+            st.markdown(f"<div class='login-container {cls_extra}'>", unsafe_allow_html=True)
             
-            # 1. LOGO (PRIMEIRO ELEMENTO ABSOLUTO)
-            icone_b64 = get_base64_image("omni_icone.png")
-            texto_b64 = get_base64_image("omni_texto.png")
-            
-            if icone_b64 and texto_b64:
-                st.markdown(f"""
-                <div class="logo-wrapper">
-                    <img src="data:image/png;base64,{icone_b64}" class="login-logo-spin">
-                    <img src="data:image/png;base64,{texto_b64}" class="login-logo-static">
-                </div>
-                """, unsafe_allow_html=True)
+            if IS_TEST_ENV:
+                st.markdown("<h2 style='color:#E65100; margin:0;'>🛠️ MODO TESTE</h2>", unsafe_allow_html=True)
+                st.caption("Acesso simplificado para desenvolvimento")
             else:
-                # Fallback se não tiver imagens
-                st.markdown("<h1 style='color:#0F52BA; margin-top:0;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
+                st.markdown("<h3>Bem-vindo de volta!</h3>", unsafe_allow_html=True)
+                st.caption("Acesse sua conta para continuar")
 
-            # 2. MANIFESTO (TEXTO)
-            st.markdown("""
-            <div class="manifesto-login">
-                "A Omnisfera é um ecossistema vivo onde a <strong>Neurociência</strong> encontra a <strong>Pedagogia</strong>. 
-                Conectamos dados, empatia e estratégia para que a inclusão deixe de ser um desafio e se torne a nossa linguagem universal."
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # 3. IDENTIFICAÇÃO (FEEDBACK)
-            st.markdown("<div style='text-align:left; font-weight:bold; color:#2D3748; font-size:0.9rem; margin-bottom:5px;'>👋 Sua Identidade (Para melhoria contínua)</div>", unsafe_allow_html=True)
-            nome_user = st.text_input("nome_fake", placeholder="Como gostaria de ser chamado?", label_visibility="collapsed")
-            st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
-            cargo_user = st.text_input("cargo_fake", placeholder="Seu Cargo (Ex: Professor, Coord...)", label_visibility="collapsed")
-            
             st.markdown("---")
-
-            # 4. TERMO JURÍDICO
-            st.markdown("<div style='text-align:left; font-weight:bold; color:#2D3748; font-size:0.9rem; margin-bottom:5px;'>🛡️ Termos de Uso (Beta)</div>", unsafe_allow_html=True)
-            st.markdown("""
-            <div class="termo-box">
-                <strong>ACORDO DE CONFIDENCIALIDADE E PROPRIEDADE INTELECTUAL</strong><br><br>
-                1. <strong>Licença de Uso:</strong> Este software ("Omnisfera") encontra-se em estágio de desenvolvimento (BETA). O acesso é concedido em caráter pessoal, intransferível e temporário.<br><br>
-                2. <strong>Propriedade Intelectual:</strong> Todo o código fonte, algoritmos de IA, prompts, design de interface e metodologia pedagógica são de propriedade exclusiva de <strong>Rodrigo A. Queiroz</strong>. É estritamente vedada a cópia, engenharia reversa, print screen para divulgação pública ou comercialização de qualquer parte desta solução.<br><br>
-                3. <strong>Dados e Feedback:</strong> Ao utilizar o sistema, o usuário concorda que seus dados de navegação e feedbacks inseridos poderão ser utilizados para aprimoramento da plataforma.<br><br>
-                4. <strong>LGPD:</strong> O usuário compromete-se a não inserir dados reais sensíveis de alunos que violem a LGPD, utilizando dados fictícios para testes.
-            </div>
-            """, unsafe_allow_html=True)
             
-            concordo = st.checkbox("Li, compreendi e concordo com os termos.")
+            # --- FORMULÁRIO DE LOGIN ---
+            
+            # Nome e Cargo (Opcionais no Teste, Obrigatórios na Produção)
+            label_nome = "Nome (Opcional no Teste)" if IS_TEST_ENV else "Seu Nome"
+            nome_user = st.text_input("user_name", placeholder="Como quer ser chamado?", label_visibility="collapsed")
+            
             st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+            label_cargo = "Cargo (Opcional no Teste)" if IS_TEST_ENV else "Seu Cargo"
+            cargo_user = st.text_input("user_role", placeholder="Cargo (Ex: Professor)", label_visibility="collapsed")
             
-            # --- ### INICIO BLOCO TESTE: SENHA OPCIONAL ### ---
-            # Mudei o placeholder e removi a lógica de checagem obrigatória no botão
-            senha = st.text_input("senha_fake", type="password", placeholder="Senha (Opcional no Teste)", label_visibility="collapsed")
-            st.caption("🔓 Ambiente de Teste: Senha liberada")
-            # --- ### FIM BLOCO TESTE ### ---
-
-            st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
+            # Termos de Uso
+            st.markdown("---")
+            st.markdown("<div class='termo-box'><strong>TERMOS DE USO (BETA)</strong><br>1. Software em desenvolvimento.<br>2. Proibida a comercialização.<br>3. Respeite a LGPD (use dados fictícios).</div>", unsafe_allow_html=True)
+            concordo = st.checkbox("Li e concordo com os termos.")
             
-            # --- ### INICIO BLOCO TESTE: LÓGICA DO BOTÃO ### ---
-            if st.button("🚀 ACESSAR (MODO TESTE)"):
-                # Para produção, você deve descomentar a linha de data e senha_correta
-                # hoje = date.today()
-                # senha_correta = "PEI_START_2026" if ...
-                
-                if not concordo:
-                    st.warning("⚠️ Aceite os termos para continuar.")
-                elif not nome_user or not cargo_user:
-                    st.warning("⚠️ Preencha Nome e Cargo para prosseguir.")
-                
-                # AQUI ESTÁ A MUDANÇA: Aceitamos qualquer senha (ou nenhuma)
-                else: 
+            # Senha (Condicional)
+            if not IS_TEST_ENV:
+                st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+                senha = st.text_input("pass_input", type="password", placeholder="Digite sua senha de acesso", label_visibility="collapsed")
+            
+            st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+            
+            # Botão de Ação
+            btn_text = "🔓 ENTRAR SEM SENHA" if IS_TEST_ENV else "🔒 ACESSAR OMNISFERA"
+            btn_type = "secondary" if IS_TEST_ENV else "primary"
+            
+            if st.button(btn_text, type=btn_type):
+                # LÓGICA DE VALIDAÇÃO
+                if IS_TEST_ENV:
+                    # --- AMBIENTE DE TESTE (TUDO LIBERADO) ---
                     st.session_state["autenticado"] = True
-                    st.session_state["usuario_nome"] = nome_user
-                    st.session_state["usuario_cargo"] = cargo_user
+                    st.session_state["usuario_nome"] = nome_user if nome_user else "Visitante Teste"
+                    st.session_state["usuario_cargo"] = cargo_user if cargo_user else "Desenvolvedor"
                     st.rerun()
-                
-                # Para produção, a lógica seria:
-                # elif senha == senha_correta:
-                #    ...loga...
-                # else:
-                #    st.error("Senha inválida")
-            # --- ### FIM BLOCO TESTE ### ---
-            
-            # Fecha container HTML
+                else:
+                    # --- AMBIENTE OFICIAL (RIGOROSO) ---
+                    if not concordo:
+                        st.warning("⚠️ Você precisa aceitar os termos.")
+                    elif not nome_user or not cargo_user:
+                        st.warning("⚠️ Preencha seu Nome e Cargo.")
+                    else:
+                        # Validação de Senha (Lógica Original)
+                        hoje = date.today()
+                        senha_mestra = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
+                        
+                        if senha == senha_mestra:
+                            st.session_state["autenticado"] = True
+                            st.session_state["usuario_nome"] = nome_user
+                            st.session_state["usuario_cargo"] = cargo_user
+                            st.rerun()
+                        else:
+                            st.error("🚫 Senha incorreta.")
+
             st.markdown("</div>", unsafe_allow_html=True)
-            
+            if IS_TEST_ENV:
+                st.markdown("<div style='text-align:center; margin-top:10px; color:#E65100; font-size:0.8rem;'>⚠️ Dados voláteis de sessão.</div>", unsafe_allow_html=True)
+
         return False
     return True
 
 if not sistema_seguranca(): st.stop()
+
+# ==============================================================================
+# 6. CONTEÚDO DA HOME (DASHBOARD)
+# ==============================================================================
+# Daqui para baixo, o código segue normal, pois o usuário já está logado.
+# O Header de Vidro continua fixo lá em cima.
+
+nome_display = st.session_state.get("usuario_nome", "Educador").split()[0]
+
+# Prompt IA para mensagem (Opcional, se tiver chave)
+mensagem_banner = "Unindo ciência, dados e empatia para transformar a educação."
+if 'OPENAI_API_KEY' in st.secrets:
+    try:
+        if 'banner_msg' not in st.session_state:
+            client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
+            prompt_banner = f"Crie uma frase curta e inspiradora para {nome_display} sobre inclusão escolar. Máx 20 palavras. NÃO repita o nome."
+            res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt_banner}])
+            st.session_state['banner_msg'] = res.choices[0].message.content
+        mensagem_banner = st.session_state['banner_msg']
+    except: pass
+
+# --- SIDEBAR (USER INFO) ---
+with st.sidebar:
+    st.markdown(f"**👤 {st.session_state['usuario_nome']}**")
+    st.caption(f"{st.session_state['usuario_cargo']}")
+    st.markdown("---")
+    st.info("💡 Dica: Use o menu superior para navegar entre PEI, PAEE e Hub.")
+
+# --- HERO SECTION ---
+st.markdown(f"""
+<div style="background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); border-radius: 16px; padding: 40px 50px; color: white; margin-bottom: 40px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(15, 82, 186, 0.3);">
+    <div style="position: relative; z-index: 2;">
+        <h1 style="font-family: 'Inter', sans-serif; font-weight: 700; margin-bottom: 10px;">Olá, {nome_display}!</h1>
+        <p style="font-size: 1.1rem; opacity: 0.9; max-width: 600px;">"{mensagem_banner}"</p>
+    </div>
+    <div style="position: absolute; right: -20px; top: -20px; opacity: 0.1; font-size: 10rem;">🌐</div>
+</div>
+""", unsafe_allow_html=True)
+
+# --- GRID DE FERRAMENTAS ---
+st.markdown("### 🚀 Acesso Rápido")
+
+col1, col2, col3 = st.columns(3)
+
+# Função auxiliar para cards
+def card_ferramenta(col, titulo, desc, icone, link, cor_borda):
+    with col:
+        st.markdown(f"""
+        <div style="background: white; border-radius: 15px; padding: 25px; height: 100%; border: 1px solid #E2E8F0; border-bottom: 5px solid {cor_borda}; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: transform 0.2s;">
+            <div style="font-size: 2.5rem; margin-bottom: 15px;">{icone}</div>
+            <h3 style="margin: 0 0 10px 0; font-size: 1.2rem; color: #2D3748;">{titulo}</h3>
+            <p style="color: #718096; font-size: 0.9rem; margin-bottom: 20px;">{desc}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button(f"Acessar {titulo}", key=f"btn_{titulo}", use_container_width=True):
+            st.switch_page(link)
+
+card_ferramenta(col1, "PEI 360º", "Avaliação, anamnese e plano educacional oficial.", "📘", "pages/1_PEI.py", "#3182CE")
+card_ferramenta(col2, "PAEE & T.A.", "Sala de recursos e eliminação de barreiras.", "🧩", "pages/2_PAE.py", "#805AD5")
+card_ferramenta(col3, "Hub Inclusão", "Adaptação de provas e criação de materiais.", "🚀", "pages/3_Hub_Inclusao.py", "#38B2AC")
+
+# --- RODAPÉ ---
+st.markdown("<div style='margin-top: 50px; text-align: center; color: #CBD5E0; font-size: 0.8rem;'>Omnisfera © 2026</div>", unsafe_allow_html=True)
+
 
 # ==============================================================================
 # 🧠 GERAÇÃO DE CONTEÚDO (IA)
