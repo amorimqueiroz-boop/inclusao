@@ -28,6 +28,7 @@ st.set_page_config(
 # ==============================================================================
 import os
 import base64
+import streamlit as st
 
 # 1. Detecção Automática de Ambiente (Via st.secrets)
 try:
@@ -46,38 +47,54 @@ def get_logo_base64():
 
 src_logo_giratoria = get_logo_base64()
 
-# 3. CSS Condicional (Faixa Amarela)
-css_faixa_teste = """
-    .test-stripe {
-        position: fixed; top: 0; left: 0; width: 100%; height: 8px;
-        background: repeating-linear-gradient(45deg, #FFC107, #FFC107 10px, #FF9800 10px, #FF9800 20px);
-        z-index: 99999999; pointer-events: none;
-    }
-""" if IS_TEST_ENV else ""
-
-html_faixa_teste = '<div class="test-stripe"></div>' if IS_TEST_ENV else ""
+# 3. Definição Dinâmica de Cores (Card Branco ou Amarelo)
+if IS_TEST_ENV:
+    # Amarelo Vibrante (Aviso de Teste)
+    card_bg = "rgba(255, 220, 50, 0.95)" 
+    card_border = "rgba(200, 160, 0, 0.5)"
+else:
+    # Branco Gelo Transparente (Original)
+    card_bg = "rgba(255, 255, 255, 0.85)"
+    card_border = "rgba(255, 255, 255, 0.6)"
 
 # 4. Renderização do CSS Global e Header Flutuante
 st.markdown(f"""
 <style>
+    /* --- AJUSTE CRÍTICO: MENU LATERAL VISÍVEL --- */
     
+    /* 1. Header principal transparente (permite ver o botão da sidebar) */
+    header[data-testid="stHeader"] {{
+        background-color: transparent !important;
+        z-index: 9999 !important; /* Garante que fique acessível */
     }}
     
+    /* 2. Esconde APENAS a barra de ferramentas da direita (Share, Deploy, etc) */
+    [data-testid="stToolbar"] {{
+        visibility: hidden !important;
+        display: none !important;
+    }}
+    
+    /* 3. Garante que o botão de abrir/fechar a sidebar esteja visível e clicável */
+    [data-testid="stSidebarCollapsedControl"] {{
+        visibility: visible !important;
+        display: block !important;
+        color: #2D3748 !important; /* Cor do ícone */
+    }}
     
     /* -------------------------------------------- */
-
-   /* Faixa de Teste (Só aparece se IS_TEST_ENV for True) */
-    {css_faixa_teste}
 
     /* CARD FLUTUANTE (OMNISFERA) */
     .omni-badge {{
         position: fixed;
         top: 15px; 
         right: 15px;
-        background: rgba(255, 255, 255, 0.85);
+        
+        /* COR DINÂMICA (Mudança aqui) */
+        background: {card_bg};
+        border: 1px solid {card_border};
+        
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.6);
         
         /* Dimensões: Fino e Largo */
         padding: 4px 30px;
@@ -86,11 +103,11 @@ st.markdown(f"""
         
         border-radius: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        z-index: 999990; /* Acima do conteúdo, mas cuidado com modais */
+        z-index: 999990; /* Acima do conteúdo */
         display: flex;
         align-items: center;
         gap: 10px;
-        pointer-events: none; /* Deixa passar clique se necessário, mas como escondeu o toolbar, ok */
+        pointer-events: none; /* Deixa passar clique se necessário */
     }}
 
     .omni-text {{
@@ -114,15 +131,13 @@ st.markdown(f"""
 
 </style>
 
-{html_faixa_teste}
-
 <div class="omni-badge">
     <img src="{src_logo_giratoria}" class="omni-logo-spin">
     <span class="omni-text">OMNISFERA</span>
 </div>
 """, unsafe_allow_html=True)
 # ==============================================================================
-# ### FIM BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA & ALERTA DE TESTE  ###
+# ### FIM BLOCO VISUAL INTELIGENTE ###
 # ==============================================================================
 
 
