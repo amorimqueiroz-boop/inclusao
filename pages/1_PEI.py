@@ -15,96 +15,42 @@ import random
 import requests
 
 # ==============================================================================
-# 0. CONFIGURAÇÃO DE PÁGINA E AMBIENTE AUTOMÁTICO
+# 0. CONFIGURAÇÃO DE PÁGINA
 # ==============================================================================
-# Detecção Automática de Ambiente via Secrets
-try:
-    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
-except:
-    IS_TEST_ENV = False
-
-titulo_pag = "[TESTE] Omnisfera | PEI" if IS_TEST_ENV else "Omnisfera | PEI"
-icone_pag = "🛠️" if IS_TEST_ENV else "📘"
-
 st.set_page_config(
-    page_title=titulo_pag,
-    page_icon=icone_pag,
+    page_title="[TESTE] Omnisfera | PEI",
+    page_icon="🛠️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ==============================================================================
-# VISUAL: HEADER "GLASSMORPHISM" E FAIXA DE TESTE
+# ### INICIO BLOCO TESTE: VISUAL DE ALERTA ###
 # ==============================================================================
-def get_base64_header(image_path):
-    if not os.path.exists(image_path): return ""
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode()
-
-b64_icone = get_base64_header("omni_icone.png")
-src_logo = f"data:image/png;base64,{b64_icone}" if b64_icone else "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
-
-# Lógica da Faixa de Teste (Só aparece se for ambiente de teste)
-css_faixa = """
-    .test-stripe {
-        position: fixed; top: 0; left: 0; width: 100%; height: 8px;
-        background: repeating-linear-gradient(45deg, #FFC107, #FFC107 10px, #FF9800 10px, #FF9800 20px);
-        z-index: 99999999; pointer-events: none;
-    }
-""" if IS_TEST_ENV else ""
-html_faixa = '<div class="test-stripe"></div>' if IS_TEST_ENV else ""
-
-st.markdown(f"""
+st.markdown("""
 <style>
-    /* Esconde o Header padrão do Streamlit e Rodapé */
-    header[data-testid="stHeader"] {{ visibility: hidden; }}
-    footer {{ visibility: hidden !important; }}
-
-    /* Ajuste do topo para o conteúdo não ficar escondido */
-    .block-container {{ padding-top: 120px !important; }}
-
-    /* Faixa de Teste */
-    {css_faixa}
-
-    /* BARRA DE VIDRO (GLASS HEADER) */
-    .glass-header {{
-        position: fixed; top: 0; left: 0; width: 100%; height: 80px;
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-        z-index: 999990;
-        display: flex; align-items: center; justify-content: center;
-        padding: 0 20px;
-    }}
-
-    .header-content {{ display: flex; align-items: center; gap: 15px; }}
-    
-    @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
-    .header-logo {{ height: 45px; width: auto; animation: spin-slow 20s linear infinite; }}
-
-    .header-title {{
-        font-family: 'Inter', sans-serif; font-weight: 800; font-size: 1.4rem;
-        background: linear-gradient(90deg, #0F52BA 0%, #3182CE 100%);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        letter-spacing: 1px;
-    }}
-    
-    .badge-mod {{
-        background-color: #EBF8FF; color: #3182CE; padding: 2px 8px; 
-        border-radius: 10px; font-size: 0.6rem; font-weight: 700; 
-        margin-left: 5px; vertical-align: middle; border: 1px solid #BEE3F8;
-    }}
+    /* Faixa de aviso no topo */
+    .test-environment-bar {
+        position: fixed; top: 0; left: 0; width: 100%; height: 12px;
+        background: repeating-linear-gradient(45deg, #FFC107, #FFC107 10px, #FF9800 10px, #FF9800 20px);
+        z-index: 9999999;
+    }
+    /* Selo de Teste */
+    .test-badge {
+        position: fixed; top: 20px; right: 20px; 
+        background-color: #FF9800; color: white;
+        padding: 5px 12px; border-radius: 8px;
+        font-weight: 800; font-size: 0.8rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        z-index: 9999999; pointer-events: none;
+    }
 </style>
-
-{html_faixa}
-<div class="glass-header">
-    <div class="header-content">
-        <img src="{src_logo}" class="header-logo">
-        <div class="header-title">OMNISFERA <span class="badge-mod">PEI 360º</span></div>
-    </div>
-</div>
+<div class="test-environment-bar"></div>
+<div class="test-badge">🛠️ AMBIENTE DE TESTES</div>
 """, unsafe_allow_html=True)
+# ==============================================================================
+# ### FIM BLOCO TESTE ###
+# ==============================================================================
 
 # ==============================================================================
 # 1. VERIFICAÇÃO DE SEGURANÇA (SIMPLIFICADA)
@@ -114,6 +60,19 @@ def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
         st.stop() # Para o carregamento aqui
+    
+    # NÃO ESCONDEMOS MAIS O CABEÇALHO.
+    # Isso garante que o botão da sidebar (setinha) funcione nativamente.
+    st.markdown("""
+        <style>
+            footer {visibility: hidden !important;}
+            [data-testid="stHeader"] {
+                visibility: visible !important;
+                background-color: transparent !important;
+            }
+            .block-container {padding-top: 2rem !important;}
+        </style>
+    """, unsafe_allow_html=True)
 
 # Executa a verificação
 verificar_acesso()
@@ -161,7 +120,7 @@ def salvar_aluno_integrado(dados):
     except Exception as e: return False, f"Erro backup: {str(e)}"
 
     # 2. Integração Omnisfera (Banco Central)
-    # Remove versão antiga se existir
+    # Remove versão antiga se existir (para atualizar)
     st.session_state.banco_estudantes = [a for a in st.session_state.banco_estudantes if a['nome'] != dados['nome']]
     
     # Cria registro otimizado para o Hub/PAE
