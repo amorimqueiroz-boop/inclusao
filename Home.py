@@ -64,13 +64,15 @@ def sistema_seguranca():
 if not sistema_seguranca(): st.stop()
 
 # ==============================================================================
-# 🏠 HOME - DASHBOARD OMNISFERA (ECOSYSTEM EDITION)
+# 🏠 HOME - DASHBOARD OMNISFERA (CLEAN & SOBER)
 # ==============================================================================
 
 # CSS GERAL
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap');
+    /* Importando Inter para títulos mais sóbrios e Nunito para corpo */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Nunito:wght@400;600;700&display=swap');
+    
     html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
     
     /* 1. ESPAÇAMENTO DO TOPO */
@@ -88,13 +90,13 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         gap: 20px; 
-        margin-bottom: 20px; 
+        margin-bottom: 10px; 
         padding-top: 10px;
     }
     .logo-icon-spin {
         height: 130px; 
         width: auto;
-        animation: spin 40s linear infinite; /* Rotação bem lenta e elegante */
+        animation: spin 45s linear infinite; 
         filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
     }
     .logo-text-static {
@@ -102,16 +104,16 @@ st.markdown("""
         width: auto;
     }
 
-    /* --- HERO BANNER (SLIM & LEFT) --- */
+    /* --- HERO BANNER (FONTE SÓBRIA) --- */
     .dash-hero { 
         background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); 
-        border-radius: 20px;
-        margin-bottom: 30px;
+        border-radius: 16px;
+        margin-bottom: 40px; /* Mais espaço abaixo do banner já que removemos o texto */
         box-shadow: 0 10px 25px rgba(15, 82, 186, 0.25);
         color: white;
         position: relative;
         overflow: hidden;
-        padding: 35px 50px; 
+        padding: 30px 50px; 
         display: flex;
         align-items: center;
         justify-content: flex-start;
@@ -121,17 +123,18 @@ st.markdown("""
 
     .hero-title {
         color: white; 
-        font-family: 'Nunito', sans-serif;
-        font-weight: 800; 
+        font-family: 'Inter', sans-serif; /* Fonte mais séria/sóbria */
+        font-weight: 700; 
         font-size: 2rem; 
         margin: 0; 
         line-height: 1.1;
-        letter-spacing: 0.5px;
+        letter-spacing: -0.5px;
     }
     .hero-subtitle {
         color: rgba(255,255,255,0.9);
-        font-size: 1.05rem;
-        margin-top: 5px; 
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+        margin-top: 8px; 
         font-weight: 400; 
     }
     
@@ -145,38 +148,15 @@ st.markdown("""
         top: 20px;
     }
 
-    /* --- CONCEITO OMNISFERA (MANIFESTO) --- */
-    .manifesto-box {
-        text-align: center;
-        margin-bottom: 40px;
-        padding: 0 10%;
-    }
-    .manifesto-title {
-        font-size: 1.2rem;
-        color: #2D3748;
-        font-weight: 800;
-        margin-bottom: 10px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    .manifesto-text {
-        font-size: 1.15rem;
-        color: #4A5568;
-        font-weight: 400;
-        line-height: 1.6;
-        font-style: italic;
-    }
-    .highlight { color: #0F52BA; font-weight: 700; font-style: normal; }
-
-    /* --- CARDS DE FERRAMENTA (COM LOGOS) --- */
+    /* --- CARDS DE FERRAMENTA (SEM TÍTULO TEXTO) --- */
     .tool-card { 
         background: white; 
         border-radius: 20px; 
-        padding: 25px; 
+        padding: 30px 20px; 
         box-shadow: 0 4px 10px rgba(0,0,0,0.03); 
         border: 1px solid #E2E8F0; 
         height: 100%; 
-        display: flex; flex-direction: column; justify-content: flex-start; /* Alinha topo */
+        display: flex; flex-direction: column; justify-content: flex-start; 
         transition: all 0.3s ease; 
         text-align: center;
     }
@@ -187,25 +167,31 @@ st.markdown("""
     }
     
     .card-logo-box {
-        height: 70px;
+        height: 80px; /* Aumentei para a logo reinar */
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
     }
     .card-logo-img {
-        max-height: 65px;
+        max-height: 75px; /* Logo maior */
         width: auto;
         object-fit: contain;
     }
     
-    .tool-title { font-size: 1.2rem; font-weight: 800; color: #2D3748; margin-bottom: 8px; }
-    .tool-desc { font-size: 0.9rem; color: #718096; margin-bottom: 25px; line-height: 1.5; }
+    /* Sem tool-title, a logo é o título */
+    .tool-desc { 
+        font-size: 0.95rem; 
+        color: #4A5568; 
+        margin-bottom: 25px; 
+        line-height: 1.5; 
+        font-weight: 500;
+    }
     
     /* Bordas de cor */
-    .border-blue { border-bottom: 5px solid #3182CE; } 
-    .border-purple { border-bottom: 5px solid #805AD5; } 
-    .border-teal { border-bottom: 5px solid #38B2AC; }
+    .border-blue { border-bottom: 6px solid #3182CE; } 
+    .border-purple { border-bottom: 6px solid #805AD5; } 
+    .border-teal { border-bottom: 6px solid #38B2AC; }
 
     /* --- INSIGHT CARD --- */
     .insight-card {
@@ -259,7 +245,7 @@ else:
     st.markdown("<h1 style='text-align: center; color: #0F52BA; font-size: 3rem; margin-bottom:10px;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
 
 
-# --- 2. HERO BANNER (TEXTO ESQUERDA + ELEGÂNCIA) ---
+# --- 2. HERO BANNER (SÓBRIO) ---
 st.markdown("""
 <div class="dash-hero">
     <div class="hero-text-block">
@@ -270,23 +256,17 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# --- 3. MANIFESTO OMNISFERA (CONCEITO) ---
-st.markdown("""
-<div class="manifesto-box">
-    <div class="manifesto-text">
-        "A Omnisfera não é apenas uma plataforma. É um ecossistema vivo onde a <span class="highlight">Neurociência</span> encontra a <span class="highlight">Pedagogia</span>.<br>
-        Do PEI na sala de aula ao PAE na clínica, conectamos dados, empatia e estratégia para que a inclusão deixe de ser um desafio e se torne a nossa linguagem universal."
-    </div>
-</div>
-""", unsafe_allow_html=True)
+# (TEXTO MANIFESTO REMOVIDO PARA LIMPEZA VISUAL)
 
-# --- 4. FERRAMENTAS DE ACESSO (COM LOGOS) ---
+# --- 3. FERRAMENTAS DE ACESSO (SEM TÍTULO TEXTO, SÓ LOGO) ---
+st.markdown("### 🎯 Acesso Rápido")
+
 # Preparar logos
 logo_pei = get_base64_image("360.png")
 logo_pae = get_base64_image("pae.png")
 logo_hub = get_base64_image("hub.png")
 
-# Fallback icons se não tiver imagem
+# Fallback icons
 icon_pei = f'<img src="data:image/png;base64,{logo_pei}" class="card-logo-img">' if logo_pei else '<i class="ri-book-read-line" style="font-size:3rem; color:#3182CE;"></i>'
 icon_pae = f'<img src="data:image/png;base64,{logo_pae}" class="card-logo-img">' if logo_pae else '<i class="ri-puzzle-line" style="font-size:3rem; color:#805AD5;"></i>'
 icon_hub = f'<img src="data:image/png;base64,{logo_hub}" class="card-logo-img">' if logo_hub else '<i class="ri-rocket-line" style="font-size:3rem; color:#38B2AC;"></i>'
@@ -298,11 +278,8 @@ with col1:
     st.markdown(f"""
     <div class="tool-card border-blue">
         <div class="card-logo-box">{icon_pei}</div>
-        <div>
-            <div class="tool-title">PEI 360º</div>
-            <div class="tool-desc">
-                O coração da inclusão escolar. Avalie, planeje e gere o documento oficial do aluno.
-            </div>
+        <div class="tool-desc">
+            O coração da inclusão escolar. Avalie, planeje e gere o documento oficial do aluno.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -314,11 +291,8 @@ with col2:
     st.markdown(f"""
     <div class="tool-card border-purple">
         <div class="card-logo-box">{icon_pae}</div>
-        <div>
-            <div class="tool-title">PAE Clínico</div>
-            <div class="tool-desc">
-                A inteligência da Sala de Recursos. Mapeie barreiras e tecnologias assistivas.
-            </div>
+        <div class="tool-desc">
+            A inteligência da Sala de Recursos. Mapeie barreiras e tecnologias assistivas.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -330,18 +304,15 @@ with col3:
     st.markdown(f"""
     <div class="tool-card border-teal">
         <div class="card-logo-box">{icon_hub}</div>
-        <div>
-            <div class="tool-title">Hub Criativo</div>
-            <div class="tool-desc">
-                Adaptação em segundos. Provas, atividades e roteiros gerados por IA.
-            </div>
+        <div class="tool-desc">
+            Adaptação em segundos. Provas, atividades e roteiros gerados por IA.
         </div>
     </div>
     """, unsafe_allow_html=True)
     if st.button("Acessar Hub ➡️", key="btn_hub", type="primary", use_container_width=True):
         st.switch_page("pages/3_Hub_Inclusao.py")
 
-# --- 5. INSIGHT DO DIA ---
+# --- 4. INSIGHT DO DIA ---
 st.markdown(f"""
 <div class="insight-card">
     <div class="insight-icon"><i class="ri-lightbulb-flash-line"></i></div>
@@ -352,4 +323,36 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- 6. RODAPÉ EDU
+# --- 5. RECURSOS EDUCATIVOS (RODAPÉ) ---
+st.markdown("### 📚 Base de Conhecimento")
+st.markdown("""
+<div class="home-grid">
+    <a href="#" class="rich-card">
+        <div class="rich-card-top" style="background-color: #3182CE;"></div>
+        <div class="rc-icon" style="background-color:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
+        <div class="rc-title">PEI vs PAE</div>
+        <div class="rc-desc">Entenda as diferenças fundamentais.</div>
+    </a>
+    <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="rich-card">
+        <div class="rich-card-top" style="background-color: #D69E2E;"></div>
+        <div class="rc-icon" style="background-color:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
+        <div class="rc-title">Legislação</div>
+        <div class="rc-desc">Lei Brasileira de Inclusão (2025).</div>
+    </a>
+    <a href="https://institutoneurosaber.com.br/" target="_blank" class="rich-card">
+        <div class="rich-card-top" style="background-color: #D53F8C;"></div>
+        <div class="rc-icon" style="background-color:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
+        <div class="rc-title">Neurociência</div>
+        <div class="rc-desc">Desenvolvimento atípico.</div>
+    </a>
+    <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="rich-card">
+        <div class="rich-card-top" style="background-color: #38A169;"></div>
+        <div class="rc-icon" style="background-color:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
+        <div class="rc-title">BNCC</div>
+        <div class="rc-desc">Currículo oficial.</div>
+    </a>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("---")
+st.markdown("<div style='text-align: center; color: #A0AEC0; font-size: 0.8rem;'>Omnisfera © 2026 - Todos os direitos reservados.</div>", unsafe_allow_html=True)
