@@ -13,7 +13,7 @@ st.set_page_config(
     page_title="[TESTE] Omnisfera | PAEE", 
     page_icon="🛠️", 
     layout="wide",
-    initial_sidebar_state="expanded" # Garante que a barra lateral inicie aberta
+    initial_sidebar_state="expanded"
 )
 
 # ==============================================================================
@@ -21,13 +21,11 @@ st.set_page_config(
 # ==============================================================================
 st.markdown("""
 <style>
-    /* Faixa de aviso no topo */
     .test-environment-bar {
         position: fixed; top: 0; left: 0; width: 100%; height: 12px;
         background: repeating-linear-gradient(45deg, #FFC107, #FFC107 10px, #FF9800 10px, #FF9800 20px);
         z-index: 9999999;
     }
-    /* Selo de Teste */
     .test-badge {
         position: fixed; top: 20px; right: 20px; 
         background-color: #FF9800; color: white;
@@ -49,14 +47,9 @@ def verificar_acesso():
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
         st.stop()
     
-    # CORREÇÃO DO MENU LATERAL:
-    # Removemos o bloqueio do stHeader para que o botão de toggle apareça.
     st.markdown("""
         <style>
-            /* Oculta apenas o rodapé */
             footer {visibility: hidden !important;}
-            
-            /* Garante que o cabeçalho padrão (com o botão do menu) esteja visível */
             [data-testid="stHeader"] {
                 visibility: visible !important;
                 background-color: transparent !important;
@@ -81,20 +74,14 @@ with st.sidebar:
 # 2. SISTEMA PAEE (Plano de Atendimento Educacional Especializado)
 # ==============================================================================
 
-# --- BANCO DE DADOS (Leitura do PEI) ---
 ARQUIVO_DB = "banco_alunos.json"
 
 def carregar_banco():
-    # --- BLINDAGEM DE DADOS (Multitenancy) ---
     usuario_atual = st.session_state.get("usuario_nome", "")
-    # -----------------------------------------
-
     if os.path.exists(ARQUIVO_DB):
         try:
             with open(ARQUIVO_DB, "r", encoding="utf-8") as f:
                 todos_alunos = json.load(f)
-                
-                # FILTRAGEM: Retorna apenas alunos deste usuário
                 meus_alunos = [
                     aluno for aluno in todos_alunos 
                     if aluno.get('responsavel') == usuario_atual
@@ -109,33 +96,21 @@ if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estu
 # --- CSS PERSONALIZADO ---
 st.markdown("""
     <style>
-    /* LAYOUT DO BANNER - AJUSTADO PARA FICAR COMPACTO */
     .header-paee { 
-        background: white; 
-        padding: 15px 25px;       /* Padding reduzido */
-        border-radius: 12px; 
-        border-left: 6px solid #805AD5; 
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-        margin-bottom: 20px; 
-        margin-top: 10px;         /* Espaço para não colar no header */
-        
-        display: flex;            
-        flex-direction: row;       
-        align-items: center;       
-        gap: 20px;                
+        background: white; padding: 15px 25px; border-radius: 12px; 
+        border-left: 6px solid #805AD5; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+        margin-bottom: 20px; margin-top: 10px; display: flex; align-items: center; gap: 20px; 
     }
-    
     .student-header { background-color: #F3E8FF; border: 1px solid #D6BCFA; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; }
     .student-label { font-size: 0.8rem; color: #553C9A; font-weight: 700; text-transform: uppercase; }
     .student-value { font-size: 1.1rem; color: #44337A; font-weight: 800; }
-    .paee-card { background-color: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
-    .paee-title { color: #805AD5; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
-    
     div[data-testid="column"] .stButton button[kind="primary"] { background-color: #805AD5 !important; border: none !important; color: white !important; font-weight: bold; }
+    
+    /* CARD DE PROJETO EI */
+    .ei-card { border: 2px dashed #F6E05E; background-color: #FFFFF0; padding: 15px; border-radius: 10px; margin-bottom: 10px; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- CABEÇALHO (LOGO ESQUERDA + SUBTÍTULO CENTRO) ---
 def get_img_tag(file_path, width):
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
@@ -143,15 +118,11 @@ def get_img_tag(file_path, width):
         return f'<img src="data:image/png;base64,{data}" width="{width}">'
     return "🧩"
 
-# Mantendo o tamanho reduzido (160) conforme solicitado anteriormente
-# Nota: Mantive o nome do arquivo 'pae.png' para não quebrar caso o arquivo não tenha sido renomeado
 img_html = get_img_tag("pae.png", "160") 
 
 st.markdown(f"""
     <div class="header-paee">
-        <div style="flex-shrink: 0;"> 
-            {img_html}
-        </div>
+        <div style="flex-shrink: 0;"> {img_html} </div>
         <div style="flex-grow: 1; text-align: center;"> 
             <p style="margin:0; color:#44337A; font-size: 1.4rem; font-weight: 600;">
                 Sala de Recursos & Eliminação de Barreiras
@@ -159,7 +130,6 @@ st.markdown(f"""
         </div>
     </div>
 """, unsafe_allow_html=True)
-
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Nenhum aluno encontrado para o seu usuário. Cadastre no módulo PEI primeiro.")
@@ -173,6 +143,11 @@ with col_sel:
 
 aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
 
+# --- DETECTOR DE EDUCAÇÃO INFANTIL ---
+# Lógica para verificar se é criança pequena
+serie_aluno = aluno.get('serie', '').lower()
+is_ei = "infantil" in serie_aluno or "creche" in serie_aluno or "pré" in serie_aluno
+
 # Exibe Resumo do PEI
 st.markdown(f"""
     <div class="student-header">
@@ -182,6 +157,9 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
+if is_ei:
+    st.info("🧸 **Modo Educação Infantil Ativado:** Foco em Campos de Experiência (BNCC) e Brincar Heurístico.")
+
 with st.expander("📄 Ver Resumo do PEI (Base para o PAEE)", expanded=False):
     st.info(aluno.get('ia_sugestao', 'Nenhum dado de PEI processado ainda.'))
 
@@ -189,7 +167,8 @@ with st.expander("📄 Ver Resumo do PEI (Base para o PAEE)", expanded=False):
 if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']
 else: api_key = st.sidebar.text_input("Chave OpenAI:", type="password")
 
-# --- FUNÇÕES DE IA DO PAEE ---
+# --- FUNÇÕES DE IA ---
+
 def gerar_diagnostico_barreiras(api_key, aluno, obs_prof):
     client = OpenAI(api_key=api_key)
     prompt = f"""
@@ -210,13 +189,41 @@ def gerar_diagnostico_barreiras(api_key, aluno, obs_prof):
         return resp.choices[0].message.content
     except Exception as e: return f"Erro: {str(e)}"
 
+# --- NOVA FUNÇÃO: GERADOR DE PROJETOS EI (BNCC) ---
+def gerar_projetos_ei_bncc(api_key, aluno, campo_exp):
+    client = OpenAI(api_key=api_key)
+    prompt = f"""
+    ATUAR COMO: Pedagogo Especialista em Educação Infantil e Inclusão.
+    ALUNO: {aluno['nome']} (Educação Infantil).
+    HIPERFOCO: {aluno.get('hiperfoco', 'Brincadeiras')}.
+    RESUMO DAS NECESSIDADES (PEI): {aluno.get('ia_sugestao', '')[:800]}
+    
+    SUA MISSÃO: Criar 3 propostas de EXPERIÊNCIAS LÚDICAS (Atividades) focadas no Campo de Experiência: "{campo_exp}".
+    
+    REGRAS:
+    1. As atividades devem usar o Hiperfoco para engajar.
+    2. Devem eliminar barreiras de participação.
+    3. Devem ser sensoriais e concretas.
+    
+    SAÍDA ESPERADA (Markdown):
+    ### 🧸 Experiência 1: [Nome Criativo]
+    * **Objetivo:** ...
+    * **Como Fazer:** ...
+    * **Adaptação:** ...
+    
+    (Repetir para 2 e 3)
+    """
+    try:
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
+        return resp.choices[0].message.content
+    except Exception as e: return str(e)
+
 def gerar_plano_habilidades(api_key, aluno, foco_treino):
     client = OpenAI(api_key=api_key)
     prompt = f"""
     CRIE UM PLANO DE INTERVENÇÃO AEE (Sala de Recursos).
     FOCO: Desenvolvimento de Habilidades ({foco_treino}).
     ALUNO: {aluno['nome']} | HIPERFOCO: {aluno.get('hiperfoco')}
-    
     GERE 3 METAS SMART (Longo Prazo, Estratégia com Hiperfoco, Recurso).
     """
     try:
@@ -249,42 +256,93 @@ def gerar_documento_articulacao(api_key, aluno, frequencia, acoes):
         return resp.choices[0].message.content
     except Exception as e: return str(e)
 
-# --- ABAS DO PAEE ---
-tab_barreiras, tab_plano, tab_tec, tab_ponte = st.tabs([
-    "🔍 Mapear Barreiras", 
-    "🎯 Plano de Habilidades", 
-    "🛠️ Tec. Assistiva", 
-    "🌉 Cronograma & Articulação"
-])
+# ==============================================================================
+# LÓGICA CONDICIONAL DE ABAS (O CORAÇÃO DA MUDANÇA)
+# ==============================================================================
 
-# 1. BARREIRAS
-with tab_barreiras:
-    st.write("### 🔍 Diagnóstico de Acessibilidade")
-    st.info("O PAEE começa identificando o que impede o aluno de participar, não a doença dele.")
-    obs_aee = st.text_area("Observações Iniciais do AEE (Opcional):", placeholder="Ex: O aluno se recusa a escrever...", height=100)
-    if st.button("Analisar Barreiras via IA", type="primary"):
-        if not api_key: st.error("Insira a chave OpenAI."); st.stop()
-        with st.spinner("Analisando..."):
-            st.markdown(gerar_diagnostico_barreiras(api_key, aluno, obs_aee))
+if is_ei:
+    # --- ABAS ESPECÍFICAS PARA EDUCAÇÃO INFANTIL ---
+    tab_barreiras, tab_projetos, tab_rotina, tab_ponte = st.tabs([
+        "🔍 Barreiras no Brincar", 
+        "🧸 Banco de Experiências", 
+        "🏠 Rotina & Adaptação", 
+        "🌉 Articulação"
+    ])
+    
+    # 1. BARREIRAS (EI)
+    with tab_barreiras:
+        st.write("### 🔍 Diagnóstico do Brincar (EI)")
+        st.caption("Na Educação Infantil, a barreira não é 'não escrever', mas sim 'não participar da interação'.")
+        obs_aee = st.text_area("Observação do Brincar:", placeholder="Ex: Isola-se no parquinho, não aceita texturas...", height=100)
+        if st.button("Mapear Barreiras do Brincar", type="primary"):
+            if not api_key: st.error("Insira a chave OpenAI."); st.stop()
+            with st.spinner("Analisando..."):
+                st.markdown(gerar_diagnostico_barreiras(api_key, aluno, obs_aee))
 
-# 2. PLANO
-with tab_plano:
-    st.write("### 🎯 Treino de Habilidades")
-    st.info(f"Hiperfoco Ativo: **{aluno.get('hiperfoco')}**")
-    foco = st.selectbox("Foco do atendimento:", ["Funções Executivas", "Autonomia", "Coordenação Motora", "Comunicação", "Habilidades Sociais"])
-    if st.button("Gerar Plano", type="primary"):
-        with st.spinner("Planejando..."):
-            st.markdown(gerar_plano_habilidades(api_key, aluno, foco))
+    # 2. PROJETOS (EI) - NOVIDADE!
+    with tab_projetos:
+        st.write("### 🧸 Banco de Experiências (BNCC)")
+        st.info(f"Hiperfoco para engajamento: **{aluno.get('hiperfoco')}**")
+        
+        campo_bncc = st.selectbox("Selecione o Campo de Experiência (BNCC):", [
+            "O eu, o outro e o nós (Identidade e Interação)",
+            "Corpo, gestos e movimentos (Motricidade)",
+            "Traços, sons, cores e formas (Artes)",
+            "Escuta, fala, pensamento e imaginação (Oralidade)",
+            "Espaços, tempos, quantidades, relações e transformações (Cognição)"
+        ])
+        
+        if st.button("✨ Gerar Atividades Lúdicas", type="primary"):
+            with st.spinner("Criando experiências..."):
+                atividades = gerar_projetos_ei_bncc(api_key, aluno, campo_bncc)
+                st.markdown(atividades)
 
-# 3. T.A.
-with tab_tec:
-    st.write("### 🛠️ Tecnologia Assistiva")
-    dif_especifica = st.text_input("Dificuldade Específica:", placeholder="Ex: Não segura o lápis")
-    if st.button("Sugerir Recursos", type="primary"):
-        with st.spinner("Buscando T.A..."):
-            st.markdown(sugerir_tecnologia_assistiva(api_key, aluno, dif_especifica))
+    # 3. ROTINA (EI)
+    with tab_rotina:
+        st.write("### 🏠 Adaptação de Rotina e AVDs")
+        st.write("Recursos visuais e sensoriais para a rotina da creche/pré-escola.")
+        dif_rotina = st.text_input("Dificuldade na Rotina:", placeholder="Ex: Hora do soninho, Desfralde, Alimentação")
+        if st.button("Sugerir Adaptação", type="primary"):
+            with st.spinner("Buscando recursos..."):
+                st.markdown(sugerir_tecnologia_assistiva(api_key, aluno, f"Rotina EI: {dif_rotina}"))
 
-# 4. ARTICULAÇÃO
+else:
+    # --- ABAS PADRÃO (FUNDAMENTAL / MÉDIO) ---
+    tab_barreiras, tab_plano, tab_tec, tab_ponte = st.tabs([
+        "🔍 Mapear Barreiras", 
+        "🎯 Plano de Habilidades", 
+        "🛠️ Tec. Assistiva", 
+        "🌉 Cronograma & Articulação"
+    ])
+
+    # 1. BARREIRAS
+    with tab_barreiras:
+        st.write("### 🔍 Diagnóstico de Acessibilidade")
+        st.info("O PAEE começa identificando o que impede o aluno de participar, não a doença dele.")
+        obs_aee = st.text_area("Observações Iniciais do AEE (Opcional):", placeholder="Ex: O aluno se recusa a escrever...", height=100)
+        if st.button("Analisar Barreiras via IA", type="primary"):
+            if not api_key: st.error("Insira a chave OpenAI."); st.stop()
+            with st.spinner("Analisando..."):
+                st.markdown(gerar_diagnostico_barreiras(api_key, aluno, obs_aee))
+
+    # 2. PLANO
+    with tab_plano:
+        st.write("### 🎯 Treino de Habilidades")
+        st.info(f"Hiperfoco Ativo: **{aluno.get('hiperfoco')}**")
+        foco = st.selectbox("Foco do atendimento:", ["Funções Executivas", "Autonomia", "Coordenação Motora", "Comunicação", "Habilidades Sociais"])
+        if st.button("Gerar Plano", type="primary"):
+            with st.spinner("Planejando..."):
+                st.markdown(gerar_plano_habilidades(api_key, aluno, foco))
+
+    # 3. T.A.
+    with tab_tec:
+        st.write("### 🛠️ Tecnologia Assistiva")
+        dif_especifica = st.text_input("Dificuldade Específica:", placeholder="Ex: Não segura o lápis")
+        if st.button("Sugerir Recursos", type="primary"):
+            with st.spinner("Buscando T.A..."):
+                st.markdown(sugerir_tecnologia_assistiva(api_key, aluno, dif_especifica))
+
+# 4. ARTICULAÇÃO (COMUM A TODOS)
 with tab_ponte:
     st.write("### 🌉 Ponte com a Sala Regular")
     c1, c2 = st.columns(2)
