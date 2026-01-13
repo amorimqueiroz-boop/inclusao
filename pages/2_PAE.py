@@ -17,7 +17,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ### VISUAL INTELIGENTE: HEADER OMNISFERA & ALERTA DE TESTE ###
+# ### BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA & ALERTA DE TESTE ###
 # ==============================================================================
 import os
 import base64
@@ -73,23 +73,29 @@ st.markdown(f"""
         backdrop-filter: blur(8px);             /* Desfoque do fundo */
         -webkit-backdrop-filter: blur(8px);
         border: 1px solid rgba(255, 255, 255, 0.6);
-        padding: 8px 16px;
+        
+        /* --- AJUSTE DE LARGURA AQUI --- */
+        padding: 8px 30px;                      /* Mais espaço nas laterais */
+        min-width: 260px;                       /* Largura mínima forçada para cobrir os botões */
+        justify-content: center;                /* Centraliza o conteúdo no card maior */
+        /* ------------------------------ */
+        
         border-radius: 20px;                    /* Formato Pílula */
         box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         z-index: 999990;                        /* Fica acima dos botões do Streamlit */
         display: flex;
         align-items: center;
-        gap: 10px;
-        pointer-events: none;                   /* Deixa clicar através dele se necessário, ou use auto */
+        gap: 12px;
+        pointer-events: none;                   /* Deixa clicar através dele se necessário */
     }}
 
     /* Texto do Card */
     .omni-text {{
         font-family: 'Nunito', sans-serif;
-        font-weight: 700;
-        font-size: 0.85rem;
+        font-weight: 800;
+        font-size: 0.9rem;
         color: #2D3748;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
         text-transform: uppercase;
     }}
 
@@ -100,8 +106,8 @@ st.markdown(f"""
     }}
     
     .omni-logo-spin {{
-        height: 24px; 
-        width: 24px; 
+        height: 26px; 
+        width: 26px; 
         animation: spin-slow 10s linear infinite; /* Gira devagar */
     }}
 
@@ -115,8 +121,9 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+
 # ==============================================================================
-# ### FIM BLOCO TESTE ###
+# ### FIM BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA & ALERTA DE TESTE  ###
 # ==============================================================================
 
 def verificar_acesso():
