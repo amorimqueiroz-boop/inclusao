@@ -25,11 +25,13 @@ st.set_page_config(page_title="[TESTE] Omnisfera | Hub", page_icon="🚀", layou
 # ==============================================================================
 st.markdown("""
 <style>
+    /* Faixa de aviso no topo */
     .test-environment-bar {
         position: fixed; top: 0; left: 0; width: 100%; height: 12px;
         background: repeating-linear-gradient(45deg, #FFC107, #FFC107 10px, #FF9800 10px, #FF9800 20px);
         z-index: 9999999;
     }
+    /* Selo de Teste */
     .test-badge {
         position: fixed; top: 20px; right: 20px; 
         background-color: #FF9800; color: white;
@@ -126,6 +128,14 @@ st.markdown("""
     
     .validado-box { background-color: #C6F6D5; color: #22543D; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; border: 1px solid #276749; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
+    /* Caixas de Explicação Pedagógica */
+    .pedagogia-box { 
+        background-color: #F7FAFC; border-left: 4px solid #3182CE; 
+        padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px; 
+        font-size: 0.9rem; color: #4A5568; 
+    }
+    .pedagogia-title { color: #2C5282; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+
     /* Abas */
     .stTabs [data-baseweb="tab-list"] { gap: 8px; flex-wrap: wrap; }
     .stTabs [data-baseweb="tab"] { border-radius: 6px; padding: 8px 16px; background-color: white; border: 1px solid #E2E8F0; font-size: 0.9rem; transition: all 0.2s; }
@@ -208,9 +218,9 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
     for linha in linhas:
         tag_match = re.search(r'\[\[(IMG|GEN_IMG).*?(\d+)\]\]', linha, re.IGNORECASE)
         if tag_match:
-            partes = re.split(r'(\[\[(?:IMG|GEN_IMG).*?\d+\]\])', linha, flags=re.IGNORECASE)
-            for parte in partes:
-                sub_match = re.search(r'(\d+)', parte)
+            parts = re.split(r'(\[\[(?:IMG|GEN_IMG).*?\d+\]\])', linha, flags=re.IGNORECASE)
+            for part in parts:
+                sub_match = re.search(r'(\d+)', part)
                 if ("IMG" in parte.upper() or "GEN_IMG" in parte.upper()) and sub_match:
                     num = int(sub_match.group(1))
                     img_bytes = mapa_imgs.get(num)
@@ -230,7 +240,7 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
 
-# --- IA FUNCTIONS (ATUALIZADAS PARA LÓGICA IA -> BANCO) ---
+# --- IA FUNCTIONS (ATUALIZADAS PARA LÓGICA DE FEEDBACK) ---
 
 def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None):
     """
@@ -247,7 +257,6 @@ def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None):
     except Exception as e:
         # 2. FALLBACK: BANCO DE IMAGENS (Se configurado)
         if unsplash_key:
-            # Limpa o prompt para buscar apenas a palavra-chave
             termo = prompt.split('.')[0] if '.' in prompt else prompt
             return buscar_imagem_unsplash(termo, unsplash_key)
         else:
@@ -365,21 +374,31 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, pct_img, mo
         return "Análise indisponível.", full_text
     except Exception as e: return str(e), ""
 
-def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo):
+# --- NOVA FUNÇÃO: GERADOR DE EXPERIÊNCIA LÚDICA (EI - BNCC) ---
+def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo, feedback_anterior=""):
     client = OpenAI(api_key=api_key)
     hiperfoco = aluno.get('hiperfoco', 'Brincar')
+    
+    ajuste_prompt = ""
+    if feedback_anterior:
+        ajuste_prompt = f"AJUSTE SOLICITADO PELO PROFESSOR: {feedback_anterior}. Refaça considerando isso."
+
     prompt = f"""
     ATUAR COMO: Especialista em Educação Infantil (BNCC) e Inclusão.
     ALUNO: {aluno['nome']} (Educação Infantil).
     HIPERFOCO: {hiperfoco}.
     RESUMO DAS NECESSIDADES (PEI): {aluno.get('ia_sugestao', '')[:600]}
+    
     SUA MISSÃO: Criar uma EXPERIÊNCIA LÚDICA, CONCRETA E VISUAL focada no Campo de Experiência: "{campo_exp}".
     Objetivo Específico: {objetivo}
+    {ajuste_prompt}
+    
     REGRAS:
     1. Não crie "provas" ou "folhinhas". Crie VIVÊNCIAS.
     2. Use o hiperfoco para engajar (ex: se gosta de dinossauros, conte dinossauros).
     3. Liste materiais concretos (massinha, tinta, blocos).
     4. Dê o passo a passo para o professor.
+    
     SAÍDA ESPERADA (Markdown):
     ## 🧸 Experiência: [Nome Criativo]
     **🎯 Intencionalidade:** ...
@@ -392,9 +411,11 @@ def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo):
         return resp.choices[0].message.content
     except Exception as e: return str(e)
 
-def gerar_roteiro_aula(api_key, aluno, assunto):
+# --- UTILS (ROTEIRO, ETC) ---
+def gerar_roteiro_aula(api_key, aluno, assunto, feedback_anterior=""):
     client = OpenAI(api_key=api_key)
-    prompt = f"Roteiro de aula {assunto} para {aluno['nome']}. PEI: {aluno.get('ia_sugestao','')[:500]}."
+    ajuste = f"Ajuste com base neste feedback: {feedback_anterior}" if feedback_anterior else ""
+    prompt = f"Roteiro de aula/rotina {assunto} para {aluno['nome']}. PEI: {aluno.get('ia_sugestao','')[:500]}. {ajuste}"
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
         return resp.choices[0].message.content
@@ -409,9 +430,10 @@ def gerar_quebra_gelo_profundo(api_key, aluno, assunto, tema_extra=""):
         return resp.choices[0].message.content
     except Exception as e: return str(e)
 
-def gerar_dinamica_inclusiva(api_key, aluno, assunto):
+def gerar_dinamica_inclusiva(api_key, aluno, assunto, feedback_anterior=""):
     client = OpenAI(api_key=api_key)
-    prompt = f"Dinâmica de grupo sobre {assunto} inclusiva para {aluno['nome']} (PEI: {aluno.get('ia_sugestao','')[:500]})."
+    ajuste = f"Refaça considerando: {feedback_anterior}" if feedback_anterior else ""
+    prompt = f"Dinâmica de grupo sobre {assunto} inclusiva para {aluno['nome']} (PEI: {aluno.get('ia_sugestao','')[:500]}). {ajuste}"
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
         return resp.choices[0].message.content
@@ -486,7 +508,14 @@ if is_ei:
     
     # 1. CRIAR EXPERIÊNCIA
     with tabs[0]:
-        st.markdown("### 🧸 Criar Experiência de Aprendizagem (BNCC)")
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-lightbulb-line"></i> Pedagogia do Brincar (BNCC)</div>
+            Na Educação Infantil, não fazemos "provas". Criamos <strong>experiências de aprendizagem</strong> intencionais. 
+            Esta ferramenta usa a BNCC para criar brincadeiras que ensinam, usando o hiperfoco da criança.
+        </div>
+        """, unsafe_allow_html=True)
+        
         col_ei1, col_ei2 = st.columns(2)
         campo_exp = col_ei1.selectbox("Campo de Experiência (BNCC)", [
             "O eu, o outro e o nós",
@@ -497,15 +526,44 @@ if is_ei:
         ])
         obj_aprendizagem = col_ei2.text_input("Objetivo de Aprendizagem:", placeholder="Ex: Compartilhar brinquedos, Identificar cores...")
         
+        # Estado local para persistir resultado
+        if 'res_ei_exp' not in st.session_state: st.session_state.res_ei_exp = None
+        if 'valid_ei_exp' not in st.session_state: st.session_state.valid_ei_exp = False
+
         if st.button("✨ GERAR EXPERIÊNCIA LÚDICA", type="primary"):
             with st.spinner("Criando vivência..."):
-                conteudo_exp = gerar_experiencia_ei_bncc(api_key, aluno, campo_exp=campo_exp, objetivo=obj_aprendizagem)
-                st.markdown(conteudo_exp)
+                st.session_state.res_ei_exp = gerar_experiencia_ei_bncc(api_key, aluno, campo_exp=campo_exp, objetivo=obj_aprendizagem)
+                st.session_state.valid_ei_exp = False # Reset validação
+
+        # ÁREA DE RESULTADO COM FEEDBACK LOOP
+        if st.session_state.res_ei_exp:
+            if st.session_state.valid_ei_exp:
+                st.markdown("<div class='validado-box'>✅ EXPERIÊNCIA APROVADA!</div>", unsafe_allow_html=True)
+                st.markdown(st.session_state.res_ei_exp)
+            else:
+                st.markdown(st.session_state.res_ei_exp)
+                st.write("---")
+                c_val, c_ref = st.columns([1, 3])
+                if c_val.button("✅ Validar Experiência"): 
+                    st.session_state.valid_ei_exp = True
+                    st.rerun()
+                
+                with c_ref.expander("🔄 Não gostou? Ensinar a IA"):
+                    feedback_ei = st.text_input("O que precisa melhorar?", placeholder="Ex: Ficou muito complexo, use materiais mais simples...")
+                    if st.button("Refazer com Ajustes"):
+                        with st.spinner("Reescrevendo..."):
+                            st.session_state.res_ei_exp = gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, obj_aprendizagem, feedback_anterior=feedback_ei)
+                            st.rerun()
 
     # 2. ESTÚDIO VISUAL (ATUALIZADO COM CAA + PRIORIDADE IA)
     with tabs[1]:
-        st.markdown("### 🎨 Estúdio Visual Inclusivo")
-        st.caption("Gere recursos visuais para rotina e comunicação. **Prioridade:** IA (DALL-E 3) -> Banco de Imagens.")
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-eye-line"></i> Apoio Visual & Comunicação</div>
+            Crianças atípicas processam melhor imagens do que fala. 
+            Use <strong>Cenas</strong> para histórias sociais (comportamento) e <strong>Pictogramas (CAA)</strong> para comunicação e pedidos básicos.
+        </div>
+        """, unsafe_allow_html=True)
         
         col_scene, col_caa = st.columns(2)
         
@@ -532,22 +590,88 @@ if is_ei:
 
     # 3. ROTINA (Adaptada para EI - COM TEXT AREA)
     with tabs[2]:
-        st.markdown("### 📝 Adaptação de Rotina & AVD")
-        st.caption("Descreva a rotina completa da turma para receber sugestões de antecipação e suporte.")
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-calendar-check-line"></i> Rotina & Previsibilidade</div>
+            A rotina organiza o pensamento da criança. Use esta ferramenta para identificar 
+            pontos de estresse e criar estratégias de antecipação para evitar desregulação.
+        </div>
+        """, unsafe_allow_html=True)
+        
         rotina_detalhada = st.text_area("Descreva a Rotina da Turma:", height=200, placeholder="Ex: \n8:00 - Chegada e Acolhida\n8:30 - Roda de Conversa\n9:00 - Lanche\n...")
         topico_foco = st.text_input("Ponto de Atenção (Opcional):", placeholder="Ex: Transição para o parque")
         
+        # Estado Rotina
+        if 'res_ei_rotina' not in st.session_state: st.session_state.res_ei_rotina = None
+        if 'valid_ei_rotina' not in st.session_state: st.session_state.valid_ei_rotina = False
+
         if st.button("📝 ANALISAR E ADAPTAR ROTINA", type="primary"):
             with st.spinner("Analisando rotina..."):
                 prompt_rotina = f"Analise esta rotina de Educação Infantil e sugira adaptações sensoriais e visuais:\n\n{rotina_detalhada}\n\nFoco específico: {topico_foco}"
-                st.markdown(gerar_roteiro_aula(api_key, aluno, prompt_rotina))
+                st.session_state.res_ei_rotina = gerar_roteiro_aula(api_key, aluno, prompt_rotina)
+                st.session_state.valid_ei_rotina = False
+
+        # FEEDBACK LOOP ROTINA
+        if st.session_state.res_ei_rotina:
+            if st.session_state.valid_ei_rotina:
+                st.markdown("<div class='validado-box'>✅ ROTINA VALIDADA!</div>", unsafe_allow_html=True)
+                st.markdown(st.session_state.res_ei_rotina)
+            else:
+                st.markdown(st.session_state.res_ei_rotina)
+                st.write("---")
+                c_val, c_ref = st.columns([1, 3])
+                if c_val.button("✅ Validar Rotina"): 
+                    st.session_state.valid_ei_rotina = True
+                    st.rerun()
+                
+                with c_ref.expander("🔄 Refazer adaptação"):
+                    fb_rotina = st.text_input("O que ajustar na rotina?", key="fb_rotina_input")
+                    if st.button("Refazer Rotina"):
+                        with st.spinner("Reajustando..."):
+                            prompt_rotina = f"Analise esta rotina de Educação Infantil e sugira adaptações:\n\n{rotina_detalhada}\n\nFoco: {topico_foco}"
+                            st.session_state.res_ei_rotina = gerar_roteiro_aula(api_key, aluno, prompt_rotina, feedback_anterior=fb_rotina)
+                            st.rerun()
 
     # 4. INCLUSÃO NO BRINCAR
     with tabs[3]:
-        st.markdown("### 🤝 Inclusão no Brincar (Dinâmicas)")
-        tema_d = st.text_input("Tema/Momento:", key="dina_ei")
-        if st.button("🤝 GERAR DINÂMICA"): 
-            st.markdown(gerar_dinamica_inclusiva(api_key, aluno, tema_d))
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-group-line"></i> Mediação Social</div>
+            Se a criança brinca isolada, o objetivo não é forçar a interação, mas criar 
+            pontes através do interesse dela. A IA criará uma brincadeira onde ela é protagonista.
+        </div>
+        """, unsafe_allow_html=True)
+        
+        tema_d = st.text_input("Tema/Momento:", key="dina_ei", placeholder="Ex: Brincadeira de massinha, Hora do Parque")
+        
+        # Estado Dinamica
+        if 'res_ei_dina' not in st.session_state: st.session_state.res_ei_dina = None
+        if 'valid_ei_dina' not in st.session_state: st.session_state.valid_ei_dina = False
+
+        if st.button("🤝 GERAR DINÂMICA", type="primary"): 
+            with st.spinner("Criando ponte social..."):
+                st.session_state.res_ei_dina = gerar_dinamica_inclusiva(api_key, aluno, tema_d)
+                st.session_state.valid_ei_dina = False
+
+        # FEEDBACK LOOP DINAMICA
+        if st.session_state.res_ei_dina:
+            if st.session_state.valid_ei_dina:
+                st.markdown("<div class='validado-box'>✅ DINÂMICA VALIDADA!</div>", unsafe_allow_html=True)
+                st.markdown(st.session_state.res_ei_dina)
+            else:
+                st.markdown(st.session_state.res_ei_dina)
+                st.write("---")
+                c_val, c_ref = st.columns([1, 3])
+                if c_val.button("✅ Validar Dinâmica"): 
+                    st.session_state.valid_ei_dina = True
+                    st.rerun()
+                
+                with c_ref.expander("🔄 Refazer dinâmica"):
+                    fb_dina = st.text_input("O que ajustar?", key="fb_dina_input")
+                    if st.button("Refazer Dinâmica"):
+                        with st.spinner("Reajustando..."):
+                            st.session_state.res_ei_dina = gerar_dinamica_inclusiva(api_key, aluno, tema_d, feedback_anterior=fb_dina)
+                            st.rerun()
 
 else:
     # === MODO PADRÃO (FUNDAMENTAL / MÉDIO) ===
@@ -555,6 +679,14 @@ else:
 
     # 1. ADAPTAR PROVA
     with tabs[0]:
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-file-edit-line"></i> Adaptação Curricular (DUA)</div>
+            Transforme provas padrão em avaliações acessíveis. O sistema simplifica enunciados, 
+            insere imagens de apoio e ajusta o layout para reduzir a carga cognitiva.
+        </div>
+        """, unsafe_allow_html=True)
+        
         c1, c2, c3 = st.columns(3)
         materia_d = c1.selectbox("Matéria", ["Matemática", "Português", "Ciências", "História", "Geografia", "Artes", "Ed. Física", "Inglês"], key="dm")
         tema_d = c2.text_input("Tema", placeholder="Ex: Frações", key="dt")
@@ -614,7 +746,14 @@ else:
 
     # 2. ADAPTAR ATIVIDADE
     with tabs[1]:
-        st.info("Adaptar de Imagem/Foto.")
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-scissors-cut-line"></i> OCR & Adaptação Visual</div>
+            Tire foto de uma atividade do livro ou caderno. A IA extrai o texto, 
+            remove poluição visual e reestrutura o conteúdo para o nível do aluno.
+        </div>
+        """, unsafe_allow_html=True)
+        
         c1, c2, c3 = st.columns(3)
         discip = ["Matemática", "Português", "Ciências", "História", "Geografia", "Artes", "Ed. Física", "Inglês", "Filosofia", "Sociologia"]
         materia_i = c1.selectbox("Matéria", discip, key="im")
@@ -673,7 +812,14 @@ else:
 
     # 3. CRIAR DO ZERO
     with tabs[2]:
-        st.info("Criação Profissional.")
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-magic-line"></i> Criação com DUA</div>
+            Crie atividades do zero alinhadas ao PEI. A IA gera questões contextualizadas, 
+            usa o hiperfoco para engajamento e cria imagens ilustrativas automaticamente.
+        </div>
+        """, unsafe_allow_html=True)
+        
         cc1, cc2 = st.columns(2)
         mat_c = cc1.selectbox("Componente", discip, key="cm")
         obj_c = cc2.text_input("Assunto", key="co")
@@ -740,31 +886,33 @@ else:
 
     # 4. ESTÚDIO VISUAL (ATUALIZADO COM CAA + PRIORIDADE IA)
     with tabs[3]:
-        st.markdown("### 🎨 Estúdio Visual Inclusivo")
-        st.caption("Gere recursos visuais para rotina e comunicação. **Prioridade:** IA (DALL-E 3) -> Banco de Imagens.")
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-image-line"></i> Recursos Visuais</div>
+            Gere flashcards, rotinas visuais e símbolos de comunicação.
+        </div>
+        """, unsafe_allow_html=True)
         
         col_scene, col_caa = st.columns(2)
         
-        # COLUNA 1: CENAS E ROTINAS
         with col_scene:
-            st.markdown("#### 🖼️ Ilustração de Cena")
-            desc_m = st.text_area("Descreva a cena ou rotina:", height=100, key="vdm_padrao", placeholder="Ex: Estudante lendo um livro na biblioteca...")
-            if st.button("🎨 Gerar Cena", key="btn_cena_padrao"):
+            st.markdown("#### 🖼️ Ilustração")
+            desc_m = st.text_area("Descreva a imagem:", height=100, key="vdm_padrao", placeholder="Ex: Sistema Solar simplificado com planetas coloridos...")
+            if st.button("🎨 Gerar Imagem", key="btn_cena_padrao"):
                 with st.spinner("Desenhando..."):
-                    prompt_completo = f"{desc_m}. Context: School environment, educational style."
+                    prompt_completo = f"{desc_m}. Context: Education."
                     url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key)
                     if url: st.image(url)
-                    else: st.error("Não foi possível gerar a imagem.")
+                    else: st.error("Erro ao gerar.")
 
-        # COLUNA 2: CAA (NOVA FUNCIONALIDADE)
         with col_caa:
-            st.markdown("#### 🗣️ Símbolo CAA (Comunicação)")
-            palavra_chave = st.text_input("Conceito/Palavra:", placeholder="Ex: Quero Água, Banheiro, Dor", key="caa_input_padrao")
+            st.markdown("#### 🗣️ Símbolo CAA")
+            palavra_chave = st.text_input("Conceito:", placeholder="Ex: Silêncio", key="caa_input_padrao")
             if st.button("🧩 Gerar Pictograma", key="btn_caa_padrao"):
-                with st.spinner("Criando símbolo acessível..."):
+                with st.spinner("Criando símbolo..."):
                     url_caa = gerar_pictograma_caa(api_key, palavra_chave)
-                    if url_caa: st.image(url_caa, width=300, caption=f"Símbolo: {palavra_chave}")
-                    else: st.error("Erro ao gerar pictograma.")
+                    if url_caa: st.image(url_caa, width=300)
+                    else: st.error("Erro ao gerar.")
 
     with tabs[4]:
         ass = st.text_input("Assunto:", key="rota")
