@@ -218,8 +218,8 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
     for linha in linhas:
         tag_match = re.search(r'\[\[(IMG|GEN_IMG).*?(\d+)\]\]', linha, re.IGNORECASE)
         if tag_match:
-            parts = re.split(r'(\[\[(?:IMG|GEN_IMG).*?\d+\]\])', linha, flags=re.IGNORECASE)
-            for part in parts:
+            partes = re.split(r'(\[\[(?:IMG|GEN_IMG).*?\d+\]\])', linha, flags=re.IGNORECASE)
+            for parte in partes:
                 sub_match = re.search(r'(\d+)', part)
                 if ("IMG" in parte.upper() or "GEN_IMG" in parte.upper()) and sub_match:
                     num = int(sub_match.group(1))
@@ -242,16 +242,21 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
 
 # --- IA FUNCTIONS (ATUALIZADAS PARA LÓGICA DE FEEDBACK) ---
 
-def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None):
+def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anterior=""):
     """
     Lógica: Tenta IA (DALL-E 3) primeiro. 
     Se falhar (erro ou cota), tenta Unsplash.
     """
     client = OpenAI(api_key=api_key)
     
+    # Adiciona feedback ao prompt se houver
+    prompt_final = prompt
+    if feedback_anterior:
+        prompt_final = f"{prompt}. Refinement needed: {feedback_anterior}"
+
     # 1. TENTATIVA PRINCIPAL: IA (DALL-E 3)
     try:
-        didactic_prompt = f"Educational textbook illustration, clean flat vector style, white background, no text labels: {prompt}"
+        didactic_prompt = f"Educational textbook illustration, clean flat vector style, white background, no text labels: {prompt_final}"
         resp = client.images.generate(model="dall-e-3", prompt=didactic_prompt, size="1024x1024", quality="standard", n=1)
         return resp.data[0].url
     except Exception as e:
@@ -262,14 +267,17 @@ def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None):
         else:
             return None
 
-def gerar_pictograma_caa(api_key, conceito):
+def gerar_pictograma_caa(api_key, conceito, feedback_anterior=""):
     """
     Gera símbolo específico para Comunicação Aumentativa e Alternativa.
     Estilo: PECS/ARASAAC (Fundo branco, traço preto grosso, alto contraste).
     """
     client = OpenAI(api_key=api_key)
+    
+    ajuste = f" CORREÇÃO PEDIDA: {feedback_anterior}" if feedback_anterior else ""
+    
     prompt_caa = f"""
-    Crie um SÍMBOLO DE COMUNICAÇÃO (CAA/PECS) para a palavra/conceito: '{conceito}'.
+    Crie um SÍMBOLO DE COMUNICAÇÃO (CAA/PECS) para a palavra/conceito: '{conceito}'. {ajuste}
     ESTILO OBRIGATÓRIO:
     - Desenho vetorial plano (Flat Design) no estilo ARASAAC.
     - Fundo 100% BRANCO sólido.
@@ -500,6 +508,12 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
+# === INICIALIZAÇÃO DE ESTADO PARA IMAGENS ===
+if 'res_scene_url' not in st.session_state: st.session_state.res_scene_url = None
+if 'valid_scene' not in st.session_state: st.session_state.valid_scene = False
+if 'res_caa_url' not in st.session_state: st.session_state.res_caa_url = None
+if 'valid_caa' not in st.session_state: st.session_state.valid_caa = False
+
 if is_ei:
     # === MODO EDUCAÇÃO INFANTIL (ABAS ESPECIAIS) ===
     st.info("🧸 **Modo Educação Infantil Ativado:** Foco em Experiências, BNCC e Brincar.")
@@ -526,16 +540,14 @@ if is_ei:
         ])
         obj_aprendizagem = col_ei2.text_input("Objetivo de Aprendizagem:", placeholder="Ex: Compartilhar brinquedos, Identificar cores...")
         
-        # Estado local para persistir resultado
         if 'res_ei_exp' not in st.session_state: st.session_state.res_ei_exp = None
         if 'valid_ei_exp' not in st.session_state: st.session_state.valid_ei_exp = False
 
         if st.button("✨ GERAR EXPERIÊNCIA LÚDICA", type="primary"):
             with st.spinner("Criando vivência..."):
                 st.session_state.res_ei_exp = gerar_experiencia_ei_bncc(api_key, aluno, campo_exp=campo_exp, objetivo=obj_aprendizagem)
-                st.session_state.valid_ei_exp = False # Reset validação
+                st.session_state.valid_ei_exp = False
 
-        # ÁREA DE RESULTADO COM FEEDBACK LOOP
         if st.session_state.res_ei_exp:
             if st.session_state.valid_ei_exp:
                 st.markdown("<div class='validado-box'>✅ EXPERIÊNCIA APROVADA!</div>", unsafe_allow_html=True)
@@ -547,7 +559,6 @@ if is_ei:
                 if c_val.button("✅ Validar Experiência"): 
                     st.session_state.valid_ei_exp = True
                     st.rerun()
-                
                 with c_ref.expander("🔄 Não gostou? Ensinar a IA"):
                     feedback_ei = st.text_input("O que precisa melhorar?", placeholder="Ex: Ficou muito complexo, use materiais mais simples...")
                     if st.button("Refazer com Ajustes"):
@@ -555,53 +566,83 @@ if is_ei:
                             st.session_state.res_ei_exp = gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, obj_aprendizagem, feedback_anterior=feedback_ei)
                             st.rerun()
 
-    # 2. ESTÚDIO VISUAL (ATUALIZADO COM CAA + PRIORIDADE IA)
+    # 2. ESTÚDIO VISUAL (ATUALIZADO COM FEEDBACK)
     with tabs[1]:
         st.markdown("""
         <div class="pedagogia-box">
             <div class="pedagogia-title"><i class="ri-eye-line"></i> Apoio Visual & Comunicação</div>
             Crianças atípicas processam melhor imagens do que fala. 
-            Use <strong>Cenas</strong> para histórias sociais (comportamento) e <strong>Pictogramas (CAA)</strong> para comunicação e pedidos básicos.
+            Use <strong>Cenas</strong> para histórias sociais (comportamento) e <strong>Pictogramas (CAA)</strong> para comunicação.
         </div>
         """, unsafe_allow_html=True)
         
         col_scene, col_caa = st.columns(2)
         
-        # COLUNA 1: CENAS E ROTINAS
+        # --- COLUNA 1: CENAS ---
         with col_scene:
             st.markdown("#### 🖼️ Ilustração de Cena")
             desc_m = st.text_area("Descreva a cena ou rotina:", height=100, key="vdm_ei", placeholder="Ex: Crianças brincando de roda no parque...")
+            
             if st.button("🎨 Gerar Cena", key="btn_cena_ei"):
                 with st.spinner("Desenhando..."):
                     prompt_completo = f"{desc_m}. Context: Child education, friendly style."
-                    url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key)
-                    if url: st.image(url)
-                    else: st.error("Não foi possível gerar a imagem.")
+                    st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key)
+                    st.session_state.valid_scene = False
 
-        # COLUNA 2: CAA (NOVA FUNCIONALIDADE)
+            # Exibição Cena
+            if st.session_state.res_scene_url:
+                st.image(st.session_state.res_scene_url)
+                if st.session_state.valid_scene:
+                    st.success("Imagem validada!")
+                else:
+                    c_vs1, c_vs2 = st.columns([1, 2])
+                    if c_vs1.button("✅ Validar", key="val_sc_ei"): st.session_state.valid_scene = True; st.rerun()
+                    with c_vs2.expander("🔄 Refazer Cena"):
+                        fb_scene = st.text_input("Ajuste:", key="fb_sc_ei")
+                        if st.button("Refazer", key="ref_sc_ei"):
+                            with st.spinner("Redesenhando..."):
+                                prompt_completo = f"{desc_m}. Context: Child education."
+                                st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key, feedback_anterior=fb_scene)
+                                st.rerun()
+
+        # --- COLUNA 2: CAA ---
         with col_caa:
             st.markdown("#### 🗣️ Símbolo CAA (Comunicação)")
-            palavra_chave = st.text_input("Conceito/Palavra:", placeholder="Ex: Quero Água, Banheiro, Dor", key="caa_input")
+            palavra_chave = st.text_input("Conceito/Palavra:", placeholder="Ex: Quero Água, Banheiro", key="caa_input")
+            
             if st.button("🧩 Gerar Pictograma", key="btn_caa"):
                 with st.spinner("Criando símbolo acessível..."):
-                    url_caa = gerar_pictograma_caa(api_key, palavra_chave)
-                    if url_caa: st.image(url_caa, width=300, caption=f"Símbolo: {palavra_chave}")
-                    else: st.error("Erro ao gerar pictograma.")
+                    st.session_state.res_caa_url = gerar_pictograma_caa(api_key, palavra_chave)
+                    st.session_state.valid_caa = False
 
-    # 3. ROTINA (Adaptada para EI - COM TEXT AREA)
+            # Exibição CAA
+            if st.session_state.res_caa_url:
+                st.image(st.session_state.res_caa_url, width=300)
+                if st.session_state.valid_caa:
+                    st.success("Pictograma validado!")
+                else:
+                    c_vc1, c_vc2 = st.columns([1, 2])
+                    if c_vc1.button("✅ Validar", key="val_caa_ei"): st.session_state.valid_caa = True; st.rerun()
+                    with c_vc2.expander("🔄 Refazer Picto"):
+                        fb_caa = st.text_input("Ajuste:", key="fb_caa_ei")
+                        if st.button("Refazer", key="ref_caa_ei"):
+                            with st.spinner("Recriando..."):
+                                st.session_state.res_caa_url = gerar_pictograma_caa(api_key, palavra_chave, feedback_anterior=fb_caa)
+                                st.rerun()
+
+    # 3. ROTINA
     with tabs[2]:
         st.markdown("""
         <div class="pedagogia-box">
             <div class="pedagogia-title"><i class="ri-calendar-check-line"></i> Rotina & Previsibilidade</div>
             A rotina organiza o pensamento da criança. Use esta ferramenta para identificar 
-            pontos de estresse e criar estratégias de antecipação para evitar desregulação.
+            pontos de estresse e criar estratégias de antecipação.
         </div>
         """, unsafe_allow_html=True)
         
         rotina_detalhada = st.text_area("Descreva a Rotina da Turma:", height=200, placeholder="Ex: \n8:00 - Chegada e Acolhida\n8:30 - Roda de Conversa\n9:00 - Lanche\n...")
         topico_foco = st.text_input("Ponto de Atenção (Opcional):", placeholder="Ex: Transição para o parque")
         
-        # Estado Rotina
         if 'res_ei_rotina' not in st.session_state: st.session_state.res_ei_rotina = None
         if 'valid_ei_rotina' not in st.session_state: st.session_state.valid_ei_rotina = False
 
@@ -611,7 +652,6 @@ if is_ei:
                 st.session_state.res_ei_rotina = gerar_roteiro_aula(api_key, aluno, prompt_rotina)
                 st.session_state.valid_ei_rotina = False
 
-        # FEEDBACK LOOP ROTINA
         if st.session_state.res_ei_rotina:
             if st.session_state.valid_ei_rotina:
                 st.markdown("<div class='validado-box'>✅ ROTINA VALIDADA!</div>", unsafe_allow_html=True)
@@ -620,10 +660,7 @@ if is_ei:
                 st.markdown(st.session_state.res_ei_rotina)
                 st.write("---")
                 c_val, c_ref = st.columns([1, 3])
-                if c_val.button("✅ Validar Rotina"): 
-                    st.session_state.valid_ei_rotina = True
-                    st.rerun()
-                
+                if c_val.button("✅ Validar Rotina"): st.session_state.valid_ei_rotina = True; st.rerun()
                 with c_ref.expander("🔄 Refazer adaptação"):
                     fb_rotina = st.text_input("O que ajustar na rotina?", key="fb_rotina_input")
                     if st.button("Refazer Rotina"):
@@ -642,9 +679,7 @@ if is_ei:
         </div>
         """, unsafe_allow_html=True)
         
-        tema_d = st.text_input("Tema/Momento:", key="dina_ei", placeholder="Ex: Brincadeira de massinha, Hora do Parque")
-        
-        # Estado Dinamica
+        tema_d = st.text_input("Tema/Momento:", key="dina_ei", placeholder="Ex: Brincadeira de massinha")
         if 'res_ei_dina' not in st.session_state: st.session_state.res_ei_dina = None
         if 'valid_ei_dina' not in st.session_state: st.session_state.valid_ei_dina = False
 
@@ -653,7 +688,6 @@ if is_ei:
                 st.session_state.res_ei_dina = gerar_dinamica_inclusiva(api_key, aluno, tema_d)
                 st.session_state.valid_ei_dina = False
 
-        # FEEDBACK LOOP DINAMICA
         if st.session_state.res_ei_dina:
             if st.session_state.valid_ei_dina:
                 st.markdown("<div class='validado-box'>✅ DINÂMICA VALIDADA!</div>", unsafe_allow_html=True)
@@ -662,10 +696,7 @@ if is_ei:
                 st.markdown(st.session_state.res_ei_dina)
                 st.write("---")
                 c_val, c_ref = st.columns([1, 3])
-                if c_val.button("✅ Validar Dinâmica"): 
-                    st.session_state.valid_ei_dina = True
-                    st.rerun()
-                
+                if c_val.button("✅ Validar Dinâmica"): st.session_state.valid_ei_dina = True; st.rerun()
                 with c_ref.expander("🔄 Refazer dinâmica"):
                     fb_dina = st.text_input("O que ajustar?", key="fb_dina_input")
                     if st.button("Refazer Dinâmica"):
@@ -884,7 +915,7 @@ else:
             docx_clean = construir_docx_final(res['txt'], aluno, mat_c, {}, None, "Criada", sem_cabecalho=True)
             c_down2.download_button("📥 DOCX (Sem Cabeçalho)", docx_clean, "Criada_Clean.docx", "secondary")
 
-    # 4. ESTÚDIO VISUAL (ATUALIZADO COM CAA + PRIORIDADE IA)
+    # 4. ESTÚDIO VISUAL (ATUALIZADO COM FEEDBACK)
     with tabs[3]:
         st.markdown("""
         <div class="pedagogia-box">
@@ -896,23 +927,54 @@ else:
         col_scene, col_caa = st.columns(2)
         
         with col_scene:
-            st.markdown("#### 🖼️ Ilustração")
+            st.markdown("#### 🖼️ Ilustração de Cena")
             desc_m = st.text_area("Descreva a imagem:", height=100, key="vdm_padrao", placeholder="Ex: Sistema Solar simplificado com planetas coloridos...")
+            
             if st.button("🎨 Gerar Imagem", key="btn_cena_padrao"):
                 with st.spinner("Desenhando..."):
                     prompt_completo = f"{desc_m}. Context: Education."
-                    url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key)
-                    if url: st.image(url)
-                    else: st.error("Erro ao gerar.")
+                    st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key)
+                    st.session_state.valid_scene = False
+
+            # Exibição Cena
+            if st.session_state.res_scene_url:
+                st.image(st.session_state.res_scene_url)
+                if st.session_state.valid_scene:
+                    st.success("Imagem validada!")
+                else:
+                    c_vs1, c_vs2 = st.columns([1, 2])
+                    if c_vs1.button("✅ Validar", key="val_sc_pd"): st.session_state.valid_scene = True; st.rerun()
+                    with c_vs2.expander("🔄 Refazer Cena"):
+                        fb_scene = st.text_input("Ajuste:", key="fb_sc_pd")
+                        if st.button("Refazer", key="ref_sc_pd"):
+                            with st.spinner("Redesenhando..."):
+                                prompt_completo = f"{desc_m}. Context: Education."
+                                st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key, feedback_anterior=fb_scene)
+                                st.rerun()
 
         with col_caa:
             st.markdown("#### 🗣️ Símbolo CAA")
             palavra_chave = st.text_input("Conceito:", placeholder="Ex: Silêncio", key="caa_input_padrao")
+            
             if st.button("🧩 Gerar Pictograma", key="btn_caa_padrao"):
                 with st.spinner("Criando símbolo..."):
-                    url_caa = gerar_pictograma_caa(api_key, palavra_chave)
-                    if url_caa: st.image(url_caa, width=300)
-                    else: st.error("Erro ao gerar.")
+                    st.session_state.res_caa_url = gerar_pictograma_caa(api_key, palavra_chave)
+                    st.session_state.valid_caa = False
+
+            # Exibição CAA
+            if st.session_state.res_caa_url:
+                st.image(st.session_state.res_caa_url, width=300)
+                if st.session_state.valid_caa:
+                    st.success("Pictograma validado!")
+                else:
+                    c_vc1, c_vc2 = st.columns([1, 2])
+                    if c_vc1.button("✅ Validar", key="val_caa_pd"): st.session_state.valid_caa = True; st.rerun()
+                    with c_vc2.expander("🔄 Refazer Picto"):
+                        fb_caa = st.text_input("Ajuste:", key="fb_caa_pd")
+                        if st.button("Refazer", key="ref_caa_pd"):
+                            with st.spinner("Recriando..."):
+                                st.session_state.res_caa_url = gerar_pictograma_caa(api_key, palavra_chave, feedback_anterior=fb_caa)
+                                st.rerun()
 
     with tabs[4]:
         ass = st.text_input("Assunto:", key="rota")
