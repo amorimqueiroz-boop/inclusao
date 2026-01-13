@@ -61,7 +61,7 @@ def sistema_seguranca():
 if not sistema_seguranca(): st.stop()
 
 # ==============================================================================
-# 🏠 HOME - DASHBOARD OMNISFERA (DESIGN GELO/CLEAN)
+# 🏠 HOME - DASHBOARD OMNISFERA (DESIGN AZUL CLÁSSICO + LOGO CENTRAL)
 # ==============================================================================
 
 # CSS GERAL E CARDS
@@ -70,34 +70,61 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
     html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
     
-    /* HERO BANNER - ESTILO NEUTRO/GELO */
+    /* LOGO HEADER CENTRALIZADA E GRANDE */
+    .centered-header-logo {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 25px;
+        padding: 10px;
+    }
+    .centered-header-logo img {
+        max-width: 100%;     /* Responsivo na largura */
+        max-height: 280px;   /* Altura máxima imponente */
+        height: auto;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); /* Sombra leve na logo */
+    }
+
+    /* HERO BANNER - DE VOLTA AO AZUL */
     .dash-hero { 
-        background: linear-gradient(135deg, #FFFFFF 0%, #F0F8FF 100%); /* Branco para Azul Gelo Suave */
+        background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); /* Azul Original */
         border-radius: 20px; 
         padding: 30px; 
         margin-bottom: 30px; 
-        box-shadow: 0 10px 25px rgba(0,0,0,0.05); /* Sombra suave */
-        border: 1px solid #E2E8F0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        box-shadow: 0 8px 20px rgba(15, 82, 186, 0.2);
+        color: white;
         position: relative;
         overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
     
-    /* Título no Banner */
+    /* Título no Banner (Branco agora) */
     .hero-title {
-        color: #1A365D; /* Azul Marinho Profundo */
+        color: white;
         font-weight: 800;
         font-size: 2.5rem;
         margin: 0;
         line-height: 1.2;
     }
     .hero-subtitle {
-        color: #4A5568;
+        color: white;
+        opacity: 0.9;
         font-size: 1.1rem;
         margin-top: 10px;
         font-weight: 600;
+    }
+    
+    /* Ícone de fundo sutil no banner */
+    .hero-bg-icon {
+        position: absolute;
+        right: 30px;
+        font-size: 6rem;
+        opacity: 0.15;
+        color: white;
+        transform: rotate(-15deg);
     }
 
     /* BOTÕES DE FERRAMENTA */
@@ -191,27 +218,34 @@ if 'OPENAI_API_KEY' in st.secrets:
         noticia = st.session_state['home_insight']
     except: pass
 
-# --- 1. HERO BANNER (NEUTRO COM LOGO GIGANTE) ---
+# --- 1. LOGO CENTRALIZADA (CABEÇALHO) ---
 logo_b64 = get_base64_image("ominisfera.png")
-# Logo gigante e alinhada à direita
-img_tag = f'<img src="data:image/png;base64,{logo_b64}" style="max-height: 220px; width: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));">' if logo_b64 else '<i class="ri-heart-pulse-fill" style="font-size: 5rem; color: #E2E8F0;"></i>'
+if logo_b64:
+    st.markdown(f"""
+    <div class="centered-header-logo">
+        <img src="data:image/png;base64,{logo_b64}">
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    # Fallback se a imagem não existir
+    st.markdown("<h1 style='text-align: center; color: #0F52BA; font-size: 3rem;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
 
+
+# --- 2. HERO BANNER (AZUL CLÁSSICO, SEM LOGO DENTRO) ---
 st.markdown(f"""
 <div class="dash-hero">
-    <div style="flex: 1; padding-right: 20px;">
+    <div style="z-index: 2;">
         <h1 class="hero-title">Olá, Educador(a)!</h1>
         <p class="hero-subtitle">"Cada criança é única; seu potencial, ilimitado!"</p>
-        <div style="margin-top: 20px; display: inline-block; padding: 8px 16px; background: #EBF8FF; border-radius: 20px; color: #2C5282; font-weight: 700; font-size: 0.9rem;">
+        <div style="margin-top: 20px; display: inline-block; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 20px; color: white; font-weight: 700; font-size: 0.9rem;">
             🚀 Sistema Operacional Omnisfera V2.0
         </div>
     </div>
-    <div style="flex-shrink: 0;">
-        {img_tag}
-    </div>
+    <i class="ri-heart-pulse-fill hero-bg-icon"></i>
 </div>
 """, unsafe_allow_html=True)
 
-# --- 2. FERRAMENTAS DE ACESSO (INTEGRADO AO TOPO) ---
+# --- 3. FERRAMENTAS DE ACESSO ---
 st.markdown("### 🎯 Acesso Rápido")
 col1, col2, col3 = st.columns(3)
 
@@ -263,7 +297,7 @@ with col3:
     if st.button("Acessar Hub ➡️", key="btn_hub", type="primary", use_container_width=True):
         st.switch_page("pages/3_Hub_Inclusao.py")
 
-# --- 3. INSIGHT DO DIA ---
+# --- 4. INSIGHT DO DIA ---
 st.markdown(f"""
 <div class="insight-card">
     <div class="insight-icon"><i class="ri-lightbulb-flash-line"></i></div>
@@ -274,7 +308,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- 4. RECURSOS EDUCATIVOS (CARDS INFORMATIVOS) ---
+# --- 5. RECURSOS EDUCATIVOS (CARDS INFORMATIVOS) ---
 st.markdown("### 📚 Base de Conhecimento")
 st.markdown("""
 <div class="home-grid">
