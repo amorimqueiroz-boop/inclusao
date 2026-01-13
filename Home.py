@@ -22,12 +22,13 @@ def get_base64_image(image_path):
         return base64.b64encode(img_file.read()).decode()
 
 def sistema_seguranca():
+    # CSS do Login
     st.markdown("""
         <style>
             [data-testid="stHeader"] {visibility: hidden !important; height: 0px !important;}
             footer {visibility: hidden !important;}
-            .login-container { background-color: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
-            .termo-box { background-color: #f8f9fa; padding: 15px; border-radius: 8px; height: 150px; overflow-y: scroll; font-size: 0.85rem; border: 1px solid #e9ecef; margin-bottom: 15px; text-align: left; }
+            .login-container { background-color: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; border: 1px solid #E2E8F0; }
+            .termo-box { background-color: #F7FAFC; padding: 15px; border-radius: 8px; height: 160px; overflow-y: scroll; font-size: 0.8rem; border: 1px solid #CBD5E0; margin-bottom: 20px; text-align: left; color: #4A5568; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -40,11 +41,11 @@ def sistema_seguranca():
             st.markdown("<div class='login-container'>", unsafe_allow_html=True)
             # LOGO DO LOGIN
             try: 
-                if os.path.exists("ominisfera.png"): st.image("ominisfera.png", width=250)
-                else: st.markdown("# 🌐 OMNISFERA")
-            except: st.markdown("# 🌐 OMNISFERA")
+                if os.path.exists("ominisfera.png"): st.image("ominisfera.png", width=280)
+                else: st.markdown("## 🌐 OMNISFERA")
+            except: st.markdown("## 🌐 OMNISFERA")
             
-            st.markdown("### Acesso Restrito")
+            st.markdown("### Portal de Acesso")
             st.markdown("---")
             st.markdown("##### 🛡️ Termo de Confidencialidade")
             st.markdown("""<div class="termo-box"><strong>AMBIENTE PROTEGIDO</strong><br><br>1. <strong>Propriedade:</strong> Todo o conteúdo e inteligência deste software são propriedade de Rodrigo A. Queiroz.<br>2. <strong>Sigilo:</strong> É vedada a divulgação de prints, lógicas ou prompts.<br>3. <strong>Uso:</strong> Acesso concedido exclusivamente para fins de desenvolvimento e validação.</div>""", unsafe_allow_html=True)
@@ -65,7 +66,7 @@ def sistema_seguranca():
 if not sistema_seguranca(): st.stop()
 
 # ==============================================================================
-# 🏠 HOME - DASHBOARD OMNISFERA (V12 - LEFT ALIGN BANNER)
+# 🏠 HOME - DASHBOARD OMNISFERA (HARMONY EDITION)
 # ==============================================================================
 
 # CSS GERAL
@@ -74,10 +75,10 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap');
     html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
     
-    /* 1. TOPO COLADO */
+    /* 1. ESPAÇAMENTO DO TOPO (Equilibrado) */
     .block-container { 
         padding-top: 1rem !important; 
-        padding-bottom: 2rem !important; 
+        padding-bottom: 3rem !important; 
         margin-top: 0rem !important;
     }
 
@@ -88,110 +89,123 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 15px; 
-        margin-bottom: 10px; /* Colado no banner */
-        padding-top: 0px;
+        gap: 20px; 
+        margin-bottom: 20px; /* Respiro entre logo e banner */
+        padding-top: 10px;
     }
     .logo-icon-spin {
-        height: 140px; 
+        height: 130px; 
         width: auto;
-        animation: spin 30s linear infinite;
+        animation: spin 35s linear infinite; /* Rotação suave */
         filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
     }
     .logo-text-static {
-        height: 90px; 
+        height: 85px; 
         width: auto;
     }
 
-    /* --- HERO BANNER (SLIM & ESQUERDA) --- */
+    /* --- HERO BANNER (HARMONIZADO) --- */
     .dash-hero { 
         background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); 
-        border-radius: 12px;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 10px rgba(15, 82, 186, 0.2);
+        border-radius: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 10px 25px rgba(15, 82, 186, 0.25); /* Sombra mais bonita */
         color: white;
         position: relative;
         overflow: hidden;
-        height: 80px; /* Altura fixa fina */
+        /* Removida altura fixa, usamos padding para dar corpo */
+        padding: 40px 50px; 
         display: flex;
         align-items: center;
-        justify-content: flex-start; /* ALINHAMENTO À ESQUERDA */
-        padding-left: 40px; /* Margem esquerda para o texto */
+        justify-content: flex-start; /* Texto à esquerda */
     }
     
-    .hero-text-block {
-        z-index: 2;
-        text-align: left; /* TEXTO À ESQUERDA */
-    }
+    .hero-text-block { z-index: 2; text-align: left; }
 
     .hero-title {
         color: white; 
         font-family: 'Nunito', sans-serif;
-        font-weight: 700; 
-        font-size: 1.5rem; 
+        font-weight: 800; 
+        font-size: 2.2rem; /* Fonte maior para impacto */
         margin: 0; 
         line-height: 1.1;
         letter-spacing: 0.5px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     .hero-subtitle {
-        color: rgba(255,255,255,0.9);
-        font-size: 0.85rem;
-        margin-top: 2px; 
-        font-weight: 300; 
-        font-style: italic;
+        color: rgba(255,255,255,0.95);
+        font-size: 1.1rem;
+        margin-top: 8px; 
+        font-weight: 400; 
     }
     
     .hero-bg-icon {
         position: absolute; 
-        right: 20px; 
-        font-size: 3rem;
+        right: 30px; 
+        font-size: 5rem;
         opacity: 0.1; 
         color: white; 
-        transform: rotate(-10deg);
-        top: 15px;
+        transform: rotate(-15deg);
+        top: 20px;
     }
 
-    /* --- TEXTO CONCEITO OMNISFERA --- */
+    /* --- TEXTO CONCEITO OMNISFERA (Abaixo do banner) --- */
     .concept-box {
         text-align: center;
-        margin-bottom: 25px;
-        padding: 0 20px;
+        margin-bottom: 40px;
+        padding: 0 40px;
     }
     .concept-text {
-        font-size: 1rem;
+        font-size: 1.1rem;
         color: #4A5568;
-        font-weight: 600;
-        line-height: 1.5;
+        font-weight: 400;
+        line-height: 1.6;
     }
+    .concept-highlight { color: #0F52BA; font-weight: 700; }
 
     /* --- INSIGHT CARD --- */
     .insight-card {
         background-color: #FFFFF0;
         border-radius: 12px;
-        padding: 15px 20px;
+        padding: 20px 25px;
         color: #2D3748;
-        display: flex; align-items: center; gap: 15px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        border: 1px solid #F6E05E; 
-        margin-bottom: 30px;
+        display: flex; align-items: center; gap: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border-left: 5px solid #F6E05E; 
+        margin-bottom: 40px;
         margin-top: 20px;
     }
-    .insight-icon { font-size: 1.4rem; color: #D69E2E; }
+    .insight-icon { font-size: 1.8rem; color: #D69E2E; }
 
     /* --- BOTÕES E CARDS --- */
-    .tool-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; height: 100%; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s; }
-    .tool-card:hover { transform: translateY(-3px); border-color: #3182CE; box-shadow: 0 8px 16px rgba(0,0,0,0.08); }
-    .tool-title { font-size: 1.2rem; font-weight: 800; color: #2D3748; margin-bottom: 5px; }
-    .tool-desc { font-size: 0.85rem; color: #718096; margin-bottom: 15px; line-height: 1.4; }
-    .border-blue { border-top: 4px solid #3182CE; } .border-purple { border-top: 4px solid #805AD5; } .border-teal { border-top: 4px solid #38B2AC; }
+    .tool-card { 
+        background: white; 
+        border-radius: 16px; 
+        padding: 25px; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.04); 
+        border: 1px solid #E2E8F0; 
+        height: 100%; 
+        display: flex; flex-direction: column; justify-content: space-between; 
+        transition: all 0.3s ease; 
+    }
+    .tool-card:hover { 
+        transform: translateY(-5px); 
+        border-color: #3182CE; 
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1); 
+    }
+    .tool-title { font-size: 1.3rem; font-weight: 800; color: #2D3748; margin-bottom: 8px; }
+    .tool-desc { font-size: 0.9rem; color: #718096; margin-bottom: 20px; line-height: 1.5; }
+    .border-blue { border-top: 5px solid #3182CE; } 
+    .border-purple { border-top: 5px solid #805AD5; } 
+    .border-teal { border-top: 5px solid #38B2AC; }
     
-    .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-    .rich-card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s; text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden; height: 100%; }
-    .rich-card:hover { transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0,0,0,0.05); }
-    .rich-card-top { width: 100%; height: 3px; position: absolute; top: 0; left: 0; }
-    .rc-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 10px; }
-    .rc-title { font-weight: 700; font-size: 0.95rem; color: #2D3748; margin-bottom: 4px; }
-    .rc-desc { font-size: 0.75rem; color: #718096; line-height: 1.3; }
+    .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+    .rich-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s; text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden; height: 100%; }
+    .rich-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.06); border-color: #CBD5E0; }
+    .rich-card-top { width: 100%; height: 4px; position: absolute; top: 0; left: 0; }
+    .rc-icon { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 12px; }
+    .rc-title { font-weight: 700; font-size: 1rem; color: #2D3748; margin-bottom: 5px; }
+    .rc-desc { font-size: 0.8rem; color: #718096; line-height: 1.3; }
 </style>
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 """, unsafe_allow_html=True)
@@ -219,10 +233,11 @@ if icone_b64 and texto_b64:
     </div>
     """, unsafe_allow_html=True)
 else:
+    # Fallback se as imagens não existirem
     st.markdown("<h1 style='text-align: center; color: #0F52BA; font-size: 3rem; margin-bottom:10px;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
 
 
-# --- 2. HERO BANNER (SLIM & LEFT ALIGNED) ---
+# --- 2. HERO BANNER (TEXTO ESQUERDA + HARMONIZADO) ---
 st.markdown("""
 <div class="dash-hero">
     <div class="hero-text-block">
@@ -233,12 +248,12 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# --- 3. CONCEITO OMNISFERA (Abaixo do banner) ---
+# --- 3. CONCEITO OMNISFERA (PONTE VISUAL) ---
 st.markdown("""
 <div class="concept-box">
     <span class="concept-text">
-        O <strong>Ecossistema Omnisfera</strong> une neurociência, legislação e estratégia pedagógica em um só lugar,<br>
-        conectando o PEI, o PAE e a Sala de Aula Regular.
+        O <span class="concept-highlight">Ecossistema Omnisfera</span> une neurociência, legislação e estratégia pedagógica em um só lugar,<br>
+        conectando o <strong>PEI</strong> (Sala Regular), o <strong>PAE</strong> (Sala de Recursos) e a Tecnologia.
     </span>
 </div>
 """, unsafe_allow_html=True)
@@ -255,7 +270,7 @@ with col1:
             <div class="tool-title"><i class="ri-book-read-line" style="color:#3182CE; margin-right:5px;"></i> PEI 360º</div>
             <div class="tool-desc">
                 <strong>Plano de Ensino Individualizado</strong><br>
-                A porta de entrada. Anamnese e plano oficial.
+                A porta de entrada. Realize a anamnese, avalie o perfil e gere o plano oficial.
             </div>
         </div>
     </div>
@@ -287,7 +302,7 @@ with col3:
             <div class="tool-title"><i class="ri-rocket-line" style="color:#38B2AC; margin-right:5px;"></i> Hub</div>
             <div class="tool-desc">
                 <strong>Adaptação & Criação</strong><br>
-                Adapte provas e crie atividades em segundos.
+                Adapte provas, crie atividades do zero e roteiros de aula em segundos.
             </div>
         </div>
     </div>
@@ -300,8 +315,8 @@ st.markdown(f"""
 <div class="insight-card">
     <div class="insight-icon"><i class="ri-lightbulb-flash-line"></i></div>
     <div>
-        <div style="font-weight: 700; font-size: 0.9rem; color: #D69E2E;">Curiosidade do Dia (IA):</div>
-        <p style="margin:2px 0 0 0; font-size:0.9rem; opacity:0.9; color:#4A5568; font-style: italic;">"{noticia}"</p>
+        <div style="font-weight: 700; font-size: 0.95rem; color: #D69E2E;">Curiosidade do Dia (IA):</div>
+        <p style="margin:4px 0 0 0; font-size:0.95rem; opacity:0.9; color:#4A5568; font-style: italic; line-height: 1.4;">"{noticia}"</p>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -314,25 +329,25 @@ st.markdown("""
         <div class="rich-card-top" style="background-color: #3182CE;"></div>
         <div class="rc-icon" style="background-color:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
         <div class="rc-title">PEI vs PAE</div>
-        <div class="rc-desc">Diferenças fundamentais.</div>
+        <div class="rc-desc">Entenda as diferenças e conexões.</div>
     </a>
     <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="rich-card">
         <div class="rich-card-top" style="background-color: #D69E2E;"></div>
         <div class="rc-icon" style="background-color:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
         <div class="rc-title">Legislação</div>
-        <div class="rc-desc">LBI e Decretos (2025).</div>
+        <div class="rc-desc">LBI e Decretos atualizados (2025).</div>
     </a>
     <a href="https://institutoneurosaber.com.br/" target="_blank" class="rich-card">
         <div class="rich-card-top" style="background-color: #D53F8C;"></div>
         <div class="rc-icon" style="background-color:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
         <div class="rc-title">Neurociência</div>
-        <div class="rc-desc">Desenvolvimento atípico.</div>
+        <div class="rc-desc">Como o cérebro atípico aprende.</div>
     </a>
     <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="rich-card">
         <div class="rich-card-top" style="background-color: #38A169;"></div>
         <div class="rc-icon" style="background-color:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
         <div class="rc-title">BNCC</div>
-        <div class="rc-desc">Currículo oficial.</div>
+        <div class="rc-desc">Currículo oficial e competências.</div>
     </a>
 </div>
 """, unsafe_allow_html=True)
