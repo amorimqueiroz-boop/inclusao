@@ -60,25 +60,50 @@ html_faixa_teste = '<div class="test-stripe"></div>' if IS_TEST_ENV else ""
 # 4. Renderização do CSS Global e Header Flutuante
 st.markdown(f"""
 <style>
-    /* --- AJUSTE CRÍTICO: MENU LATERAL VISÍVEL --- */
+    /* --- 1. HEADER E BARRA DE FERRAMENTAS --- */
     
-    /* 1. Header principal transparente (permite ver o botão da sidebar) */
+    /* Esconde o Header padrão do Streamlit (onde ficam os botões Share, etc) */
     header[data-testid="stHeader"] {{
         background-color: transparent !important;
-        z-index: 9999 !important; /* Garante que fique acessível */
+        pointer-events: none !important; /* Deixa clicar no que está atrás se for transparente */
     }}
     
-    /* 2. Esconde APENAS a barra de ferramentas da direita (Share, Deploy, etc) */
+    /* Esconde a Toolbar da direita (Share, Deploy, 3 pontinhos) */
     [data-testid="stToolbar"] {{
         visibility: hidden !important;
         display: none !important;
     }}
     
-    /* 3. Garante que o botão de abrir/fechar a sidebar esteja visível e clicável */
+    /* --- 2. O BOTÃO DE MENU (A SOLUÇÃO CIRÚRGICA) --- */
+    
+    /* Movemos o botão nativo para baixo da nossa barra personalizada */
     [data-testid="stSidebarCollapsedControl"] {{
+        position: fixed !important;
+        top: 95px !important;       /* Abaixo do Header de 80px */
+        left: 20px !important;
+        z-index: 1000000 !important; /* Acima de tudo */
         visibility: visible !important;
-        display: block !important;
-        color: #2D3748 !important; /* Cor do ícone */
+        display: flex !important;
+        
+        /* Estilo de Botão Flutuante */
+        background-color: white !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 12px !important;
+        width: 45px !important;
+        height: 45px !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+        
+        /* Centraliza o ícone (seta/menu) */
+        align-items: center !important;
+        justify-content: center !important;
+        color: #2D3748 !important;
+        transition: all 0.2s ease !important;
+    }}
+    
+    [data-testid="stSidebarCollapsedControl"]:hover {{
+        background-color: #F7FAFC !important;
+        border-color: #CBD5E0 !important;
+        transform: scale(1.05);
     }}
     
     /* -------------------------------------------- */
