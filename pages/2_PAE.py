@@ -23,22 +23,19 @@ import os
 import base64
 
 # 1. Detecção Automática de Ambiente (Via st.secrets)
-# Se você colocar ENV = "TESTE" nos secrets do Streamlit, a faixa amarela aparece.
-# Se não colocar nada, ele assume que é Produção (Oficial) e esconde a faixa.
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
 except:
     IS_TEST_ENV = False
 
-# 2. Função para carregar a logo em Base64 (para usar no HTML)
+# 2. Função para carregar a logo em Base64
 def get_logo_base64():
-    # Tente carregar a imagem local, senão usa um ícone genérico da web
-    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"] # Seus arquivos possíveis
+    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
     for c in caminhos:
         if os.path.exists(c):
             with open(c, "rb") as f:
                 return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
-    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png" # Fallback
+    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
 
 src_logo_giratoria = get_logo_base64()
 
@@ -56,40 +53,39 @@ html_faixa_teste = '<div class="test-stripe"></div>' if IS_TEST_ENV else ""
 # 4. Renderização do CSS Global e Header Flutuante
 st.markdown(f"""
 <style>
-    /* Esconde o Header padrão do Streamlit (Botões Share, Deploy, etc) */
-    header[data-testid="stHeader"] {{
-        visibility: hidden;
+    
     }}
     
-    /* Faixa de Teste (Só aparece se IS_TEST_ENV for True) */
+    
+    /* -------------------------------------------- */
+
+    /* Faixa de Teste */
     {css_faixa_teste}
 
-    /* CARD FLUTUANTE (GLASSMORPHISM) */
+    /* CARD FLUTUANTE (OMNISFERA) */
     .omni-badge {{
         position: fixed;
         top: 15px; 
         right: 15px;
-        background: rgba(255, 255, 255, 0.85); /* Branco Gelo Transparente */
-        backdrop-filter: blur(8px);             /* Desfoque do fundo */
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         border: 1px solid rgba(255, 255, 255, 0.6);
         
-        /* --- AJUSTE DE LARGURA AQUI --- */
-        padding: 8px 30px;                      /* Mais espaço nas laterais */
-        min-width: 260px;                       /* Largura mínima forçada para cobrir os botões */
-        justify-content: center;                /* Centraliza o conteúdo no card maior */
-        /* ------------------------------ */
+        /* Dimensões: Fino e Largo */
+        padding: 4px 30px;
+        min-width: 260px;
+        justify-content: center;
         
-        border-radius: 20px;                    /* Formato Pílula */
+        border-radius: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        z-index: 999990;                        /* Fica acima dos botões do Streamlit */
+        z-index: 999990; /* Acima do conteúdo, mas cuidado com modais */
         display: flex;
         align-items: center;
-        gap: 12px;
-        pointer-events: none;                   /* Deixa clicar através dele se necessário */
+        gap: 10px;
+        pointer-events: none; /* Deixa passar clique se necessário, mas como escondeu o toolbar, ok */
     }}
 
-    /* Texto do Card */
     .omni-text {{
         font-family: 'Nunito', sans-serif;
         font-weight: 800;
@@ -99,16 +95,14 @@ st.markdown(f"""
         text-transform: uppercase;
     }}
 
-    /* Animação de Rotação da Logo */
     @keyframes spin-slow {{
         from {{ transform: rotate(0deg); }}
         to {{ transform: rotate(360deg); }}
     }}
     
     .omni-logo-spin {{
-        height: 26px; 
-        width: 26px; 
-        animation: spin-slow 10s linear infinite; /* Gira devagar */
+        height: 26px; width: 26px; 
+        animation: spin-slow 10s linear infinite;
     }}
 
 </style>
@@ -120,11 +114,9 @@ st.markdown(f"""
     <span class="omni-text">OMNISFERA</span>
 </div>
 """, unsafe_allow_html=True)
-
-
 # ==============================================================================
 # ### FIM BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA & ALERTA DE TESTE  ###
-# ==============================================================================
+# ===============================================================================
 
 def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
