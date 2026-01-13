@@ -39,11 +39,8 @@ def sistema_seguranca():
         with c2:
             st.markdown("<div class='login-container'>", unsafe_allow_html=True)
             try: 
-                # Tenta carregar ícone se existir
-                if os.path.exists("omni_icone.png"):
-                    st.image("omni_icone.png", width=100)
-                else:
-                    st.image("ominisfera.png", width=250)
+                if os.path.exists("omni_icone.png"): st.image("omni_icone.png", width=100)
+                else: st.image("ominisfera.png", width=250)
             except: st.markdown("# 🌐 OMNISFERA")
             st.markdown("### Acesso Restrito")
             st.markdown("---")
@@ -66,7 +63,7 @@ def sistema_seguranca():
 if not sistema_seguranca(): st.stop()
 
 # ==============================================================================
-# 🏠 HOME - DASHBOARD OMNISFERA (DESIGN ULTRA SLIM)
+# 🏠 HOME - DASHBOARD OMNISFERA (BIG LOGO / TINY BANNER)
 # ==============================================================================
 
 # CSS GERAL E CARDS
@@ -75,155 +72,97 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap');
     html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
     
-    /* 1. REMOVENDO ESPAÇO VAZIO DO TOPO */
-    .block-container {
-        padding-top: 0rem !important; /* Cola no teto */
-        padding-bottom: 2rem !important;
-        margin-top: 1rem !important;
-    }
+    /* REMOVENDO ESPAÇO VAZIO DO TOPO */
+    .block-container { padding-top: 0rem !important; padding-bottom: 2rem !important; margin-top: 1rem !important; }
 
-    /* --- ANIMAÇÃO DE ROTAÇÃO --- */
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
+    /* --- ANIMAÇÃO E LOGO GIGANTE --- */
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     
-    /* HEADER LOGO: Margens reduzidas */
     .logo-container {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 15px; 
-        margin-bottom: 10px; /* Reduzido de 25px */
-        padding-top: 10px;
+        gap: 20px; 
+        margin-bottom: 20px;
+        padding-top: 15px;
     }
-    
+    /* AUMENTEI SIGNIFICATIVAMENTE OS TAMANHOS AQUI */
     .logo-icon-spin {
-        height: 70px; /* Levemente menor para elegância */
+        height: 130px; /* Bem grande */
         width: auto;
-        animation: spin 20s linear infinite; 
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        animation: spin 25s linear infinite; /* Rotação mais lenta e elegante */
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
     }
-    
     .logo-text-static {
-        height: 45px; /* Proporcional */
+        height: 90px; /* Proporcionalmente grande */
         width: auto;
     }
 
-    /* --- HERO BANNER (SLIM & ELEGANTE) --- */
+    /* --- HERO BANNER (SUPER SLIM) --- */
     .dash-hero { 
         background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); 
-        border-radius: 12px; /* Bordas um pouco menos arredondadas */
-        padding: 20px 30px; /* Mais fino verticalmente */
-        margin-bottom: 20px; 
-        box-shadow: 0 4px 10px rgba(15, 82, 186, 0.15);
+        border-radius: 10px;
+        padding: 10px 25px; /* Padding vertical muito reduzido */
+        margin-bottom: 25px; 
+        box-shadow: 0 2px 5px rgba(15, 82, 186, 0.15);
         color: white;
         position: relative;
         overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        min-height: 80px;
+        min-height: 60px; /* Altura mínima reduzida */
     }
-    
-    /* Tipografia Elegante */
     .hero-title {
-        color: white;
-        font-family: 'Nunito', sans-serif;
-        font-weight: 700; 
-        font-size: 1.8rem;
-        margin: 0;
-        line-height: 1;
-        letter-spacing: 0.5px;
+        color: white; font-weight: 700; 
+        font-size: 1.4rem; /* Fonte menor */
+        margin: 0; line-height: 1;
     }
     .hero-subtitle {
-        color: rgba(255,255,255,0.9);
-        font-size: 0.95rem;
-        margin-top: 4px;
-        font-weight: 300; /* Mais leve/fino */
-        font-style: italic; /* Toque de elegância */
+        color: rgba(255,255,255,0.85);
+        font-size: 0.85rem; /* Subtítulo menor e mais discreto */
+        margin-top: 2px; font-weight: 300; font-style: italic;
     }
-    
     .hero-bg-icon {
-        position: absolute;
-        right: 20px;
-        font-size: 3.5rem;
-        opacity: 0.12;
-        color: white;
-        transform: rotate(-10deg);
+        position: absolute; right: 20px; font-size: 2.5rem; /* Ícone de fundo menor */
+        opacity: 0.1; color: white; transform: rotate(-10deg);
     }
 
-    /* --- BOTÕES DE FERRAMENTA --- */
-    .tool-card {
+    /* --- NOVAS SEÇÕES: CONCEITO E INSIGHT --- */
+    .concept-section {
         background-color: white;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
         border: 1px solid #E2E8F0;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        transition: transform 0.2s, box-shadow 0.2s;
+        border-left: 4px solid #0F52BA; /* Azul Omnisfera */
+        margin-top: 25px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
     }
-    .tool-card:hover { 
-        transform: translateY(-3px); 
-        border-color: #3182CE; 
-        box-shadow: 0 8px 16px rgba(0,0,0,0.08);
-    }
-    .tool-title { font-size: 1.2rem; font-weight: 800; color: #2D3748; margin-bottom: 5px; }
-    .tool-desc { font-size: 0.85rem; color: #718096; margin-bottom: 15px; line-height: 1.4; }
-    
-    .border-blue { border-top: 4px solid #3182CE; }
-    .border-purple { border-top: 4px solid #805AD5; }
-    .border-teal { border-top: 4px solid #38B2AC; }
+    .concept-title { font-size: 1.1rem; font-weight: 700; color: #0F52BA; margin-bottom: 8px; }
+    .concept-text { font-size: 0.95rem; color: #4A5568; line-height: 1.5; }
 
-    /* --- INSIGHT CARD --- */
     .insight-card {
-        background-color: #FFFFF0;
+        background-color: #FFFFF0; /* Amarelo muito suave */
         border-radius: 12px;
         padding: 15px 20px;
         color: #2D3748;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        border-left: 4px solid #D69E2E;
-        margin-top: 15px;
+        display: flex; align-items: center; gap: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid #F6E05E; /* Borda sutil amarela */
         margin-bottom: 30px;
     }
-    .insight-icon {
-        font-size: 1.4rem;
-        color: #D69E2E;
-        background: rgba(214, 158, 46, 0.15);
-        width: 35px; height: 35px;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-    }
+    .insight-icon { font-size: 1.4rem; color: #D69E2E; }
 
-    /* --- CARDS INFORMATIVOS --- */
-    .home-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-    }
-    .rich-card {
-        background: white;
-        border-radius: 12px;
-        padding: 15px;
-        border: 1px solid #E2E8F0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        transition: all 0.2s ease;
-        text-decoration: none;
-        color: inherit;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-        height: 100%;
-    }
+    /* --- BOTÕES E CARDS RODAPÉ (Mantidos da V6) --- */
+    .tool-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; height: 100%; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s; }
+    .tool-card:hover { transform: translateY(-3px); border-color: #3182CE; box-shadow: 0 8px 16px rgba(0,0,0,0.08); }
+    .tool-title { font-size: 1.2rem; font-weight: 800; color: #2D3748; margin-bottom: 5px; }
+    .tool-desc { font-size: 0.85rem; color: #718096; margin-bottom: 15px; line-height: 1.4; }
+    .border-blue { border-top: 4px solid #3182CE; } .border-purple { border-top: 4px solid #805AD5; } .border-teal { border-top: 4px solid #38B2AC; }
+    
+    .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+    .rich-card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s; text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden; height: 100%; }
     .rich-card:hover { transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0,0,0,0.05); }
     .rich-card-top { width: 100%; height: 3px; position: absolute; top: 0; left: 0; }
     .rc-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 10px; }
@@ -244,7 +183,7 @@ if 'OPENAI_API_KEY' in st.secrets:
         noticia = st.session_state['home_insight']
     except: pass
 
-# --- 1. CABEÇALHO COM ANIMAÇÃO (SLIM) ---
+# --- 1. CABEÇALHO LOGO GIGANTE ANIMADA ---
 icone_b64 = get_base64_image("omni_icone.png")
 texto_b64 = get_base64_image("omni_texto.png")
 
@@ -256,10 +195,10 @@ if icone_b64 and texto_b64:
     </div>
     """, unsafe_allow_html=True)
 else:
-    st.markdown("<h1 style='text-align: center; color: #0F52BA; font-size: 2.5rem; margin-bottom:10px;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #0F52BA; font-size: 3rem; margin-bottom:10px;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
 
 
-# --- 2. HERO BANNER (SLIM & ELEGANTE) ---
+# --- 2. HERO BANNER (SUPER SLIM) ---
 st.markdown(f"""
 <div class="dash-hero">
     <div style="z-index: 2;">
@@ -322,18 +261,28 @@ with col3:
     if st.button("Acessar Hub ➡️", key="btn_hub", type="primary", use_container_width=True):
         st.switch_page("pages/3_Hub_Inclusao.py")
 
-# --- 4. INSIGHT DO DIA ---
-st.markdown(f"""
-<div class="insight-card">
-    <div class="insight-icon"><i class="ri-lightbulb-flash-line"></i></div>
-    <div>
-        <h4 style="margin:0; color:#2D3748; font-size:1rem;">Insight do Dia</h4>
-        <p style="margin:2px 0 0 0; font-size:0.85rem; opacity:0.9; color:#4A5568;">{noticia}</p>
+# --- 4. NOVO: SEÇÃO DE CONCEITO OMNISFERA ---
+st.markdown("""
+<div class="concept-section">
+    <div class="concept-title"><i class="ri-global-line"></i> O Ecossistema Omnisfera</div>
+    <div class="concept-text">
+        Mais do que ferramentas, a Omnisfera é um ambiente integrado que conecta o <strong>PEI</strong> (sala regular), o <strong>PAE</strong> (sala de recursos) e um <strong>Hub Criativo</strong> impulsionado por IA. Nossa missão é unir neurociência, legislação e estratégia pedagógica para transformar a inclusão em uma prática simples, eficiente e potente para cada estudante.
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# --- 5. RECURSOS EDUCATIVOS (CARDS INFORMATIVOS) ---
+# --- 5. INSIGHT DO DIA (AGORA ABAIXO DO CONCEITO) ---
+st.markdown(f"""
+<div class="insight-card">
+    <div class="insight-icon"><i class="ri-lightbulb-flash-line"></i></div>
+    <div>
+        <div style="font-weight: 700; font-size: 0.9rem; color: #D69E2E;">Curiosidade do Dia (IA):</div>
+        <p style="margin:2px 0 0 0; font-size:0.9rem; opacity:0.9; color:#4A5568; font-style: italic;">"{noticia}"</p>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# --- 6. RECURSOS EDUCATIVOS (RODAPÉ) ---
 st.markdown("### 📚 Base de Conhecimento")
 st.markdown("""
 <div class="home-grid">
@@ -341,25 +290,25 @@ st.markdown("""
         <div class="rich-card-top" style="background-color: #3182CE;"></div>
         <div class="rc-icon" style="background-color:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
         <div class="rc-title">PEI vs PAE</div>
-        <div class="rc-desc">Entenda as diferenças fundamentais.</div>
+        <div class="rc-desc">Diferenças fundamentais.</div>
     </a>
     <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="rich-card">
         <div class="rich-card-top" style="background-color: #D69E2E;"></div>
         <div class="rc-icon" style="background-color:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
         <div class="rc-title">Legislação</div>
-        <div class="rc-desc">LBI e Decretos de inclusão (2025).</div>
+        <div class="rc-desc">LBI e Decretos (2025).</div>
     </a>
     <a href="https://institutoneurosaber.com.br/" target="_blank" class="rich-card">
         <div class="rich-card-top" style="background-color: #D53F8C;"></div>
         <div class="rc-icon" style="background-color:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
         <div class="rc-title">Neurociência</div>
-        <div class="rc-desc">Desenvolvimento atípico e estudos.</div>
+        <div class="rc-desc">Desenvolvimento atípico.</div>
     </a>
     <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="rich-card">
         <div class="rich-card-top" style="background-color: #38A169;"></div>
         <div class="rc-icon" style="background-color:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
         <div class="rc-title">BNCC</div>
-        <div class="rc-desc">Currículo oficial e competências.</div>
+        <div class="rc-desc">Currículo oficial.</div>
     </a>
 </div>
 """, unsafe_allow_html=True)
