@@ -3,6 +3,7 @@ from datetime import date
 from openai import OpenAI
 import base64
 import os
+import time
 
 # --- 1. CONFIGURAÇÃO INICIAL ---
 st.set_page_config(
@@ -21,12 +22,39 @@ def get_base64_image(image_path):
         return base64.b64encode(img_file.read()).decode()
 
 def sistema_seguranca():
+    # CSS: Limpa o topo e ajusta visual do Login
     st.markdown("""
         <style>
             [data-testid="stHeader"] {visibility: hidden !important; height: 0px !important;}
             footer {visibility: hidden !important;}
-            .login-container { background-color: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
-            .termo-box { background-color: #f8f9fa; padding: 15px; border-radius: 8px; height: 150px; overflow-y: scroll; font-size: 0.85rem; border: 1px solid #e9ecef; margin-bottom: 15px; text-align: left; }
+            
+            .login-container { 
+                background-color: white; 
+                padding: 40px; 
+                border-radius: 15px; 
+                box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+                text-align: center; 
+                border: 1px solid #E2E8F0;
+            }
+            .termo-box { 
+                background-color: #F7FAFC; 
+                padding: 15px; 
+                border-radius: 8px; 
+                height: 180px; 
+                overflow-y: scroll; 
+                font-size: 0.75rem; 
+                border: 1px solid #CBD5E0; 
+                margin-bottom: 20px; 
+                text-align: left;
+                color: #4A5568;
+                line-height: 1.5;
+            }
+            .termo-title {
+                font-weight: bold;
+                color: #2D3748;
+                margin-bottom: 5px;
+                font-size: 0.8rem;
+            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -37,127 +65,167 @@ def sistema_seguranca():
         c1, c2, c3 = st.columns([1, 2, 1])
         with c2:
             st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+            
+            # LOGO DO LOGIN (VOLTOU A OMNISFERA.PNG)
             try: 
-                if os.path.exists("omni_icone.png"): st.image("omni_icone.png", width=100)
-                else: st.image("ominisfera.png", width=250)
-            except: st.markdown("# 🌐 OMNISFERA")
-            st.markdown("### Acesso Restrito")
+                st.image("ominisfera.png", width=280)
+            except: 
+                st.markdown("## 🌐 OMNISFERA")
+            
+            st.markdown("### Portal de Acesso")
             st.markdown("---")
-            st.markdown("##### 🛡️ Termo de Confidencialidade")
-            st.markdown("""<div class="termo-box"><strong>AMBIENTE PROTEGIDO</strong><br>1. Propriedade Intelectual de Rodrigo A. Queiroz.<br>2. Proibido cópia ou engenharia reversa.<br>3. Uso exclusivo para testes autorizados.</div>""", unsafe_allow_html=True)
-            concordo = st.checkbox("Li e aceito os termos.")
-            senha = st.text_input("Senha:", type="password")
-            if st.button("🚀 ENTRAR", type="primary", use_container_width=True):
+            
+            # TERMO JURÍDICO MELHORADO
+            st.markdown("##### 🛡️ Termos de Uso e Confidencialidade")
+            termo_html = """
+            <div class="termo-box">
+                <div class="termo-title">1. PROPRIEDADE INTELECTUAL</div>
+                Todo o conteúdo, algoritmos, prompts de IA e metodologia pedagógica contidos nesta plataforma ("Omnisfera") são de propriedade exclusiva de <strong>Rodrigo A. Queiroz</strong>. É estritamente proibida a cópia, reprodução, engenharia reversa ou distribuição não autorizada.<br><br>
+                <div class="termo-title">2. SIGILO E DADOS</div>
+                O usuário compromete-se a manter sigilo absoluto sobre as metodologias aqui apresentadas. Dados de alunos inseridos para teste devem ser fictícios ou anonimizados, em conformidade com a LGPD.<br><br>
+                <div class="termo-title">3. LICENÇA DE USO</div>
+                O acesso é concedido em caráter pessoal, intransferível e temporário para fins de validação pedagógica e técnica. O uso indevido acarretará no bloqueio imediato do acesso.<br><br>
+                <div class="termo-title">4. ACEITE</div>
+                Ao prosseguir, você declara estar ciente e de acordo com todas as cláusulas acima.
+            </div>
+            """
+            st.markdown(termo_html, unsafe_allow_html=True)
+            
+            concordo = st.checkbox("Li, compreendi e aceito os termos de uso.")
+            st.write("")
+            senha = st.text_input("Chave de Acesso:", type="password")
+            
+            if st.button("🚀 ACESSAR ECOSSISTEMA", type="primary", use_container_width=True):
                 hoje = date.today()
                 senha_correta = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
-                if not concordo: st.warning("Aceite os termos.")
+                
+                if not concordo:
+                    st.warning("⚠️ É necessário aceitar os termos para continuar.")
                 elif senha == senha_correta:
                     st.session_state["autenticado"] = True
                     st.rerun()
-                else: st.error("Senha inválida.")
+                else:
+                    st.error("🚫 Credenciais inválidas.")
+            
             st.markdown("</div>", unsafe_allow_html=True)
         return False
     return True
 
+# EXECUTA O LOGIN
 if not sistema_seguranca(): st.stop()
 
 # ==============================================================================
-# 🏠 HOME - DASHBOARD OMNISFERA (DYNAMIC TEXT BANNER)
+# 🏠 HOME - DASHBOARD (CORRIGIDA E POLIDA)
 # ==============================================================================
 
-# CSS GERAL E CARDS
+# CSS GERAL
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap');
     html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
     
-    /* REMOVENDO ESPAÇO VAZIO DO TOPO */
-    .block-container { padding-top: 0rem !important; padding-bottom: 2rem !important; margin-top: 1rem !important; }
+    /* 1. TOPO COLADO */
+    .block-container { 
+        padding-top: 1rem !important; 
+        padding-bottom: 2rem !important; 
+        margin-top: 0rem !important;
+    }
 
-    /* --- ANIMAÇÃO LOGO --- */
+    /* --- LOGO GIGANTE ANIMADA --- */
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     
     .logo-container {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 20px; 
-        margin-bottom: 10px; /* Bem colado no banner */
-        padding-top: 15px;
+        gap: 15px; 
+        margin-bottom: 0px; /* Colado no banner */
+        padding-top: 0px;
     }
     .logo-icon-spin {
-        height: 140px; /* Aumentei ainda mais */
+        height: 140px; 
         width: auto;
         animation: spin 30s linear infinite;
         filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
     }
     .logo-text-static {
-        height: 95px; 
+        height: 90px; 
         width: auto;
     }
 
-    /* --- ANIMAÇÃO TEXTO BANNER (FADE CYCLE) --- */
-    @keyframes textCycle1 {
+    /* --- ANIMAÇÃO TEXTO (FADE) --- */
+    @keyframes textFade1 {
         0%, 45% { opacity: 1; transform: translateY(0); }
-        50%, 95% { opacity: 0; transform: translateY(-10px); }
-        100% { opacity: 1; transform: translateY(0); }
+        50%, 100% { opacity: 0; transform: translateY(-10px); }
     }
-    @keyframes textCycle2 {
+    @keyframes textFade2 {
         0%, 45% { opacity: 0; transform: translateY(10px); }
-        50%, 95% { opacity: 1; transform: translateY(0); }
-        100% { opacity: 0; transform: translateY(10px); }
+        50%, 100% { opacity: 1; transform: translateY(0); }
     }
 
-    /* --- HERO BANNER (DINÂMICO) --- */
+    /* --- HERO BANNER (SLIM & CORRIGIDO) --- */
     .dash-hero { 
         background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); 
         border-radius: 12px;
-        padding: 0; /* Padding controlado internamente */
-        margin-bottom: 25px; 
+        margin-bottom: 30px; 
         box-shadow: 0 4px 10px rgba(15, 82, 186, 0.2);
         color: white;
         position: relative;
         overflow: hidden;
-        min-height: 90px; /* Altura fixa para evitar pulos */
+        height: 80px; /* Altura fixa fina */
         display: flex;
         align-items: center;
+        justify-content: center;
     }
     
     .hero-content-wrapper {
         position: relative;
         width: 100%;
-        height: 90px;
+        height: 100%;
         display: flex;
         align-items: center;
-        padding-left: 30px;
-        padding-right: 30px;
+        justify-content: center;
     }
 
-    /* ESTADOS DO TEXTO */
     .hero-text-block {
         position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 90%;
+        width: 100%;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
     }
     
-    .state-1 { animation: textCycle1 50s infinite ease-in-out; } /* Ciclo de 50s (25s cada) */
-    .state-2 { animation: textCycle2 50s infinite ease-in-out; opacity: 0; }
+    /* Ciclo de Animação */
+    .state-1 { animation: textFade1 50s infinite; }
+    .state-2 { animation: textFade2 50s infinite; }
 
     .hero-title {
-        color: white; font-weight: 700; 
-        font-size: 1.6rem; /* Reduzi o tamanho (antes era 2.5) */
-        margin: 0; line-height: 1.1;
+        color: white; 
+        font-family: 'Nunito', sans-serif;
+        font-weight: 700; 
+        font-size: 1.5rem; 
+        margin: 0; 
+        line-height: 1.1;
+        letter-spacing: 0.5px;
     }
     .hero-subtitle {
         color: rgba(255,255,255,0.9);
-        font-size: 0.9rem;
-        margin-top: 3px; font-weight: 300; font-style: italic;
+        font-size: 0.85rem;
+        margin-top: 2px; 
+        font-weight: 300; 
+        font-style: italic;
     }
     
     .hero-bg-icon {
-        position: absolute; right: 20px; font-size: 3rem;
-        opacity: 0.1; color: white; transform: rotate(-10deg); top: 20px;
+        position: absolute; 
+        right: 20px; 
+        font-size: 3rem;
+        opacity: 0.1; 
+        color: white; 
+        transform: rotate(-10deg);
+        top: 15px;
     }
 
     /* --- INSIGHT CARD --- */
@@ -215,23 +283,22 @@ if icone_b64 and texto_b64:
     </div>
     """, unsafe_allow_html=True)
 else:
+    # Fallback se as imagens não existirem
     st.markdown("<h1 style='text-align: center; color: #0F52BA; font-size: 3rem; margin-bottom:10px;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
 
 
-# --- 2. HERO BANNER "VIVO" (TEXTO ALTERNADO) ---
-# Texto 1: Boas vindas
-# Texto 2: Conceito Omnisfera
+# --- 2. HERO BANNER "VIVO" (CORRIGIDO PARA EXIBIR HTML) ---
 st.markdown(f"""
 <div class="dash-hero">
     <div class="hero-content-wrapper">
         <div class="hero-text-block state-1">
-            <h1 class="hero-title">Olá, Educador(a)!</h1>
-            <p class="hero-subtitle">"Cada criança é única; seu potencial, ilimitado!"</p>
+            <div class="hero-title">Olá, Educador(a)!</div>
+            <div class="hero-subtitle">"Cada criança é única; seu potencial, ilimitado!"</div>
         </div>
         
         <div class="hero-text-block state-2">
-            <h1 class="hero-title">O Ecossistema Omnisfera</h1>
-            <p class="hero-subtitle">Unindo neurociência, legislação e estratégia pedagógica em um só lugar.</p>
+            <div class="hero-title">O Ecossistema Omnisfera</div>
+            <div class="hero-subtitle">Unindo neurociência, legislação e estratégia pedagógica.</div>
         </div>
     </div>
     <i class="ri-global-line hero-bg-icon"></i>
@@ -266,7 +333,7 @@ with col2:
             <div class="tool-title"><i class="ri-puzzle-line" style="color:#805AD5; margin-right:5px;"></i> PAE</div>
             <div class="tool-desc">
                 <strong>Plano de AEE</strong><br>
-                Sala de Recursos, barreiras e tecnologia assistiva.
+                Focado na Sala de Recursos. Identifique barreiras e tecnologias assistivas.
             </div>
         </div>
     </div>
@@ -290,7 +357,7 @@ with col3:
     if st.button("Acessar Hub ➡️", key="btn_hub", type="primary", use_container_width=True):
         st.switch_page("pages/3_Hub_Inclusao.py")
 
-# --- 4. INSIGHT DO DIA (SEPARADO) ---
+# --- 4. INSIGHT DO DIA ---
 st.markdown(f"""
 <div class="insight-card">
     <div class="insight-icon"><i class="ri-lightbulb-flash-line"></i></div>
