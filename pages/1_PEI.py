@@ -66,7 +66,7 @@ st.markdown(f"""
     
     /* -------------------------------------------- */
 
-   /* Faixa de Teste */
+   /* Faixa de Teste (Só aparece se IS_TEST_ENV for True) */
     {css_faixa_teste}
 
     /* CARD FLUTUANTE (OMNISFERA) */
