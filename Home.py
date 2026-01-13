@@ -22,7 +22,6 @@ def get_base64_image(image_path):
         return base64.b64encode(img_file.read()).decode()
 
 def sistema_seguranca():
-    # CSS do Login
     st.markdown("""
         <style>
             [data-testid="stHeader"] {visibility: hidden !important; height: 0px !important;}
@@ -39,7 +38,6 @@ def sistema_seguranca():
         c1, c2, c3 = st.columns([1, 2, 1])
         with c2:
             st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-            # LOGO DO LOGIN
             try: 
                 if os.path.exists("ominisfera.png"): st.image("ominisfera.png", width=280)
                 else: st.markdown("## 🌐 OMNISFERA")
@@ -66,7 +64,7 @@ def sistema_seguranca():
 if not sistema_seguranca(): st.stop()
 
 # ==============================================================================
-# 🏠 HOME - DASHBOARD OMNISFERA (HARMONY EDITION)
+# 🏠 HOME - DASHBOARD OMNISFERA (ECOSYSTEM EDITION)
 # ==============================================================================
 
 # CSS GERAL
@@ -75,7 +73,7 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap');
     html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
     
-    /* 1. ESPAÇAMENTO DO TOPO (Equilibrado) */
+    /* 1. ESPAÇAMENTO DO TOPO */
     .block-container { 
         padding-top: 1rem !important; 
         padding-bottom: 3rem !important; 
@@ -90,13 +88,13 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         gap: 20px; 
-        margin-bottom: 20px; /* Respiro entre logo e banner */
+        margin-bottom: 20px; 
         padding-top: 10px;
     }
     .logo-icon-spin {
         height: 130px; 
         width: auto;
-        animation: spin 35s linear infinite; /* Rotação suave */
+        animation: spin 40s linear infinite; /* Rotação bem lenta e elegante */
         filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
     }
     .logo-text-static {
@@ -104,20 +102,19 @@ st.markdown("""
         width: auto;
     }
 
-    /* --- HERO BANNER (HARMONIZADO) --- */
+    /* --- HERO BANNER (SLIM & LEFT) --- */
     .dash-hero { 
         background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); 
         border-radius: 20px;
-        margin-bottom: 25px;
-        box-shadow: 0 10px 25px rgba(15, 82, 186, 0.25); /* Sombra mais bonita */
+        margin-bottom: 30px;
+        box-shadow: 0 10px 25px rgba(15, 82, 186, 0.25);
         color: white;
         position: relative;
         overflow: hidden;
-        /* Removida altura fixa, usamos padding para dar corpo */
-        padding: 40px 50px; 
+        padding: 35px 50px; 
         display: flex;
         align-items: center;
-        justify-content: flex-start; /* Texto à esquerda */
+        justify-content: flex-start;
     }
     
     .hero-text-block { z-index: 2; text-align: left; }
@@ -126,16 +123,15 @@ st.markdown("""
         color: white; 
         font-family: 'Nunito', sans-serif;
         font-weight: 800; 
-        font-size: 2.2rem; /* Fonte maior para impacto */
+        font-size: 2rem; 
         margin: 0; 
         line-height: 1.1;
         letter-spacing: 0.5px;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     .hero-subtitle {
-        color: rgba(255,255,255,0.95);
-        font-size: 1.1rem;
-        margin-top: 8px; 
+        color: rgba(255,255,255,0.9);
+        font-size: 1.05rem;
+        margin-top: 5px; 
         font-weight: 400; 
     }
     
@@ -149,19 +145,67 @@ st.markdown("""
         top: 20px;
     }
 
-    /* --- TEXTO CONCEITO OMNISFERA (Abaixo do banner) --- */
-    .concept-box {
+    /* --- CONCEITO OMNISFERA (MANIFESTO) --- */
+    .manifesto-box {
         text-align: center;
         margin-bottom: 40px;
-        padding: 0 40px;
+        padding: 0 10%;
     }
-    .concept-text {
-        font-size: 1.1rem;
+    .manifesto-title {
+        font-size: 1.2rem;
+        color: #2D3748;
+        font-weight: 800;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .manifesto-text {
+        font-size: 1.15rem;
         color: #4A5568;
         font-weight: 400;
         line-height: 1.6;
+        font-style: italic;
     }
-    .concept-highlight { color: #0F52BA; font-weight: 700; }
+    .highlight { color: #0F52BA; font-weight: 700; font-style: normal; }
+
+    /* --- CARDS DE FERRAMENTA (COM LOGOS) --- */
+    .tool-card { 
+        background: white; 
+        border-radius: 20px; 
+        padding: 25px; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03); 
+        border: 1px solid #E2E8F0; 
+        height: 100%; 
+        display: flex; flex-direction: column; justify-content: flex-start; /* Alinha topo */
+        transition: all 0.3s ease; 
+        text-align: center;
+    }
+    .tool-card:hover { 
+        transform: translateY(-8px); 
+        border-color: #3182CE; 
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1); 
+    }
+    
+    .card-logo-box {
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+    }
+    .card-logo-img {
+        max-height: 65px;
+        width: auto;
+        object-fit: contain;
+    }
+    
+    .tool-title { font-size: 1.2rem; font-weight: 800; color: #2D3748; margin-bottom: 8px; }
+    .tool-desc { font-size: 0.9rem; color: #718096; margin-bottom: 25px; line-height: 1.5; }
+    
+    /* Bordas de cor */
+    .border-blue { border-bottom: 5px solid #3182CE; } 
+    .border-purple { border-bottom: 5px solid #805AD5; } 
+    .border-teal { border-bottom: 5px solid #38B2AC; }
 
     /* --- INSIGHT CARD --- */
     .insight-card {
@@ -173,32 +217,11 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         border-left: 5px solid #F6E05E; 
         margin-bottom: 40px;
-        margin-top: 20px;
+        margin-top: 10px;
     }
     .insight-icon { font-size: 1.8rem; color: #D69E2E; }
 
-    /* --- BOTÕES E CARDS --- */
-    .tool-card { 
-        background: white; 
-        border-radius: 16px; 
-        padding: 25px; 
-        box-shadow: 0 4px 6px rgba(0,0,0,0.04); 
-        border: 1px solid #E2E8F0; 
-        height: 100%; 
-        display: flex; flex-direction: column; justify-content: space-between; 
-        transition: all 0.3s ease; 
-    }
-    .tool-card:hover { 
-        transform: translateY(-5px); 
-        border-color: #3182CE; 
-        box-shadow: 0 15px 30px rgba(0,0,0,0.1); 
-    }
-    .tool-title { font-size: 1.3rem; font-weight: 800; color: #2D3748; margin-bottom: 8px; }
-    .tool-desc { font-size: 0.9rem; color: #718096; margin-bottom: 20px; line-height: 1.5; }
-    .border-blue { border-top: 5px solid #3182CE; } 
-    .border-purple { border-top: 5px solid #805AD5; } 
-    .border-teal { border-top: 5px solid #38B2AC; }
-    
+    /* --- RODAPÉ --- */
     .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
     .rich-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s; text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden; height: 100%; }
     .rich-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.06); border-color: #CBD5E0; }
@@ -233,11 +256,10 @@ if icone_b64 and texto_b64:
     </div>
     """, unsafe_allow_html=True)
 else:
-    # Fallback se as imagens não existirem
     st.markdown("<h1 style='text-align: center; color: #0F52BA; font-size: 3rem; margin-bottom:10px;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
 
 
-# --- 2. HERO BANNER (TEXTO ESQUERDA + HARMONIZADO) ---
+# --- 2. HERO BANNER (TEXTO ESQUERDA + ELEGÂNCIA) ---
 st.markdown("""
 <div class="dash-hero">
     <div class="hero-text-block">
@@ -248,29 +270,38 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# --- 3. CONCEITO OMNISFERA (PONTE VISUAL) ---
+# --- 3. MANIFESTO OMNISFERA (CONCEITO) ---
 st.markdown("""
-<div class="concept-box">
-    <span class="concept-text">
-        O <span class="concept-highlight">Ecossistema Omnisfera</span> une neurociência, legislação e estratégia pedagógica em um só lugar,<br>
-        conectando o <strong>PEI</strong> (Sala Regular), o <strong>PAE</strong> (Sala de Recursos) e a Tecnologia.
-    </span>
+<div class="manifesto-box">
+    <div class="manifesto-text">
+        "A Omnisfera não é apenas uma plataforma. É um ecossistema vivo onde a <span class="highlight">Neurociência</span> encontra a <span class="highlight">Pedagogia</span>.<br>
+        Do PEI na sala de aula ao PAE na clínica, conectamos dados, empatia e estratégia para que a inclusão deixe de ser um desafio e se torne a nossa linguagem universal."
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-# --- 4. FERRAMENTAS DE ACESSO ---
-st.markdown("### 🎯 Acesso Rápido")
+# --- 4. FERRAMENTAS DE ACESSO (COM LOGOS) ---
+# Preparar logos
+logo_pei = get_base64_image("360.png")
+logo_pae = get_base64_image("pae.png")
+logo_hub = get_base64_image("hub.png")
+
+# Fallback icons se não tiver imagem
+icon_pei = f'<img src="data:image/png;base64,{logo_pei}" class="card-logo-img">' if logo_pei else '<i class="ri-book-read-line" style="font-size:3rem; color:#3182CE;"></i>'
+icon_pae = f'<img src="data:image/png;base64,{logo_pae}" class="card-logo-img">' if logo_pae else '<i class="ri-puzzle-line" style="font-size:3rem; color:#805AD5;"></i>'
+icon_hub = f'<img src="data:image/png;base64,{logo_hub}" class="card-logo-img">' if logo_hub else '<i class="ri-rocket-line" style="font-size:3rem; color:#38B2AC;"></i>'
+
 col1, col2, col3 = st.columns(3)
 
 # PEI
 with col1:
-    st.markdown("""
+    st.markdown(f"""
     <div class="tool-card border-blue">
+        <div class="card-logo-box">{icon_pei}</div>
         <div>
-            <div class="tool-title"><i class="ri-book-read-line" style="color:#3182CE; margin-right:5px;"></i> PEI 360º</div>
+            <div class="tool-title">PEI 360º</div>
             <div class="tool-desc">
-                <strong>Plano de Ensino Individualizado</strong><br>
-                A porta de entrada. Realize a anamnese, avalie o perfil e gere o plano oficial.
+                O coração da inclusão escolar. Avalie, planeje e gere o documento oficial do aluno.
             </div>
         </div>
     </div>
@@ -280,13 +311,13 @@ with col1:
 
 # PAE
 with col2:
-    st.markdown("""
+    st.markdown(f"""
     <div class="tool-card border-purple">
+        <div class="card-logo-box">{icon_pae}</div>
         <div>
-            <div class="tool-title"><i class="ri-puzzle-line" style="color:#805AD5; margin-right:5px;"></i> PAE</div>
+            <div class="tool-title">PAE Clínico</div>
             <div class="tool-desc">
-                <strong>Plano de AEE</strong><br>
-                Focado na Sala de Recursos. Identifique barreiras e tecnologias assistivas.
+                A inteligência da Sala de Recursos. Mapeie barreiras e tecnologias assistivas.
             </div>
         </div>
     </div>
@@ -296,13 +327,13 @@ with col2:
 
 # HUB
 with col3:
-    st.markdown("""
+    st.markdown(f"""
     <div class="tool-card border-teal">
+        <div class="card-logo-box">{icon_hub}</div>
         <div>
-            <div class="tool-title"><i class="ri-rocket-line" style="color:#38B2AC; margin-right:5px;"></i> Hub</div>
+            <div class="tool-title">Hub Criativo</div>
             <div class="tool-desc">
-                <strong>Adaptação & Criação</strong><br>
-                Adapte provas, crie atividades do zero e roteiros de aula em segundos.
+                Adaptação em segundos. Provas, atividades e roteiros gerados por IA.
             </div>
         </div>
     </div>
@@ -315,42 +346,10 @@ st.markdown(f"""
 <div class="insight-card">
     <div class="insight-icon"><i class="ri-lightbulb-flash-line"></i></div>
     <div>
-        <div style="font-weight: 700; font-size: 0.95rem; color: #D69E2E;">Curiosidade do Dia (IA):</div>
-        <p style="margin:4px 0 0 0; font-size:0.95rem; opacity:0.9; color:#4A5568; font-style: italic; line-height: 1.4;">"{noticia}"</p>
+        <div style="font-weight: 700; font-size: 0.9rem; color: #D69E2E;">Insight do Dia (IA):</div>
+        <p style="margin:2px 0 0 0; font-size:0.95rem; opacity:0.9; color:#4A5568;">"{noticia}"</p>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# --- 6. RECURSOS EDUCATIVOS (RODAPÉ) ---
-st.markdown("### 📚 Base de Conhecimento")
-st.markdown("""
-<div class="home-grid">
-    <a href="#" class="rich-card">
-        <div class="rich-card-top" style="background-color: #3182CE;"></div>
-        <div class="rc-icon" style="background-color:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
-        <div class="rc-title">PEI vs PAE</div>
-        <div class="rc-desc">Entenda as diferenças e conexões.</div>
-    </a>
-    <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="rich-card">
-        <div class="rich-card-top" style="background-color: #D69E2E;"></div>
-        <div class="rc-icon" style="background-color:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
-        <div class="rc-title">Legislação</div>
-        <div class="rc-desc">LBI e Decretos atualizados (2025).</div>
-    </a>
-    <a href="https://institutoneurosaber.com.br/" target="_blank" class="rich-card">
-        <div class="rich-card-top" style="background-color: #D53F8C;"></div>
-        <div class="rc-icon" style="background-color:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
-        <div class="rc-title">Neurociência</div>
-        <div class="rc-desc">Como o cérebro atípico aprende.</div>
-    </a>
-    <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="rich-card">
-        <div class="rich-card-top" style="background-color: #38A169;"></div>
-        <div class="rc-icon" style="background-color:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
-        <div class="rc-title">BNCC</div>
-        <div class="rc-desc">Currículo oficial e competências.</div>
-    </a>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("---")
-st.markdown("<div style='text-align: center; color: #A0AEC0; font-size: 0.8rem;'>Omnisfera © 2026 - Todos os direitos reservados.</div>", unsafe_allow_html=True)
+# --- 6. RODAPÉ EDU
