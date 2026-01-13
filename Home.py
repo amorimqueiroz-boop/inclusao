@@ -7,7 +7,7 @@ import time
 
 # --- 1. CONFIGURAÇÃO INICIAL ---
 st.set_page_config(
-    page_title="[TESTE] Omnisfera", 
+    page_title="[TESTE] Omnisfera",  # Mudei o título da aba também
     page_icon="🛠️", 
     layout="wide",
     initial_sidebar_state="expanded"
@@ -56,7 +56,7 @@ else:
     src_logo = f"data:image/png;base64,{img_logo_b64}"
 
 # ==============================================================================
-# ✨ LOADER BLINDADO (CORREÇÃO TELA BRANCA)
+# ✨ LOADER E LOGO GIRATÓRIA (CSS + JS)
 # ==============================================================================
 st.markdown(f"""
 <style>
@@ -69,14 +69,12 @@ st.markdown(f"""
     /* 1. TELA DE LOADING */
     #loader-overlay {{
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background-color: #F7FAFC; 
-        z-index: 999999;
+        background: #F7FAFC; z-index: 999999;
         display: flex; flex-direction: column; justify-content: center; align-items: center;
         transition: opacity 0.5s ease;
-        cursor: pointer; /* Importante: Mostra que é clicável */
     }}
     
-    /* 2. LOGO NO CANTO */
+    /* 2. LOGO NO CANTO (BRANDING PERSISTENTE) */
     .brand-corner {{
         position: fixed; bottom: 20px; right: 20px;
         width: 50px; height: 50px; z-index: 999998;
@@ -95,12 +93,11 @@ st.markdown(f"""
     }}
 </style>
 
-<div id="loader-overlay" onclick="this.style.opacity='0'; setTimeout(()=>this.style.display='none', 500)">
+<div id="loader-overlay">
     <div style="width: 90px; height: 90px; animation: girar-suave 1.2s linear infinite;">
         <img src="{src_logo}" style="width:100%; height:100%; object-fit:contain;">
     </div>
     <p style="margin-top:20px; font-family:'Nunito', sans-serif; color:#4A5568; font-weight:600; letter-spacing:1px;">CARREGANDO TESTE...</p>
-    <p style="font-size:0.75rem; color:#A0AEC0; margin-top:40px;">(Se demorar, clique na tela)</p>
 </div>
 
 <div class="brand-corner" title="Omnisfera Teste">
@@ -108,19 +105,23 @@ st.markdown(f"""
 </div>
 
 <script>
-    // Função unificada para matar o loader
-    function killLoader() {{
+    window.addEventListener('load', function() {{
+        setTimeout(function() {{
+            var loader = document.getElementById('loader-overlay');
+            if (loader) {{
+                loader.style.opacity = '0'; 
+                setTimeout(function() {{ loader.style.display = 'none'; }}, 500); 
+            }}
+        }}, 1000); // Carregamento mais rápido no teste (1s)
+    }});
+    
+    setTimeout(function() {{
         var loader = document.getElementById('loader-overlay');
         if (loader) {{
             loader.style.opacity = '0';
             setTimeout(function() {{ loader.style.display = 'none'; }}, 500);
         }}
-    }}
-
-    // Tenta matar em vários momentos para garantir
-    setTimeout(killLoader, 1500); // 1.5 segundos
-    setTimeout(killLoader, 3000); // 3 segundos (backup)
-    setTimeout(killLoader, 5000); // 5 segundos (garantia final)
+    }}, 2000);
 </script>
 """, unsafe_allow_html=True)
 
