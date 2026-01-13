@@ -993,10 +993,14 @@ with st.sidebar:
             st.session_state.dados.update(d); st.success("Carregado!")
         except: st.error("Erro no arquivo.")
     st.markdown("---")
-    if st.button("💾 Registrar Aluno", use_container_width=True):
-        ok, msg = salvar_aluno(st.session_state.dados)
-        if ok: st.success(msg)
-        else: st.error(msg)
+    st.markdown("### 💾 Salvar & Integrar")
+    if st.button("🌐 INTEGRAR NA OMNISFERA", use_container_width=True, type="primary"):
+        ok, msg = salvar_aluno_integrado(st.session_state.dados)
+        if ok: 
+            st.success(msg)
+            st.balloons()
+        else: 
+            st.error(msg)
     st.markdown("---")
 
 # HEADER
@@ -1437,6 +1441,15 @@ with tab8: # DASHBOARD & DOCS (RENOMEADO)
                 st.write("")
                 json_dados = json.dumps(st.session_state.dados, default=str)
                 st.download_button("💾 Baixar Arquivo do Aluno (.json)", json_dados, f"PEI_{st.session_state.dados['nome']}.json", "application/json")
+                st.write("")
+        
+        st.markdown("---")
+        # BOTÃO EXTRA PARA INTEGRAÇÃO
+        c_integra, c_vazio = st.columns([2, 1])
+        if c_integra.button("🚀 SALVAR E SINCRONIZAR (PAE/HUB)", type="primary"):
+            ok, msg = salvar_aluno_integrado(st.session_state.dados)
+            if ok: st.toast(msg, icon="✅")
+            else: st.error(msg)
 
 with tab_mapa: # ABA NOVA (JORNADA DO ALUNO)
     render_progresso()
