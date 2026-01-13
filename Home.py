@@ -1,5 +1,6 @@
 import streamlit as st
 from datetime import date
+from openai import OpenAI
 import time
 
 # --- 1. CONFIGURAÇÃO INICIAL (Primeira linha obrigatória) ---
@@ -47,13 +48,10 @@ def sistema_seguranca():
 
     # TELA DE LOGIN (Se não autenticado)
     if not st.session_state["autenticado"]:
-        # Centraliza o login forçando margens
         c_vazio_esq, c_login, c_vazio_dir = st.columns([1, 2, 1])
-        
         with c_login:
             st.markdown("<div class='login-container'>", unsafe_allow_html=True)
             try:
-                # Certifique-se que o arquivo oministra.png está na mesma pasta
                 st.image("ominisfera.png", width=300) 
             except:
                 st.markdown("# 🌐 OMNISFERA")
@@ -81,7 +79,6 @@ def sistema_seguranca():
             
             if st.button("🚀 ENTRAR NO SISTEMA", type="primary", use_container_width=True):
                 hoje = date.today()
-                # Senha válida até 19/01/2026, depois muda automático
                 senha_correta = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
                 
                 if not concordo:
@@ -93,10 +90,8 @@ def sistema_seguranca():
                     st.error("🚫 Chave inválida.")
             
             st.markdown("</div>", unsafe_allow_html=True)
-        
         return False
 
-    # Se autenticado, libera o app
     return True
 
 # --- EXECUTA A SEGURANÇA ---
@@ -104,125 +99,233 @@ if not sistema_seguranca():
     st.stop()
 
 # ==============================================================================
-# 🏠 HOME - DASHBOARD OMNISFERA (Aparece após login)
+# 🏠 HOME - DASHBOARD OMNISFERA (PREMIUM)
 # ==============================================================================
 
-# CSS Específico da Home (Cards Bonitos)
+# CSS PREMIUM (Trazido do PEI para a Home)
 st.markdown("""
 <style>
-    .card {
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+    html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
+    
+    /* CARDS DE NAVEGAÇÃO RÁPIDA (LINKS EXTERNOS) */
+    .home-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+        margin-bottom: 30px;
+    }
+    .rich-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #E2E8F0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        transition: all 0.2s ease;
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+    }
+    .rich-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+        border-color: #CBD5E0;
+    }
+    .rich-card-top { width: 100%; height: 4px; position: absolute; top: 0; left: 0; }
+    .rc-icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 12px; }
+    .rc-title { font-weight: 800; font-size: 1rem; color: #2D3748; margin-bottom: 5px; }
+    .rc-desc { font-size: 0.8rem; color: #718096; line-height: 1.3; }
+
+    /* CARD DE INSIGHT */
+    .insight-card {
+        background-color: #FFFFF0;
+        border-radius: 12px;
+        padding: 20px;
+        color: #2D3748;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        border-left: 5px solid #D69E2E;
+        margin-bottom: 40px;
+    }
+    .insight-icon {
+        font-size: 1.5rem;
+        color: #D69E2E;
+        background: rgba(214, 158, 46, 0.15);
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    /* HERO BANNER */
+    .dash-hero { 
+        background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); 
+        border-radius: 16px; 
+        padding: 30px; 
+        color: white; 
+        margin-bottom: 30px; 
+        box-shadow: 0 4px 12px rgba(15, 82, 186, 0.15); 
+    }
+
+    /* CARDS DE FERRAMENTAS (PEI, PAE, HUB) */
+    .tool-card {
         background-color: white;
         border-radius: 15px;
         padding: 25px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         border: 1px solid #E2E8F0;
-        transition: transform 0.2s, box-shadow 0.2s;
         height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        transition: transform 0.2s;
     }
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-        border-color: #3182CE;
-    }
-    .card-title {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #2D3748;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .card-desc {
-        font-size: 0.95rem;
-        color: #718096;
-        margin-bottom: 20px;
-        line-height: 1.5;
-    }
-    .card-number {
-        font-size: 3rem;
-        font-weight: 900;
-        color: #E2E8F0;
-        position: absolute;
-        top: 20px;
-        right: 30px;
-        opacity: 0.3;
-    }
-    /* Cores dos Cards */
+    .tool-card:hover { transform: translateY(-5px); border-color: #3182CE; }
+    .tool-title { font-size: 1.4rem; font-weight: 800; color: #2D3748; margin-bottom: 10px; }
+    .tool-desc { font-size: 0.9rem; color: #718096; margin-bottom: 20px; }
     .border-blue { border-top: 5px solid #3182CE; }
     .border-purple { border-top: 5px solid #805AD5; }
     .border-teal { border-top: 5px solid #38B2AC; }
 </style>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 """, unsafe_allow_html=True)
 
-# Cabeçalho da Home
-c_head1, c_head2 = st.columns([1, 5])
-with c_head1:
-    try:
-        st.image("ominisfera.png", width=120)
-    except:
-        st.write("🌐")
-with c_head2:
-    st.markdown("# OMNISFERA")
-    st.markdown("### O Ecossistema de Gestão da Inclusão")
+# GERAÇÃO DA FRASE DO DIA (IA ou Padrão)
+saudacao = "Bem-vindo(a) ao Futuro da Inclusão!"
+noticia = "A neurociência na escola revela como o aprendizado é moldado pelo cérebro, otimizando o ensino para cada aluno."
 
+if 'OPENAI_API_KEY' in st.secrets:
+    try:
+        client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
+        # Gera frase se não tiver cacheada na sessão
+        if 'home_insight' not in st.session_state:
+            res = client.chat.completions.create(
+                model="gpt-4o-mini", 
+                messages=[{"role": "user", "content": "Gere uma curiosidade curta e fascinante (1 frase) sobre neurociência e aprendizagem."}]
+            )
+            st.session_state['home_insight'] = res.choices[0].message.content
+        noticia = st.session_state['home_insight']
+    except: pass
+
+# --- HERO BANNER ---
+try:
+    st.image("ominisfera.png", width=150)
+except:
+    st.write("🌐 OMNISFERA")
+
+st.markdown(f"""
+<div class="dash-hero">
+    <div>
+        <h1 style="color:white; margin:0; font-size: 2.2rem;">Olá, Educador(a)!</h1>
+        <p style="margin:10px 0 0 0; opacity:0.9; font-size: 1.1rem;">"Cada criança é única; seu potencial, ilimitado!"</p>
+    </div>
+    <div style="text-align: right; font-size: 3rem; opacity: 0.2;">
+        <i class="ri-heart-pulse-fill"></i>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# --- CARDS DE RECURSOS (LINKS EXTERNOS) ---
+st.markdown("""
+<div class="home-grid">
+    <a href="https://diversa.org.br/educacao-inclusiva/" target="_blank" class="rich-card">
+        <div class="rich-card-top" style="background-color: #3182CE;"></div>
+        <div class="rc-icon" style="background-color:#EBF8FF; color:#3182CE;"><i class="ri-book-open-line"></i></div>
+        <div class="rc-title">O que é PEI?</div>
+        <div class="rc-desc">Conceitos fundamentais e estruturação.</div>
+    </a>
+    <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="rich-card">
+        <div class="rich-card-top" style="background-color: #D69E2E;"></div>
+        <div class="rc-icon" style="background-color:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
+        <div class="rc-title">Legislação</div>
+        <div class="rc-desc">LBI e Decretos sobre inclusão.</div>
+    </a>
+    <a href="https://institutoneurosaber.com.br/" target="_blank" class="rich-card">
+        <div class="rich-card-top" style="background-color: #D53F8C;"></div>
+        <div class="rc-icon" style="background-color:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
+        <div class="rc-title">Neurociência</div>
+        <div class="rc-desc">Artigos sobre desenvolvimento atípico.</div>
+    </a>
+    <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="rich-card">
+        <div class="rich-card-top" style="background-color: #38A169;"></div>
+        <div class="rc-icon" style="background-color:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
+        <div class="rc-title">BNCC</div>
+        <div class="rc-desc">Currículo oficial e adaptações.</div>
+    </a>
+</div>
+""", unsafe_allow_html=True)
+
+# --- INSIGHT DO DIA ---
+st.markdown(f"""
+<div class="insight-card">
+    <div class="insight-icon"><i class="ri-lightbulb-flash-line"></i></div>
+    <div>
+        <h4 style="margin:0; color:#2D3748;">Insight do Dia</h4>
+        <p style="margin:5px 0 0 0; font-size:0.95rem; opacity:0.9; color:#4A5568;">{noticia}</p>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("### 🚀 Acessar Ferramentas")
 st.markdown("---")
 
-# DASHBOARD - TRÊS PILARES
+# --- BOTÕES DE ACESSO ÀS FERRAMENTAS ---
 col1, col2, col3 = st.columns(3)
 
-# --- PILAR 1: PEI (A Base) ---
+# 1. PEI
 with col1:
     st.markdown("""
-    <div class="card border-blue">
-        <div class="card-number">1</div>
-        <div class="card-title">📘 PEI 360º</div>
-        <div class="card-desc">
-            <strong>Plano de Ensino Individualizado</strong><br><br>
-            A porta de entrada. Realize a anamnese, avalie o perfil do aluno e gere o documento oficial que guia todo o processo inclusivo na sala de aula regular.
+    <div class="tool-card border-blue">
+        <div>
+            <div class="tool-title">📘 PEI 360º</div>
+            <div class="tool-desc">
+                <strong>Plano de Ensino Individualizado</strong><br>
+                A porta de entrada. Realize a anamnese, avalie o perfil do aluno e gere o documento oficial.
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Botão para o PEI (Certifique-se de criar o arquivo pages/1_PEI.py)
     if st.button("Acessar PEI ➡️", key="btn_pei", use_container_width=True):
         st.switch_page("pages/1_PEI.py")
 
-# --- PILAR 2: PAE (O Especialista) ---
+# 2. PAE
 with col2:
     st.markdown("""
-    <div class="card border-purple">
-        <div class="card-number">2</div>
-        <div class="card-title">🧩 PAE</div>
-        <div class="card-desc">
-            <strong>Plano de AEE</strong><br><br>
-            Focado na Sala de Recursos. Identifique barreiras específicas, selecione tecnologias assistivas e trabalhe a autonomia e funções executivas.
+    <div class="tool-card border-purple">
+        <div>
+            <div class="tool-title">🧩 PAE</div>
+            <div class="tool-desc">
+                <strong>Plano de AEE</strong><br>
+                Focado na Sala de Recursos. Identifique barreiras e selecione tecnologias assistivas.
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Botão para o PAE (Certifique-se de criar o arquivo pages/2_PAE.py)
     if st.button("Acessar PAE ➡️", key="btn_pae", use_container_width=True):
         st.switch_page("pages/2_PAE.py")
 
-# --- PILAR 3: HUB DE INCLUSÃO (A Ação) ---
+# 3. HUB
 with col3:
     st.markdown("""
-    <div class="card border-teal">
-        <div class="card-number">3</div>
-        <div class="card-title">🚀 Hub de Inclusão</div>
-        <div class="card-desc">
-            <strong>Adaptação & Criação</strong><br><br>
-            A ferramenta prática para o dia a dia. Adapte provas (Word/Print), crie atividades do zero, gere recursos visuais e roteiros de aula.
+    <div class="tool-card border-teal">
+        <div>
+            <div class="tool-title">🚀 Hub de Inclusão</div>
+            <div class="tool-desc">
+                <strong>Adaptação & Criação</strong><br>
+                A ferramenta prática. Adapte provas, crie atividades do zero e roteiros de aula.
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Botão para o Hub (Aqui está a correção!)
-    if st.button("Acessar Hub de Inclusão ➡️", key="btn_hub", type="primary", use_container_width=True):
+    if st.button("Acessar Hub ➡️", key="btn_hub", type="primary", use_container_width=True):
         st.switch_page("pages/3_Hub_Inclusao.py")
 
 st.markdown("---")
