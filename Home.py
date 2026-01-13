@@ -27,26 +27,27 @@ def sistema_seguranca():
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Nunito:wght@400;600;700&display=swap');
             
-            /* Remove cabeçalho padrão do Streamlit */
             [data-testid="stHeader"] {visibility: hidden !important; height: 0px !important;}
             footer {visibility: hidden !important;}
             
-            /* Ajuste global do topo para Login */
+            /* Remove espaços extras do topo da página */
             .block-container {
                 padding-top: 1rem !important;
+                margin-top: 0rem !important;
             }
             
-            /* Container Centralizado - Limpo e Compacto */
+            /* Container Centralizado - COM TOPO ZERADO */
             .login-container { 
                 background-color: white; 
-                padding: 40px; 
+                /* AQUI ESTAVA O ERRO: Reduzi o topo para 5px apenas */
+                padding: 5px 40px 40px 40px; 
                 border-radius: 20px; 
                 box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
                 text-align: center; 
                 border: 1px solid #E2E8F0;
                 max-width: 550px;
                 margin: 0 auto;
-                margin-top: 20px; /* Espaço suave do topo */
+                margin-top: 20px;
             }
 
             /* Animação da Logo */
@@ -58,18 +59,17 @@ def sistema_seguranca():
             }
             .login-logo-static { height: 75px; width: auto; margin-left: 10px; }
             
-            /* Wrapper da Logo - SEM MARGEM SUPERIOR EXTRA */
+            /* Wrapper da Logo - Margem negativa se precisar subir mais */
             .logo-wrapper { 
                 display: flex; justify-content: center; align-items: center; 
-                margin-bottom: 25px; 
-                margin-top: 0px; 
-                padding-top: 0px;
+                margin-bottom: 20px; 
+                margin-top: 10px; /* Pequeno respiro */
             }
 
             /* Manifesto */
             .manifesto-login {
                 font-family: 'Nunito', sans-serif;
-                font-size: 0.95rem;
+                font-size: 0.9rem;
                 color: #4A5568;
                 font-style: italic;
                 line-height: 1.5;
@@ -127,7 +127,7 @@ def sistema_seguranca():
             # Abre o container visualmente (HTML)
             st.markdown("<div class='login-container'>", unsafe_allow_html=True)
             
-            # 1. LOGO (PRIMEIRO ELEMENTO ABSOLUTO - SEM ESPAÇO ACIMA)
+            # 1. LOGO (PRIMEIRO ELEMENTO ABSOLUTO)
             icone_b64 = get_base64_image("omni_icone.png")
             texto_b64 = get_base64_image("omni_texto.png")
             
@@ -231,7 +231,7 @@ if 'OPENAI_API_KEY' in st.secrets:
     except: pass
 
 # ==============================================================================
-# 🏠 HOME - DASHBOARD OMNISFERA (V24 - CLEAN LOGIN & FEEDBACK)
+# 🏠 HOME - DASHBOARD OMNISFERA (V25 - CLEANEST LOGIN)
 # ==============================================================================
 
 # --- SIDEBAR (FEEDBACK & USER) ---
