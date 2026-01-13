@@ -25,13 +25,11 @@ st.set_page_config(page_title="[TESTE] Omnisfera | Hub", page_icon="🚀", layou
 # ==============================================================================
 st.markdown("""
 <style>
-    /* Faixa de aviso no topo */
     .test-environment-bar {
         position: fixed; top: 0; left: 0; width: 100%; height: 12px;
         background: repeating-linear-gradient(45deg, #FFC107, #FFC107 10px, #FF9800 10px, #FF9800 20px);
         z-index: 9999999;
     }
-    /* Selo de Teste */
     .test-badge {
         position: fixed; top: 20px; right: 20px; 
         background-color: #FF9800; color: white;
@@ -86,15 +84,14 @@ with st.sidebar:
 ARQUIVO_DB = "banco_alunos.json"
 
 def carregar_banco():
-    # --- BLINDAGEM DE DADOS (Multitenancy) ---
+    # --- BLINDAGEM DE DADOS ---
     usuario_atual = st.session_state.get("usuario_nome", "")
-    # -----------------------------------------
+    # --------------------------
 
     if os.path.exists(ARQUIVO_DB):
         try:
             with open(ARQUIVO_DB, "r", encoding="utf-8") as f:
                 todos_alunos = json.load(f)
-                
                 # FILTRAGEM: Retorna apenas alunos deste usuário
                 meus_alunos = [
                     aluno for aluno in todos_alunos 
@@ -233,19 +230,49 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
 
-# --- IA FUNCTIONS ---
+# --- IA FUNCTIONS (ATUALIZADAS PARA LÓGICA IA -> BANCO) ---
 
-def gerar_imagem_hibrida(api_key, prompt, unsplash_key=None):
-    if unsplash_key:
-        termo = prompt.split('.')[0] if '.' in prompt else prompt
-        url = buscar_imagem_unsplash(termo, unsplash_key)
-        if url: return url
+def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None):
+    """
+    Lógica: Tenta IA (DALL-E 3) primeiro. 
+    Se falhar (erro ou cota), tenta Unsplash.
+    """
     client = OpenAI(api_key=api_key)
+    
+    # 1. TENTATIVA PRINCIPAL: IA (DALL-E 3)
     try:
         didactic_prompt = f"Educational textbook illustration, clean flat vector style, white background, no text labels: {prompt}"
         resp = client.images.generate(model="dall-e-3", prompt=didactic_prompt, size="1024x1024", quality="standard", n=1)
         return resp.data[0].url
-    except: return None
+    except Exception as e:
+        # 2. FALLBACK: BANCO DE IMAGENS (Se configurado)
+        if unsplash_key:
+            # Limpa o prompt para buscar apenas a palavra-chave
+            termo = prompt.split('.')[0] if '.' in prompt else prompt
+            return buscar_imagem_unsplash(termo, unsplash_key)
+        else:
+            return None
+
+def gerar_pictograma_caa(api_key, conceito):
+    """
+    Gera símbolo específico para Comunicação Aumentativa e Alternativa.
+    Estilo: PECS/ARASAAC (Fundo branco, traço preto grosso, alto contraste).
+    """
+    client = OpenAI(api_key=api_key)
+    prompt_caa = f"""
+    Crie um SÍMBOLO DE COMUNICAÇÃO (CAA/PECS) para a palavra/conceito: '{conceito}'.
+    ESTILO OBRIGATÓRIO:
+    - Desenho vetorial plano (Flat Design) no estilo ARASAAC.
+    - Fundo 100% BRANCO sólido.
+    - Contorno PRETO GROSSO em volta do desenho.
+    - Cores primárias e alto contraste.
+    - Sem sombras, sem cenários, sem detalhes desnecessários.
+    - Apenas o objeto ou ação centralizado.
+    """
+    try:
+        resp = client.images.generate(model="dall-e-3", prompt=prompt_caa, size="1024x1024", quality="standard", n=1)
+        return resp.data[0].url
+    except Exception as e: return None
 
 def adaptar_conteudo_docx(api_key, aluno, texto, materia, tema, tipo_atv, remover_resp, questoes_mapeadas, modo_profundo=False):
     client = OpenAI(api_key=api_key)
@@ -338,26 +365,21 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, pct_img, mo
         return "Análise indisponível.", full_text
     except Exception as e: return str(e), ""
 
-# --- NOVA FUNÇÃO: GERADOR DE EXPERIÊNCIA LÚDICA (EI - BNCC) ---
 def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo):
     client = OpenAI(api_key=api_key)
     hiperfoco = aluno.get('hiperfoco', 'Brincar')
-    
     prompt = f"""
     ATUAR COMO: Especialista em Educação Infantil (BNCC) e Inclusão.
     ALUNO: {aluno['nome']} (Educação Infantil).
     HIPERFOCO: {hiperfoco}.
     RESUMO DAS NECESSIDADES (PEI): {aluno.get('ia_sugestao', '')[:600]}
-    
     SUA MISSÃO: Criar uma EXPERIÊNCIA LÚDICA, CONCRETA E VISUAL focada no Campo de Experiência: "{campo_exp}".
     Objetivo Específico: {objetivo}
-    
     REGRAS:
     1. Não crie "provas" ou "folhinhas". Crie VIVÊNCIAS.
     2. Use o hiperfoco para engajar (ex: se gosta de dinossauros, conte dinossauros).
     3. Liste materiais concretos (massinha, tinta, blocos).
     4. Dê o passo a passo para o professor.
-    
     SAÍDA ESPERADA (Markdown):
     ## 🧸 Experiência: [Nome Criativo]
     **🎯 Intencionalidade:** ...
@@ -370,7 +392,6 @@ def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo):
         return resp.choices[0].message.content
     except Exception as e: return str(e)
 
-# --- UTILS (ROTEIRO, ETC) ---
 def gerar_roteiro_aula(api_key, aluno, assunto):
     client = OpenAI(api_key=api_key)
     prompt = f"Roteiro de aula {assunto} para {aluno['nome']}. PEI: {aluno.get('ia_sugestao','')[:500]}."
@@ -461,9 +482,9 @@ if is_ei:
     # === MODO EDUCAÇÃO INFANTIL (ABAS ESPECIAIS) ===
     st.info("🧸 **Modo Educação Infantil Ativado:** Foco em Experiências, BNCC e Brincar.")
     
-    tabs = st.tabs(["🧸 Criar Experiência (BNCC)", "🎨 Estúdio Visual", "📝 Rotina & AVD", "🤝 Inclusão no Brincar"])
+    tabs = st.tabs(["🧸 Criar Experiência (BNCC)", "🎨 Estúdio Visual & CAA", "📝 Rotina & AVD", "🤝 Inclusão no Brincar"])
     
-    # 1. CRIAR EXPERIÊNCIA (Substitui Adaptar Prova)
+    # 1. CRIAR EXPERIÊNCIA
     with tabs[0]:
         st.markdown("### 🧸 Criar Experiência de Aprendizagem (BNCC)")
         col_ei1, col_ei2 = st.columns(2)
@@ -481,25 +502,38 @@ if is_ei:
                 conteudo_exp = gerar_experiencia_ei_bncc(api_key, aluno, campo_exp=campo_exp, objetivo=obj_aprendizagem)
                 st.markdown(conteudo_exp)
 
-    # 2. ESTÚDIO VISUAL (Mantido, essencial para EI)
+    # 2. ESTÚDIO VISUAL (ATUALIZADO COM CAA + PRIORIDADE IA)
     with tabs[1]:
-        st.markdown("### 🎨 Estúdio Visual (Cards e Rotinas)")
-        if st.button("✨ SUGERIR RECURSO VISUAL"):
-            desc = sugerir_imagem_pei(api_key, aluno)
-            url = gerar_imagem_hibrida(api_key, desc, unsplash_key)
-            if url: st.image(url, caption=desc)
-        st.write("---")
-        desc_m = st.text_area("Descrição Manual:", key="vdm_ei")
-        if st.button("🎨 Gerar Imagem"):
-            url = gerar_imagem_hibrida(api_key, f"{desc_m} {aluno.get('hiperfoco')}", unsplash_key)
-            if url: st.image(url)
+        st.markdown("### 🎨 Estúdio Visual Inclusivo")
+        st.caption("Gere recursos visuais para rotina e comunicação. **Prioridade:** IA (DALL-E 3) -> Banco de Imagens.")
+        
+        col_scene, col_caa = st.columns(2)
+        
+        # COLUNA 1: CENAS E ROTINAS
+        with col_scene:
+            st.markdown("#### 🖼️ Ilustração de Cena")
+            desc_m = st.text_area("Descreva a cena ou rotina:", height=100, key="vdm_ei", placeholder="Ex: Crianças brincando de roda no parque...")
+            if st.button("🎨 Gerar Cena", key="btn_cena_ei"):
+                with st.spinner("Desenhando..."):
+                    prompt_completo = f"{desc_m}. Context: Child education, friendly style."
+                    url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key)
+                    if url: st.image(url)
+                    else: st.error("Não foi possível gerar a imagem.")
 
-    # 3. ROTINA (Adaptada para EI - COM TEXT AREA AGORA!)
+        # COLUNA 2: CAA (NOVA FUNCIONALIDADE)
+        with col_caa:
+            st.markdown("#### 🗣️ Símbolo CAA (Comunicação)")
+            palavra_chave = st.text_input("Conceito/Palavra:", placeholder="Ex: Quero Água, Banheiro, Dor", key="caa_input")
+            if st.button("🧩 Gerar Pictograma", key="btn_caa"):
+                with st.spinner("Criando símbolo acessível..."):
+                    url_caa = gerar_pictograma_caa(api_key, palavra_chave)
+                    if url_caa: st.image(url_caa, width=300, caption=f"Símbolo: {palavra_chave}")
+                    else: st.error("Erro ao gerar pictograma.")
+
+    # 3. ROTINA (Adaptada para EI - COM TEXT AREA)
     with tabs[2]:
         st.markdown("### 📝 Adaptação de Rotina & AVD")
         st.caption("Descreva a rotina completa da turma para receber sugestões de antecipação e suporte.")
-        
-        # MUDANÇA SOLICITADA: Text Area para colar a rotina inteira
         rotina_detalhada = st.text_area("Descreva a Rotina da Turma:", height=200, placeholder="Ex: \n8:00 - Chegada e Acolhida\n8:30 - Roda de Conversa\n9:00 - Lanche\n...")
         topico_foco = st.text_input("Ponto de Atenção (Opcional):", placeholder="Ex: Transição para o parque")
         
@@ -517,7 +551,7 @@ if is_ei:
 
 else:
     # === MODO PADRÃO (FUNDAMENTAL / MÉDIO) ===
-    tabs = st.tabs(["📄 Adaptar Prova", "✂️ Adaptar Atividade", "✨ Criar do Zero", "🎨 Estúdio Visual", "📝 Roteiro de Aula", "🗣️ Papo de Mestre", "🤝 Dinâmica Inclusiva"])
+    tabs = st.tabs(["📄 Adaptar Prova", "✂️ Adaptar Atividade", "✨ Criar do Zero", "🎨 Estúdio Visual & CAA", "📝 Roteiro de Aula", "🗣️ Papo de Mestre", "🤝 Dinâmica Inclusiva"])
 
     # 1. ADAPTAR PROVA
     with tabs[0]:
@@ -661,7 +695,7 @@ else:
                 tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', txt)
                 for p in tags:
                     count += 1
-                    url = gerar_imagem_hibrida(api_key, p, unsplash_key)
+                    url = gerar_imagem_inteligente(api_key, p, unsplash_key)
                     if url:
                         io = baixar_imagem_url(url)
                         if io: novo_map[count] = io.getvalue()
@@ -704,17 +738,33 @@ else:
             docx_clean = construir_docx_final(res['txt'], aluno, mat_c, {}, None, "Criada", sem_cabecalho=True)
             c_down2.download_button("📥 DOCX (Sem Cabeçalho)", docx_clean, "Criada_Clean.docx", "secondary")
 
-    # 4. ESTÚDIO VISUAL, 5. ROTEIRO, 6. PAPO, 7. DINÂMICA
+    # 4. ESTÚDIO VISUAL (ATUALIZADO COM CAA + PRIORIDADE IA)
     with tabs[3]:
-        if st.button("✨ MÁGICA DO PEI"):
-            desc = sugerir_imagem_pei(api_key, aluno)
-            url = gerar_imagem_hibrida(api_key, desc, unsplash_key)
-            if url: st.image(url, caption=desc)
-        st.write("---")
-        desc_m = st.text_area("Manual:", key="vdm")
-        if st.button("🎨 Gerar"):
-            url = gerar_imagem_hibrida(api_key, f"{desc_m} {aluno.get('hiperfoco')}", unsplash_key)
-            if url: st.image(url)
+        st.markdown("### 🎨 Estúdio Visual Inclusivo")
+        st.caption("Gere recursos visuais para rotina e comunicação. **Prioridade:** IA (DALL-E 3) -> Banco de Imagens.")
+        
+        col_scene, col_caa = st.columns(2)
+        
+        # COLUNA 1: CENAS E ROTINAS
+        with col_scene:
+            st.markdown("#### 🖼️ Ilustração de Cena")
+            desc_m = st.text_area("Descreva a cena ou rotina:", height=100, key="vdm_padrao", placeholder="Ex: Estudante lendo um livro na biblioteca...")
+            if st.button("🎨 Gerar Cena", key="btn_cena_padrao"):
+                with st.spinner("Desenhando..."):
+                    prompt_completo = f"{desc_m}. Context: School environment, educational style."
+                    url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key)
+                    if url: st.image(url)
+                    else: st.error("Não foi possível gerar a imagem.")
+
+        # COLUNA 2: CAA (NOVA FUNCIONALIDADE)
+        with col_caa:
+            st.markdown("#### 🗣️ Símbolo CAA (Comunicação)")
+            palavra_chave = st.text_input("Conceito/Palavra:", placeholder="Ex: Quero Água, Banheiro, Dor", key="caa_input_padrao")
+            if st.button("🧩 Gerar Pictograma", key="btn_caa_padrao"):
+                with st.spinner("Criando símbolo acessível..."):
+                    url_caa = gerar_pictograma_caa(api_key, palavra_chave)
+                    if url_caa: st.image(url_caa, width=300, caption=f"Símbolo: {palavra_chave}")
+                    else: st.error("Erro ao gerar pictograma.")
 
     with tabs[4]:
         ass = st.text_input("Assunto:", key="rota")
