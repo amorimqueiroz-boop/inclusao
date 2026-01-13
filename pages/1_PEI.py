@@ -18,11 +18,39 @@ import requests
 # 0. CONFIGURAÇÃO DE PÁGINA
 # ==============================================================================
 st.set_page_config(
-    page_title="Omnisfera | PEI",
-    page_icon="📘",
+    page_title="[TESTE] Omnisfera | PEI",
+    page_icon="🛠️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# ==============================================================================
+# ### INICIO BLOCO TESTE: VISUAL DE ALERTA ###
+# ==============================================================================
+st.markdown("""
+<style>
+    /* Faixa de aviso no topo */
+    .test-environment-bar {
+        position: fixed; top: 0; left: 0; width: 100%; height: 12px;
+        background: repeating-linear-gradient(45deg, #FFC107, #FFC107 10px, #FF9800 10px, #FF9800 20px);
+        z-index: 9999999;
+    }
+    /* Selo de Teste */
+    .test-badge {
+        position: fixed; top: 20px; right: 20px; 
+        background-color: #FF9800; color: white;
+        padding: 5px 12px; border-radius: 8px;
+        font-weight: 800; font-size: 0.8rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        z-index: 9999999; pointer-events: none;
+    }
+</style>
+<div class="test-environment-bar"></div>
+<div class="test-badge">🛠️ AMBIENTE DE TESTES</div>
+""", unsafe_allow_html=True)
+# ==============================================================================
+# ### FIM BLOCO TESTE ###
+# ==============================================================================
 
 # ==============================================================================
 # 1. VERIFICAÇÃO DE SEGURANÇA (SIMPLIFICADA)
@@ -35,6 +63,16 @@ def verificar_acesso():
     
     # NÃO ESCONDEMOS MAIS O CABEÇALHO.
     # Isso garante que o botão da sidebar (setinha) funcione nativamente.
+    st.markdown("""
+        <style>
+            footer {visibility: hidden !important;}
+            [data-testid="stHeader"] {
+                visibility: visible !important;
+                background-color: transparent !important;
+            }
+            .block-container {padding-top: 2rem !important;}
+        </style>
+    """, unsafe_allow_html=True)
 
 # Executa a verificação
 verificar_acesso()
@@ -48,10 +86,21 @@ PASTA_BANCO = "banco_alunos_backup" # Pasta local
 if not os.path.exists(PASTA_BANCO): os.makedirs(PASTA_BANCO)
 
 def carregar_banco():
+    # --- BLINDAGEM DE DADOS (Leitura filtrada) ---
+    usuario_atual = st.session_state.get("usuario_nome", "")
+    # ---------------------------------------------
+
     if os.path.exists(ARQUIVO_DB_CENTRAL):
         try:
             with open(ARQUIVO_DB_CENTRAL, "r", encoding="utf-8") as f:
-                return json.load(f)
+                todos_alunos = json.load(f)
+                
+                # FILTRAGEM: Retorna apenas alunos deste usuário
+                meus_alunos = [
+                    aluno for aluno in todos_alunos 
+                    if aluno.get('responsavel') == usuario_atual
+                ]
+                return meus_alunos
         except: return []
     return []
 
@@ -71,7 +120,7 @@ def salvar_aluno_integrado(dados):
     except Exception as e: return False, f"Erro backup: {str(e)}"
 
     # 2. Integração Omnisfera (Banco Central)
-    # Remove versão antiga se existir
+    # Remove versão antiga se existir (para atualizar)
     st.session_state.banco_estudantes = [a for a in st.session_state.banco_estudantes if a['nome'] != dados['nome']]
     
     # Cria registro otimizado para o Hub/PAE
@@ -89,10 +138,24 @@ def salvar_aluno_integrado(dados):
     }
     st.session_state.banco_estudantes.append(novo_registro)
     
-    # Salva no arquivo central
+    # Salva no arquivo central (Sobrescreve com a lista atualizada)
     try:
+        # Primeiro, precisamos carregar o banco COMPLETO do disco para não perder alunos de outros usuários
+        banco_completo = []
+        if os.path.exists(ARQUIVO_DB_CENTRAL):
+            with open(ARQUIVO_DB_CENTRAL, "r", encoding="utf-8") as f:
+                banco_completo = json.load(f)
+        
+        # Remove a versão antiga desse aluno do banco completo (se existir)
+        banco_completo = [a for a in banco_completo if a['nome'] != dados['nome']]
+        
+        # Adiciona o novo registro ao banco completo
+        banco_completo.append(novo_registro)
+        
+        # Salva tudo de volta
         with open(ARQUIVO_DB_CENTRAL, "w", encoding="utf-8") as f:
-            json.dump(st.session_state.banco_estudantes, f, default=str, ensure_ascii=False, indent=4)
+            json.dump(banco_completo, f, default=str, ensure_ascii=False, indent=4)
+            
         return True, f"Aluno {dados['nome']} integrado à Omnisfera!"
     except Exception as e:
         return False, f"Erro integração: {str(e)}"
