@@ -63,28 +63,6 @@ st.markdown(f"""
     
     }}
     
-    /* --- 2. O BOTÃO DE MENU (A SOLUÇÃO CIRÚRGICA) --- */
-        
-        /* Estilo de Botão Flutuante */
-        background-color: white !important;
-        border: 1px solid #E2E8F0 !important;
-        border-radius: 12px !important;
-        width: 45px !important;
-        height: 45px !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
-        
-        /* Centraliza o ícone (seta/menu) */
-        align-items: center !important;
-        justify-content: center !important;
-        color: #2D3748 !important;
-        transition: all 0.2s ease !important;
-    }}
-    
-    [data-testid="stSidebarCollapsedControl"]:hover {{
-        background-color: #F7FAFC !important;
-        border-color: #CBD5E0 !important;
-        transform: scale(1.05);
-    }}
     
     /* -------------------------------------------- */
 
