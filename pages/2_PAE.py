@@ -4,135 +4,22 @@ from openai import OpenAI
 import json
 import pandas as pd
 from datetime import date
-import base64
 
 # ==============================================================================
-# 1. CONFIGURAÇÃO E SEGURANÇA (VISUAL OMNISFERA)
+# 1. CONFIGURAÇÃO E SEGURANÇA
 # ==============================================================================
 st.set_page_config(page_title="Omnisfera | PAE", page_icon="🧩", layout="wide")
-
-def get_base64_image(image_path):
-    if not os.path.exists(image_path): return ""
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode()
 
 def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
         st.stop()
     
-    # --- CSS GLOBAL OMNISFERA (PAE EDITION - ROXO) ---
     st.markdown("""
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Nunito:wght@400;600;700&display=swap');
-            
-            /* Fundo e Tipografia */
-            html, body, [class*="css"] { 
-                font-family: 'Nunito', sans-serif; 
-                color: #2D3748; 
-                background-color: #F7FAFC;
-            }
-            
-            /* Ajuste do Topo */
-            .block-container { padding-top: 1rem !important; padding-bottom: 5rem !important; }
-            [data-testid="stHeader"] { background-color: rgba(0,0,0,0); visibility: visible; }
-
-            /* --- HERO BANNER (LOGO GRANDE) --- */
-            .dash-hero { 
-                background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); 
-                border-radius: 16px;
-                margin-bottom: 30px; 
-                box-shadow: 0 4px 12px rgba(15, 82, 186, 0.2);
-                color: white;
-                position: relative;
-                overflow: hidden;
-                padding: 40px 50px; /* Mais espaço para a logo */
-                display: flex; align-items: center; justify-content: flex-start;
-            }
-            
-            .hero-logo-container {
-                display: flex; flex-direction: column; align-items: flex-start; z-index: 2;
-            }
-            
-            .hero-logo-img { 
-                height: 90px; /* Logo Grande */
-                width: auto; 
-                margin-bottom: 10px; 
-                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-            }
-            
-            .hero-subtitle { 
-                color: rgba(255,255,255,0.9); 
-                font-size: 1.1rem; 
-                font-weight: 400; 
-                font-style: italic; 
-                font-family: 'Inter', sans-serif; 
-            }
-            
-            .hero-bg-icon { 
-                position: absolute; right: 40px; font-size: 6rem; 
-                opacity: 0.1; color: white; transform: rotate(-10deg); top: 20px; 
-            }
-
-            /* --- CARDS (CONTAINERS) --- */
-            [data-testid="stVerticalBlockBorderWrapper"] {
-                background-color: white;
-                border-radius: 12px;
-                padding: 25px;
-                border: 1px solid #E2E8F0;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-                margin-bottom: 20px;
-            }
-
-            /* --- INPUTS --- */
-            .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-                border-radius: 8px !important; border-color: #E2E8F0 !important;
-                background-color: #FAFAFA !important;
-            }
-            .stTextInput input:focus, .stTextArea textarea:focus {
-                border-color: #805AD5 !important; /* Roxo PAE */
-                box-shadow: 0 0 0 1px #805AD5 !important;
-            }
-
-            /* --- BOTÕES (ROXO) --- */
-            div[data-testid="column"] .stButton button { 
-                border-radius: 8px !important; font-weight: 700 !important; 
-                background-color: #805AD5 !important; 
-                border: none !important; color: white !important;
-                font-family: 'Inter', sans-serif;
-            }
-            div[data-testid="column"] .stButton button:hover { background-color: #6B46C1 !important; }
-
-            /* --- ABAS (CAIXA ALTA & SEM EMOJI) --- */
-            .stTabs [data-baseweb="tab-list"] { gap: 8px; }
-            .stTabs [data-baseweb="tab"] {
-                height: 45px; border-radius: 8px !important;
-                background-color: white; border: 1px solid #E2E8F0;
-                color: #718096; font-family: 'Inter', sans-serif; 
-                font-weight: 700; font-size: 0.85rem;
-                text-transform: uppercase; letter-spacing: 0.5px;
-            }
-            .stTabs [aria-selected="true"] {
-                background-color: #F3E8FF !important;
-                color: #6B46C1 !important;
-                border: 1px solid #6B46C1 !important;
-                box-shadow: none !important;
-            }
-
-            /* --- RESUMO ALUNO --- */
-            .student-header { 
-                display: flex; gap: 30px; align-items: center; 
-                padding-bottom: 15px; border-bottom: 1px solid #E2E8F0; margin-bottom: 20px;
-            }
-            .sh-item { display: flex; flex-direction: column; }
-            .sh-label { font-size: 0.75rem; color: #718096; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-            .sh-val { font-size: 1.1rem; color: #2D3748; font-weight: 800; font-family: 'Inter', sans-serif; }
-            .tag-hiperfoco { 
-                background-color: #FAF5FF; color: #805AD5; padding: 2px 10px; 
-                border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid #E9D8FD;
-            }
+            [data-testid="stHeader"] {visibility: hidden !important; height: 0px !important;}
+            .block-container {padding-top: 1rem !important;}
         </style>
-        <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     """, unsafe_allow_html=True)
 
 verificar_acesso()
@@ -140,20 +27,19 @@ verificar_acesso()
 # --- BARRA LATERAL ---
 with st.sidebar:
     try:
-        if os.path.exists("ominisfera.png"): st.image("ominisfera.png", width=120)
-        else: st.write("🌐 OMNISFERA")
-    except: st.write("🌐 OMNISFERA")
-    
+        st.image("ominisfera.png", width=150)
+    except:
+        st.write("🌐 OMNISFERA")
     st.markdown("---")
     if st.button("🏠 Voltar para Home", use_container_width=True):
         st.switch_page("Home.py")
     st.markdown("---")
 
 # ==============================================================================
-# 2. SISTEMA PAE (LÓGICA PRESERVADA)
+# 2. SISTEMA PAE (Plano de Atendimento Educacional Especializado)
 # ==============================================================================
 
-# --- BANCO DE DADOS ---
+# --- BANCO DE DADOS (Leitura do PEI) ---
 ARQUIVO_DB = "banco_alunos.json"
 
 def carregar_banco():
@@ -167,81 +53,72 @@ def carregar_banco():
 if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
     st.session_state.banco_estudantes = carregar_banco()
 
-# --- HERO BANNER (LOGO NO LUGAR DO TÍTULO) ---
-logo_pae_b64 = get_base64_image("pae.png")
-
-# Se tiver logo, usa ela. Se não, fallback texto.
-if logo_pae_b64:
-    logo_display = f'<img src="data:image/png;base64,{logo_pae_b64}" class="hero-logo-img">'
-else:
-    logo_display = '<h1 style="color:white; margin:0; font-family:Inter; font-size:2.5rem;">PAE</h1>'
-
-st.markdown(f"""
-<div class="dash-hero">
-    <div class="hero-logo-container">
-        {logo_display}
-        <div class="hero-subtitle">Plano de Atendimento Educacional Especializado & Sala de Recursos</div>
-    </div>
-    <i class="ri-puzzle-fill hero-bg-icon"></i>
-</div>
+# --- CSS PERSONALIZADO ---
+st.markdown("""
+    <style>
+    .student-header { background-color: #F3E8FF; border: 1px solid #D6BCFA; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; }
+    .student-label { font-size: 0.8rem; color: #553C9A; font-weight: 700; text-transform: uppercase; }
+    .student-value { font-size: 1.1rem; color: #44337A; font-weight: 800; }
+    .pae-card { background-color: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
+    .pae-title { color: #805AD5; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
+    
+    div[data-testid="column"] .stButton button[kind="primary"] { background-color: #805AD5 !important; border: none !important; color: white !important; font-weight: bold; }
+    </style>
 """, unsafe_allow_html=True)
+
+# --- CABEÇALHO (LOGO PAE) ---
+# Substituindo o título textual pela Logo conforme solicitado
+try:
+    st.image("pae.png", width=350) # Logo grande
+except:
+    st.warning("⚠️ Logo 'pae.png' não encontrada. Verifique o arquivo.")
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Nenhum aluno com PEI encontrado. Cadastre no módulo PEI primeiro.")
     st.stop()
 
-# --- SELEÇÃO DE ALUNO (CARD) ---
-with st.container(border=True):
-    col_sel, col_info = st.columns([1, 2])
-    with col_sel:
-        lista_alunos = [a['nome'] for a in st.session_state.banco_estudantes]
-        nome_aluno = st.selectbox("📂 SELECIONE O ESTUDANTE:", lista_alunos)
+# --- SELEÇÃO DE ALUNO ---
+lista_alunos = [a['nome'] for a in st.session_state.banco_estudantes]
+col_sel, col_info = st.columns([1, 2])
+with col_sel:
+    nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista_alunos)
 
-    aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
+aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
 
-    # Exibe Resumo do Aluno (Design Clean)
-    hf = aluno.get('hiperfoco', 'Não informado')
-    st.markdown(f"""
-        <div class="student-header">
-            <div class="sh-item">
-                <span class="sh-label">Estudante</span>
-                <span class="sh-val">{aluno.get('nome')}</span>
-            </div>
-            <div class="sh-item" style="margin-left: 20px;">
-                <span class="sh-label">Série</span>
-                <span class="sh-val">{aluno.get('serie', '-')}</span>
-            </div>
-            <div class="sh-item" style="margin-left: 20px;">
-                <span class="sh-label">Hiperfoco</span>
-                <span class="sh-val"><span class="tag-hiperfoco">{hf}</span></span>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+# Exibe Resumo do PEI (A "Alimentação Inicial")
+st.markdown(f"""
+    <div class="student-header">
+        <div><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div>
+        <div><div class="student-label">Série</div><div class="student-value">{aluno.get('serie', '-')}</div></div>
+        <div><div class="student-label">Hiperfoco</div><div class="student-value">{aluno.get('hiperfoco', '-')}</div></div>
+    </div>
+""", unsafe_allow_html=True)
 
-    with st.expander("📄 Ver Dados do PEI (Base)", expanded=False):
-        st.info(aluno.get('ia_sugestao', 'Nenhum dado de PEI processado ainda.'))
+with st.expander("📄 Ver Resumo do PEI (Base para o PAE)", expanded=False):
+    st.info(aluno.get('ia_sugestao', 'Nenhum dado de PEI processado ainda.'))
 
 # --- GESTÃO DE CHAVES ---
 if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']
 else: api_key = st.sidebar.text_input("Chave OpenAI:", type="password")
 
-# --- FUNÇÕES DE IA DO PAE (INTACTAS) ---
+# --- FUNÇÕES DE IA DO PAE ---
 def gerar_diagnostico_barreiras(api_key, aluno, obs_prof):
     client = OpenAI(api_key=api_key)
     prompt = f"""
     ATUAR COMO: Especialista em AEE (Atendimento Educacional Especializado).
-    OBJETIVO: Analisar o PEI do aluno e o relato do professor para mapear BARREIRAS.
+    OBJETIVO: Analisar o PEI do aluno e o relato do professor para mapear BARREIRAS (não deficiências).
+    
     ALUNO: {aluno['nome']} | HIPERFOCO: {aluno.get('hiperfoco')}
     RESUMO PEI: {aluno.get('ia_sugestao', '')[:1000]}
-    OBSERVAÇÃO PROFESSOR: {obs_prof}
+    OBSERVAÇÃO ATUAL DO PROFESSOR AEE: {obs_prof}
     
-    CLASSIFIQUE AS BARREIRAS (Lei Brasileira de Inclusão):
-    1. **Barreiras Comunicacionais**
-    2. **Barreiras Metodológicas**
-    3. **Barreiras Atitudinais**
-    4. **Barreiras Tecnológicas**
+    CLASSIFIQUE AS BARREIRAS ENCONTRADAS (Lei Brasileira de Inclusão):
+    1. **Barreiras Comunicacionais:** (Ex: falta de Libras, escrita, comunicação alternativa)
+    2. **Barreiras Metodológicas:** (Ex: métodos de ensino que não atingem o aluno)
+    3. **Barreiras Atitudinais:** (Ex: isolamento, bullying, descrença da capacidade)
+    4. **Barreiras Tecnológicas/Instrumentais:** (Ex: falta de engrossador, material adaptado)
     
-    SAÍDA: Tabela Markdown clara.
+    SAÍDA: Tabela Markdown clara e direta.
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.5)
@@ -254,13 +131,14 @@ def gerar_plano_habilidades(api_key, aluno, foco_treino):
     CRIE UM PLANO DE INTERVENÇÃO PARA SALA DE RECURSOS (AEE).
     FOCO: Desenvolvimento de Habilidades (Não reforço escolar).
     ÁREA DO TREINO: {foco_treino}
+    
     ALUNO: {aluno['nome']}
-    HIPERFOCO: {aluno.get('hiperfoco')} (USE COMO ESTRATÉGIA).
+    HIPERFOCO: {aluno.get('hiperfoco')} (USE O HIPERFOCO COMO ESTRATÉGIA DE ENGAJAMENTO).
     
     GERE 3 METAS SMART:
-    1. **Meta de Longo Prazo** (6 meses)
-    2. **Estratégia com Hiperfoco**
-    3. **Recurso Necessário**
+    1. **Meta de Longo Prazo:** (O que queremos em 6 meses?)
+    2. **Estratégia com Hiperfoco:** (Como usar {aluno.get('hiperfoco')} para treinar isso?)
+    3. **Recurso Necessário:** (O que construir ou usar?)
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
@@ -270,9 +148,13 @@ def gerar_plano_habilidades(api_key, aluno, foco_treino):
 def sugerir_tecnologia_assistiva(api_key, aluno, dificuldade):
     client = OpenAI(api_key=api_key)
     prompt = f"""
-    SUGESTÃO DE TECNOLOGIA ASSISTIVA.
-    Aluno: {aluno['nome']}. Dificuldade: {dificuldade}.
-    Sugira 3 Níveis: Baixa (DIY), Média e Alta Tecnologia.
+    SUGESTÃO DE TECNOLOGIA ASSISTIVA E RECURSOS.
+    Aluno: {aluno['nome']}. Dificuldade Específica relatada: {dificuldade}.
+    
+    Sugira 3 Níveis de Solução:
+    1. **Baixa Tecnologia (DIY):** Algo que o professor pode fazer com papelão, velcro, garrafa PET.
+    2. **Média Tecnologia:** Materiais pedagógicos estruturados ou adaptações físicas simples.
+    3. **Alta Tecnologia:** Apps, softwares ou hardware específico.
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
@@ -283,75 +165,77 @@ def gerar_documento_articulacao(api_key, aluno, frequencia, acoes):
     client = OpenAI(api_key=api_key)
     prompt = f"""
     ESCREVA UMA CARTA DE ARTICULAÇÃO (AEE -> SALA REGULAR).
-    De: Professor do AEE. Para: Professores da Sala Regular.
+    De: Professor do AEE.
+    Para: Professores da Sala Regular.
     Aluno: {aluno['nome']}.
-    Conteúdo: Atendimento {frequencia}. Trabalhando: {acoes}.
-    Dê 3 dicas práticas para a sala regular. Tom colaborativo.
+    
+    Conteúdo:
+    - Informe que o aluno será atendido {frequencia}.
+    - Explique que no AEE estamos trabalhando: {acoes}.
+    - Dê 3 dicas práticas de como o professor da sala regular pode ajudar a generalizar essas conquistas na aula dele.
+    - Tom: Colaborativo, profissional e parceiro.
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
         return resp.choices[0].message.content
     except Exception as e: return str(e)
 
-# --- ABAS (ESTILIZADAS - CAIXA ALTA) ---
+# --- ABAS DO PAE ---
 tab_barreiras, tab_plano, tab_tec, tab_ponte = st.tabs([
-    "MAPEAR BARREIRAS", 
-    "PLANO DE HABILIDADES", 
-    "TEC. ASSISTIVA", 
-    "CRONOGRAMA & ARTICULAÇÃO"
+    "🔍 Mapear Barreiras", 
+    "🎯 Plano de Habilidades", 
+    "🛠️ Tec. Assistiva", 
+    "🌉 Cronograma & Articulação"
 ])
 
-# 1. BARREIRAS
+# 1. BARREIRAS (Diagnóstico)
 with tab_barreiras:
-    with st.container(border=True):
-        st.markdown("#### 🔍 DIAGNÓSTICO DE ACESSIBILIDADE")
-        st.info("Identifique o que impede a participação plena do estudante.")
-        obs_aee = st.text_area("Observações do AEE:", placeholder="Ex: Dificuldade motora fina, não segura o lápis...", height=100)
-        
-        if st.button("ANALISAR BARREIRAS (IA)", type="primary", use_container_width=True):
-            if not api_key: st.error("Configure a API Key."); st.stop()
-            with st.spinner("Mapeando barreiras..."):
-                res = gerar_diagnostico_barreiras(api_key, aluno, obs_aee)
-                st.markdown("---")
-                st.markdown(res)
+    st.write("### 🔍 Diagnóstico de Acessibilidade")
+    st.info("O PAE começa identificando o que impede o aluno de participar, não a doença dele.")
+    
+    obs_aee = st.text_area("Observações Iniciais do AEE (Opcional):", placeholder="Ex: O aluno se recusa a escrever, mas fala muito sobre dinossauros. Tem dificuldade motora fina.", height=100)
+    
+    if st.button("Analisar Barreiras via IA", type="primary"):
+        if not api_key: st.error("Insira a chave OpenAI."); st.stop()
+        with st.spinner("Cruzando dados do PEI com Observações..."):
+            res_barreiras = gerar_diagnostico_barreiras(api_key, aluno, obs_aee)
+            st.markdown(res_barreiras)
 
-# 2. PLANO DE HABILIDADES
+# 2. PLANO DE HABILIDADES (Treino)
 with tab_plano:
-    with st.container(border=True):
-        st.markdown("#### 🎯 TREINO DE HABILIDADES")
-        st.info(f"Estratégia baseada no Hiperfoco: **{aluno.get('hiperfoco', 'Geral')}**")
-        foco = st.selectbox("Foco da Intervenção:", ["Funções Executivas", "Autonomia/AVD", "Coordenação Motora", "Comunicação Alternativa", "Habilidades Sociais"])
-        
-        if st.button("GERAR PLANO DE INTERVENÇÃO", type="primary", use_container_width=True):
-            with st.spinner("Criando plano..."):
-                res = gerar_plano_habilidades(api_key, aluno, foco)
-                st.markdown("---")
-                st.markdown(res)
+    st.write("### 🎯 Treino de Habilidades (Não Curricular)")
+    st.info(f"Vamos usar o hiperfoco **({aluno.get('hiperfoco')})** para desenvolver funções mentais superiores.")
+    
+    foco = st.selectbox("Qual o foco do atendimento agora?", 
+        ["Funções Executivas (Atenção/Memória)", "Autonomia e AVDs", "Coordenação Motora", "Comunicação Alternativa", "Habilidades Sociais"])
+    
+    if st.button("Gerar Plano de Intervenção", type="primary"):
+        with st.spinner("Criando estratégias engajadoras..."):
+            res_plano = gerar_plano_habilidades(api_key, aluno, foco)
+            st.markdown(res_plano)
 
 # 3. TECNOLOGIA ASSISTIVA
 with tab_tec:
-    with st.container(border=True):
-        st.markdown("#### 🛠️ RECURSOS & TA")
-        dif = st.text_input("Dificuldade específica:", placeholder="Ex: Não consegue ler letras pequenas")
-        
-        if st.button("SUGERIR RECURSOS", type="primary", use_container_width=True):
-            with st.spinner("Buscando soluções..."):
-                res = sugerir_tecnologia_assistiva(api_key, aluno, dif)
-                st.markdown("---")
-                st.markdown(res)
+    st.write("### 🛠️ Caixa de Ferramentas")
+    dif_especifica = st.text_input("Qual a dificuldade específica a ser superada?", placeholder="Ex: Não consegue segurar o lápis / Não consegue ler textos longos")
+    
+    if st.button("Sugerir Recursos", type="primary"):
+        with st.spinner("Buscando soluções no banco de dados de TA..."):
+            res_ta = sugerir_tecnologia_assistiva(api_key, aluno, dif_especifica)
+            st.markdown(res_ta)
 
-# 4. ARTICULAÇÃO
+# 4. ARTICULAÇÃO (A Ponte)
 with tab_ponte:
-    with st.container(border=True):
-        st.markdown("#### 🌉 PONTE COM A SALA REGULAR")
-        c1, c2 = st.columns(2)
-        freq = c1.selectbox("Frequência:", ["1x semana", "2x semana", "Diário"])
-        turno = c2.selectbox("Turno:", ["Manhã", "Tarde"])
-        acoes = st.text_area("Resumo do trabalho no AEE:", height=70)
-        
-        if st.button("GERAR CARTA DE ARTICULAÇÃO", type="primary", use_container_width=True):
-            with st.spinner("Escrevendo carta..."):
-                carta = gerar_documento_articulacao(api_key, aluno, f"{freq} ({turno})", acoes)
-                st.markdown("---")
-                st.markdown(carta)
-                st.download_button("📥 BAIXAR CARTA", carta, f"Carta_{aluno['nome']}.txt", use_container_width=True)
+    st.write("### 🌉 A Ponte com a Sala Regular")
+    c1, c2 = st.columns(2)
+    freq = c1.selectbox("Frequência do Atendimento:", ["1x por semana", "2x por semana", "3x por semana", "Diário"])
+    turno = c2.selectbox("Turno:", ["Contraturno Manhã", "Contraturno Tarde"])
+    
+    acoes_resumo = st.text_area("O que está sendo trabalhado no AEE?", placeholder="Ex: Uso de prancha de comunicação e treino de foco.", height=70)
+    
+    if st.button("Gerar Carta de Articulação", type="primary"):
+        with st.spinner("Redigindo documento oficial..."):
+            carta = gerar_documento_articulacao(api_key, aluno, f"{freq} ({turno})", acoes_resumo)
+            st.markdown("### 📄 Documento Gerado")
+            st.markdown(carta)
+            st.download_button("📥 Baixar Carta (.txt)", carta, "Carta_Articulacao.txt")
