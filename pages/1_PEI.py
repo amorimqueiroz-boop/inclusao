@@ -60,30 +60,10 @@ html_faixa_teste = '<div class="test-stripe"></div>' if IS_TEST_ENV else ""
 # 4. Renderização do CSS Global e Header Flutuante
 st.markdown(f"""
 <style>
-    /* --- 1. HEADER E BARRA DE FERRAMENTAS --- */
     
-    /* Esconde o Header padrão do Streamlit (onde ficam os botões Share, etc) */
-    header[data-testid="stHeader"] {{
-        background-color: transparent !important;
-        pointer-events: none !important; /* Deixa clicar no que está atrás se for transparente */
-    }}
-    
-    /* Esconde a Toolbar da direita (Share, Deploy, 3 pontinhos) */
-    [data-testid="stToolbar"] {{
-        visibility: hidden !important;
-        display: none !important;
     }}
     
     /* --- 2. O BOTÃO DE MENU (A SOLUÇÃO CIRÚRGICA) --- */
-    
-    /* Movemos o botão nativo para baixo da nossa barra personalizada */
-    [data-testid="stSidebarCollapsedControl"] {{
-        position: fixed !important;
-        top: 95px !important;       /* Abaixo do Header de 80px */
-        left: 20px !important;
-        z-index: 1000000 !important; /* Acima de tudo */
-        visibility: visible !important;
-        display: flex !important;
         
         /* Estilo de Botão Flutuante */
         background-color: white !important;
