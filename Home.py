@@ -42,27 +42,6 @@ else:
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-
-    /* --- AJUSTE CRÍTICO: MENU LATERAL VISÍVEL --- */
-    
-    /* 1. Header principal transparente */
-    header[data-testid="stHeader"] {{
-        background-color: transparent !important;
-        z-index: 9999 !important;
-    }}
-    
-    /* 2. Esconde Toolbar (Share, Deploy, etc) */
-    [data-testid="stToolbar"] {{
-        visibility: hidden !important;
-        display: none !important;
-    }}
-    
-    /* 3. Botão da Sidebar visível e reposicionado */
-    [data-testid="stSidebarCollapsedControl"] {{
-        visibility: visible !important;
-        display: block !important;
-        color: #2D3748 !important;
-    }}
     
     /* -------------------------------------------- */
 
