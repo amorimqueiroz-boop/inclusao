@@ -53,27 +53,7 @@ else:
 # 4. Renderização do CSS Global e Header Flutuante
 st.markdown(f"""
 <style>
-    /* --- AJUSTE CRÍTICO: MENU LATERAL VISÍVEL --- */
-    
-    /* 1. Header principal transparente (permite ver o botão da sidebar) */
-    header[data-testid="stHeader"] {{
-        background-color: transparent !important;
-        z-index: 9999 !important; /* Garante que fique acessível */
-    }}
-    
-    /* 2. Esconde APENAS a barra de ferramentas da direita (Share, Deploy, etc) */
-    [data-testid="stToolbar"] {{
-        visibility: hidden !important;
-        display: none !important;
-    }}
-    
-    /* 3. Garante que o botão de abrir/fechar a sidebar esteja visível e clicável */
-    [data-testid="stSidebarCollapsedControl"] {{
-        visibility: visible !important;
-        display: block !important;
-        color: #2D3748 !important; /* Cor do ícone */
-    }}
-    
+   
     /* -------------------------------------------- */
 
     /* CARD FLUTUANTE (OMNISFERA) */
