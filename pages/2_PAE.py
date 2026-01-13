@@ -9,17 +9,30 @@ import base64
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
 # ==============================================================================
-st.set_page_config(page_title="Omnisfera | PAE", page_icon="🧩", layout="wide")
+st.set_page_config(
+    page_title="Omnisfera | PAE", 
+    page_icon="🧩", 
+    layout="wide",
+    initial_sidebar_state="expanded" # Garante que a barra lateral inicie aberta
+)
 
 def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
         st.stop()
     
+    # CORREÇÃO DO MENU LATERAL:
+    # Removemos o bloqueio do stHeader para que o botão de toggle apareça.
     st.markdown("""
         <style>
-            [data-testid="stHeader"] {visibility: hidden !important; height: 0px !important;}
-            .block-container {padding-top: 1rem !important;}
+            /* Oculta apenas o rodapé */
+            footer {visibility: hidden !important;}
+            
+            /* Garante que o cabeçalho padrão (com o botão do menu) esteja visível */
+            [data-testid="stHeader"] {
+                visibility: visible !important;
+                background-color: transparent !important;
+            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -60,11 +73,12 @@ st.markdown("""
     /* LAYOUT DO BANNER - AJUSTADO PARA FICAR COMPACTO */
     .header-pae { 
         background: white; 
-        padding: 15px 25px;       /* Padding reduzido para ficar mais fino como na foto */
+        padding: 15px 25px;       /* Padding reduzido */
         border-radius: 12px; 
         border-left: 6px solid #805AD5; 
         box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
         margin-bottom: 20px; 
+        margin-top: 10px;         /* Espaço para não colar no header */
         
         display: flex;             
         flex-direction: row;       
@@ -90,8 +104,7 @@ def get_img_tag(file_path, width):
         return f'<img src="data:image/png;base64,{data}" width="{width}">'
     return "🧩"
 
-# Reduzi o tamanho da imagem de 350 para 160.
-# Isso garante que a altura do banner diminua e fique parecido com o exemplo "Hub de Inclusão".
+# Mantendo o tamanho reduzido (160) conforme solicitado anteriormente
 img_html = get_img_tag("pae.png", "160") 
 
 st.markdown(f"""
