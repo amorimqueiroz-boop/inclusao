@@ -1,331 +1,203 @@
+# ARQUIVO: omni_utils.py
 import streamlit as st
-import omni_utils as core  # Importa a Matriz
-import json
 import os
 import base64
-from openai import OpenAI
+from datetime import date
 
 # ==============================================================================
-# 1. CONFIGURAÇÃO E INICIALIZAÇÃO DA MATRIZ
+# 1. CONFIGURAÇÕES
 # ==============================================================================
-st.set_page_config(
-    page_title="PAEE & T.A.", 
-    page_icon="🧩", 
-    layout="wide", 
-    initial_sidebar_state="expanded"
-)
+APP_VERSION = "v116.0"
 
-# Aplica o estilo global e define a logo da sidebar para esta página
-core.aplicar_estilo_global(logo_pagina="pae.png")
+def verificar_ambiente():
+    try: return st.secrets.get("ENV") == "TESTE"
+    except: return False
 
-# Verifica se o usuário está logado
-if not core.verificar_acesso():
-    st.stop()
+IS_TEST_ENV = verificar_ambiente()
 
 # ==============================================================================
-# 2. CABEÇALHO DA PÁGINA (VISUAL NOVO PADRONIZADO)
+# 2. FUNÇÕES ÚTEIS
 # ==============================================================================
-core.renderizar_header_padrao(
-    titulo="PAEE & T.A.",
-    subtitulo="Plano de Atendimento Educacional Especializado e Sala de Recursos.",
-    nome_arquivo_imagem="pae.png",
-    cor_destaque="#805AD5"  # Roxo
-)
+def get_base64_image(image_path):
+    if not image_path or not os.path.exists(image_path): return ""
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
 
-# ==============================================================================
-# 3. LÓGICA DE DADOS (BANCO DE ALUNOS)
-# ==============================================================================
-ARQUIVO_DB = "banco_alunos.json"
-
-def carregar_banco():
-    usuario_atual = st.session_state.get("usuario_nome", "")
-    if os.path.exists(ARQUIVO_DB):
-        try:
-            with open(ARQUIVO_DB, "r", encoding="utf-8") as f:
-                todos_alunos = json.load(f)
-                # Filtra alunos do usuário logado
-                meus_alunos = [
-                    aluno for aluno in todos_alunos 
-                    if aluno.get('responsavel') == usuario_atual
-                ]
-                return meus_alunos
-        except: return []
-    return []
-
-# Inicializa o banco na sessão se não existir
-if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
-    st.session_state.banco_estudantes = carregar_banco()
-
-# Se não tiver alunos, avisa e para
-if not st.session_state.banco_estudantes:
-    st.warning("⚠️ Nenhum aluno encontrado para o seu usuário. Cadastre no módulo PEI primeiro.")
-    st.stop()
+def finding_logo():
+    caminhos = ["omni_icone.png", "logo.png", "icone.png"]
+    for c in caminhos:
+        if os.path.exists(c): return c
+    return None
 
 # ==============================================================================
-# 4. SELEÇÃO E INFO DO ALUNO
+# 3. HEADER PADRONIZADO (CARD DA PÁGINA)
 # ==============================================================================
-lista_alunos = [a['nome'] for a in st.session_state.banco_estudantes]
-
-col_sel, col_vazia = st.columns([1, 2])
-with col_sel:
-    nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista_alunos)
-
-# Recupera o objeto aluno selecionado
-aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
-
-# CSS Específico para o Card do Aluno (Fundo Roxo Claro)
-st.markdown("""
-<style>
-    .student-header { 
-        background-color: #F3E8FF; 
-        border: 1px solid #D6BCFA; 
-        border-radius: 12px; 
-        padding: 20px; 
-        margin-bottom: 25px; 
-        display: flex; 
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-    }
-    .student-info-box { text-align: left; }
-    .student-label { font-size: 0.75rem; color: #6B46C1; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-    .student-value { font-size: 1.1rem; color: #44337A; font-weight: 800; }
+def renderizar_header_padrao(titulo, subtitulo, nome_arquivo_imagem=None, cor_destaque="#0F52BA"):
+    """Renderiza o cabeçalho específico da página (Card Branco)"""
     
-    /* Ajuste visual para botões roxos (PAEE) */
-    div[data-testid="column"] .stButton button[kind="primary"] { 
-        background-color: #805AD5 !important; 
-        border-color: #805AD5 !important; 
-        color: white !important; 
-        font-weight: 700;
-        border-radius: 10px;
-    }
-    div[data-testid="column"] .stButton button[kind="primary"]:hover {
-        background-color: #6B46C1 !important;
-        box-shadow: 0 4px 12px rgba(128, 90, 213, 0.3);
-    }
-</style>
-""", unsafe_allow_html=True)
+    if nome_arquivo_imagem and os.path.exists(nome_arquivo_imagem):
+        b64_logo = get_base64_image(nome_arquivo_imagem)
+    else:
+        padrao = finding_logo()
+        b64_logo = get_base64_image(padrao) if padrao else ""
 
-# Renderiza Card do Aluno
-st.markdown(f"""
-    <div class="student-header">
-        <div class="student-info-box">
-            <div class="student-label">Nome Completo</div>
-            <div class="student-value">{aluno.get('nome')}</div>
-        </div>
-        <div class="student-info-box">
-            <div class="student-label">Série / Ano</div>
-            <div class="student-value">{aluno.get('serie', '-')}</div>
-        </div>
-        <div class="student-info-box">
-            <div class="student-label">Hiperfoco / Interesse</div>
-            <div class="student-value">{aluno.get('hiperfoco', '-')}</div>
-        </div>
+    img_html = f'<img src="data:image/png;base64,{b64_logo}" style="height: 90px; width: auto; object-fit: contain;">' if b64_logo else '<div style="font-size: 70px;">🔷</div>'
+
+    st.markdown("""
+    <style>
+        .header-card {
+            display: flex; align-items: center; gap: 30px;
+            background-color: white;
+            padding: 40px 40px; margin-top: -30px; margin-bottom: 40px;
+            border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            border: 1px solid #E2E8F0; transition: transform 0.3s ease;
+        }
+        .header-card:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
+        .header-texts { display: flex; flex-direction: column; border-left: 2px solid #CBD5E0; padding-left: 30px; height: 100%; justify-content: center; }
+        .header-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 2.2rem; color: #2D3748; margin: 0; line-height: 1.1; letter-spacing: -0.5px; }
+        .header-subtitle { font-family: 'Inter', sans-serif; font-size: 1.1rem; color: #718096; margin-top: 8px; font-weight: 500; }
+        @media (max-width: 768px) {
+            .header-card { flex-direction: column; text-align: center; gap: 20px; padding: 30px; }
+            .header-texts { border-left: none; padding-left: 0; border-top: 2px solid #E2E8F0; padding-top: 20px; }
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="header-card" style="border-left: 8px solid {cor_destaque} !important;">
+        <div class="header-logo">{img_html}</div>
+        <div class="header-texts"><div class="header-title">{titulo}</div><div class="header-subtitle">{subtitulo}</div></div>
     </div>
-""", unsafe_allow_html=True)
-
-# Lógica Educação Infantil
-serie_aluno = aluno.get('serie', '').lower()
-is_ei = "infantil" in serie_aluno or "creche" in serie_aluno or "pré" in serie_aluno
-
-if is_ei:
-    st.info("🧸 **Modo Educação Infantil Ativado:** Foco em Campos de Experiência (BNCC) e Brincar Heurístico.")
-
-# Expander com Resumo do PEI
-with st.expander("📄 Ver Resumo do PEI (Base para o PAEE)", expanded=False):
-    st.info(aluno.get('ia_sugestao', 'Nenhum dado de PEI processado ainda.'))
+    """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 5. INTELIGÊNCIA ARTIFICIAL (FUNÇÕES)
+# 4. CSS GLOBAL E SIDEBAR (A MATRIZ VISUAL)
 # ==============================================================================
-# Gestão de Chave API
-if 'OPENAI_API_KEY' in st.secrets: 
-    api_key = st.secrets['OPENAI_API_KEY']
-else: 
-    api_key = st.text_input("Chave OpenAI:", type="password")
-
-def gerar_diagnostico_barreiras(api_key, aluno, obs_prof):
-    client = OpenAI(api_key=api_key)
-    prompt = f"""
-    ATUAR COMO: Especialista em AEE.
-    ALUNO: {aluno['nome']} | HIPERFOCO: {aluno.get('hiperfoco')}
-    RESUMO PEI: {aluno.get('ia_sugestao', '')[:1000]}
-    OBSERVAÇÃO ATUAL: {obs_prof}
-    
-    CLASSIFIQUE AS BARREIRAS (Lei Brasileira de Inclusão):
-    1. **Barreiras Comunicacionais**
-    2. **Barreiras Metodológicas**
-    3. **Barreiras Atitudinais**
-    4. **Barreiras Tecnológicas/Instrumentais**
-    SAÍDA: Tabela Markdown.
+def aplicar_estilo_global(logo_pagina=None, exibir_header_global=True):
     """
-    try:
-        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.5)
-        return resp.choices[0].message.content
-    except Exception as e: return f"Erro: {str(e)}"
-
-def gerar_projetos_ei_bncc(api_key, aluno, campo_exp):
-    client = OpenAI(api_key=api_key)
-    prompt = f"""
-    ATUAR COMO: Pedagogo Especialista em Educação Infantil e Inclusão.
-    ALUNO: {aluno['nome']} (Educação Infantil).
-    HIPERFOCO: {aluno.get('hiperfoco', 'Brincadeiras')}.
-    RESUMO DAS NECESSIDADES (PEI): {aluno.get('ia_sugestao', '')[:800]}
-    
-    SUA MISSÃO: Criar 3 propostas de EXPERIÊNCIAS LÚDICAS (Atividades) focadas no Campo de Experiência: "{campo_exp}".
-    
-    REGRAS:
-    1. As atividades devem usar o Hiperfoco para engajar.
-    2. Devem eliminar barreiras de participação.
-    3. Devem ser sensoriais e concretas.
-    
-    SAÍDA ESPERADA (Markdown):
-    ### 🧸 Experiência 1: [Nome Criativo]
-    * **Objetivo:** ...
-    * **Como Fazer:** ...
-    * **Adaptação:** ...
-    
-    (Repetir para 2 e 3)
+    ARGUMENTOS:
+    - logo_pagina: Imagem para a Sidebar.
+    - exibir_header_global: Se True, mostra a barra de vidro com 'OMNISFERA' no topo (Home).
+                            Se False, esconde (para usar nos módulos PEI/PAEE).
     """
-    try:
-        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
-        return resp.choices[0].message.content
-    except Exception as e: return str(e)
-
-def gerar_plano_habilidades(api_key, aluno, foco_treino):
-    client = OpenAI(api_key=api_key)
-    prompt = f"""
-    CRIE UM PLANO DE INTERVENÇÃO AEE (Sala de Recursos).
-    FOCO: Desenvolvimento de Habilidades ({foco_treino}).
-    ALUNO: {aluno['nome']} | HIPERFOCO: {aluno.get('hiperfoco')}
-    GERE 3 METAS SMART (Longo Prazo, Estratégia com Hiperfoco, Recurso).
-    """
-    try:
-        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
-        return resp.choices[0].message.content
-    except Exception as e: return str(e)
-
-def sugerir_tecnologia_assistiva(api_key, aluno, dificuldade):
-    client = OpenAI(api_key=api_key)
-    prompt = f"""
-    SUGESTÃO DE TECNOLOGIA ASSISTIVA.
-    Aluno: {aluno['nome']}. Dificuldade: {dificuldade}.
-    Sugira: Baixa Tecnologia (DIY), Média Tecnologia, Alta Tecnologia.
-    """
-    try:
-        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
-        return resp.choices[0].message.content
-    except Exception as e: return str(e)
-
-def gerar_documento_articulacao(api_key, aluno, frequencia, acoes):
-    client = OpenAI(api_key=api_key)
-    prompt = f"""
-    ESCREVA UMA CARTA DE ARTICULAÇÃO (AEE -> SALA REGULAR).
-    Aluno: {aluno['nome']}. Frequência: {frequencia}.
-    Ações no AEE: {acoes}.
-    Dê 3 dicas para o professor regente. Tom colaborativo.
-    """
-    try:
-        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
-        return resp.choices[0].message.content
-    except Exception as e: return str(e)
-
-# ==============================================================================
-# 6. INTERFACE DE ABAS (FLUXO DE TRABALHO)
-# ==============================================================================
-
-if is_ei:
-    # --- ABAS EDUCAÇÃO INFANTIL ---
-    tab_barreiras, tab_projetos, tab_rotina, tab_ponte = st.tabs([
-        "🔍 Barreiras no Brincar", 
-        "🧸 Banco de Experiências", 
-        "🏠 Rotina & Adaptação", 
-        "🌉 Articulação"
-    ])
     
-    # 1. BARREIRAS (EI)
-    with tab_barreiras:
-        st.markdown("#### 🔍 Diagnóstico do Brincar (EI)")
-        st.caption("Na Educação Infantil, a barreira não é 'não escrever', mas sim 'não participar da interação'.")
-        obs_aee = st.text_area("Observação do Brincar:", placeholder="Ex: Isola-se no parquinho, não aceita texturas...", height=100)
-        if st.button("Mapear Barreiras do Brincar", type="primary"):
-            if not api_key: st.error("Insira a chave OpenAI."); st.stop()
-            with st.spinner("Analisando..."):
-                st.markdown(gerar_diagnostico_barreiras(api_key, aluno, obs_aee))
+    if IS_TEST_ENV:
+        footer_vis, card_bg, card_border, display_text = "visible", "rgba(255, 220, 50, 0.95)", "rgba(200, 160, 0, 0.5)", "OMNISFERA | TESTE"
+    else:
+        footer_vis, card_bg, card_border, display_text = "hidden", "rgba(255, 255, 255, 0.85)", "rgba(255, 255, 255, 0.6)", f"OMNISFERA {APP_VERSION}"
 
-    # 2. PROJETOS (EI)
-    with tab_projetos:
-        st.markdown("#### 🧸 Banco de Experiências (BNCC)")
+    # CSS MESTRE
+    st.markdown(f"""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
+        html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; }}
+
+        [data-testid="stSidebarNav"] {{ display: none !important; }}
+        [data-testid="stHeader"] {{ background: transparent !important; z-index: 9999; pointer-events: none; }}
+        [data-testid="stToolbar"] {{ display: none !important; }}
         
-        campo_bncc = st.selectbox("Selecione o Campo de Experiência (BNCC):", [
-            "O eu, o outro e o nós (Identidade e Interação)",
-            "Corpo, gestos e movimentos (Motricidade)",
-            "Traços, sons, cores e formas (Artes)",
-            "Escuta, fala, pensamento e imaginação (Oralidade)",
-            "Espaços, tempos, quantidades, relações e transformações (Cognição)"
-        ])
+        section[data-testid="stSidebar"] {{ background-color: #FFFFFF !important; border-right: 1px solid #E2E8F0; }}
+        [data-testid="stSidebarCollapsedControl"] {{ top: 110px !important; background: white !important; border: 1px solid #E2E8F0; padding: 4px; border-radius: 8px; pointer-events: auto; }}
         
-        if st.button("✨ Gerar Atividades Lúdicas", type="primary"):
-            with st.spinner("Criando experiências..."):
-                atividades = gerar_projetos_ei_bncc(api_key, aluno, campo_bncc)
-                st.markdown(atividades)
+        .block-container {{ padding-top: 140px !important; padding-bottom: 3rem !important; }}
+        footer {{ visibility: {footer_vis} !important; }}
 
-    # 3. ROTINA (EI)
-    with tab_rotina:
-        st.markdown("#### 🏠 Adaptação de Rotina e AVDs")
-        st.write("Recursos visuais e sensoriais para a rotina da creche/pré-escola.")
-        dif_rotina = st.text_input("Dificuldade na Rotina:", placeholder="Ex: Hora do soninho, Desfralde, Alimentação")
-        if st.button("Sugerir Adaptação", type="primary"):
-            with st.spinner("Buscando recursos..."):
-                st.markdown(sugerir_tecnologia_assistiva(api_key, aluno, f"Rotina EI: {dif_rotina}"))
+        /* Header Vidro Global */
+        .logo-container {{
+            position: fixed; top: 0; left: 0; width: 100%; height: 100px;
+            background-color: rgba(247, 250, 252, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5); z-index: 9998; 
+            display: flex; align-items: center; justify-content: center;
+        }}
+        .logo-icon-spin {{ height: 80px; animation: spin 60s linear infinite; }}
+        .logo-text-static {{ height: 50px; }}
+        @keyframes spin {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
 
-else:
-    # --- ABAS FUNDAMENTAL / MÉDIO ---
-    tab_barreiras, tab_plano, tab_tec, tab_ponte = st.tabs([
-        "🔍 Mapear Barreiras", 
-        "🎯 Plano de Habilidades", 
-        "🛠️ Tec. Assistiva", 
-        "🌉 Cronograma & Articulação"
-    ])
+        .omni-badge {{
+            position: fixed; top: 20px; right: 20px;
+            background: {card_bg}; border: 1px solid {card_border};
+            backdrop-filter: blur(8px); padding: 6px 20px; border-radius: 12px;
+            font-family: 'Inter'; font-weight: 800; font-size: 0.7rem; color: #2D3748;
+            letter-spacing: 2px; z-index: 999990; pointer-events: none;
+        }}
+    </style>
+    """, unsafe_allow_html=True)
 
-    # 1. BARREIRAS
-    with tab_barreiras:
-        st.markdown("#### 🔍 Diagnóstico de Acessibilidade")
-        st.caption("O PAEE começa identificando o que impede o aluno de participar, não a doença dele.")
-        obs_aee = st.text_area("Observações Iniciais do AEE (Opcional):", placeholder="Ex: O aluno se recusa a escrever...", height=100)
-        if st.button("Analisar Barreiras via IA", type="primary"):
-            if not api_key: st.error("Insira a chave OpenAI."); st.stop()
-            with st.spinner("Analisando..."):
-                st.markdown(gerar_diagnostico_barreiras(api_key, aluno, obs_aee))
-
-    # 2. PLANO
-    with tab_plano:
-        st.markdown("#### 🎯 Treino de Habilidades")
-        foco = st.selectbox("Foco do atendimento:", ["Funções Executivas", "Autonomia", "Coordenação Motora", "Comunicação", "Habilidades Sociais"])
-        if st.button("Gerar Plano", type="primary"):
-            with st.spinner("Planejando..."):
-                st.markdown(gerar_plano_habilidades(api_key, aluno, foco))
-
-    # 3. T.A.
-    with tab_tec:
-        st.markdown("#### 🛠️ Tecnologia Assistiva")
-        dif_especifica = st.text_input("Dificuldade Específica:", placeholder="Ex: Não segura o lápis")
-        if st.button("Sugerir Recursos", type="primary"):
-            with st.spinner("Buscando T.A..."):
-                st.markdown(sugerir_tecnologia_assistiva(api_key, aluno, dif_especifica))
-
-# 4. ARTICULAÇÃO (COMUM)
-with tab_ponte:
-    st.markdown("#### 🌉 Ponte com a Sala Regular")
-    c1, c2 = st.columns(2)
-    with c1: freq = st.selectbox("Frequência:", ["1x/sem", "2x/sem", "3x/sem", "Diário"])
-    with c2: turno = st.selectbox("Turno:", ["Manhã", "Tarde"])
+    # 1. Badge de Status (Sempre aparece)
+    st.markdown(f'<div class="omni-badge">{display_text}</div>', unsafe_allow_html=True)
     
-    acoes_resumo = st.text_area("Trabalho no AEE:", placeholder="Ex: Comunicação alternativa...", height=70)
+    # 2. Header Global (CONDICIONAL: Só aparece se exibir_header_global=True)
+    if exibir_header_global:
+        img_app_icon = get_base64_image("omni_icone.png")
+        img_app_text = get_base64_image("omni_texto.png")
+        
+        if img_app_icon and img_app_text:
+            st.markdown(f"""<div class="logo-container"><img src="data:image/png;base64,{img_app_icon}" class="logo-icon-spin"><img src="data:image/png;base64,{img_app_text}" class="logo-text-static"></div>""", unsafe_allow_html=True)
+        else:
+            st.markdown("<div class='logo-container'><h1 style='color: #0F52BA;'>🌐 OMNISFERA</h1></div>", unsafe_allow_html=True)
+
+    # 3. Sidebar Customizada
+    logo_para_sidebar = logo_pagina if logo_pagina else "omni_icone.png"
+    img_sidebar_b64 = get_base64_image(logo_para_sidebar)
+    construir_sidebar_manual(img_sidebar_b64)
+
+def construir_sidebar_manual(img_sidebar_b64):
+    with st.sidebar:
+        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+        if img_sidebar_b64: 
+            st.markdown(f"""<div style="text-align: center; margin-bottom: 20px; opacity: 1;"><img src="data:image/png;base64,{img_sidebar_b64}" width="70" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));"></div>""", unsafe_allow_html=True)
+
+        if st.session_state.get("autenticado"):
+            nome = st.session_state["usuario_nome"].split()[0]
+            cargo = st.session_state["usuario_cargo"]
+            st.markdown(f"""<div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 10px; margin-bottom: 30px;"><div style="font-weight: bold; color: #2D3748; font-size: 0.9rem;">👋 Olá, {nome}</div><div style="font-size: 0.75rem; color: #718096; text-transform: uppercase;">{cargo}</div></div>""", unsafe_allow_html=True)
+
+        st.markdown("<p style='font-size: 0.75rem; color: #A0AEC0; font-weight: 700; margin-bottom: 10px; padding-left: 5px;'>NAVEGAÇÃO</p>", unsafe_allow_html=True)
+        st.page_link("Home.py", label="Dashboard", icon="🏠")
+        st.page_link("pages/1_PEI.py", label="PEI 360º", icon="📘")
+        st.page_link("pages/2_PAE.py", label="PAEE & T.A.", icon="🧩")
+        st.page_link("pages/3_Hub_Inclusao.py", label="Hub Inclusão", icon="🚀")
+        st.markdown("---")
+        if st.button("🔒 Sair", use_container_width=True):
+            st.session_state["autenticado"] = False
+            st.rerun()
+
+# ==============================================================================
+# 5. LOGIN
+# ==============================================================================
+def verificar_acesso():
+    if st.session_state.get("autenticado", False): return True
     
-    if st.button("Gerar Carta de Articulação", type="primary"):
-        with st.spinner("Escrevendo..."):
-            carta = gerar_documento_articulacao(api_key, aluno, f"{freq} ({turno})", acoes_resumo)
-            st.markdown("### 📄 Documento Gerado")
-            st.markdown(carta)
-            st.download_button("📥 Baixar Carta", carta, "Carta_Articulacao.txt")
+    # IMPORTANTE: No login, forçamos o header a aparecer para não ficar vazio
+    if "header_login_renderizado" not in st.session_state:
+        # Força CSS de login
+        st.markdown("""<style>[data-testid="stHeader"] {visibility: hidden !important;}</style>""", unsafe_allow_html=True)
+        img_app_icon = get_base64_image("omni_icone.png")
+        img_app_text = get_base64_image("omni_texto.png")
+        # Renderiza header manual apenas pro login se necessário, ou deixa limpo
+        # (Nesta versão deixei limpo focado no card de login)
+    
+    c1, c2, c3 = st.columns([1, 1.5, 1])
+    with c2:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown(f"""<div style="background: white; padding: 30px; border-radius: 20px; border: 1px solid #E2E8F0; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05);"><h2 style="color: #0F52BA;">{'🛠️ MODO TESTE' if IS_TEST_ENV else 'Bem-vindo'}</h2><p style="color: #718096; font-size: 0.9rem;">Ecossistema Omnisfera</p></div><br>""", unsafe_allow_html=True)
+
+        if IS_TEST_ENV:
+            st.info("Acesso Rápido (Desenvolvimento).")
+            if st.button("🚀 ENTRAR", use_container_width=True, type="primary"):
+                st.session_state.update({"autenticado": True, "usuario_nome": "Tester", "usuario_cargo": "Dev"})
+                st.rerun()
+        else:
+            nome = st.text_input("Nome")
+            cargo = st.text_input("Cargo")
+            termo = st.checkbox("Aceito termos.")
+            senha = st.text_input("Senha", type="password")
+            if st.button("🔒 ACESSAR", use_container_width=True, type="primary"):
+                hoje = date.today()
+                senha_ok = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
+                if not termo or not nome or not cargo: st.warning("Preencha tudo.")
+                elif senha != senha_ok: st.error("Senha errada.")
+                else:
+                    st.session_state.update({"autenticado": True, "usuario_nome": nome, "usuario_cargo": cargo})
+                    st.rerun()
+    return False
