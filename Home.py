@@ -482,4 +482,40 @@ st.markdown("""
     <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="bento-item hover-spring">
         <div class="bento-icon" style="background:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
         <div class="bento-title">Legislação</div>
-        <div class="b
+        <div class="bento-desc">LBI e Decretos.</div>
+    </a>
+    <a href="https://institutoneurosaber.com.br/" target="_blank" class="bento-item hover-spring">
+        <div class="bento-icon" style="background:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
+        <div class="bento-title">Neurociência</div>
+        <div class="bento-desc">Desenvolvimento atípico.</div>
+    </a>
+    <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="bento-item hover-spring">
+        <div class="bento-icon" style="background:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
+        <div class="bento-title">BNCC</div>
+        <div class="bento-desc">Currículo oficial.</div>
+    </a>
+</div>
+""", unsafe_allow_html=True)
+
+# Insight do Dia
+noticia_insight = "A aprendizagem acontece quando o cérebro se emociona. Crie vínculos antes de cobrar conteúdos."
+if 'OPENAI_API_KEY' in st.secrets:
+    try:
+        if 'insight_dia' not in st.session_state:
+            client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
+            res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": "Dica de 1 frase sobre neurociência para professores."}])
+            st.session_state['insight_dia'] = res.choices[0].message.content
+        noticia_insight = st.session_state['insight_dia']
+    except: pass
+
+st.markdown(f"""
+<div class="insight-card-end hover-spring">
+    <div class="insight-icon-end"><i class="ri-lightbulb-flash-line"></i></div>
+    <div>
+        <div style="font-weight: 800; font-size: 0.95rem; color: #D69E2E; letter-spacing: 0.5px; text-transform: uppercase;">Insight do Dia</div>
+        <p style="margin:5px 0 0 0; font-size:1.05rem; opacity:0.9; color:#4A5568; font-style: italic; font-weight: 500;">"{noticia_insight}"</p>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.8rem; margin-top: 60px; font-weight: 600;'>Omnisfera © 2026 - Tecnologia Assistiva & Inclusão</div>", unsafe_allow_html=True)
