@@ -139,7 +139,7 @@ if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estu
 # 4. FUNÇÕES CORE (IA & PROCESSAMENTO)
 # ==============================================================================
 
-# --- Helpers de Imagem e DOCX ---
+# --- Helpers de Imagem e Arquivos ---
 def get_img_tag(file_path, width):
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
@@ -147,16 +147,43 @@ def get_img_tag(file_path, width):
         return f'<img src="data:image/png;base64,{data}" width="{width}">'
     return "🚀"
 
-def extrair_dados_docx(uploaded_file):
-    uploaded_file.seek(0); imagens = []; texto = ""
-    try:
-        doc = Document(uploaded_file)
-        texto = "\n".join([p.text for p in doc.paragraphs if p.text.strip() != ""])
-        for rel in doc.part.rels.values():
-            if "image" in rel.target_ref:
-                img_data = rel.target_part.blob
-                if len(img_data) > 1024: imagens.append(img_data)
-    except: pass
+def extrair_dados_arquivo(uploaded_file):
+    # Identifica o tipo e extrai texto/imagens
+    uploaded_file.seek(0)
+    nome_arquivo = uploaded_file.name.lower()
+    imagens = []
+    texto = ""
+
+    # 1. PROCESSAMENTO DE PDF
+    if nome_arquivo.endswith('.pdf'):
+        try:
+            reader = PdfReader(uploaded_file)
+            for page in reader.pages:
+                if page.extract_text():
+                    texto += page.extract_text() + "\n"
+                # Tentativa de extração de imagens do PDF
+                try:
+                    for image_file_object in page.images:
+                        imagens.append(image_file_object.data)
+                except: pass
+        except Exception as e:
+            texto = f"[Erro ao ler PDF: {str(e)}]"
+
+    # 2. PROCESSAMENTO DE DOCX (e tentativa de DOC)
+    elif nome_arquivo.endswith('.docx') or nome_arquivo.endswith('.doc'):
+        try:
+            doc = Document(uploaded_file)
+            texto = "\n".join([p.text for p in doc.paragraphs if p.text.strip() != ""])
+            for rel in doc.part.rels.values():
+                if "image" in rel.target_ref:
+                    img_data = rel.target_part.blob
+                    if len(img_data) > 1024: imagens.append(img_data)
+        except Exception as e:
+            if nome_arquivo.endswith('.doc'):
+                texto = "[Aviso: Arquivos .doc antigos (binários) podem não ser lidos corretamente. Se falhar, converta para .docx ou .pdf]"
+            else:
+                pass
+
     return texto, imagens
 
 def sanitizar_imagem(image_bytes):
@@ -607,16 +634,17 @@ else:
         materia_d = c1.selectbox("Matéria", ["Matemática", "Português", "Ciências", "História", "Geografia", "Artes", "Inglês"], key="dm")
         tema_d = c2.text_input("Tema", key="dt")
         tipo_d = c3.selectbox("Tipo", ["Prova", "Tarefa"], key="dtp")
-        arquivo_d = st.file_uploader("Upload DOCX", type=["docx"], key="fd")
+        # ATUALIZAÇÃO: Aceita DOCX, DOC e PDF
+        arquivo_d = st.file_uploader("Upload Arquivo (DOCX, PDF, DOC)", type=["docx", "doc", "pdf"], key="fd")
         
         if 'docx_imgs' not in st.session_state: st.session_state.docx_imgs = []
         if 'docx_txt' not in st.session_state: st.session_state.docx_txt = None
 
         if arquivo_d and arquivo_d.file_id != st.session_state.get('last_d'):
             st.session_state.last_d = arquivo_d.file_id
-            txt, imgs = extrair_dados_docx(arquivo_d)
+            txt, imgs = extrair_dados_arquivo(arquivo_d)
             st.session_state.docx_txt = txt; st.session_state.docx_imgs = imgs
-            st.success(f"{len(imgs)} imagens extraídas.")
+            st.success(f"{len(imgs)} imagens encontradas.")
 
         qs_d = []
         if st.session_state.docx_imgs:
