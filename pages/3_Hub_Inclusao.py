@@ -57,7 +57,7 @@ else:
 # 4. Renderização do CSS Global e Header Flutuante
 st.markdown(f"""
 <style>
-   
+    
     /* -------------------------------------------- */
 
     /* CARD FLUTUANTE (OMNISFERA) */
@@ -311,10 +311,10 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
 
 # --- IA FUNCTIONS (BLINDADAS CONTRA TEXTO) ---
 
-def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anterior=""):
+def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anterior="", prioridade="IA"):
     """
-    Lógica: Tenta IA (DALL-E 3) primeiro. 
-    Se falhar (erro ou cota), tenta Unsplash.
+    prioridade: 'IA' (DALL-E) ou 'BANCO' (Unsplash).
+    Lógica: Se prioridade='BANCO', tenta Unsplash. Se falhar ou prioridade='IA', usa DALL-E 3.
     """
     client = OpenAI(api_key=api_key)
     
@@ -322,19 +322,25 @@ def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anteri
     if feedback_anterior:
         prompt_final = f"{prompt}. Adjustment requested: {feedback_anterior}"
 
-    # 1. TENTATIVA PRINCIPAL: IA (DALL-E 3) - BLINDAGEM AGRESSIVA CONTRA TEXTO
+    # 1. TENTATIVA BANCO DE IMAGENS (Se solicitado e configurado)
+    if prioridade == "BANCO" and unsplash_key:
+        termo = prompt.split('.')[0] if '.' in prompt else prompt
+        url_banco = buscar_imagem_unsplash(termo, unsplash_key)
+        if url_banco:
+            return url_banco
+
+    # 2. TENTATIVA IA (DALL-E 3) - BLINDAGEM AGRESSIVA CONTRA TEXTO
     try:
         # Prompt com TRAVA DE TEXTO ("STRICTLY NO TEXT")
         didactic_prompt = f"Educational textbook illustration, clean flat vector style, white background. CRITICAL RULE: STRICTLY NO TEXT, NO TYPOGRAPHY, NO ALPHABET, NO NUMBERS, NO LABELS inside the image. Just the visual representation of: {prompt_final}"
         resp = client.images.generate(model="dall-e-3", prompt=didactic_prompt, size="1024x1024", quality="standard", n=1)
         return resp.data[0].url
     except Exception as e:
-        # 2. FALLBACK: BANCO DE IMAGENS (Se configurado)
-        if unsplash_key:
+        # Se IA falhar e não tentamos banco ainda, tenta agora como fallback
+        if prioridade == "IA" and unsplash_key:
             termo = prompt.split('.')[0] if '.' in prompt else prompt
             return buscar_imagem_unsplash(termo, unsplash_key)
-        else:
-            return None
+        return None
 
 def gerar_pictograma_caa(api_key, conceito, feedback_anterior=""):
     """
@@ -426,16 +432,23 @@ def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_at
         return analise, atividade
     except Exception as e: return str(e), ""
 
-def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, pct_img, modo_profundo=False):
+def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, modo_profundo=False):
     client = OpenAI(api_key=api_key)
     hiperfoco = aluno.get('hiperfoco', 'Geral')
-    qtd_imgs = int(qtd * (pct_img / 100))
-    instrucao_img = f"Incluir {qtd_imgs} imagens (use [[GEN_IMG: termo]])." if qtd_imgs > 0 else "Sem imagens."
+    
+    # Nova lógica de instrução de imagem e posição
+    instrucao_img = f"Incluir imagens em {qtd_imgs} questões (use [[GEN_IMG: termo]]). REGRA DE POSIÇÃO: A tag da imagem ([[GEN_IMG: termo]]) DEVE vir logo APÓS o enunciado e ANTES das alternativas." if qtd_imgs > 0 else "Sem imagens."
+    
     style = "Atue como uma banca examinadora rigorosa." if modo_profundo else "Atue como professor elaborador."
     prompt = f"""
     {style}
     Crie prova de {materia} ({objeto}). QTD: {qtd} ({tipo_q}).
-    DIRETRIZES: 1. Contexto Real. 2. Hiperfoco ({hiperfoco}) em 30%. 3. Distratores Inteligentes. 4. Imagens: {instrucao_img} (NUNCA repita a mesma imagem). 5. Divisão Clara.
+    DIRETRIZES: 
+    1. Contexto Real. 
+    2. Hiperfoco ({hiperfoco}) em 30%. 
+    3. Distratores Inteligentes. 
+    4. Imagens: {instrucao_img} (NUNCA repita a mesma imagem). 
+    5. Divisão Clara.
     
     SAÍDA OBRIGATÓRIA:
     [ANÁLISE PEDAGÓGICA]
@@ -657,7 +670,8 @@ if is_ei:
             if st.button("🎨 Gerar Cena", key="btn_cena_ei"):
                 with st.spinner("Desenhando..."):
                     prompt_completo = f"{desc_m}. Context: Child education, friendly style."
-                    st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key)
+                    # Prioridade IA (DALL-E)
+                    st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key, prioridade="IA")
                     st.session_state.valid_scene = False
 
             # Exibição Cena
@@ -673,7 +687,7 @@ if is_ei:
                         if st.button("Refazer", key="ref_sc_ei"):
                             with st.spinner("Redesenhando..."):
                                 prompt_completo = f"{desc_m}. Context: Child education."
-                                st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key, feedback_anterior=fb_scene)
+                                st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key, feedback_anterior=fb_scene, prioridade="IA")
                                 st.rerun()
 
         # --- COLUNA 2: CAA ---
@@ -927,23 +941,26 @@ else:
         obj_c = cc2.text_input("Assunto", key="co")
         
         cc3, cc4 = st.columns(2)
-        qtd_c = cc3.slider("Qtd", 1, 10, 5, key="cq")
+        qtd_c = cc3.slider("Qtd Questões", 1, 10, 5, key="cq")
         tipo_quest = cc4.selectbox("Tipo", ["Objetiva", "Discursiva", "Mista"], key="ctq")
         
         col_img_opt, col_img_pct = st.columns([1, 2])
         usar_img = col_img_opt.checkbox("📸 Incluir Imagens?", value=True)
-        pct_img = col_img_pct.slider("Porcentagem com Imagem", 0, 100, 30, disabled=not usar_img)
+        
+        # MUDANÇA: Slider numérico (0 até Qtd Questões)
+        qtd_img_sel = col_img_pct.slider("Quantas questões terão imagens?", 0, qtd_c, int(qtd_c/2), disabled=not usar_img)
         
         if st.button("✨ CRIAR ATIVIDADE", type="primary", key="btn_c"):
             with st.spinner("Elaborando..."):
-                pct_final = pct_img if usar_img else 0
-                rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, pct_final)
+                qtd_final = qtd_img_sel if usar_img else 0
+                rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final)
                 
                 novo_map = {}; count = 0
                 tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', txt)
                 for p in tags:
                     count += 1
-                    url = gerar_imagem_inteligente(api_key, p, unsplash_key)
+                    # MUDANÇA: Prioridade BANCO, depois IA
+                    url = gerar_imagem_inteligente(api_key, p, unsplash_key, prioridade="BANCO")
                     if url:
                         io = baixar_imagem_url(url)
                         if io: novo_map[count] = io.getvalue()
@@ -962,8 +979,8 @@ else:
                 if col_v.button("✅ Validar", key="val_c"): st.session_state['res_create']['valid'] = True; st.rerun()
                 if col_r.button("🧠 Refazer (+Profundo)", key="redo_c"):
                     with st.spinner("Refazendo..."):
-                        pct_final = pct_img if usar_img else 0
-                        rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, pct_final, modo_profundo=True)
+                        qtd_final = qtd_img_sel if usar_img else 0
+                        rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, modo_profundo=True)
                         st.session_state['res_create']['rac'] = rac
                         st.session_state['res_create']['txt'] = txt
                         st.session_state['res_create']['valid'] = False
@@ -1004,7 +1021,8 @@ else:
             if st.button("🎨 Gerar Imagem", key="btn_cena_padrao"):
                 with st.spinner("Desenhando..."):
                     prompt_completo = f"{desc_m}. Context: Education."
-                    st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key)
+                    # Prioridade IA (DALL-E)
+                    st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key, prioridade="IA")
                     st.session_state.valid_scene = False
 
             if st.session_state.res_scene_url:
@@ -1019,7 +1037,7 @@ else:
                         if st.button("Refazer", key="ref_sc_pd"):
                             with st.spinner("Redesenhando..."):
                                 prompt_completo = f"{desc_m}. Context: Education."
-                                st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key, feedback_anterior=fb_scene)
+                                st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key, feedback_anterior=fb_scene, prioridade="IA")
                                 st.rerun()
 
         with col_caa:
