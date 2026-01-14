@@ -356,7 +356,123 @@ with st.sidebar:
         else:
             st.warning("Escreva uma mensagem.")
 
-st.markdown("""<style>
+# CSS GERAL (STICKY HEADER + CLEAN UI)
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Nunito:wght@400;600;700&display=swap');
+    html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }
+    
+    /* HEADER CONGELADO */
+    .logo-container {
+        display: flex; align-items: center; justify-content: center;
+        gap: 20px; 
+        position: fixed; top: 0; left: 0; width: 100%;
+        background-color: #F7FAFC; z-index: 9999; 
+        padding-top: 15px; padding-bottom: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    /* COMPENSAÇÃO DE CORPO */
+    .block-container { 
+        padding-top: 180px !important; 
+        padding-bottom: 3rem !important; 
+        margin-top: 0rem !important;
+    }
+
+    /* LOGO HOME ANIMADA */
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .logo-icon-spin {
+        height: 120px; width: auto;
+        animation: spin 45s linear infinite; 
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+    }
+    .logo-text-static { height: 80px; width: auto; }
+
+    /* HERO BANNER */
+    .dash-hero { 
+        background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); 
+        border-radius: 16px; margin-bottom: 40px; 
+        box-shadow: 0 10px 25px rgba(15, 82, 186, 0.25);
+        color: white; position: relative; overflow: hidden;
+        padding: 50px 60px;
+        display: flex; align-items: center; justify-content: flex-start;
+    }
+    .hero-text-block { z-index: 2; text-align: left; max-width: 90%; }
+    .hero-title {
+        color: white; font-family: 'Inter', sans-serif; font-weight: 700; 
+        font-size: 2.2rem; margin: 0; line-height: 1.1; letter-spacing: -0.5px;
+        margin-bottom: 15px;
+    }
+    .hero-subtitle {
+        color: rgba(255,255,255,0.95); font-family: 'Inter', sans-serif;
+        font-size: 1.15rem; font-weight: 400; line-height: 1.5; font-style: italic;
+    }
+    .hero-bg-icon {
+        position: absolute; right: 40px; font-size: 6rem;
+        opacity: 0.1; color: white; transform: rotate(-15deg); top: 30px;
+    }
+
+    /* CARDS */
+    .tool-card { 
+        background: white; border-radius: 20px; padding: 25px; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; 
+        height: 100%; display: flex; flex-direction: column; justify-content: space-between; 
+        transition: all 0.3s ease; text-align: center;
+    }
+    .tool-card:hover { transform: translateY(-8px); border-color: #3182CE; box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+    
+    .card-logo-box { height: 110px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+    .card-logo-img { max-height: 95px; width: auto; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); }
+    .tool-desc-short { font-size: 0.9rem; color: #4A5568; font-weight: 500; margin-bottom: 15px; min-height: 45px; display: flex; align-items: center; justify-content: center; line-height: 1.3; }
+    
+    div[data-testid="column"] .stButton button {
+        width: 100%; border-radius: 12px; border: 1px solid #E2E8F0;
+        background-color: #F8F9FA; color: #2D3748; font-family: 'Inter', sans-serif; font-weight: 700; 
+        font-size: 1rem; padding: 12px 0; transition: all 0.2s;
+    }
+    div[data-testid="column"] .stButton button:hover { background-color: #3182CE; color: white; border-color: #3182CE; }
+    
+    .border-blue { border-bottom: 6px solid #3182CE; } 
+    .border-purple { border-bottom: 6px solid #805AD5; } 
+    .border-teal { border-bottom: 6px solid #38B2AC; }
+
+    /* RODAPÉ & INSIGHT */
+    .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
+    .rich-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s; text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden; height: 100%; }
+    .rich-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.06); border-color: #CBD5E0; }
+    .rich-card-top { width: 100%; height: 4px; position: absolute; top: 0; left: 0; }
+    .rc-icon { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 12px; }
+    .rc-title { font-weight: 700; font-size: 1rem; color: #2D3748; margin-bottom: 5px; }
+    .rc-desc { font-size: 0.8rem; color: #718096; line-height: 1.3; }
+
+    .insight-card-end {
+        background-color: #FFFFF0; border-radius: 12px; padding: 20px 25px;
+        color: #2D3748; display: flex; align-items: center; gap: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid #F6E05E; 
+        margin-bottom: 20px;
+    }
+    .insight-icon-end { font-size: 1.8rem; color: #D69E2E; }
+
+    .section-title { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1.4rem; color: #2D3748; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    .section-title i { color: #3182CE; }
+
+</style>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+""", unsafe_allow_html=True)
+
+# --- HEADER STICKY ---
+icone_b64 = get_base64_image("omni_icone.png")
+texto_b64 = get_base64_image("omni_texto.png")
+
+if icone_b64 and texto_b64:
+    st.markdown(f"""
+    <div class="logo-container">
+        <img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">
+        <img src="data:image/png;base64,{texto_b64}" class="logo-text-static">
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("<div class='logo-container'><h1 style='color: #0F52BA; margin:0;'>🌐 OMNISFERA</h1></div>", unsafe_allow_html=True)
 
 
 # --- CONTEÚDO PRINCIPAL ---
