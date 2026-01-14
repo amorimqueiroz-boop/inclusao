@@ -319,6 +319,26 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
 
+def criar_docx_simples(texto, titulo="Documento"):
+    doc = Document()
+    doc.add_heading(titulo, 0)
+    for para in texto.split('\n'):
+        if para.strip():
+            doc.add_paragraph(para.strip())
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+
+def criar_pdf_generico(texto):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    # Sanitização básica para latin-1 (FPDF padrão não suporta todos caracteres UTF-8 diretamente sem fontes externas)
+    texto_safe = texto.encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 10, texto_safe)
+    return pdf.output(dest='S').encode('latin-1')
+
 # --- IA FUNCTIONS (BLINDADAS CONTRA TEXTO) ---
 
 def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anterior="", prioridade="IA"):
@@ -447,7 +467,7 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, v
     hiperfoco = aluno.get('hiperfoco', 'Geral')
     
     # Nova lógica de instrução de imagem e posição
-    instrucao_img = f"Incluir imagens em {qtd_imgs} questões (use [[GEN_IMG: termo]]). REGRA DE POSIÇÃO: A tag da imagem ([[GEN_IMG: termo]]) DEVE vir logo APÓS o enunciado e ANTES das alternativas." if qtd_imgs > 0 else "Sem imagens."
+    instrucao_img = f"Incluir imagens em {qtd_imgs} questões (use [[GEN_IMG: termo]]). REGRA VISUAL: NUNCA repita a mesma imagem. POSIÇÃO OBRIGATÓRIA: A imagem deve ser inserida IMEDIATAMENTE APÓS o texto do enunciado e ANTES das alternativas." if qtd_imgs > 0 else "Sem imagens."
     
     # Instrução de Bloom
     instrucao_bloom = ""
@@ -477,7 +497,7 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, v
     1. Contexto Real. 
     2. Hiperfoco ({hiperfoco}) em 30%. 
     {diretriz_tipo}
-    4. Imagens: {instrucao_img} (NUNCA repita a mesma imagem). 
+    4. Imagens: {instrucao_img} 
     5. Divisão Clara.
     
     REGRA DE OURO GRAMATICAL (IMPERATIVO):
@@ -882,7 +902,7 @@ if is_ei:
 else:
     # === MODO PADRÃO (FUNDAMENTAL / MÉDIO) ===
     # AQUI ESTÃO AS NOVAS ABAS SOLICITADAS: Roteiro Individual, Papo de Mestre, Dinâmica, Plano de Aula
-    tabs = st.tabs(["📄 Adaptar Prova", "✂️ Adaptar Atividade", "✨ Criar do Zero", "🎨 Estúdio Visual & CAA", "📝 Roteiro Individual", "🗣️ Papo de Mestre", "🤝 Dinâmica Inclusiva", "📅 Plano de Aula (BNCC)"])
+    tabs = st.tabs(["📄 Adaptar Prova", "✂️ Adaptar Atividade", "✨ Criar do Zero", "🎨 Estúdio Visual & CAA", "📝 Roteiro Individual", "🗣️ Papo de Mestre", "🤝 Dinâmica Inclusiva", "📅 Plano de Aula DUA"])
 
     # 1. ADAPTAR PROVA
     with tabs[0]:
@@ -948,8 +968,13 @@ else:
                         im = res['map'].get(num)
                         if im: st.image(im, width=300)
                     elif p.strip(): st.markdown(p.strip())
+            
+            c_down1, c_down2 = st.columns(2)
             docx = construir_docx_final(res['txt'], aluno, materia_d, res['map'], None, tipo_d)
-            st.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Prova_Adaptada.docx", "primary")
+            c_down1.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Prova_Adaptada.docx", "primary")
+            
+            pdf_bytes = criar_pdf_generico(res['txt'])
+            c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Prova_Adaptada.pdf", "secondary", mime="application/pdf")
 
     # 2. ADAPTAR ATIVIDADE
     with tabs[1]:
@@ -1014,8 +1039,13 @@ else:
                         im = res['map'].get(1)
                         if im: st.image(im, width=300)
                     elif p.strip(): st.markdown(p.strip())
+            
+            c_down1, c_down2 = st.columns(2)
             docx = construir_docx_final(res['txt'], aluno, materia_i, res['map'], None, tipo_i)
-            st.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Atividade.docx", "primary")
+            c_down1.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Atividade.docx", "primary")
+            
+            pdf_bytes = criar_pdf_generico(res['txt'])
+            c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Atividade.pdf", "secondary", mime="application/pdf")
 
     # 3. CRIAR DO ZERO
     with tabs[2]:
@@ -1139,8 +1169,9 @@ else:
             c_down1, c_down2 = st.columns(2)
             docx = construir_docx_final(res['txt'], aluno, mat_c, {}, None, "Criada")
             c_down1.download_button("📥 DOCX", docx, "Criada.docx", "primary")
-            docx_clean = construir_docx_final(res['txt'], aluno, mat_c, {}, None, "Criada", sem_cabecalho=True)
-            c_down2.download_button("📥 DOCX (Sem Cabeçalho)", docx_clean, "Criada_Clean.docx", "secondary")
+            
+            pdf_bytes = criar_pdf_generico(res['txt'])
+            c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Criada.pdf", "secondary", mime="application/pdf")
 
     # 4. ESTÚDIO VISUAL (ATUALIZADO COM FEEDBACK)
     with tabs[3]:
@@ -1218,9 +1249,16 @@ else:
         
         if st.button("📝 GERAR ROTEIRO INDIVIDUAL", type="primary"): 
             if tema_rotina:
-                st.markdown(gerar_roteiro_aula(api_key, aluno, materia_rotina, tema_rotina))
+                res = gerar_roteiro_aula(api_key, aluno, materia_rotina, tema_rotina)
+                st.session_state['res_roteiro'] = res
             else:
                 st.warning("Preencha o Assunto/Tema.")
+        
+        if 'res_roteiro' in st.session_state:
+            st.markdown(st.session_state['res_roteiro'])
+            c_d1, c_d2 = st.columns(2)
+            c_d1.download_button("📥 DOCX", criar_docx_simples(st.session_state['res_roteiro'], "Roteiro Individual"), "Roteiro.docx", "primary")
+            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_roteiro']), "Roteiro.pdf", "secondary", mime="application/pdf")
 
     # 6. PAPO DE MESTRE (QUEBRA-GELO DUA)
     with tabs[5]:
@@ -1242,9 +1280,16 @@ else:
         
         if st.button("🗣️ CRIAR CONEXÕES", type="primary"): 
             if assunto_papo:
-                st.markdown(gerar_quebra_gelo_profundo(api_key, aluno, materia_papo, assunto_papo, hiperfoco_papo, tema_turma))
+                res = gerar_quebra_gelo_profundo(api_key, aluno, materia_papo, assunto_papo, hiperfoco_papo, tema_turma)
+                st.session_state['res_papo'] = res
             else:
                 st.warning("Preencha o Assunto.")
+        
+        if 'res_papo' in st.session_state:
+            st.markdown(st.session_state['res_papo'])
+            c_d1, c_d2 = st.columns(2)
+            c_d1.download_button("📥 DOCX", criar_docx_simples(st.session_state['res_papo'], "Papo de Mestre"), "Papo_Mestre.docx", "primary")
+            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_papo']), "Papo_Mestre.pdf", "secondary", mime="application/pdf")
 
     # 7. DINÂMICA INCLUSIVA
     with tabs[6]:
@@ -1265,15 +1310,22 @@ else:
         
         if st.button("🤝 CRIAR DINÂMICA", type="primary"): 
             if assunto_din:
-                st.markdown(gerar_dinamica_inclusiva(api_key, aluno, materia_din, assunto_din, qtd_alunos, carac_turma))
+                res = gerar_dinamica_inclusiva(api_key, aluno, materia_din, assunto_din, qtd_alunos, carac_turma)
+                st.session_state['res_dinamica'] = res
             else:
                 st.warning("Preencha o Assunto.")
+        
+        if 'res_dinamica' in st.session_state:
+            st.markdown(st.session_state['res_dinamica'])
+            c_d1, c_d2 = st.columns(2)
+            c_d1.download_button("📥 DOCX", criar_docx_simples(st.session_state['res_dinamica'], "Dinâmica Inclusiva"), "Dinamica.docx", "primary")
+            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_dinamica']), "Dinamica.pdf", "secondary", mime="application/pdf")
 
-    # 8. NOVO: PLANO DE AULA (BNCC)
+    # 8. NOVO: PLANO DE AULA DUA
     with tabs[7]:
         st.markdown("""
         <div class="pedagogia-box">
-            <div class="pedagogia-title"><i class="ri-book-open-line"></i> Plano de Aula (BNCC)</div>
+            <div class="pedagogia-title"><i class="ri-book-open-line"></i> Plano de Aula DUA</div>
             Gere um planejamento completo alinhado à BNCC, selecionando metodologias ativas e recursos.
         </div>
         """, unsafe_allow_html=True)
@@ -1298,6 +1350,13 @@ else:
         if st.button("📅 GERAR PLANO DE AULA", type="primary"):
             if assunto_plano:
                 with st.spinner("Consultando BNCC e planejando..."):
-                    st.markdown(gerar_plano_aula_bncc(api_key, materia_plano, assunto_plano, metodologia, tecnica_ativa, qtd_alunos_plano, recursos_plano))
+                    res = gerar_plano_aula_bncc(api_key, materia_plano, assunto_plano, metodologia, tecnica_ativa, qtd_alunos_plano, recursos_plano)
+                    st.session_state['res_plano'] = res
             else:
                 st.warning("Preencha o Assunto.")
+        
+        if 'res_plano' in st.session_state:
+            st.markdown(st.session_state['res_plano'])
+            c_d1, c_d2 = st.columns(2)
+            c_d1.download_button("📥 DOCX", criar_docx_simples(st.session_state['res_plano'], "Plano de Aula DUA"), "Plano_Aula.docx", "primary")
+            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_plano']), "Plano_Aula.pdf", "secondary", mime="application/pdf")
