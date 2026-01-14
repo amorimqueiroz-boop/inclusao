@@ -10,135 +10,147 @@ import base64
 # 1. CONFIGURAÇÃO E SEGURANÇA
 # ==============================================================================
 st.set_page_config(
-    page_title="[TESTE] Omnisfera | PAEE", 
-    page_icon="🛠️", 
+    page_title="PAEE & T.A. | Omnisfera", 
+    page_icon="🧩", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ==============================================================================
-# ### BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA & ALERTA DE TESTE ###
+# 2. BLOCO VISUAL (DESIGN SYSTEM PREMIUM) & HEADER
 # ==============================================================================
 import os
 import base64
 import streamlit as st
 
-# 1. Detecção Automática de Ambiente (Via st.secrets)
-try:
-    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
-except:
-    IS_TEST_ENV = False
+# 1. Detecção de Ambiente
+try: IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
+except: IS_TEST_ENV = False
 
-# 2. Função para carregar a logo em Base64
+# 2. Logo Base64
 def get_logo_base64():
     caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
     for c in caminhos:
         if os.path.exists(c):
-            with open(c, "rb") as f:
-                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+            with open(c, "rb") as f: return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
     return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
 
 src_logo_giratoria = get_logo_base64()
 
-# 3. Definição Dinâmica de Cores (Card Branco ou Amarelo)
+# 3. Cores Dinâmicas
 if IS_TEST_ENV:
-    # Amarelo Vibrante (Aviso de Teste)
-    card_bg = "rgba(255, 220, 50, 0.95)" 
-    card_border = "rgba(200, 160, 0, 0.5)"
+    card_bg, card_border = "rgba(255, 220, 50, 0.95)", "rgba(200, 160, 0, 0.5)"
 else:
-    # Branco Gelo Transparente (Original)
-    card_bg = "rgba(255, 255, 255, 0.85)"
-    card_border = "rgba(255, 255, 255, 0.6)"
+    card_bg, card_border = "rgba(255, 255, 255, 0.85)", "rgba(255, 255, 255, 0.6)"
 
-# 4. Renderização do CSS Global e Header Flutuante
+# 4. Renderização CSS Global (Design System Premium)
 st.markdown(f"""
-<style>
-   
-    /* -------------------------------------------- */
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+    /* VARIÁVEIS GLOBAIS */
+    :root {{ 
+        --brand-blue: #004E92; --brand-coral: #FF6B6B; --brand-purple: #805AD5; 
+        --card-radius: 16px; 
+    }}
+    
+    html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; color: #2D3748; }}
+    div[data-baseweb="tab-highlight"] {{ background-color: transparent !important; }}
+
+    /* HEADER DA PÁGINA (CLEAN - ROXO PARA PAEE) */
+    .header-clean {{
+        background-color: white; padding: 30px 40px; border-radius: var(--card-radius);
+        border-left: 6px solid var(--brand-purple); 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04); margin-bottom: 30px;
+        display: flex; align-items: center; gap: 25px;
+    }}
+    .icon-box {{
+        width: 55px; height: 55px; background: #F3E8FF; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--brand-purple); font-size: 28px;
+    }}
+
+    /* HEADER DO ESTUDANTE */
+    .student-header {{ 
+        background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--card-radius); 
+        padding: 20px 30px; margin-bottom: 20px; 
+        display: flex; justify-content: space-between; align-items: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }}
+    .student-label {{ font-size: 0.8rem; color: #718096; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }}
+    .student-value {{ font-size: 1.2rem; color: #2D3748; font-weight: 800; }}
+
+    /* ABAS EM PÍLULA */
+    .stTabs [data-baseweb="tab-list"] {{ gap: 10px; padding-bottom: 15px; flex-wrap: wrap; }}
+    .stTabs [data-baseweb="tab"] {{
+        height: 45px; border-radius: 25px; padding: 0 25px; background-color: white;
+        border: 1px solid #E2E8F0; font-weight: 700; color: #718096; font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }}
+    .stTabs [aria-selected="true"] {{
+        background-color: var(--brand-purple) !important; color: white !important;
+        border-color: var(--brand-purple) !important; 
+        box-shadow: 0 4px 10px rgba(128, 90, 213, 0.3);
+    }}
+
+    /* INPUTS E BOTÕES */
+    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {{
+        border-radius: 12px !important; border-color: #E2E8F0 !important;
+    }}
+    div[data-testid="column"] .stButton button {{
+        border-radius: 12px !important; font-weight: 800 !important; text-transform: uppercase; height: 50px !important; letter-spacing: 0.5px;
+    }}
+    div[data-testid="column"] .stButton button[kind="primary"] {{ 
+        background-color: var(--brand-purple) !important; border: none !important; color: white !important; 
+        box-shadow: 0 4px 6px rgba(128, 90, 213, 0.2);
+    }}
+    div[data-testid="column"] .stButton button[kind="primary"]:hover {{ 
+        transform: translateY(-2px); box-shadow: 0 6px 12px rgba(128, 90, 213, 0.3); 
+    }}
 
     /* CARD FLUTUANTE (OMNISFERA) */
     .omni-badge {{
-        position: fixed;
-        top: 15px; 
-        right: 15px;
-        
-        /* COR DINÂMICA (Mudança aqui) */
-        background: {card_bg};
-        border: 1px solid {card_border};
-        
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        
-        /* Dimensões: Fino e Largo */
-        padding: 4px 30px;
-        min-width: 260px;
-        justify-content: center;
-        
-        border-radius: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        z-index: 999990; /* Acima do conteúdo */
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        pointer-events: none; /* Deixa passar clique se necessário */
+        position: fixed; top: 15px; right: 15px;
+        background: {card_bg}; border: 1px solid {card_border};
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        padding: 4px 30px; min-width: 260px; justify-content: center;
+        border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        z-index: 999990; display: flex; align-items: center; gap: 10px;
+        pointer-events: none;
     }}
-
-    .omni-text {{
-        font-family: 'Nunito', sans-serif;
-        font-weight: 800;
-        font-size: 0.9rem;
-        color: #2D3748;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-    }}
-
-    @keyframes spin-slow {{
-        from {{ transform: rotate(0deg); }}
-        to {{ transform: rotate(360deg); }}
-    }}
+    .omni-text {{ font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem; color: #2D3748; letter-spacing: 1px; text-transform: uppercase; }}
+    @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
+    .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
     
-    .omni-logo-spin {{
-        height: 26px; width: 26px; 
-        animation: spin-slow 10s linear infinite;
+    /* PEDAGOGIA BOX */
+    .pedagogia-box {{ 
+        background-color: #F7FAFC; border-left: 4px solid var(--brand-purple); 
+        padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; 
+        font-size: 0.95rem; color: #4A5568; 
     }}
-
-</style>
-
-<div class="omni-badge">
-    <img src="{src_logo_giratoria}" class="omni-logo-spin">
-    <span class="omni-text">OMNISFERA</span>
-</div>
+    </style>
+    
+    <div class="omni-badge">
+        <img src="{src_logo_giratoria}" class="omni-logo-spin">
+        <span class="omni-text">OMNISFERA</span>
+    </div>
 """, unsafe_allow_html=True)
-# ==============================================================================
-# ### FIM BLOCO VISUAL INTELIGENTE ###
-# ==============================================================================
 
 def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
         st.stop()
-    
-    st.markdown("""
-        <style>
-            footer {visibility: hidden !important;}
-            [data-testid="stHeader"] {
-                visibility: visible !important;
-                background-color: transparent !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
+    st.markdown("""<style>footer {visibility: hidden !important;} [data-testid="stHeader"] {visibility: visible !important; background-color: transparent !important;} .block-container {padding-top: 2rem !important;}</style>""", unsafe_allow_html=True)
 
 verificar_acesso()
 
 # --- BARRA LATERAL ---
 with st.sidebar:
-    try:
-        st.image("ominisfera.png", width=150)
-    except:
-        st.write("🌐 OMNISFERA")
+    try: st.image("ominisfera.png", width=150)
+    except: st.write("🌐 OMNISFERA")
     st.markdown("---")
-    if st.button("🏠 Voltar para Home", use_container_width=True):
-        st.switch_page("Home.py")
+    if st.button("🏠 Voltar para Home", use_container_width=True): st.switch_page("Home.py")
     st.markdown("---")
 
 # ==============================================================================
@@ -153,53 +165,22 @@ def carregar_banco():
         try:
             with open(ARQUIVO_DB, "r", encoding="utf-8") as f:
                 todos_alunos = json.load(f)
-                meus_alunos = [
-                    aluno for aluno in todos_alunos 
-                    if aluno.get('responsavel') == usuario_atual
-                ]
-                return meus_alunos
+                return [aluno for aluno in todos_alunos if aluno.get('responsavel') == usuario_atual]
         except: return []
     return []
 
 if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
     st.session_state.banco_estudantes = carregar_banco()
 
-# --- CSS PERSONALIZADO ---
+# --- HEADER DA PÁGINA ---
 st.markdown("""
-    <style>
-    .header-paee { 
-        background: white; padding: 15px 25px; border-radius: 12px; 
-        border-left: 6px solid #805AD5; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-        margin-bottom: 20px; margin-top: 10px; display: flex; align-items: center; gap: 20px; 
-    }
-    .student-header { background-color: #F3E8FF; border: 1px solid #D6BCFA; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; }
-    .student-label { font-size: 0.8rem; color: #553C9A; font-weight: 700; text-transform: uppercase; }
-    .student-value { font-size: 1.1rem; color: #44337A; font-weight: 800; }
-    div[data-testid="column"] .stButton button[kind="primary"] { background-color: #805AD5 !important; border: none !important; color: white !important; font-weight: bold; }
-    
-    /* CARD DE PROJETO EI */
-    .ei-card { border: 2px dashed #F6E05E; background-color: #FFFFF0; padding: 15px; border-radius: 10px; margin-bottom: 10px; }
-    </style>
-""", unsafe_allow_html=True)
-
-def get_img_tag(file_path, width):
-    if os.path.exists(file_path):
-        with open(file_path, "rb") as f:
-            data = base64.b64encode(f.read()).decode("utf-8")
-        return f'<img src="data:image/png;base64,{data}" width="{width}">'
-    return "🧩"
-
-img_html = get_img_tag("pae.png", "160") 
-
-st.markdown(f"""
-    <div class="header-paee">
-        <div style="flex-shrink: 0;"> {img_html} </div>
-        <div style="flex-grow: 1; text-align: center;"> 
-            <p style="margin:0; color:#44337A; font-size: 1.4rem; font-weight: 600;">
-                Sala de Recursos & Eliminação de Barreiras
-            </p>
-        </div>
+<div class="header-clean">
+    <div class="icon-box"><i class="ri-puzzle-line"></i></div>
+    <div>
+        <h1 style="margin:0; font-size: 1.8rem; color: #2D3748; font-weight: 800;">PAEE & T.A.</h1>
+        <p style="margin:0; color: #718096; font-size: 1rem;">Sala de Recursos & Eliminação de Barreiras</p>
     </div>
+</div>
 """, unsafe_allow_html=True)
 
 if not st.session_state.banco_estudantes:
@@ -215,16 +196,15 @@ with col_sel:
 aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
 
 # --- DETECTOR DE EDUCAÇÃO INFANTIL ---
-# Lógica para verificar se é criança pequena
 serie_aluno = aluno.get('serie', '').lower()
 is_ei = "infantil" in serie_aluno or "creche" in serie_aluno or "pré" in serie_aluno
 
-# Exibe Resumo do PEI
+# --- HEADER DO ALUNO ---
 st.markdown(f"""
     <div class="student-header">
         <div><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div>
         <div><div class="student-label">Série</div><div class="student-value">{aluno.get('serie', '-')}</div></div>
-        <div><div class="student-label">Hiperfoco</div><div class="student-value">{aluno.get('hiperfoco', '-')}</div></div>
+        <div><div class="student-label">Hiperfoco</div><div class="student-value" style="color: #805AD5;">{aluno.get('hiperfoco', '-')}</div></div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -260,7 +240,6 @@ def gerar_diagnostico_barreiras(api_key, aluno, obs_prof):
         return resp.choices[0].message.content
     except Exception as e: return f"Erro: {str(e)}"
 
-# --- NOVA FUNÇÃO: GERADOR DE PROJETOS EI (BNCC) ---
 def gerar_projetos_ei_bncc(api_key, aluno, campo_exp):
     client = OpenAI(api_key=api_key)
     prompt = f"""
@@ -342,18 +321,16 @@ if is_ei:
     
     # 1. BARREIRAS (EI)
     with tab_barreiras:
-        st.write("### 🔍 Diagnóstico do Brincar (EI)")
-        st.caption("Na Educação Infantil, a barreira não é 'não escrever', mas sim 'não participar da interação'.")
+        st.markdown("<div class='pedagogia-box'><strong>Diagnóstico do Brincar:</strong> Na Educação Infantil, a barreira não é 'não escrever', mas sim 'não participar da interação'.</div>", unsafe_allow_html=True)
         obs_aee = st.text_area("Observação do Brincar:", placeholder="Ex: Isola-se no parquinho, não aceita texturas...", height=100)
         if st.button("Mapear Barreiras do Brincar", type="primary"):
             if not api_key: st.error("Insira a chave OpenAI."); st.stop()
             with st.spinner("Analisando..."):
                 st.markdown(gerar_diagnostico_barreiras(api_key, aluno, obs_aee))
 
-    # 2. PROJETOS (EI) - NOVIDADE!
+    # 2. PROJETOS (EI)
     with tab_projetos:
-        st.write("### 🧸 Banco de Experiências (BNCC)")
-        st.info(f"Hiperfoco para engajamento: **{aluno.get('hiperfoco')}**")
+        st.markdown("<div class='pedagogia-box'><strong>Banco de Experiências (BNCC):</strong> Atividades lúdicas usando o hiperfoco.</div>", unsafe_allow_html=True)
         
         campo_bncc = st.selectbox("Selecione o Campo de Experiência (BNCC):", [
             "O eu, o outro e o nós (Identidade e Interação)",
@@ -370,8 +347,7 @@ if is_ei:
 
     # 3. ROTINA (EI)
     with tab_rotina:
-        st.write("### 🏠 Adaptação de Rotina e AVDs")
-        st.write("Recursos visuais e sensoriais para a rotina da creche/pré-escola.")
+        st.markdown("<div class='pedagogia-box'><strong>Adaptação de Rotina:</strong> Recursos visuais e sensoriais para a creche/pré-escola.</div>", unsafe_allow_html=True)
         dif_rotina = st.text_input("Dificuldade na Rotina:", placeholder="Ex: Hora do soninho, Desfralde, Alimentação")
         if st.button("Sugerir Adaptação", type="primary"):
             with st.spinner("Buscando recursos..."):
@@ -388,8 +364,7 @@ else:
 
     # 1. BARREIRAS
     with tab_barreiras:
-        st.write("### 🔍 Diagnóstico de Acessibilidade")
-        st.info("O PAEE começa identificando o que impede o aluno de participar, não a doença dele.")
+        st.markdown("<div class='pedagogia-box'><strong>Diagnóstico de Acessibilidade:</strong> Identifique o que impede o aluno de participar, não a doença.</div>", unsafe_allow_html=True)
         obs_aee = st.text_area("Observações Iniciais do AEE (Opcional):", placeholder="Ex: O aluno se recusa a escrever...", height=100)
         if st.button("Analisar Barreiras via IA", type="primary"):
             if not api_key: st.error("Insira a chave OpenAI."); st.stop()
@@ -398,8 +373,7 @@ else:
 
     # 2. PLANO
     with tab_plano:
-        st.write("### 🎯 Treino de Habilidades")
-        st.info(f"Hiperfoco Ativo: **{aluno.get('hiperfoco')}**")
+        st.markdown("<div class='pedagogia-box'><strong>Treino de Habilidades:</strong> Desenvolvimento cognitivo, motor e social.</div>", unsafe_allow_html=True)
         foco = st.selectbox("Foco do atendimento:", ["Funções Executivas", "Autonomia", "Coordenação Motora", "Comunicação", "Habilidades Sociais"])
         if st.button("Gerar Plano", type="primary"):
             with st.spinner("Planejando..."):
@@ -407,7 +381,7 @@ else:
 
     # 3. T.A.
     with tab_tec:
-        st.write("### 🛠️ Tecnologia Assistiva")
+        st.markdown("<div class='pedagogia-box'><strong>Tecnologia Assistiva:</strong> Recursos para autonomia.</div>", unsafe_allow_html=True)
         dif_especifica = st.text_input("Dificuldade Específica:", placeholder="Ex: Não segura o lápis")
         if st.button("Sugerir Recursos", type="primary"):
             with st.spinner("Buscando T.A..."):
@@ -415,7 +389,7 @@ else:
 
 # 4. ARTICULAÇÃO (COMUM A TODOS)
 with tab_ponte:
-    st.write("### 🌉 Ponte com a Sala Regular")
+    st.markdown("<div class='pedagogia-box'><strong>Ponte com a Sala Regular:</strong> Documento de colaboração com os professores.</div>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     freq = c1.selectbox("Frequência:", ["1x/sem", "2x/sem", "3x/sem", "Diário"])
     turno = c2.selectbox("Turno:", ["Manhã", "Tarde"])
