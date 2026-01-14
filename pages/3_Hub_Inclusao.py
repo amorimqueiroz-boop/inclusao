@@ -467,7 +467,7 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, v
     hiperfoco = aluno.get('hiperfoco', 'Geral')
     
     # Nova lógica de instrução de imagem e posição
-    instrucao_img = f"Incluir imagens em {qtd_imgs} questões (use [[GEN_IMG: termo]]). REGRA VISUAL: NUNCA repita a mesma imagem. POSIÇÃO OBRIGATÓRIA: A imagem deve ser inserida IMEDIATAMENTE APÓS o texto do enunciado e ANTES das alternativas." if qtd_imgs > 0 else "Sem imagens."
+    instrucao_img = f"Incluir imagens em {qtd_imgs} questões (use [[GEN_IMG: termo]]). REGRA DE POSIÇÃO: A tag da imagem ([[GEN_IMG: termo]]) DEVE vir logo APÓS o enunciado e ANTES das alternativas." if qtd_imgs > 0 else "Sem imagens."
     
     # Instrução de Bloom
     instrucao_bloom = ""
@@ -477,6 +477,7 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, v
         6. TAXONOMIA DE BLOOM (RIGOROSO):
            - Utilize OBRIGATORIAMENTE os seguintes verbos de ação selecionados: {lista_verbos}.
            - Distribua esses verbos entre as questões criadas.
+           - REGRA DE FORMATAÇÃO: O verbo de comando deve vir no início do enunciado, em **NEGRITO E CAIXA ALTA** (Ex: **ANALISE**, **IDENTIFIQUE**, **EXPLIQUE**).
            - Use apenas UM verbo de comando por questão.
         """
 
@@ -497,7 +498,7 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, v
     1. Contexto Real. 
     2. Hiperfoco ({hiperfoco}) em 30%. 
     {diretriz_tipo}
-    4. Imagens: {instrucao_img} 
+    4. Imagens: {instrucao_img} (NUNCA repita a mesma imagem). 
     5. Divisão Clara.
     
     REGRA DE OURO GRAMATICAL (IMPERATIVO):
@@ -974,7 +975,7 @@ else:
             c_down1.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Prova_Adaptada.docx", "primary")
             
             pdf_bytes = criar_pdf_generico(res['txt'])
-            c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Prova_Adaptada.pdf", "secondary", mime="application/pdf")
+            c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Prova_Adaptada.pdf", mime="application/pdf", type="secondary")
 
     # 2. ADAPTAR ATIVIDADE
     with tabs[1]:
@@ -1039,13 +1040,11 @@ else:
                         im = res['map'].get(1)
                         if im: st.image(im, width=300)
                     elif p.strip(): st.markdown(p.strip())
-            
-            c_down1, c_down2 = st.columns(2)
             docx = construir_docx_final(res['txt'], aluno, materia_i, res['map'], None, tipo_i)
-            c_down1.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Atividade.docx", "primary")
+            st.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Atividade.docx", "primary")
             
             pdf_bytes = criar_pdf_generico(res['txt'])
-            c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Atividade.pdf", "secondary", mime="application/pdf")
+            c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Atividade.pdf", mime="application/pdf", type="secondary")
 
     # 3. CRIAR DO ZERO
     with tabs[2]:
@@ -1171,7 +1170,7 @@ else:
             c_down1.download_button("📥 DOCX", docx, "Criada.docx", "primary")
             
             pdf_bytes = criar_pdf_generico(res['txt'])
-            c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Criada.pdf", "secondary", mime="application/pdf")
+            c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Criada.pdf", mime="application/pdf", type="secondary")
 
     # 4. ESTÚDIO VISUAL (ATUALIZADO COM FEEDBACK)
     with tabs[3]:
@@ -1258,7 +1257,7 @@ else:
             st.markdown(st.session_state['res_roteiro'])
             c_d1, c_d2 = st.columns(2)
             c_d1.download_button("📥 DOCX", criar_docx_simples(st.session_state['res_roteiro'], "Roteiro Individual"), "Roteiro.docx", "primary")
-            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_roteiro']), "Roteiro.pdf", "secondary", mime="application/pdf")
+            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_roteiro']), "Roteiro.pdf", mime="application/pdf", type="secondary")
 
     # 6. PAPO DE MESTRE (QUEBRA-GELO DUA)
     with tabs[5]:
@@ -1289,7 +1288,7 @@ else:
             st.markdown(st.session_state['res_papo'])
             c_d1, c_d2 = st.columns(2)
             c_d1.download_button("📥 DOCX", criar_docx_simples(st.session_state['res_papo'], "Papo de Mestre"), "Papo_Mestre.docx", "primary")
-            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_papo']), "Papo_Mestre.pdf", "secondary", mime="application/pdf")
+            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_papo']), "Papo_Mestre.pdf", mime="application/pdf", type="secondary")
 
     # 7. DINÂMICA INCLUSIVA
     with tabs[6]:
@@ -1319,7 +1318,7 @@ else:
             st.markdown(st.session_state['res_dinamica'])
             c_d1, c_d2 = st.columns(2)
             c_d1.download_button("📥 DOCX", criar_docx_simples(st.session_state['res_dinamica'], "Dinâmica Inclusiva"), "Dinamica.docx", "primary")
-            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_dinamica']), "Dinamica.pdf", "secondary", mime="application/pdf")
+            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_dinamica']), "Dinamica.pdf", mime="application/pdf", type="secondary")
 
     # 8. NOVO: PLANO DE AULA DUA
     with tabs[7]:
@@ -1359,4 +1358,4 @@ else:
             st.markdown(st.session_state['res_plano'])
             c_d1, c_d2 = st.columns(2)
             c_d1.download_button("📥 DOCX", criar_docx_simples(st.session_state['res_plano'], "Plano de Aula DUA"), "Plano_Aula.docx", "primary")
-            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_plano']), "Plano_Aula.pdf", "secondary", mime="application/pdf")
+            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_plano']), "Plano_Aula.pdf", mime="application/pdf", type="secondary")
