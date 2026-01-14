@@ -453,7 +453,13 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, v
     instrucao_bloom = ""
     if verbos_bloom:
         lista_verbos = ", ".join(verbos_bloom)
-        instrucao_bloom = f"6. TAXONOMIA DE BLOOM: Utilize prioritaria e obrigatoriamente os seguintes verbos de ação nos enunciados das questões: {lista_verbos}."
+        instrucao_bloom = f"""
+        6. TAXONOMIA DE BLOOM (RIGOROSO):
+           - Utilize OBRIGATORIAMENTE os seguintes verbos de ação selecionados: {lista_verbos}.
+           - Distribua esses verbos entre as questões criadas.
+           - REGRA DE FORMATAÇÃO: O verbo de comando deve vir no início do enunciado, em **NEGRITO E CAIXA ALTA** (Ex: **ANALISE**, **IDENTIFIQUE**, **EXPLIQUE**).
+           - Use apenas UM verbo de comando por questão.
+        """
 
     style = "Atue como uma banca examinadora rigorosa." if modo_profundo else "Atue como professor elaborador."
     prompt = f"""
@@ -1028,7 +1034,7 @@ else:
         if usar_bloom:
             col_b1, col_b2 = st.columns(2)
             cat_bloom = col_b1.selectbox("Categoria Cognitiva:", list(TAXONOMIA_BLOOM.keys()))
-            verbos_selecionados = col_b2.multiselect("Selecione os Verbos de Ação:", TAXONOMIA_BLOOM[cat_bloom])
+            verbos_selecionados = col_b2.multiselect("Selecione os Verbos de Ação:", TAXONOMIA_BLOOM[cat_bloom], help=f"Você selecionou {qtd_c} questões. Tente escolher pelo menos {min(3, qtd_c)} verbos para variar.")
             if verbos_selecionados:
                 st.info(f"As questões serão criadas com foco em: **{', '.join(verbos_selecionados)}**")
         # ---------------------
