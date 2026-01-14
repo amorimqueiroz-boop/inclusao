@@ -110,13 +110,11 @@ def sistema_seguranca():
             [data-testid="stHeader"] {visibility: hidden !important; height: 0px !important;}
             footer {visibility: hidden !important;}
             
-            /* Remove espaços extras do topo da página */
             .block-container {
                 padding-top: 1rem !important;
                 margin-top: 0rem !important;
             }
             
-            /* Container Centralizado - COM TOPO ZERADO */
             .login-container { 
                 background-color: white; 
                 padding: 5px 40px 40px 40px; 
@@ -129,7 +127,6 @@ def sistema_seguranca():
                 margin-top: 20px;
             }
 
-            /* Animação da Logo */
             @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
             .login-logo-spin {
                 height: 110px; width: auto;
@@ -138,14 +135,12 @@ def sistema_seguranca():
             }
             .login-logo-static { height: 75px; width: auto; margin-left: 10px; }
             
-            /* Wrapper da Logo - Margem negativa se precisar subir mais */
             .logo-wrapper { 
                 display: flex; justify-content: center; align-items: center; 
                 margin-bottom: 20px; 
-                margin-top: 10px; /* Pequeno respiro */
+                margin-top: 10px;
             }
 
-            /* Manifesto */
             .manifesto-login {
                 font-family: 'Nunito', sans-serif;
                 font-size: 0.9rem;
@@ -156,7 +151,6 @@ def sistema_seguranca():
                 padding: 0 15px;
             }
 
-            /* Inputs */
             .stTextInput input {
                 border-radius: 8px !important;
                 border: 1px solid #CBD5E0 !important;
@@ -164,7 +158,6 @@ def sistema_seguranca():
                 background-color: #F8FAFC !important;
             }
 
-            /* Termo */
             .termo-box { 
                 background-color: #F8FAFC; 
                 padding: 15px; 
@@ -179,7 +172,6 @@ def sistema_seguranca():
                 line-height: 1.4;
             }
             
-            /* Botão */
             div[data-testid="column"] .stButton button {
                 width: 100%;
                 background-color: #0F52BA !important;
@@ -192,6 +184,11 @@ def sistema_seguranca():
             div[data-testid="column"] .stButton button:hover {
                 background-color: #0A3D8F !important;
             }
+            
+            /* Destaque visual para modo teste */
+            .teste-warning {
+                color: #D69E2E; font-size: 0.8rem; font-weight: bold; margin-bottom: 10px;
+            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -199,14 +196,12 @@ def sistema_seguranca():
         st.session_state["autenticado"] = False
 
     if not st.session_state["autenticado"]:
-        # Layout de colunas para centralizar
         c_vazio1, c_login, c_vazio2 = st.columns([1, 2, 1])
         
         with c_login:
-            # Abre o container visualmente (HTML)
             st.markdown("<div class='login-container'>", unsafe_allow_html=True)
             
-            # 1. LOGO (PRIMEIRO ELEMENTO ABSOLUTO)
+            # 1. LOGO
             icone_b64 = get_base64_image("omni_icone.png")
             texto_b64 = get_base64_image("omni_texto.png")
             
@@ -218,10 +213,9 @@ def sistema_seguranca():
                 </div>
                 """, unsafe_allow_html=True)
             else:
-                # Fallback se não tiver imagens
                 st.markdown("<h1 style='color:#0F52BA; margin-top:0;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
 
-            # 2. MANIFESTO (TEXTO)
+            # 2. MANIFESTO
             st.markdown("""
             <div class="manifesto-login">
                 "A Omnisfera é um ecossistema vivo onde a <strong>Neurociência</strong> encontra a <strong>Pedagogia</strong>. 
@@ -229,63 +223,78 @@ def sistema_seguranca():
             </div>
             """, unsafe_allow_html=True)
             
-            # 3. IDENTIFICAÇÃO (FEEDBACK)
-            st.markdown("<div style='text-align:left; font-weight:bold; color:#2D3748; font-size:0.9rem; margin-bottom:5px;'>👋 Sua Identidade (Para melhoria contínua)</div>", unsafe_allow_html=True)
-            nome_user = st.text_input("nome_fake", placeholder="Como gostaria de ser chamado?", label_visibility="collapsed")
-            st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
-            cargo_user = st.text_input("cargo_fake", placeholder="Seu Cargo (Ex: Professor, Coord...)", label_visibility="collapsed")
+            # --- CAMPOS DE ENTRADA (CONDICIONAIS) ---
             
-            st.markdown("---")
+            nome_user = ""
+            cargo_user = ""
+            senha = ""
+            concordo = False
 
-            # 4. TERMO JURÍDICO
-            st.markdown("<div style='text-align:left; font-weight:bold; color:#2D3748; font-size:0.9rem; margin-bottom:5px;'>🛡️ Termos de Uso (Beta)</div>", unsafe_allow_html=True)
-            st.markdown("""
-            <div class="termo-box">
-                <strong>ACORDO DE CONFIDENCIALIDADE E PROPRIEDADE INTELECTUAL</strong><br><br>
-                1. <strong>Licença de Uso:</strong> Este software ("Omnisfera") encontra-se em estágio de desenvolvimento (BETA). O acesso é concedido em caráter pessoal, intransferível e temporário.<br><br>
-                2. <strong>Propriedade Intelectual:</strong> Todo o código fonte, algoritmos de IA, prompts, design de interface e metodologia pedagógica são de propriedade exclusiva de <strong>Rodrigo A. Queiroz</strong>. É estritamente vedada a cópia, engenharia reversa, print screen para divulgação pública ou comercialização de qualquer parte desta solução.<br><br>
-                3. <strong>Dados e Feedback:</strong> Ao utilizar o sistema, o usuário concorda que seus dados de navegação e feedbacks inseridos poderão ser utilizados para aprimoramento da plataforma.<br><br>
-                4. <strong>LGPD:</strong> O usuário compromete-se a não inserir dados reais sensíveis de alunos que violem a LGPD, utilizando dados fictícios para testes.
-            </div>
-            """, unsafe_allow_html=True)
-            
-            concordo = st.checkbox("Li, compreendi e concordo com os termos.")
-            st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
-            
-            # --- ### INICIO BLOCO TESTE: SENHA OPCIONAL ### ---
-            # Mudei o placeholder e removi a lógica de checagem obrigatória no botão
-            senha = st.text_input("senha_fake", type="password", placeholder="Senha (Opcional no Teste)", label_visibility="collapsed")
-            st.caption("🔓 Ambiente de Teste: Senha liberada")
-            # --- ### FIM BLOCO TESTE ### ---
+            if IS_TEST_ENV:
+                # --- MODO TESTE (SEM CAMPOS OBRIGATÓRIOS VISUAIS) ---
+                st.markdown("<div class='teste-warning'>🛠️ MODO TESTE ATIVADO: Acesso Rápido Liberado</div>", unsafe_allow_html=True)
+                # Campos opcionais para quem quiser preencher, mas não obrigatórios
+                with st.expander("📝 Preencher dados (Opcional)"):
+                    nome_user = st.text_input("nome_fake", placeholder="Nome (Opcional)", label_visibility="collapsed")
+                    st.markdown("<div style='height:5px'></div>", unsafe_allow_html=True)
+                    cargo_user = st.text_input("cargo_fake", placeholder="Cargo (Opcional)", label_visibility="collapsed")
+                
+                btn_texto = "🚀 ENTRAR (TESTE)"
+                
+            else:
+                # --- MODO PÚBLICO (TUDO OBRIGATÓRIO) ---
+                st.markdown("<div style='text-align:left; font-weight:bold; color:#2D3748; font-size:0.9rem; margin-bottom:5px;'>👋 Sua Identidade</div>", unsafe_allow_html=True)
+                nome_user = st.text_input("nome_real", placeholder="Como gostaria de ser chamado?", label_visibility="collapsed")
+                st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+                cargo_user = st.text_input("cargo_real", placeholder="Seu Cargo (Ex: Professor, Coord...)", label_visibility="collapsed")
+                
+                st.markdown("---")
+
+                st.markdown("<div style='text-align:left; font-weight:bold; color:#2D3748; font-size:0.9rem; margin-bottom:5px;'>🛡️ Termos de Uso (Beta)</div>", unsafe_allow_html=True)
+                st.markdown("""
+                <div class="termo-box">
+                    <strong>ACORDO DE CONFIDENCIALIDADE E PROPRIEDADE INTELECTUAL</strong><br><br>
+                    1. <strong>Licença de Uso:</strong> Este software ("Omnisfera") encontra-se em estágio de desenvolvimento (BETA). O acesso é concedido em caráter pessoal, intransferível e temporário.<br><br>
+                    2. <strong>Propriedade Intelectual:</strong> Todo o código fonte, algoritmos de IA, prompts, design de interface e metodologia pedagógica são de propriedade exclusiva de <strong>Rodrigo A. Queiroz</strong>. É estritamente vedada a cópia, engenharia reversa, print screen para divulgação pública ou comercialização de qualquer parte desta solução.<br><br>
+                    3. <strong>Dados e Feedback:</strong> Ao utilizar o sistema, o usuário concorda que seus dados de navegação e feedbacks inseridos poderão ser utilizados para aprimoramento da plataforma.<br><br>
+                    4. <strong>LGPD:</strong> O usuário compromete-se a não inserir dados reais sensíveis de alunos que violem a LGPD, utilizando dados fictícios para testes.
+                </div>
+                """, unsafe_allow_html=True)
+                
+                concordo = st.checkbox("Li, compreendi e concordo com os termos.")
+                st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+                
+                senha = st.text_input("senha_real", type="password", placeholder="Senha de Acesso", label_visibility="collapsed")
+                btn_texto = "🔒 ACESSAR OMNISFERA"
 
             st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
             
-            # --- ### INICIO BLOCO TESTE: LÓGICA DO BOTÃO ### ---
-            if st.button("🚀 ACESSAR (MODO TESTE)"):
-                # Para produção, você deve descomentar a linha de data e senha_correta
-                # hoje = date.today()
-                # senha_correta = "PEI_START_2026" if ...
-                
-                if not concordo:
-                    st.warning("⚠️ Aceite os termos para continuar.")
-                elif not nome_user or not cargo_user:
-                    st.warning("⚠️ Preencha Nome e Cargo para prosseguir.")
-                
-                # AQUI ESTÁ A MUDANÇA: Aceitamos qualquer senha (ou nenhuma)
-                else: 
+            # --- LÓGICA DO BOTÃO ---
+            if st.button(btn_texto):
+                if IS_TEST_ENV:
+                    # Lógica Teste: Entra direto, usa valores padrão se vazio
                     st.session_state["autenticado"] = True
-                    st.session_state["usuario_nome"] = nome_user
-                    st.session_state["usuario_cargo"] = cargo_user
+                    st.session_state["usuario_nome"] = nome_user if nome_user else "Visitante Teste"
+                    st.session_state["usuario_cargo"] = cargo_user if cargo_user else "Desenvolvedor"
                     st.rerun()
-                
-                # Para produção, a lógica seria:
-                # elif senha == senha_correta:
-                #    ...loga...
-                # else:
-                #    st.error("Senha inválida")
-            # --- ### FIM BLOCO TESTE ### ---
+                else:
+                    # Lógica Pública: Validação Rigorosa
+                    # Senha dinâmica baseada na data
+                    hoje = date.today()
+                    senha_mestra = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
+
+                    if not concordo:
+                        st.warning("⚠️ Você precisa aceitar os termos de uso.")
+                    elif not nome_user or not cargo_user:
+                        st.warning("⚠️ Preencha Nome e Cargo para prosseguir.")
+                    elif senha != senha_mestra:
+                        st.error("🚫 Senha incorreta.")
+                    else:
+                        st.session_state["autenticado"] = True
+                        st.session_state["usuario_nome"] = nome_user
+                        st.session_state["usuario_cargo"] = cargo_user
+                        st.rerun()
             
-            # Fecha container HTML
             st.markdown("</div>", unsafe_allow_html=True)
             
         return False
