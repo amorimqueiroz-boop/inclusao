@@ -1028,40 +1028,48 @@ else:
         
         # --- BLOOM SECTION ---
         st.write("---")
-        st.markdown("#### 🧠 Intencionalidade Pedagógica")
+        st.markdown("#### 🧠 Intencionalidade Pedagógica (Taxonomia de Bloom)")
         usar_bloom = st.checkbox("🎯 Usar Taxonomia de Bloom (Revisada)")
-        verbos_selecionados = []
+        
+        # Inicializa memória de seleção no session state se não existir
+        if 'bloom_memoria' not in st.session_state:
+            st.session_state.bloom_memoria = {cat: [] for cat in TAXONOMIA_BLOOM.keys()}
+
+        verbos_finais_para_ia = []
+
         if usar_bloom:
             col_b1, col_b2 = st.columns(2)
             
-            # --- MUDANÇA CIRÚRGICA: MULTISELECT PARA CATEGORIAS ---
-            cats_selecionadas = col_b1.multiselect(
-                "Categorias Cognitivas:", 
-                list(TAXONOMIA_BLOOM.keys()),
-                default=None
+            # 1. Seleciona a Categoria (Gaveta)
+            cat_atual = col_b1.selectbox("Categoria Cognitiva:", list(TAXONOMIA_BLOOM.keys()))
+            
+            # 2. Mostra Multiselect apenas para essa categoria, carregando o que já estava na memória
+            selecao_atual = col_b2.multiselect(
+                f"Verbos de '{cat_atual}':", 
+                TAXONOMIA_BLOOM[cat_atual],
+                default=st.session_state.bloom_memoria[cat_atual],
+                key=f"ms_bloom_{cat_atual}" # Chave única para o widget
             )
             
-            # AGREGAÇÃO DE VERBOS
-            verbos_disponiveis = []
-            if cats_selecionadas:
-                for cat in cats_selecionadas:
-                    verbos_disponiveis.extend(TAXONOMIA_BLOOM[cat])
+            # 3. Atualiza a memória com o que o usuário acabou de mexer
+            st.session_state.bloom_memoria[cat_atual] = selecao_atual
             
-            verbos_selecionados = col_b2.multiselect(
-                "Selecione os Verbos de Ação:", 
-                verbos_disponiveis,
-                key="bloom_verbs_final", # Chave fixa para persistência
-                help=f"Você selecionou {qtd_c} questões. Tente escolher pelo menos {min(3, qtd_c)} verbos para variar."
-            )
+            # 4. Agrega tudo para mostrar ao usuário e enviar para a IA
+            for cat in st.session_state.bloom_memoria:
+                verbos_finais_para_ia.extend(st.session_state.bloom_memoria[cat])
             
-            if verbos_selecionados:
-                st.info(f"As questões serão criadas com foco em: **{', '.join(verbos_selecionados)}**")
+            if verbos_finais_para_ia:
+                st.info(f"**Verbos Tagueados (Total):** {', '.join(verbos_finais_para_ia)}")
+            else:
+                st.caption("Nenhum verbo selecionado ainda.")
         # ---------------------
 
         if st.button("✨ CRIAR ATIVIDADE", type="primary", key="btn_c"):
             with st.spinner("Elaborando..."):
                 qtd_final = qtd_img_sel if usar_img else 0
-                rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, verbos_bloom=verbos_selecionados if usar_bloom else None)
+                
+                # Passamos a lista agregada 'verbos_finais_para_ia'
+                rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, verbos_bloom=verbos_finais_para_ia if usar_bloom else None)
                 
                 novo_map = {}; count = 0
                 tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', txt)
@@ -1088,7 +1096,13 @@ else:
                 if col_r.button("🧠 Refazer (+Profundo)", key="redo_c"):
                     with st.spinner("Refazendo..."):
                         qtd_final = qtd_img_sel if usar_img else 0
-                        rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, verbos_bloom=verbos_selecionados if usar_bloom else None, modo_profundo=True)
+                        # Mesmo aqui, passamos a lista agregada atualizada
+                        verbos_profundos = []
+                        if usar_bloom:
+                             for cat in st.session_state.bloom_memoria:
+                                verbos_profundos.extend(st.session_state.bloom_memoria[cat])
+
+                        rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, verbos_bloom=verbos_profundos if usar_bloom else None, modo_profundo=True)
                         st.session_state['res_create']['rac'] = rac
                         st.session_state['res_create']['txt'] = txt
                         st.session_state['res_create']['valid'] = False
