@@ -1033,13 +1033,24 @@ else:
         verbos_selecionados = []
         if usar_bloom:
             col_b1, col_b2 = st.columns(2)
-            cat_bloom = col_b1.selectbox("Categoria Cognitiva:", list(TAXONOMIA_BLOOM.keys()))
             
-            # --- MUDANÇA CIRÚRGICA: CHAVE DINÂMICA PARA RESETAR LISTA AO MUDAR CATEGORIA ---
+            # --- MUDANÇA CIRÚRGICA: MULTISELECT PARA CATEGORIAS ---
+            cats_selecionadas = col_b1.multiselect(
+                "Categorias Cognitivas:", 
+                list(TAXONOMIA_BLOOM.keys()),
+                default=None
+            )
+            
+            # AGREGAÇÃO DE VERBOS
+            verbos_disponiveis = []
+            if cats_selecionadas:
+                for cat in cats_selecionadas:
+                    verbos_disponiveis.extend(TAXONOMIA_BLOOM[cat])
+            
             verbos_selecionados = col_b2.multiselect(
                 "Selecione os Verbos de Ação:", 
-                TAXONOMIA_BLOOM[cat_bloom],
-                key=f"verbs_{cat_bloom}", # <--- O segredo do reset automático
+                verbos_disponiveis,
+                key="bloom_verbs_final", # Chave fixa para persistência
                 help=f"Você selecionou {qtd_c} questões. Tente escolher pelo menos {min(3, qtd_c)} verbos para variar."
             )
             
