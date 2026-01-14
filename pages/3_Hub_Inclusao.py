@@ -254,7 +254,7 @@ def obter_recurso_visual(api_key, prompt, unsplash_key=None, modo="ia_strict", f
         if url_stock:
             return url_stock
     
-    # 2. MODO IA / FALLBACK
+    # 2. MODO IA / FALLBACK (DALL-E 3)
     try:
         didactic_prompt = f"Educational textbook illustration, clean flat vector style, white background. CRITICAL RULE: STRICTLY NO TEXT, NO TYPOGRAPHY, NO ALPHABET, NO NUMBERS. Visual representation of: {prompt_final}"
         resp = client.images.generate(model="dall-e-3", prompt=didactic_prompt, size="1024x1024", quality="standard", n=1)
