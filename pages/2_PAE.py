@@ -1,20 +1,15 @@
 import streamlit as st
 import omni_utils as core
 
-# 1. Configura
-st.set_page_config(page_title="PEI 360", layout="wide")
-core.aplicar_estilo_global()
+st.set_page_config(page_title="PAEE", layout="wide")
 
-# 2. Loga
 if not core.verificar_acesso(): st.stop()
 
-# 3. RENDERIZA HEADER PERSONALIZADO
-# Aqui você passa a imagem específica "360.png"
+# REPLICA O ESTILO MUDANDO SÓ O TEXTO E COR
 core.renderizar_header_padrao(
-    titulo="PEI 360º",
-    subtitulo="Ecossistema de Inteligência Pedagógica e Inclusiva",
-    nome_arquivo_imagem="360.png",
-    cor_destaque="#3182CE"  # Azul para PEI
+    titulo="PAEE & T.A.", 
+    subtitulo="Plano de Atendimento Educacional Especializado e Sala de Recursos.",
+    cor_destaque="#805AD5" # Roxo
 )
 
 # ==============================================================================
