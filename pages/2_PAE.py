@@ -1,9 +1,22 @@
+# ARQUIVO: pages/2_PAE.py
 import streamlit as st
-import omni_utils as core  # Importa a Matriz
-import json
-import os
-import base64
-from openai import OpenAI
+import omni_utils as core
+# ... imports ...
+
+st.set_page_config(page_title="PAEE", layout="wide")
+
+# AQUI: Define logo da sidebar (pae.png) e DESLIGA a logo fixa do topo (False)
+core.aplicar_estilo_global(logo_pagina="pae.png", exibir_header_global=False)
+
+if not core.verificar_acesso(): st.stop()
+
+# Agora usamos o Card Personalizado como cabeçalho
+core.renderizar_header_padrao(
+    titulo="PAEE & T.A.",
+    subtitulo="Plano de Atendimento Educacional Especializado",
+    nome_arquivo_imagem="pae.png",
+    cor_destaque="#805AD5"
+)
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E INICIALIZAÇÃO DA MATRIZ
