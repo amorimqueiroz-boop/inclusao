@@ -27,7 +27,7 @@ import streamlit as st
 try: IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
 except: IS_TEST_ENV = False
 
-# 2. Logo Base64
+# 2. Logo Base64 (Giratória)
 def get_logo_base64():
     caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
     for c in caminhos:
@@ -60,15 +60,10 @@ st.markdown(f"""
 
     /* HEADER DA PÁGINA (CLEAN - ROXO PARA PAEE) */
     .header-clean {{
-        background-color: white; padding: 30px 40px; border-radius: var(--card-radius);
+        background-color: white; padding: 20px 30px; border-radius: var(--card-radius);
         border-left: 6px solid var(--brand-purple); 
         box-shadow: 0 4px 12px rgba(0,0,0,0.04); margin-bottom: 30px;
         display: flex; align-items: center; gap: 25px;
-    }}
-    .icon-box {{
-        width: 55px; height: 55px; background: #F3E8FF; border-radius: 14px;
-        display: flex; align-items: center; justify-content: center;
-        color: var(--brand-purple); font-size: 28px;
     }}
 
     /* HEADER DO ESTUDANTE */
@@ -172,13 +167,25 @@ def carregar_banco():
 if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
     st.session_state.banco_estudantes = carregar_banco()
 
-# --- HEADER DA PÁGINA ---
-st.markdown("""
+# --- HEADER COM LOGO PAE (SUBSTITUINDO TÍTULO) ---
+def get_img_tag_custom(file_path, width):
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            data = base64.b64encode(f.read()).decode("utf-8")
+        return f'<img src="data:image/png;base64,{data}" width="{width}" style="object-fit: contain;">'
+    return ""
+
+img_pae = get_img_tag_custom("pae.png", "220") # Logo maior substituindo título
+
+st.markdown(f"""
 <div class="header-clean">
-    <div class="icon-box"><i class="ri-puzzle-line"></i></div>
-    <div>
-        <h1 style="margin:0; font-size: 1.8rem; color: #2D3748; font-weight: 800;">PAEE & T.A.</h1>
-        <p style="margin:0; color: #718096; font-size: 1rem;">Sala de Recursos & Eliminação de Barreiras</p>
+    <div style="flex-shrink: 0;">
+        {img_pae}
+    </div>
+    <div style="flex-grow: 1; text-align: center;">
+        <p style="margin:0; color: #4A5568; font-size: 1.2rem; font-weight: 700; letter-spacing: 0.5px;">
+            Sala de Recursos & Eliminação de Barreiras
+        </p>
     </div>
 </div>
 """, unsafe_allow_html=True)
