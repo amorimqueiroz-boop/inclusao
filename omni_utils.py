@@ -3,9 +3,7 @@ import os
 import base64
 from datetime import date
 
-# ==============================================================================
-# 1. CONFIGURAÇÕES
-# ==============================================================================
+# --- CONFIGURAÇÕES GERAIS ---
 APP_VERSION = "v116.0"
 
 def verificar_ambiente():
@@ -14,9 +12,7 @@ def verificar_ambiente():
 
 IS_TEST_ENV = verificar_ambiente()
 
-# ==============================================================================
-# 2. IMAGENS
-# ==============================================================================
+# --- UTILITÁRIOS DE IMAGEM ---
 def get_base64_image(image_path):
     if not image_path or not os.path.exists(image_path): return ""
     with open(image_path, "rb") as img_file:
@@ -28,20 +24,19 @@ def finding_logo():
         if os.path.exists(c): return c
     return None
 
-# ==============================================================================
-# 3. HEADER DE PÁGINA (CARD BRANCO - MÓDULOS)
-# ==============================================================================
+# --- RENDERIZAÇÃO DO CARD DE CABEÇALHO (MÓDULOS) ---
 def renderizar_header_padrao(titulo, subtitulo, nome_arquivo_imagem=None, cor_destaque="#0F52BA"):
-    """Renderiza o cabeçalho específico (Card) dentro da página"""
     
+    # Definição da Logo
     if nome_arquivo_imagem and os.path.exists(nome_arquivo_imagem):
         b64_logo = get_base64_image(nome_arquivo_imagem)
     else:
         padrao = finding_logo()
         b64_logo = get_base64_image(padrao) if padrao else ""
 
-    img_html = f'<img src="data:image/png;base64,{b64_logo}" style="height: 90px; width: auto; object-fit: contain;">' if b64_logo else '<div style="font-size: 60px;">🔷</div>'
+    img_html = f'<img src="data:image/png;base64,{b64_logo}" style="height: 90px; width: auto; object-fit: contain;">' if b64_logo else '<div style="font-size: 70px;">🔷</div>'
 
+    # CSS Local
     st.markdown("""
     <style>
         .header-card {
@@ -63,6 +58,7 @@ def renderizar_header_padrao(titulo, subtitulo, nome_arquivo_imagem=None, cor_de
     </style>
     """, unsafe_allow_html=True)
 
+    # HTML
     st.markdown(f"""
     <div class="header-card" style="border-left: 8px solid {cor_destaque} !important;">
         <div class="header-logo">{img_html}</div>
@@ -70,44 +66,38 @@ def renderizar_header_padrao(titulo, subtitulo, nome_arquivo_imagem=None, cor_de
     </div>
     """, unsafe_allow_html=True)
 
-# ==============================================================================
-# 4. APLICAR ESTILO (COM CONTROLE DO HEADER FIXO)
-# ==============================================================================
+# --- APLICAÇÃO DE ESTILOS E ESTRUTURA ---
 def aplicar_estilo_global(logo_pagina=None, exibir_header_global=True):
-    """
-    exibir_header_global=True -> Mostra a barra de vidro no topo (Use na HOME)
-    exibir_header_global=False -> Esconde a barra de vidro (Use nos MÓDULOS)
-    """
     
-    # Define variáveis de ambiente
+    # Variáveis de Ambiente
     if IS_TEST_ENV:
         footer_vis, card_bg, card_border, display_text = "visible", "rgba(255, 220, 50, 0.95)", "rgba(200, 160, 0, 0.5)", "OMNISFERA | TESTE"
     else:
         footer_vis, card_bg, card_border, display_text = "hidden", "rgba(255, 255, 255, 0.85)", "rgba(255, 255, 255, 0.6)", f"OMNISFERA {APP_VERSION}"
 
-    # CSS MESTRE
+    # CSS Principal
     st.markdown(f"""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
         html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; }}
 
-        /* Ocultar Menu Nativo */
+        /* Sidebar Nativa Oculta */
         [data-testid="stSidebarNav"] {{ display: none !important; }}
         section[data-testid="stSidebar"] {{ background-color: #FFFFFF !important; border-right: 1px solid #E2E8F0; }}
         
-        /* Ajuste do Topo da Página */
-        /* Se o header global estiver desligado, reduzimos o padding superior */
+        /* Layout */
         .block-container {{ 
             padding-top: {'140px' if exibir_header_global else '60px'} !important; 
             padding-bottom: 3rem !important; 
         }}
 
+        /* Elementos de Interface */
         footer {{ visibility: {footer_vis} !important; }}
         header[data-testid="stHeader"] {{ background: transparent !important; z-index: 9999; pointer-events: none; }}
         [data-testid="stToolbar"] {{ display: none !important; }}
         [data-testid="stSidebarCollapsedControl"] {{ top: {'110px' if exibir_header_global else '20px'} !important; background: white !important; border: 1px solid #E2E8F0; padding: 4px; border-radius: 8px; pointer-events: auto; }}
 
-        /* Header Vidro Global (Só aparece se o HTML for injetado) */
+        /* Header Global (Vidro) */
         .logo-container {{
             position: fixed; top: 0; left: 0; width: 100%; height: 100px;
             background-color: rgba(247, 250, 252, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -118,6 +108,7 @@ def aplicar_estilo_global(logo_pagina=None, exibir_header_global=True):
         .logo-text-static {{ height: 50px; }}
         @keyframes spin {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
 
+        /* Badge Status */
         .omni-badge {{
             position: fixed; top: 20px; right: 20px;
             background: {card_bg}; border: 1px solid {card_border};
@@ -128,10 +119,9 @@ def aplicar_estilo_global(logo_pagina=None, exibir_header_global=True):
     </style>
     """, unsafe_allow_html=True)
 
-    # 1. Badge de Status (Sempre presente para saber se é teste/prod)
+    # Renderização Condicional do Header
     st.markdown(f'<div class="omni-badge">{display_text}</div>', unsafe_allow_html=True)
     
-    # 2. Header Global (CONDICIONAL)
     if exibir_header_global:
         img_app_icon = get_base64_image("omni_icone.png")
         img_app_text = get_base64_image("omni_texto.png")
@@ -141,13 +131,14 @@ def aplicar_estilo_global(logo_pagina=None, exibir_header_global=True):
         else:
             st.markdown("<div class='logo-container'><h1 style='color: #0F52BA;'>🌐 OMNISFERA</h1></div>", unsafe_allow_html=True)
 
-    # 3. Sidebar
+    # Inicialização da Sidebar
     logo_para_sidebar = logo_pagina if logo_pagina else "omni_icone.png"
     construir_sidebar_manual(get_base64_image(logo_para_sidebar))
 
 def construir_sidebar_manual(img_sidebar_b64):
     with st.sidebar:
         st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+        
         if img_sidebar_b64: 
             st.markdown(f"""<div style="text-align: center; margin-bottom: 20px; opacity: 1;"><img src="data:image/png;base64,{img_sidebar_b64}" width="70" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));"></div>""", unsafe_allow_html=True)
 
@@ -157,24 +148,21 @@ def construir_sidebar_manual(img_sidebar_b64):
             st.markdown(f"""<div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 10px; margin-bottom: 30px;"><div style="font-weight: bold; color: #2D3748; font-size: 0.9rem;">👋 Olá, {nome}</div><div style="font-size: 0.75rem; color: #718096; text-transform: uppercase;">{cargo}</div></div>""", unsafe_allow_html=True)
 
         st.markdown("<p style='font-size: 0.75rem; color: #A0AEC0; font-weight: 700; margin-bottom: 10px; padding-left: 5px;'>NAVEGAÇÃO</p>", unsafe_allow_html=True)
+        
         st.page_link("Home.py", label="Dashboard", icon="🏠")
         st.page_link("pages/1_PEI.py", label="PEI 360º", icon="📘")
         st.page_link("pages/2_PAE.py", label="PAEE & T.A.", icon="🧩")
         st.page_link("pages/3_Hub_Inclusao.py", label="Hub Inclusão", icon="🚀")
+        
         st.markdown("---")
         if st.button("🔒 Sair", use_container_width=True):
             st.session_state["autenticado"] = False
             st.rerun()
 
-# ==============================================================================
-# 5. LOGIN
-# ==============================================================================
 def verificar_acesso():
     if st.session_state.get("autenticado", False): return True
     
-    # Força CSS de login para esconder cabeçalhos nativos se houver
     st.markdown("""<style>[data-testid="stHeader"] {visibility: hidden !important;}</style>""", unsafe_allow_html=True)
-    
     c1, c2, c3 = st.columns([1, 1.5, 1])
     with c2:
         st.markdown("<br><br>", unsafe_allow_html=True)
