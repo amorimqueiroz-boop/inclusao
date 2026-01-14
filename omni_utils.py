@@ -16,7 +16,7 @@ def verificar_ambiente():
 IS_TEST_ENV = verificar_ambiente()
 
 # ==============================================================================
-# 2. FUNÇÕES DE UTILIDADE (IMAGENS)
+# 2. FUNÇÕES DE UTILIDADE
 # ==============================================================================
 def get_base64_image(image_path):
     if not os.path.exists(image_path): return ""
@@ -24,93 +24,89 @@ def get_base64_image(image_path):
         return base64.b64encode(img_file.read()).decode()
 
 # ==============================================================================
-# 3. CSS GLOBAL (A "MATRIZ" VISUAL)
+# 3. CSS GLOBAL E SIDEBAR CUSTOMIZADA
 # ==============================================================================
 def aplicar_estilo_global():
-    """Aplica CSS que vale para TODAS as páginas"""
+    """Aplica o CSS mestre e CONSTRÓI a sidebar customizada"""
     
-    # Lógica Visual
+    # Configurações Visuais por Ambiente
     if IS_TEST_ENV:
         footer_vis, card_bg, card_border, display_text = "visible", "rgba(255, 220, 50, 0.95)", "rgba(200, 160, 0, 0.5)", "OMNISFERA | TESTE"
     else:
         footer_vis, card_bg, card_border, display_text = "hidden", "rgba(255, 255, 255, 0.85)", "rgba(255, 255, 255, 0.6)", f"OMNISFERA {APP_VERSION}"
 
-    # --- CSS AGRESSIVO PARA SIDEBAR ---
+    # CSS MESTRE
     st.markdown(f"""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Nunito:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
         
-        html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; }}
+        /* RESET GERAL */
+        html {{ scroll-behavior: smooth; }}
+        html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }}
 
-        /* 1. FORÇAR A SIDEBAR A SER BRANCA (CSS Nuclear) */
+        /* --- 1. SUMIR COM O MENU NATIVO (O SEGREDO) --- */
+        [data-testid="stSidebarNav"] {{
+            display: none !important;
+        }}
+
+        /* --- 2. SIDEBAR LIMPA --- */
         section[data-testid="stSidebar"] {{
-            background-color: #FFFFFF !important; /* Fundo Branco */
-            border-right: 1px solid #E2E8F0 !important; /* Borda sutil */
-            box-shadow: 4px 0 20px rgba(0,0,0,0.03) !important; /* Sombra suave */
+            background-color: #FFFFFF !important;
+            border-right: 1px solid #E2E8F0;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.02);
+            padding-top: 0px !important;
         }}
         
-        /* Garante que o container interno também seja branco */
-        section[data-testid="stSidebar"] > div {{
-            background-color: #FFFFFF !important;
-        }}
-
-        /* 2. ESTILIZAR OS LINKS DE NAVEGAÇÃO (Páginas) */
-        /* Link Normal */
-        [data-testid="stSidebarNav"] a {{
+        /* --- 3. ESTILIZAR NOSSOS BOTÕES DE MENU NA SIDEBAR --- */
+        /* Transforma botões comuns em links elegantes */
+        section[data-testid="stSidebar"] button {{
+            width: 100%;
             background-color: transparent !important;
-            color: #4A5568 !important; /* Cinza Escuro */
+            color: #4A5568 !important;
+            border: 1px solid transparent !important;
+            border-radius: 8px !important;
+            text-align: left !important;
+            padding: 10px 15px !important;
             font-family: 'Inter', sans-serif !important;
             font-weight: 500 !important;
-            border-radius: 8px !important;
-            padding: 10px 15px !important;
-            margin-bottom: 5px !important;
-            transition: all 0.3s ease !important;
-            border: 1px solid transparent !important;
+            margin-bottom: 4px !important;
+            transition: all 0.2s ease !important;
+            display: flex;
+            justify-content: flex-start;
         }}
         
-        /* Link ao passar o mouse (Hover) */
-        [data-testid="stSidebarNav"] a:hover {{
-            background-color: #EBF8FF !important; /* Azul bem clarinho */
-            color: #3182CE !important; /* Azul forte */
-            border: 1px solid #BEE3F8 !important;
-            padding-left: 20px !important; /* Efeito de deslizar para a direita */
+        /* Efeito Hover nos botões do menu */
+        section[data-testid="stSidebar"] button:hover {{
+            background-color: #F1F5F9 !important;
+            color: #3182CE !important;
+            border: 1px solid #E2E8F0 !important;
+            padding-left: 20px !important; /* Desliza para direita */
         }}
         
-        /* Link Ativo (Página Atual) */
-        [data-testid="stSidebarNav"] a[aria-current="page"] {{
-            background-color: #3182CE !important;
-            color: white !important;
-            font-weight: 700 !important;
-            box-shadow: 0 4px 10px rgba(49, 130, 206, 0.3) !important;
+        /* Botão "Sair" ou ações secundárias */
+        .logout-btn button {{
+            color: #E53E3E !important;
+        }}
+        .logout-btn button:hover {{
+            background-color: #FFF5F5 !important;
+            border-color: #FED7D7 !important;
         }}
 
-        /* 3. TÍTULOS E TEXTOS NA SIDEBAR */
-        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {{
-            color: #1A202C !important;
-            font-family: 'Inter', sans-serif !important;
-        }}
-        
-        [data-testid="stSidebar"] p, [data-testid="stSidebar"] span {{
-            color: #4A5568 !important;
-        }}
-
-        /* --- RESTO DO CSS (VIDRO, LOGIN, ETC) --- */
-        
-        /* Header e Footer */
+        /* --- 4. HEADER E ELEMENTOS GERAIS --- */
         footer {{ visibility: {footer_vis} !important; }}
         header[data-testid="stHeader"] {{ background-color: transparent !important; z-index: 9999 !important; pointer-events: none; }}
         [data-testid="stToolbar"] {{ visibility: hidden !important; display: none !important; }}
+        .block-container {{ padding-top: 140px !important; padding-bottom: 3rem !important; }}
 
-        /* Menu Hambúrguer */
+        /* Menu Hambúrguer Customizado */
         [data-testid="stSidebarCollapsedControl"] {{
             position: fixed !important; top: 110px !important; left: 20px !important; z-index: 1000000 !important;
             visibility: visible !important; display: flex !important;
             background-color: white !important; border: 1px solid #E2E8F0 !important; border-radius: 12px !important;
             width: 40px !important; height: 40px !important;
             align-items: center !important; justify-content: center !important;
-            color: #2D3748 !important; pointer-events: auto !important; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
-            transition: all 0.2s ease !important;
+            color: #2D3748 !important; box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+            pointer-events: auto !important; transition: all 0.2s ease !important;
         }}
         [data-testid="stSidebarCollapsedControl"]:hover {{ background-color: #3182CE !important; color: white !important; transform: scale(1.05); }}
 
@@ -134,14 +130,11 @@ def aplicar_estilo_global():
             z-index: 999990; display: flex; align-items: center; justify-content: center; pointer-events: none;
         }}
         .omni-text {{ font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.75rem; color: #2D3748; letter-spacing: 2px; text-transform: uppercase; }}
-        
-        .block-container {{ padding-top: 140px !important; padding-bottom: 3rem !important; }}
     </style>
     """, unsafe_allow_html=True)
 
-    # --- RENDERIZA ELEMENTOS FIXOS DA UI ---
+    # Renderiza HTML Fixo (Header/Badge)
     st.markdown(f'<div class="omni-badge"><span class="omni-text">{display_text}</span></div>', unsafe_allow_html=True)
-    
     img_icon = get_base64_image("omni_icone.png")
     img_text = get_base64_image("omni_texto.png")
     
@@ -149,38 +142,64 @@ def aplicar_estilo_global():
         html_header = f"""<div class="logo-container"><img src="data:image/png;base64,{img_icon}" class="logo-icon-spin"><img src="data:image/png;base64,{img_text}" class="logo-text-static"></div>"""
     else:
         html_header = "<div class='logo-container'><h1 style='color: #0F52BA; margin:0;'>🌐 OMNISFERA</h1></div>"
-    
     st.markdown(html_header, unsafe_allow_html=True)
 
-    # --- SIDEBAR INTERNA (CONTEÚDO) ---
+    # --- AQUI ESTÁ A MÁGICA: CONSTRUIR NOSSA SIDEBAR MANUALMENTE ---
+    construir_sidebar_manual(img_icon)
+
+def construir_sidebar_manual(img_icon):
     with st.sidebar:
-        # Espaço no topo para não colar no header
+        # 1. Logo no topo da sidebar
         st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-        
-        # Logo Pequena na Sidebar (Opcional, dá charme)
         if img_icon:
-            st.markdown(f"""
-            <div style="text-align: center; margin-bottom: 30px;">
-                <img src="data:image/png;base64,{img_icon}" width="50" style="opacity: 0.8;">
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div style="text-align: center; margin-bottom: 25px; opacity: 0.9;"><img src="data:image/png;base64,{img_icon}" width="60"></div>""", unsafe_allow_html=True)
         
-        # Card do Usuário (Glass na Sidebar)
+        # 2. Cartão do Usuário
         if "usuario_nome" in st.session_state:
             nome = st.session_state["usuario_nome"].split()[0]
             cargo = st.session_state["usuario_cargo"]
             st.markdown(f"""
-            <div style="
-                background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);
-                padding: 15px; border-radius: 12px; border: 1px solid #E2E8F0;
-                margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
-                <div style="font-family: 'Inter'; font-weight: 700; color: #2D3748; font-size: 0.95rem; margin-bottom: 2px;">👋 Olá, {nome}</div>
-                <div style="font-size: 0.75rem; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">{cargo}</div>
+            <div style="background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%); padding: 15px; border-radius: 12px; border: 1px solid #E2E8F0; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                <div style="font-family: 'Inter'; font-weight: 700; color: #2D3748; font-size: 0.95rem;">👋 Olá, {nome}</div>
+                <div style="font-size: 0.75rem; color: #718096; font-weight: 600; text-transform: uppercase;">{cargo}</div>
             </div>
             """, unsafe_allow_html=True)
 
+        # 3. MENU DE NAVEGAÇÃO (BOTÕES CUSTOMIZADOS)
+        st.markdown("<div style='font-size: 0.75rem; color: #A0AEC0; font-weight: 700; margin-bottom: 10px; padding-left: 5px;'>MENU PRINCIPAL</div>", unsafe_allow_html=True)
+        
+        # Navegação Manual - Use st.switch_page para trocar de tela
+        if st.button("🏠  Dashboard / Home"):
+            st.switch_page("Home.py")
+            
+        if st.button("📘  PEI 360º (Plano)"):
+            st.switch_page("pages/1_PEI.py")
+            
+        if st.button("🧩  PAEE & T.A."):
+            st.switch_page("pages/2_PAE.py")
+            
+        if st.button("🚀  Hub de Inclusão"):
+            st.switch_page("pages/3_Hub_Inclusao.py")
+
+        # 4. BOTÃO SAIR / FEEDBACK
+        st.markdown("<div style='margin-top: 40px; border-top: 1px solid #E2E8F0; padding-top: 20px;'></div>", unsafe_allow_html=True)
+        
+        # Feedback rápido dentro da própria sidebar (Expander)
+        with st.expander("📢 Feedback Rápido"):
+            st.caption("Ajude a melhorar o Omnisfera")
+            txt_feed = st.text_area("msg", placeholder="Sua mensagem...", label_visibility="collapsed")
+            if st.button("Enviar Feedback"):
+                st.toast("Obrigado!", icon="✅")
+
+        # Botão Sair (Exemplo visual)
+        st.markdown('<div class="logout-btn">', unsafe_allow_html=True)
+        if st.button("🔒 Sair do Sistema"):
+            st.session_state["autenticado"] = False
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
 # ==============================================================================
-# 4. SISTEMA DE LOGIN
+# 4. SISTEMA DE LOGIN (CENTRALIZADO)
 # ==============================================================================
 def verificar_acesso():
     if st.session_state.get("autenticado", False): return True
@@ -232,7 +251,6 @@ def renderizar_tela_login():
             else:
                 hoje = date.today()
                 senha_ok = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
-                
                 if not termo: st.warning("Aceite os termos.")
                 elif not nome or not cargo: st.warning("Preencha dados.")
                 elif senha != senha_ok: st.error("Senha incorreta.")
