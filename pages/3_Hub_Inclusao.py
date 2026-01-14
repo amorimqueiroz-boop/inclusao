@@ -457,15 +457,12 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, v
         6. TAXONOMIA DE BLOOM (RIGOROSO):
            - Utilize OBRIGATORIAMENTE os seguintes verbos de ação selecionados: {lista_verbos}.
            - Distribua esses verbos entre as questões criadas.
-           - REGRA DE FORMATAÇÃO: O verbo de comando deve vir no início do enunciado, em **NEGRITO E CAIXA ALTA** (Ex: **ANALISE**, **IDENTIFIQUE**, **EXPLIQUE**).
            - Use apenas UM verbo de comando por questão.
         """
 
     # --- AJUSTE: INSTRUÇÃO DE FORMATO BASEADA NO TIPO_Q ---
     diretriz_tipo = ""
-    if tipo_q == "Mista":
-        diretriz_tipo = "3. FORMATO MISTO (RIGOROSO): Crie uma mistura equilibrada. Nas questões OBJETIVAS, use distratores inteligentes. Nas questões DISCURSIVAS, NÃO inclua alternativas, apenas deixe espaço/linhas para resposta."
-    elif tipo_q == "Discursiva":
+    if tipo_q == "Discursiva":
         diretriz_tipo = "3. FORMATO DISCURSIVO (RIGOROSO): Crie apenas questões abertas. NÃO inclua alternativas, apenas linhas para resposta."
     else: # Objetiva
         diretriz_tipo = "3. FORMATO OBJETIVO: Crie questões de múltipla escolha com distratores inteligentes."
@@ -475,12 +472,20 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, v
     prompt = f"""
     {style}
     Crie prova de {materia} ({objeto}). QTD: {qtd} ({tipo_q}).
+    
     DIRETRIZES: 
     1. Contexto Real. 
     2. Hiperfoco ({hiperfoco}) em 30%. 
     {diretriz_tipo}
     4. Imagens: {instrucao_img} (NUNCA repita a mesma imagem). 
     5. Divisão Clara.
+    
+    REGRA DE OURO GRAMATICAL (IMPERATIVO):
+    - TODOS os comandos das questões devem estar no modo IMPERATIVO (Ex: "Cite", "Explique", "Calcule", "Analise", "Escreva").
+    - JAMAIS use o infinitivo (Ex: "Citar", "Explicar", "Calcular").
+    - Se houver verbos de Bloom selecionados, CONJUGUE-OS para o IMPERATIVO.
+    - O verbo de comando deve vir no início do enunciado, em **NEGRITO E CAIXA ALTA** (Ex: **ANALISE**, **IDENTIFIQUE**).
+    
     {instrucao_bloom}
     
     SAÍDA OBRIGATÓRIA:
@@ -1028,7 +1033,9 @@ else:
         
         cc3, cc4 = st.columns(2)
         qtd_c = cc3.slider("Qtd Questões", 1, 10, 5, key="cq")
-        tipo_quest = cc4.selectbox("Tipo", ["Objetiva", "Discursiva", "Mista"], key="ctq")
+        
+        # --- MUDANÇA: REMOVIDA OPÇÃO 'MISTA' ---
+        tipo_quest = cc4.selectbox("Tipo", ["Objetiva", "Discursiva"], key="ctq")
         
         col_img_opt, col_img_pct = st.columns([1, 2])
         usar_img = col_img_opt.checkbox("📸 Incluir Imagens?", value=True)
