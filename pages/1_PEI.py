@@ -60,7 +60,7 @@ else:
 # 4. Renderização do CSS Global e Header Flutuante
 st.markdown(f"""
 <style>
-   
+    
     /* -------------------------------------------- */
 
     /* CARD FLUTUANTE (OMNISFERA) */
@@ -593,6 +593,10 @@ def aplicar_estilo_visual():
         .sc-green { background-color: #F0FFF4; border-left-color: #38A169; }
         .footer-signature { margin-top: 50px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center; font-size: 0.8rem; color: #A0AEC0; }
         .meta-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 5px; }
+        
+        .sc-head { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.95rem; margin-bottom: 15px; color: #2D3748; }
+        .sc-body { font-size: 0.85rem; color: #4A5568; line-height: 1.5; flex-grow: 1; }
+        .bg-icon { position: absolute; bottom: -10px; right: -10px; font-size: 5rem; opacity: 0.08; pointer-events: none; }
     </style>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     """
@@ -1126,68 +1130,41 @@ abas = [
 ]
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
 
-with tab0: # INÍCIO (SEM TÍTULO FUNDAMENTOS)
-    if api_key:
-        with st.spinner("Conectando à IA..."):
-            try:
-                client = OpenAI(api_key=api_key)
-                saudacao = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": "Frase muito curta e motivadora para professor de educação inclusiva."}], max_tokens=30).choices[0].message.content
-                noticia = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": "Dica relâmpago (1 frase) sobre neurociência na escola."}], max_tokens=40).choices[0].message.content
-            except:
-                saudacao = "A inclusão transforma vidas."
-                noticia = "O cérebro aprende quando emocionado."
-        
-        # HERO BANNER
-        st.markdown(f"""
-        <div class="dash-hero">
-            <div>
-                <h2 style="color:white; margin:0;">Olá, Educador(a)!</h2>
-                <p style="margin:5px 0 0 0; opacity:0.9;">{saudacao}</p>
-            </div>
-            <div style="font-size:3rem; opacity:0.2;"><i class="ri-heart-pulse-line"></i></div>
-        </div>""", unsafe_allow_html=True)
-    
-    # GRID DE CARDS COLORIDOS
+with tab0: # INÍCIO
+    st.markdown("### 🏛️ Central de Fundamentos e Legislação")
+
+    # Bloco 1: O PEI (Azul)
     st.markdown("""
-    <div class="home-grid">
-        <a href="https://diversa.org.br/educacao-inclusiva/" target="_blank" class="rich-card">
-            <div class="rich-card-top" style="background-color: #3182CE;"></div>
-            <div class="rc-icon" style="background-color:#EBF8FF; color:#3182CE;"><i class="ri-book-open-line"></i></div>
-            <div class="rc-title">O que é PEI?</div>
-            <div class="rc-desc">Conceitos fundamentais e estruturação.</div>
-        </a>
-        <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="rich-card">
-            <div class="rich-card-top" style="background-color: #D69E2E;"></div>
-            <div class="rc-icon" style="background-color:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
-            <div class="rc-title">Legislação</div>
-            <div class="rc-desc">LBI e Decretos sobre inclusão.</div>
-        </a>
-        <a href="https://institutoneurosaber.com.br/" target="_blank" class="rich-card">
-            <div class="rich-card-top" style="background-color: #D53F8C;"></div>
-            <div class="rc-icon" style="background-color:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
-            <div class="rc-title">Neurociência</div>
-            <div class="rc-desc">Artigos sobre desenvolvimento atípico.</div>
-        </a>
-        <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="rich-card">
-            <div class="rich-card-top" style="background-color: #38A169;"></div>
-            <div class="rc-icon" style="background-color:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
-            <div class="rc-title">BNCC</div>
-            <div class="rc-desc">Currículo oficial e adaptações.</div>
-        </a>
+    <div class="soft-card sc-blue" style="min-height: auto; margin-bottom: 20px;">
+        <div class="sc-head"><i class="ri-article-line" style="color:#3182CE;"></i> O que é o PEI? (Definição Técnica)</div>
+        <div class="sc-body" style="font-size: 0.95rem; line-height: 1.6;">
+            O <b>Plano de Ensino Individualizado (PEI)</b> é o instrumento norteador da inclusão escolar. Ele não é apenas um documento burocrático, mas um mapa vivo que descreve as potencialidades, as barreiras e, principalmente, as <b>estratégias de eliminação de barreiras</b> para garantir o acesso ao currículo. O PEI baseia-se no Desenho Universal para a Aprendizagem (DUA) e deve ser revisado periodicamente. Ele garante que a escola não apenas "receba" o aluno, mas planeje ativamente sua permanência e sucesso.
+        </div>
+        <div class="bg-icon">📘</div>
     </div>
     """, unsafe_allow_html=True)
 
-    # INSIGHT CARD
-    if api_key:
-        st.markdown(f"""
-        <div class="insight-card">
-            <div class="insight-icon"><i class="ri-lightbulb-flash-line"></i></div>
-            <div>
-                <h4 style="margin:0; color:#2D3748;">Insight do Dia</h4>
-                <p style="margin:5px 0 0 0; font-size:0.95rem; opacity:0.9; color:#4A5568;">{noticia}</p>
+    # Bloco 2: Legislação (Amarelo/Laranja)
+    st.markdown("""
+    <div class="soft-card sc-yellow" style="min-height: auto;">
+        <div class="sc-head"><i class="ri-balance-line" style="color:#D69E2E;"></i> Marco Legal & Atualizações (2025)</div>
+        <div class="sc-body" style="font-size: 0.95rem; line-height: 1.6;">
+            A fundamentação legal do PDI/PEI baseia-se na <b>LDB (Lei 9.394/96)</b> e na Lei Brasileira de Inclusão, garantindo o direito à adaptação curricular e ao AEE.
+            <br><br>
+            <div style="background: rgba(255,255,255,0.6); padding: 15px; border-radius: 8px; border: 1px solid #E2E8F0;">
+                <strong style="color:#C05621;">📢 ATUALIZAÇÕES RECENTES (DEZEMBRO/2025)</strong>
+                <ul style="margin-top: 10px;">
+                     <li><b><a href="https://www2.camara.leg.br/legin/fed/decret/2025/decreto-12686-20-outubro-2025-798166-publicacaooriginal-176779-pe.html" target="_blank" style="text-decoration:none; color:#C05621;">Decreto nº 12.686 (20/10/2025)</a></b>: Estabelece novas diretrizes para o financiamento do AEE e a estruturação das salas de recursos multifuncionais.</li>
+                     <li style="margin-top:8px;"><b><a href="https://www2.camara.leg.br/legin/fed/decret/2025/decreto-12773-8-dezembro-2025-798454-publicacaooriginal-177304-pe.html" target="_blank" style="text-decoration:none; color:#C05621;">Decreto nº 12.773 (08/12/2025)</a></b>: Regula a obrigatoriedade do PDI em transições escolares e a formação continuada de professores.</li>
+                </ul>
+            </div>
+            <div style="margin-top: 10px; font-size: 0.85rem;">
+                🔗 <a href="https://www.planalto.gov.br/ccivil_03/leis/l9394.htm" target="_blank" style="color:#718096; text-decoration:none;">Consultar LDB na íntegra</a>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        <div class="bg-icon">⚖️</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 with tab1: # ESTUDANTE
     render_progresso()
