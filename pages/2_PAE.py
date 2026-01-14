@@ -10,14 +10,14 @@ import base64
 # 1. CONFIGURAÇÃO E SEGURANÇA
 # ==============================================================================
 st.set_page_config(
-    page_title="[TESTE] Omnisfera | PAEE", 
-    page_icon="🛠️", 
+    page_title="PAEE & T.A. | Omnisfera", 
+    page_icon="🧩", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ==============================================================================
-# 2. BLOCO VISUAL (DESIGN SYSTEM PREMIUM) & HEADER
+# 2. BLOCO VISUAL (DESIGN SYSTEM PREMIUM - AZUL SÓBRIO)
 # ==============================================================================
 import os
 import base64
@@ -37,31 +37,87 @@ def get_logo_base64():
 
 src_logo_giratoria = get_logo_base64()
 
-# 3. Cores Dinâmicas
+# 3. Cores Dinâmicas (Badge)
 if IS_TEST_ENV:
     card_bg, card_border = "rgba(255, 220, 50, 0.95)", "rgba(200, 160, 0, 0.5)"
 else:
     card_bg, card_border = "rgba(255, 255, 255, 0.85)", "rgba(255, 255, 255, 0.6)"
 
-# 4. Renderização CSS Global (Design System Premium)
+# 4. Renderização CSS Global (Design System Premium - AZUL)
 st.markdown(f"""
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-    /* VARIÁVEIS GLOBAIS */
+    /* VARIÁVEIS GLOBAIS - AZUL SÓBRIO */
     :root {{ 
-        --brand-blue: #004E92; --brand-coral: #FF6B6B; --brand-purple: #805AD5; 
+        --brand-blue: #0F52BA; 
+        --brand-hover: #0A3D8F;
         --card-radius: 16px; 
     }}
     
-    html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; color: #2D3748; }}
-    div[data-baseweb="tab-highlight"] {{ background-color: transparent !important; }}
+    /* 1. Fontes e Cores Base */
+    html, body, [class*="css"] {{ 
+        font-family: 'Nunito', sans-serif; 
+        color: #2D3748; 
+        background-color: #F7FAFC; 
+    }}
+    .block-container {{ 
+        padding-top: 1.5rem !important; 
+        padding-bottom: 5rem !important; 
+    }}
 
-    /* HEADER DA PÁGINA (UNIFICADO/CLEAN - AJUSTADO PARA FICAR MAIS ALTO) */
+    /* 2. Navegação em Abas "Glow" Clean */
+    div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] {{ display: none !important; }}
+    
+    .stTabs [data-baseweb="tab-list"] {{ 
+        gap: 8px; 
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 10px 5px;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }}
+    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {{ display: none; }}
+
+    /* ESTILO PADRÃO DAS ABAS (Pílula) */
+    .stTabs [data-baseweb="tab"] {{ 
+        height: 38px; 
+        border-radius: 20px !important; 
+        background-color: #FFFFFF; 
+        border: 1px solid #E2E8F0; 
+        color: #718096; 
+        font-weight: 700; 
+        font-size: 0.8rem; 
+        padding: 0 20px; 
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        flex-shrink: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }}
+    
+    .stTabs [data-baseweb="tab"]:hover {{
+        border-color: #CBD5E0;
+        color: #4A5568;
+        background-color: #EDF2F7;
+    }}
+
+    /* ESTADO SELECIONADO (AZUL COM GLOW) */
+    .stTabs [aria-selected="true"] {{ 
+        background-color: transparent !important; 
+        color: var(--brand-blue) !important; 
+        border: 1px solid var(--brand-blue) !important; 
+        font-weight: 800;
+        box-shadow: 0 0 12px rgba(15, 82, 186, 0.3), inset 0 0 5px rgba(15, 82, 186, 0.1) !important;
+    }}
+
+    /* 3. Header Unificado (Com Divisor Vertical - SEM barra lateral) */
     .header-unified {{ 
         background-color: white; 
-        padding: 35px 40px; /* <--- AJUSTE DE ALTURA AQUI (Era 20px 40px) */
+        padding: 35px 40px; /* Altura ajustada */
         border-radius: 16px; 
         border: 1px solid #E2E8F0; 
         box-shadow: 0 2px 10px rgba(0,0,0,0.02); 
@@ -81,42 +137,24 @@ st.markdown(f"""
         line-height: 1.2; 
     }}
 
-    /* HEADER DO ESTUDANTE */
-    .student-header {{ 
-        background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--card-radius); 
-        padding: 20px 30px; margin-bottom: 20px; 
-        display: flex; justify-content: space-between; align-items: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    /* 5. Inputs e Botões (Arredondamento 8px) */
+    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {{ 
+        border-radius: 8px !important; 
+        border-color: #E2E8F0 !important; 
     }}
-    .student-label {{ font-size: 0.8rem; color: #718096; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }}
-    .student-value {{ font-size: 1.2rem; color: #2D3748; font-weight: 800; }}
-
-    /* ABAS EM PÍLULA */
-    .stTabs [data-baseweb="tab-list"] {{ gap: 10px; padding-bottom: 15px; flex-wrap: wrap; }}
-    .stTabs [data-baseweb="tab"] {{
-        height: 45px; border-radius: 25px; padding: 0 25px; background-color: white;
-        border: 1px solid #E2E8F0; font-weight: 700; color: #718096; font-size: 0.9rem;
-        transition: all 0.3s ease;
+    
+    div[data-testid="column"] .stButton button {{ 
+        border-radius: 8px !important; 
+        font-weight: 800 !important; 
+        text-transform: uppercase; 
+        height: 50px !important; 
+        background-color: var(--brand-blue) !important; /* Azul Sóbrio */
+        color: white !important; 
+        border: none !important;
+        letter-spacing: 0.5px;
     }}
-    .stTabs [aria-selected="true"] {{
-        background-color: var(--brand-purple) !important; color: white !important;
-        border-color: var(--brand-purple) !important; 
-        box-shadow: 0 4px 10px rgba(128, 90, 213, 0.3);
-    }}
-
-    /* INPUTS E BOTÕES */
-    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {{
-        border-radius: 12px !important; border-color: #E2E8F0 !important;
-    }}
-    div[data-testid="column"] .stButton button {{
-        border-radius: 12px !important; font-weight: 800 !important; text-transform: uppercase; height: 50px !important; letter-spacing: 0.5px;
-    }}
-    div[data-testid="column"] .stButton button[kind="primary"] {{ 
-        background-color: var(--brand-purple) !important; border: none !important; color: white !important; 
-        box-shadow: 0 4px 6px rgba(128, 90, 213, 0.2);
-    }}
-    div[data-testid="column"] .stButton button[kind="primary"]:hover {{ 
-        transform: translateY(-2px); box-shadow: 0 6px 12px rgba(128, 90, 213, 0.3); 
+    div[data-testid="column"] .stButton button:hover {{ 
+        background-color: var(--brand-hover) !important; 
     }}
 
     /* CARD FLUTUANTE (OMNISFERA) */
@@ -133,9 +171,9 @@ st.markdown(f"""
     @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
     .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
     
-    /* PEDAGOGIA BOX */
+    /* PEDAGOGIA BOX (Atualizado para Azul) */
     .pedagogia-box {{ 
-        background-color: #F7FAFC; border-left: 4px solid var(--brand-purple); 
+        background-color: #F8FAFC; border-left: 4px solid var(--brand-blue); 
         padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; 
         font-size: 0.95rem; color: #4A5568; 
     }}
@@ -182,7 +220,7 @@ def carregar_banco():
 if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
     st.session_state.banco_estudantes = carregar_banco()
 
-# --- HEADER COM LOGO PAE (SUBSTITUINDO TÍTULO) ---
+# --- HEADER UNIFICADO (CLEAN COM DIVISOR - AZUL) ---
 def get_img_tag_custom(file_path, width):
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
@@ -190,7 +228,7 @@ def get_img_tag_custom(file_path, width):
         return f'<img src="data:image/png;base64,{data}" width="{width}" style="object-fit: contain;">'
     return ""
 
-img_pae = get_img_tag_custom("pae.png", "220") # <--- AUMENTADO PARA 220px (Tamanho PEI)
+img_pae = get_img_tag_custom("pae.png", "220") # <--- AUMENTADO PARA 220px
 
 st.markdown(f"""
 <div class="header-unified">
@@ -219,12 +257,12 @@ aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_a
 serie_aluno = aluno.get('serie', '').lower()
 is_ei = "infantil" in serie_aluno or "creche" in serie_aluno or "pré" in serie_aluno
 
-# --- HEADER DO ALUNO ---
+# --- HEADER DO ALUNO (CORES AZUIS) ---
 st.markdown(f"""
-    <div class="student-header">
-        <div><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div>
-        <div><div class="student-label">Série</div><div class="student-value">{aluno.get('serie', '-')}</div></div>
-        <div><div class="student-label">Hiperfoco</div><div class="student-value" style="color: #805AD5;">{aluno.get('hiperfoco', '-')}</div></div>
+    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px 30px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+        <div><div style="font-size: 0.8rem; color: #718096; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Nome</div><div style="font-size: 1.2rem; color: #2D3748; font-weight: 800;">{aluno.get('nome')}</div></div>
+        <div><div style="font-size: 0.8rem; color: #718096; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Série</div><div style="font-size: 1.2rem; color: #2D3748; font-weight: 800;">{aluno.get('serie', '-')}</div></div>
+        <div><div style="font-size: 0.8rem; color: #718096; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Hiperfoco</div><div style="font-size: 1.2rem; color: #0F52BA; font-weight: 800;">{aluno.get('hiperfoco', '-')}</div></div>
     </div>
 """, unsafe_allow_html=True)
 
