@@ -1,50 +1,9 @@
 import streamlit as st
-import omni_utils as core
+from datetime import date
 from openai import OpenAI
-
-# 1. Configuração (Obrigatória ser a primeira linha)
-st.set_page_config(page_title="Omnisfera", page_icon="🌐", layout="wide", initial_sidebar_state="expanded")
-
-# 2. Invoca a Matriz (Aplica CSS, Header, e SIDEBAR)
-core.aplicar_estilo_global()
-
-# 3. Verifica Segurança
-if not core.verificar_acesso():
-    st.stop()
-
-# --- CONTEÚDO DA HOME ---
-nome = st.session_state["usuario_nome"].split()[0]
-
-# Hero Simples e Bonito
-st.markdown(f"""
-<div style="background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); border-radius: 20px; padding: 50px; color: white; margin-bottom: 30px; margin-top: 20px; box-shadow: 0 10px 20px rgba(15, 82, 186, 0.2);">
-    <h1 style="margin:0; font-family: 'Inter';">Olá, {nome}!</h1>
-    <p style="opacity: 0.9; margin-top: 10px; font-size: 1.1rem;">"Unindo ciência e dados para transformar a educação."</p>
-</div>
-""", unsafe_allow_html=True)
-
-# Cards de Acesso
-st.markdown("### 🚀 Acesso Rápido")
-c1, c2, c3 = st.columns(3)
-
-def card(col, titulo, desc, icon, page):
-    with col:
-        st.markdown(f"""
-        <div style="background: white; padding: 20px; border-radius: 15px; border: 1px solid #E2E8F0; height: 100%; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-            <div style="font-size: 2.5rem; margin-bottom: 10px;">{icon}</div>
-            <h3 style="margin: 0; color: #2D3748; font-size: 1.2rem;">{titulo}</h3>
-            <p style="color: #718096; font-size: 0.9rem;">{desc}</p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button(f"Abrir {titulo}", key=titulo, use_container_width=True):
-            st.switch_page(page)
-
-card(c1, "PEI 360º", "Plano Educacional Individualizado.", "📘", "pages/1_PEI.py")
-card(c2, "PAEE", "Atendimento Educacional Especializado.", "🧩", "pages/2_PAE.py")
-card(c3, "Hub", "Adaptação de materiais e provas.", "🚀", "pages/3_Hub_Inclusao.py")
-
-# Rodapé simples
-st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.8rem; margin-top: 50px;'>Omnisfera © 2026</div>", unsafe_allow_html=True)
+import base64
+import os
+import time
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL E AMBIENTE
