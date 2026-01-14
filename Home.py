@@ -1,7 +1,6 @@
 import streamlit as st
-import omni_utils as core  # Nossa Matriz Inteligente
+import omni_utils as core
 from openai import OpenAI
-import time
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO (Obrigatório ser a 1ª linha)
@@ -16,33 +15,28 @@ st.set_page_config(
 # ==============================================================================
 # 2. INVOCANDO A MATRIZ
 # ==============================================================================
-# Na HOME, queremos:
-# 1. Sidebar padrão (logo do app) -> logo_pagina=None
-# 2. Header Global de Vidro -> exibir_header_global=True
-core.aplicar_estilo_global(logo_pagina=None, exibir_header_global=True)
+# Aplica apenas a sidebar branca e as fontes. Não mexe no header.
+core.aplicar_estilo_global()
 
 # Verifica Login
 if not core.verificar_acesso():
     st.stop()
 
 # ==============================================================================
-# 3. CSS ESPECÍFICO DA HOME (Animações e Bento Grid)
+# 3. CSS DA HOME (Animações e Bento Grid)
 # ==============================================================================
+# OBS: NÃO há nenhum comando aqui escondendo o header nativo.
 st.markdown("""
 <style>
-    /* --- ANIMAÇÕES DE SCROLL E HOVER (Nível "Framer Motion") --- */
-    
+    /* --- ANIMAÇÕES (Fade In e Hover) --- */
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    
-    /* Classe para animar entrada dos elementos */
     .animate-enter {
         animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
 
-    /* Efeito de Mola ao passar o mouse */
     .hover-spring {
         transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
     }
@@ -60,12 +54,12 @@ st.markdown("""
         box-shadow: 0 15px 40px -10px rgba(15, 82, 186, 0.4);
         color: white; position: relative; overflow: hidden;
         padding: 60px; display: flex; align-items: center; 
-        margin-top: 20px; border: 1px solid rgba(255,255,255,0.1);
+        margin-top: 10px; border: 1px solid rgba(255,255,255,0.1);
     }
     .hero-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 2.4rem; margin: 0; line-height: 1.1; letter-spacing: -1px; }
     .hero-bg-icon { position: absolute; right: 30px; font-size: 12rem; opacity: 0.05; top: -20px; transform: rotate(-10deg); pointer-events: none; }
 
-    /* --- TOOL CARDS (Estilo Apple/Bento) --- */
+    /* --- CARDS DOS MÓDULOS --- */
     .tool-card { 
         background: white; border-radius: 20px; padding: 30px 25px; 
         box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; 
@@ -76,7 +70,7 @@ st.markdown("""
     .card-logo-img { max-height: 85px; width: auto; object-fit: contain; filter: drop-shadow(0 8px 12px rgba(0,0,0,0.1)); }
     .tool-desc-short { font-size: 0.95rem; color: #718096; font-weight: 500; margin-bottom: 25px; min-height: 45px; line-height: 1.4; }
     
-    /* Botões Modernos */
+    /* Botões */
     div[data-testid="column"] .stButton button {
         width: 100%; border-radius: 12px; border: none;
         background-color: #F8FAFC; color: #475569; font-family: 'Inter', sans-serif; font-weight: 700; 
@@ -86,7 +80,7 @@ st.markdown("""
         background-color: #3182CE; color: white; border-color: #3182CE;
     }
     
-    /* Bordas de destaque */
+    /* Bordas Coloridas */
     .border-blue { border-bottom: 5px solid #3182CE; } 
     .border-purple { border-bottom: 5px solid #805AD5; } 
     .border-teal { border-bottom: 5px solid #38B2AC; }
@@ -102,22 +96,33 @@ st.markdown("""
     .bento-item:hover { transform: translateY(-5px); border-color: #CBD5E0; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
     .bento-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 15px; }
 
-    /* Titulos de Seção */
     .section-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.4rem; color: #1A202C; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
 </style>
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. DADOS & IA
+# 4. LOGO DA HOME (Integrada ao fluxo, não congelada)
+# ==============================================================================
+# Esta função (que está no omni_utils) desenha a logo grande no topo
+# Se você removeu essa função do omni_utils, me avise que coloco o código direto aqui.
+# Assumindo que ela existe no omni_utils conforme última versão:
+try:
+    core.renderizar_header_home()
+except:
+    # Fallback caso a função não exista
+    st.markdown("<h1 style='text-align: center; color: #0F52BA; margin-bottom: 30px;'>🌐 OMNISFERA</h1>", unsafe_allow_html=True)
+
+# ==============================================================================
+# 5. DADOS & HERO SECTION
 # ==============================================================================
 nome_display = st.session_state.get("usuario_nome", "Educador").split()[0]
 mensagem_banner = "Unindo ciência, dados e empatia para transformar a educação."
 
+# IA para frase do dia (Opcional)
 if 'OPENAI_API_KEY' in st.secrets:
     try:
         client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
-        # Cache de sessão para não gastar API à toa
         if 'banner_msg' not in st.session_state:
             prompt = f"Frase muito curta e inspiradora para {nome_display} sobre educação inclusiva."
             res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
@@ -125,11 +130,7 @@ if 'OPENAI_API_KEY' in st.secrets:
         mensagem_banner = st.session_state['banner_msg']
     except: pass
 
-# ==============================================================================
-# 5. RENDERIZAÇÃO (CONTEÚDO)
-# ==============================================================================
-
-# --- HERO ---
+# Hero Card
 st.markdown(f"""
 <div class="dash-hero animate-enter">
     <div style="z-index: 2; max-width: 85%;">
@@ -140,7 +141,9 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- CARDS PRINCIPAIS ---
+# ==============================================================================
+# 6. MÓDULOS PRINCIPAIS
+# ==============================================================================
 st.markdown("<div class='section-title animate-enter'><i class='ri-apps-2-line'></i> Módulos Principais</div>", unsafe_allow_html=True)
 
 logo_pei = core.get_base64_image("360.png")
@@ -164,7 +167,9 @@ with c3:
     st.markdown(f"""<div class="tool-card border-teal hover-spring animate-enter"><div class="card-logo-box">{img_tag}</div><div class="tool-desc-short">Adaptação de Provas e Materiais.</div></div>""", unsafe_allow_html=True)
     if st.button("➜ Acessar Hub", key="btn_hub", use_container_width=True): st.switch_page("pages/3_Hub_Inclusao.py")
 
-# --- BENTO GRID ---
+# ==============================================================================
+# 7. BENTO GRID (Links Úteis)
+# ==============================================================================
 st.markdown("<div style='margin-top:40px;'></div>", unsafe_allow_html=True)
 st.markdown("<div class='section-title animate-enter'><i class='ri-book-open-line'></i> Central de Conhecimento</div>", unsafe_allow_html=True)
 
