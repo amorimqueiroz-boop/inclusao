@@ -461,6 +461,16 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, v
            - Use apenas UM verbo de comando por questão.
         """
 
+    # --- AJUSTE: INSTRUÇÃO DE FORMATO BASEADA NO TIPO_Q ---
+    diretriz_tipo = ""
+    if tipo_q == "Mista":
+        diretriz_tipo = "3. FORMATO MISTO (RIGOROSO): Crie uma mistura equilibrada. Nas questões OBJETIVAS, use distratores inteligentes. Nas questões DISCURSIVAS, NÃO inclua alternativas, apenas deixe espaço/linhas para resposta."
+    elif tipo_q == "Discursiva":
+        diretriz_tipo = "3. FORMATO DISCURSIVO (RIGOROSO): Crie apenas questões abertas. NÃO inclua alternativas, apenas linhas para resposta."
+    else: # Objetiva
+        diretriz_tipo = "3. FORMATO OBJETIVO: Crie questões de múltipla escolha com distratores inteligentes."
+    # --------------------------------------------------------
+
     style = "Atue como uma banca examinadora rigorosa." if modo_profundo else "Atue como professor elaborador."
     prompt = f"""
     {style}
@@ -468,7 +478,7 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, v
     DIRETRIZES: 
     1. Contexto Real. 
     2. Hiperfoco ({hiperfoco}) em 30%. 
-    3. Distratores Inteligentes. 
+    {diretriz_tipo}
     4. Imagens: {instrucao_img} (NUNCA repita a mesma imagem). 
     5. Divisão Clara.
     {instrucao_bloom}
