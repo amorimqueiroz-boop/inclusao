@@ -1,229 +1,137 @@
-# ARQUIVO: omni_utils.py
 import streamlit as st
-import os
-import base64
-from datetime import date
+import omni_utils as core # Importa a nossa Matriz
+from openai import OpenAI
+import time
 
 # ==============================================================================
-# 1. CONFIGURAÇÕES GLOBAIS E AMBIENTE
+# 1. CONFIGURAÇÃO DA PÁGINA
 # ==============================================================================
-APP_VERSION = "v116.0"
-
-def verificar_ambiente():
-    try: return st.secrets.get("ENV") == "TESTE"
-    except: return False
-
-IS_TEST_ENV = verificar_ambiente()
-
-# ==============================================================================
-# 2. FUNÇÕES DE UTILIDADE (IMAGENS)
-# ==============================================================================
-def get_base64_image(image_path):
-    if not os.path.exists(image_path): return ""
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode()
+# A configuração básica fica aqui, o resto vem da matriz
+st.set_page_config(
+    page_title="Omnisfera", 
+    page_icon="🌐", 
+    layout="wide", 
+    initial_sidebar_state="expanded"
+)
 
 # ==============================================================================
-# 3. CSS GLOBAL (A "MATRIZ" VISUAL)
+# 2. INVOCANDO A MATRIZ (ESTILO, HEADER, SIDEBAR E LOGIN)
 # ==============================================================================
-def aplicar_estilo_global():
-    """Aplica CSS que vale para TODAS as páginas"""
+# Aplica CSS, Header de Vidro, Sidebar Nova e Rodapé
+core.aplicar_estilo_global()
+
+# Verifica Login (Se não logar, o script para aqui)
+if not core.verificar_acesso():
+    st.stop()
+
+# ==============================================================================
+# 3. DADOS DO USUÁRIO (PARTE 5 - CONTEÚDO)
+# ==============================================================================
+# Como já passamos pelo login da matriz, os dados estão seguros na sessão
+nome_display = st.session_state["usuario_nome"].split()[0]
+
+# Banner Message (IA ou Padrão)
+mensagem_banner = "Unindo ciência, dados e empatia para transformar a educação."
+if 'OPENAI_API_KEY' in st.secrets:
+    try:
+        if 'banner_msg' not in st.session_state:
+            client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
+            prompt = f"Frase curta (max 20 palavras) de boas-vindas para {nome_display} sobre potencial humano e educação."
+            res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
+            st.session_state['banner_msg'] = res.choices[0].message.content
+        mensagem_banner = st.session_state['banner_msg']
+    except: pass
+
+# ==============================================================================
+# 4. DASHBOARD VISUAL (HERO E CARDS)
+# ==============================================================================
+
+# CSS Específico da Home (Só o que não é global)
+st.markdown("""
+<style>
+    .dash-hero { 
+        background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); 
+        border-radius: 20px; margin-bottom: 40px; 
+        box-shadow: 0 15px 30px rgba(15, 82, 186, 0.2);
+        color: white; position: relative; overflow: hidden;
+        padding: 50px 60px; margin-top: 20px;
+        display: flex; align-items: center;
+    }
+    .hero-title { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 2.2rem; margin: 0; margin-bottom: 10px; }
+    .hero-subtitle { font-size: 1.1rem; opacity: 0.95; font-style: italic; }
+    .hero-bg-icon { position: absolute; right: 40px; font-size: 8rem; opacity: 0.08; top: 20px; transform: rotate(-15deg); }
+
+    .tool-card { 
+        background: white; border-radius: 20px; padding: 30px 25px; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; 
+        height: 100%; display: flex; flex-direction: column; justify-content: space-between; 
+        text-align: center; transition: all 0.3s;
+    }
+    .tool-card:hover { transform: translateY(-5px); border-color: #3182CE; box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
     
-    # Lógica Visual
-    if IS_TEST_ENV:
-        footer_vis, card_bg, card_border, display_text = "visible", "rgba(255, 220, 50, 0.95)", "rgba(200, 160, 0, 0.5)", "OMNISFERA | TESTE"
-    else:
-        footer_vis, card_bg, card_border, display_text = "hidden", "rgba(255, 255, 255, 0.85)", "rgba(255, 255, 255, 0.6)", f"OMNISFERA {APP_VERSION}"
-
-    # CSS MESTRE + SIDEBAR NOVA
-    st.markdown(f"""
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Nunito:wght@400;600;700&display=swap');
-        
-        /* RESET */
-        html {{ scroll-behavior: smooth; }}
-        html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }}
-
-        /* --- SIDEBAR MAIS HARMÔNICA (NOVO!) --- */
-        [data-testid="stSidebar"] {{
-            background-color: #FFFFFF; /* Fundo Branco Limpo */
-            border-right: 1px solid #E2E8F0;
-            box-shadow: 4px 0 15px rgba(0,0,0,0.02);
-        }}
-        
-        /* Título da Sidebar (User Info) */
-        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {{
-            font-family: 'Inter', sans-serif; color: #1A202C;
-        }}
-        
-        /* Botões/Links da Sidebar (Estilo Menu Moderno) */
-        [data-testid="stSidebarNav"] {{
-            padding-top: 20px;
-        }}
-        
-        /* Ajuste fino nos botões nativos do Streamlit dentro da sidebar */
-        [data-testid="stSidebar"] button {{
-            border-radius: 8px !important;
-            border: 1px solid #E2E8F0 !important;
-            color: #4A5568 !important;
-            transition: all 0.2s;
-        }}
-        [data-testid="stSidebar"] button:hover {{
-            border-color: #3182CE !important; color: #3182CE !important; background: #EBF8FF !important;
-        }}
-
-        /* --- HEADER & CONTROLES --- */
-        footer {{ visibility: {footer_vis} !important; }}
-        header[data-testid="stHeader"] {{ background-color: transparent !important; z-index: 9999 !important; pointer-events: none; }}
-        [data-testid="stToolbar"] {{ visibility: hidden !important; display: none !important; }}
-
-        /* Menu Hambúrguer (Flutuante) */
-        [data-testid="stSidebarCollapsedControl"] {{
-            position: fixed !important; top: 110px !important; left: 20px !important; z-index: 1000000 !important;
-            visibility: visible !important; display: flex !important;
-            background-color: white !important; border: 1px solid #E2E8F0 !important; border-radius: 12px !important;
-            width: 40px !important; height: 40px !important;
-            align-items: center !important; justify-content: center !important;
-            color: #2D3748 !important; pointer-events: auto !important; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
-            transition: all 0.2s ease !important;
-        }}
-        [data-testid="stSidebarCollapsedControl"]:hover {{ background-color: #3182CE !important; color: white !important; transform: scale(1.05); }}
-
-        /* --- HEADER DE VIDRO --- */
-        .logo-container {{
-            display: flex; align-items: center; justify-content: center; gap: 20px; 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100px;
-            background-color: rgba(247, 250, 252, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.5); z-index: 9998; box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-        }}
-        .logo-icon-spin {{ height: 80px; width: auto; animation: spin 45s linear infinite; }}
-        .logo-text-static {{ height: 50px; width: auto; }}
-        @keyframes spin {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
-
-        /* --- CARD OMNISFERA --- */
-        .omni-badge {{
-            position: fixed; top: 20px; right: 20px;
-            background: {card_bg}; border: 1px solid {card_border};
-            backdrop-filter: blur(8px); padding: 8px 25px; min-width: 200px;
-            border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            z-index: 999990; display: flex; align-items: center; justify-content: center; pointer-events: none;
-        }}
-        .omni-text {{ font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.75rem; color: #2D3748; letter-spacing: 2px; text-transform: uppercase; }}
-        
-        .block-container {{ padding-top: 140px !important; padding-bottom: 3rem !important; }}
-    </style>
-    """, unsafe_allow_html=True)
-
-    # Renderiza HTML Fixo
-    st.markdown(f'<div class="omni-badge"><span class="omni-text">{display_text}</span></div>', unsafe_allow_html=True)
+    .card-logo-box { height: 90px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+    .card-logo-img { max-height: 80px; width: auto; object-fit: contain; }
+    .tool-desc { font-size: 0.9rem; color: #718096; margin-bottom: 20px; min-height: 40px; }
     
-    img_icon = get_base64_image("omni_icone.png")
-    img_text = get_base64_image("omni_texto.png")
+    .border-blue { border-bottom: 5px solid #3182CE; } 
+    .border-purple { border-bottom: 5px solid #805AD5; } 
+    .border-teal { border-bottom: 5px solid #38B2AC; }
     
-    if img_icon and img_text:
-        html_header = f"""
-        <div class="logo-container">
-            <img src="data:image/png;base64,{img_icon}" class="logo-icon-spin">
-            <img src="data:image/png;base64,{img_text}" class="logo-text-static">
-        </div>"""
-    else:
-        html_header = "<div class='logo-container'><h1 style='color: #0F52BA; margin:0;'>🌐 OMNISFERA</h1></div>"
-    
-    st.markdown(html_header, unsafe_allow_html=True)
+    /* Botões */
+    div[data-testid="column"] .stButton button {
+        width: 100%; border-radius: 12px; background-color: #F8F9FA; color: #2D3748; border: 1px solid #E2E8F0; font-weight: 700;
+    }
+    div[data-testid="column"] .stButton button:hover { background-color: #3182CE; color: white; border-color: #3182CE; }
+</style>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+""", unsafe_allow_html=True)
 
-    # --- SIDEBAR PADRONIZADA (NOVO!) ---
-    # Isso aparecerá em TODAS as páginas automaticamente
-    with st.sidebar:
-        # Se tiver logo, mostra no topo da sidebar também (opcional, fica elegante)
-        if img_icon:
-            st.markdown(f"""<div style="text-align: center; margin-bottom: 20px;"><img src="data:image/png;base64,{img_icon}" width="60"></div>""", unsafe_allow_html=True)
-        
-        # Info do Usuário (se logado)
-        if "usuario_nome" in st.session_state:
-            nome = st.session_state["usuario_nome"].split()[0]
-            cargo = st.session_state["usuario_cargo"]
-            st.markdown(f"""
-            <div style="background-color: #F7FAFC; padding: 15px; border-radius: 12px; border: 1px solid #E2E8F0; margin-bottom: 20px;">
-                <div style="font-weight: 700; color: #2D3748; font-size: 0.95rem;">👋 {nome}</div>
-                <div style="font-size: 0.8rem; color: #718096;">{cargo}</div>
-            </div>
-            """, unsafe_allow_html=True)
+# HERO SECTION
+st.markdown(f"""
+<div class="dash-hero">
+    <div style="z-index: 2; max-width: 90%;">
+        <div class="hero-title">Olá, {nome_display}!</div>
+        <div class="hero-subtitle">"{mensagem_banner}"</div>
+    </div>
+    <i class="ri-heart-pulse-fill hero-bg-icon"></i>
+</div>
+""", unsafe_allow_html=True)
 
-# ==============================================================================
-# 4. SISTEMA DE LOGIN (CENTRALIZADO)
-# ==============================================================================
-def verificar_acesso():
-    if st.session_state.get("autenticado", False): return True
-    renderizar_tela_login()
-    return False
+# ACESSO RÁPIDO
+st.markdown("### 🚀 Acesso Rápido")
 
-def renderizar_tela_login():
-    st.markdown("""<style>[data-testid="stHeader"] {visibility: hidden !important;}</style>""", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1, 2, 1])
-    with c2:
-        cor_borda = "#FF9800" if IS_TEST_ENV else "#E2E8F0"
-        titulo = "🛠️ MODO TESTE" if IS_TEST_ENV else "Bem-vindo!"
-        btn_txt = "🚀 ENTRAR (TESTE)" if IS_TEST_ENV else "🔒 ACESSAR"
-        btn_color = "#E65100" if IS_TEST_ENV else "#0F52BA"
-        
-        st.markdown(f"""
-        <div style="background: white; padding: 40px; border-radius: 20px; border: 2px solid {cor_borda}; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 50px;">
-            <h2 style="color: #0F52BA; margin: 0;">{titulo}</h2>
-            <p style="color: #718096; font-size: 0.9rem;">Ecossistema Omnisfera</p>
-            <hr style="margin: 20px 0;">
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Estilo específico para o botão de login
-        st.markdown(f"""
-        <style>
-            div[data-testid="column"] .stButton button {{
-                width: 100%; background-color: {btn_color} !important; color: white !important;
-                border-radius: 8px !important; font-weight: 700 !important; height: 50px !important; border: none !important;
-            }}
-        </style>
-        """, unsafe_allow_html=True)
+logo_pei = core.get_base64_image("360.png")
+logo_paee = core.get_base64_image("pae.png")
+logo_hub = core.get_base64_image("hub.png")
 
-        nome = ""
-        cargo = ""
-        senha = ""
-        termo = False
+c1, c2, c3 = st.columns(3)
 
-        if IS_TEST_ENV:
-            st.info("Acesso liberado para desenvolvimento.")
-            with st.expander("Preencher dados (Opcional)"):
-                nome = st.text_input("Nome", placeholder="Opcional")
-                cargo = st.text_input("Cargo", placeholder="Opcional")
-        else:
-            st.markdown("<div style='font-size: 0.9rem; font-weight: bold; color: #4A5568; margin-bottom: 5px;'>Sua Identidade</div>", unsafe_allow_html=True)
-            nome = st.text_input("Nome", placeholder="Como quer ser chamado?")
-            cargo = st.text_input("Cargo", placeholder="Ex: Professor")
-            
-            st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
-            st.markdown("<div style='font-size: 0.8rem; color: #4A5568; background: #F7FAFC; padding: 10px; border-radius: 8px; margin: 10px 0;'>📜 Aceito os termos de uso e confidencialidade.</div>", unsafe_allow_html=True)
-            termo = st.checkbox("Li e concordo")
-            
-            st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-            senha = st.text_input("Senha", type="password", placeholder="Senha de acesso")
-        
-        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+# Card PEI
+with c1:
+    img_tag = f'<img src="data:image/png;base64,{logo_pei}" class="card-logo-img">' if logo_pei else '<i class="ri-book-read-line" style="font-size:4rem; color:#3182CE;"></i>'
+    st.markdown(f"""<div class="tool-card border-blue"><div class="card-logo-box">{img_tag}</div><div class="tool-desc">Plano de Ensino Individualizado Oficial.</div></div>""", unsafe_allow_html=True)
+    if st.button("➜ Acessar PEI", use_container_width=True): st.switch_page("pages/1_PEI.py")
 
-        if st.button(btn_txt, use_container_width=True):
-            if IS_TEST_ENV:
-                st.session_state["autenticado"] = True
-                st.session_state["usuario_nome"] = nome if nome else "Tester"
-                st.session_state["usuario_cargo"] = cargo if cargo else "Dev"
-                st.rerun()
-            else:
-                hoje = date.today()
-                senha_ok = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
-                
-                if not termo: st.warning("Aceite os termos.")
-                elif not nome or not cargo: st.warning("Preencha seus dados.")
-                elif senha != senha_ok: st.error("Senha incorreta.")
-                else:
-                    st.session_state["autenticado"] = True
-                    st.session_state["usuario_nome"] = nome
-                    st.session_state["usuario_cargo"] = cargo
-                    st.rerun()
+# Card PAEE
+with c2:
+    img_tag = f'<img src="data:image/png;base64,{logo_paee}" class="card-logo-img">' if logo_paee else '<i class="ri-puzzle-line" style="font-size:4rem; color:#805AD5;"></i>'
+    st.markdown(f"""<div class="tool-card border-purple"><div class="card-logo-box">{img_tag}</div><div class="tool-desc">Sala de Recursos e Tecnologias Assistivas.</div></div>""", unsafe_allow_html=True)
+    if st.button("➜ Acessar PAEE", use_container_width=True): st.switch_page("pages/2_PAE.py")
+
+# Card Hub
+with c3:
+    img_tag = f'<img src="data:image/png;base64,{logo_hub}" class="card-logo-img">' if logo_hub else '<i class="ri-rocket-line" style="font-size:4rem; color:#38B2AC;"></i>'
+    st.markdown(f"""<div class="tool-card border-teal"><div class="card-logo-box">{img_tag}</div><div class="tool-desc">Adaptação de Provas e Materiais.</div></div>""", unsafe_allow_html=True)
+    if st.button("➜ Acessar Hub", use_container_width=True): st.switch_page("pages/3_Hub_Inclusao.py")
+
+# INSIGHT FINAL
+st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("""
+<div style="background-color: #FFFFF0; border-left: 5px solid #D69E2E; padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 15px;">
+    <i class="ri-lightbulb-flash-line" style="font-size: 1.5rem; color: #D69E2E;"></i>
+    <div style="color: #4A5568; font-style: italic;">"A inclusão acontece quando aprendemos com as diferenças e não apesar delas."</div>
+</div>
+""", unsafe_allow_html=True)
+
+# RODAPÉ
+st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.8rem; margin-top: 50px;'>Omnisfera © 2026</div>", unsafe_allow_html=True)
