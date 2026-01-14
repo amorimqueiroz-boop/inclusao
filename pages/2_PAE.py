@@ -1,21 +1,16 @@
 import streamlit as st
-import omni_utils as core # Importa a matriz
+import omni_utils as core
 
-st.set_page_config(page_title="PEI 360", layout="wide")
+st.set_page_config(page_title="PAEE", layout="wide")
 
-# 1. Verifica se pode entrar
 if not core.verificar_acesso(): st.stop()
 
-# 2. CHAMA O CABEÇALHO PADRÃO DA MATRIZ
-# Você só passa o Título, a Descrição e a Cor da borda
+# REPLICA O ESTILO MUDANDO SÓ O TEXTO E COR
 core.renderizar_header_padrao(
-    titulo="PEI 360º", 
-    subtitulo="Plano Educacional Individualizado: Anamnese e Estratégia.",
-    cor_destaque="#3182CE" # Azul
+    titulo="PAEE & T.A.", 
+    subtitulo="Plano de Atendimento Educacional Especializado e Sala de Recursos.",
+    cor_destaque="#805AD5" # Roxo
 )
-
-# ... Resto do seu código do PEI aqui ...
-st.write("Conteúdo do formulário PEI...")
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
