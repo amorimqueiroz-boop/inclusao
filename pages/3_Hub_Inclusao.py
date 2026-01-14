@@ -360,6 +360,7 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd_total, tipo_q, qtd_i
         Você deve incluir EXATAMENTE {qtd_imagens_desejada} imagens distribuídas entre as questões.
         Para pedir uma imagem, use a tag: [[GEN_IMG: termo_simples_em_ingles]].
         IMPORTANTE: O termo dentro da tag deve ser UMA ou DUAS palavras em inglês (ex: "Apple", "Dog running") para facilitar a busca no banco de imagens.
+        REGRA DE POSICIONAMENTO: A imagem deve vir IMEDIATAMENTE APÓS O ENUNCIADO e ANTES das alternativas.
         REGRA: NÃO REPITA IMAGENS. Cada [[GEN_IMG]] deve ter um termo diferente.
         """
     else:
