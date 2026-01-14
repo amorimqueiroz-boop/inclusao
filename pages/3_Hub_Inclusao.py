@@ -75,7 +75,7 @@ st.markdown(f"""
     .analise-box {{ background-color: #F0FFF4; border: 1px solid #C6F6D5; border-radius: 8px; padding: 20px; margin-bottom: 20px; color: #22543D; }}
     .analise-title {{ font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }}
 
-    /* UI TABS E BOTOES */
+    /* ELEMENTOS UI */
     .stTabs [data-baseweb="tab-list"] {{ gap: 8px; flex-wrap: wrap; }}
     .stTabs [data-baseweb="tab"] {{ border-radius: 6px; padding: 8px 16px; background-color: white; border: 1px solid #E2E8F0; font-size: 0.9rem; transition: all 0.2s; }}
     .stTabs [aria-selected="true"] {{ background-color: #3182CE !important; color: white !important; border-color: #3182CE !important; }}
@@ -131,9 +131,10 @@ if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estu
     st.session_state.banco_estudantes = carregar_banco()
 
 # ==============================================================================
-# 4. FUNÇÕES CORE E PROMPTS
+# 4. FUNÇÕES CORE (Lógica e Prompts)
 # ==============================================================================
 
+# --- Helpers de Arquivo e Imagem ---
 def get_img_tag(file_path, width):
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
@@ -150,7 +151,7 @@ def extrair_dados_arquivo(uploaded_file):
             reader = PdfReader(uploaded_file)
             for page in reader.pages:
                 if page.extract_text(): texto += page.extract_text() + "\n"
-        except: texto = "[Erro PDF]"
+        except: texto = "[Erro na leitura do PDF]"
     elif nome_arquivo.endswith('.docx') or nome_arquivo.endswith('.doc'):
         try:
             doc = Document(uploaded_file)
@@ -204,6 +205,7 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
         doc.add_paragraph(f"Estudante: {aluno['nome']}").alignment = WD_ALIGN_PARAGRAPH.CENTER
         doc.add_paragraph("_"*50)
         doc.add_heading('Atividades', level=2)
+    
     linhas = texto_ia.split('\n')
     for linha in linhas:
         tag_match = re.search(r'\[\[(IMG|GEN_IMG).*?(\d+)\]\]', linha, re.IGNORECASE)
@@ -226,18 +228,29 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
 
+# --- Gerenciador de Imagens Híbrido ---
 def obter_recurso_visual(api_key, prompt, unsplash_key=None, modo="ia_strict", feedback_anterior=""):
+    """
+    MODOS:
+    - 'ia_strict': Estúdio Visual/CAA. Só gera IA.
+    - 'stock_first': Criar Prova. Tenta Unsplash, se falhar ou sem key, vai de IA.
+    """
     client = OpenAI(api_key=api_key)
     prompt_final = f"{prompt}. Adjustment: {feedback_anterior}" if feedback_anterior else prompt
+    
+    # Prioridade Stock
     if modo == "stock_first" and unsplash_key:
         termo = prompt.split('.')[0] if '.' in prompt else prompt
         url = buscar_imagem_unsplash(termo, unsplash_key)
         if url: return url
+    
+    # Fallback ou Strict IA
     try:
-        didactic_prompt = f"Educational illustration, clean flat vector, white background. NO TEXT, NO LABELS. Visual: {prompt_final}"
+        didactic_prompt = f"Educational illustration, clean flat vector style, white background. NO TEXT, NO LABELS. Visual representation of: {prompt_final}"
         resp = client.images.generate(model="dall-e-3", prompt=didactic_prompt, size="1024x1024", quality="standard", n=1)
         return resp.data[0].url
     except:
+        # Se IA falhar e for stock_first, tenta stock como último recurso
         if modo == "stock_first" and unsplash_key: return buscar_imagem_unsplash(prompt, unsplash_key)
         return None
 
@@ -250,7 +263,7 @@ def gerar_pictograma_caa(api_key, conceito, feedback_anterior=""):
         return resp.data[0].url
     except: return None
 
-# --- PROMPTS ATUALIZADOS ---
+# --- Funções de Texto (GPT) ---
 
 def adaptar_conteudo_docx(api_key, aluno, texto, materia, tema, tipo_atv, remover_resp, questoes_mapeadas, modo_profundo=False, feedback_anterior=""):
     client = OpenAI(api_key=api_key)
@@ -295,20 +308,36 @@ def adaptar_conteudo_imagem(api_key, aluno, img_bytes, materia, tema, tipo_atv, 
         return "Análise indisponível.", full
     except Exception as e: return str(e), ""
 
-def criar_profissional(api_key, aluno, materia, objeto, qtd_total, tipo_q, qtd_imgs, modo_profundo=False, feedback_anterior=""):
+def criar_profissional(api_key, aluno, materia, objeto, qtd_total, tipo_q, qtd_imagens_desejada, modo_profundo=False, feedback_anterior=""):
+    """
+    Gera questões do zero com lógica reforçada de BNCC, Bloom e Posição da Imagem.
+    """
     client = OpenAI(api_key=api_key)
     hiperfoco = aluno.get('hiperfoco', 'Geral')
-    ajuste = f"AJUSTE: {feedback_anterior}" if feedback_anterior else ""
-    inst_tipo = "50% Objetivas e 50% Discursivas." if tipo_q == "Mista" else f"Tipo {tipo_q}."
-    inst_img = f"Incluir {qtd_imgs} imagens (tag: [[GEN_IMG: keyword_english]]). POSIÇÃO: IMEDIATAMENTE APÓS O ENUNCIADO e ANTES das alternativas." if qtd_imgs > 0 else "Sem imagens."
     
+    ajuste = f"AJUSTE SOLICITADO: {feedback_anterior}" if feedback_anterior else ""
+    inst_tipo = "50% Objetivas e 50% Discursivas." if tipo_q == "Mista" else f"Questões do tipo {tipo_q}."
+
+    inst_img = "Não inclua imagens."
+    if qtd_imagens_desejada > 0:
+        inst_img = f"""
+        INSTRUÇÃO VISUAL (PRIORIDADE BANCO DE IMAGENS):
+        Incluir EXATAMENTE {qtd_imagens_desejada} imagens distribuídas.
+        Tag: [[GEN_IMG: keyword_english]].
+        A KEYWORD deve ser simples (ex: "Apple", "Dog running") para busca em banco.
+        REGRA POSICIONAMENTO: A tag [[GEN_IMG...]] deve vir IMEDIATAMENTE APÓS O ENUNCIADO e ANTES das alternativas.
+        REGRA REPETIÇÃO: NÃO repita imagens.
+        """
+
     prompt = f"""
-    Professor Elaborador. {ajuste}
+    Atue como professor elaborador especialista em BNCC e Taxonomia de Bloom. {ajuste}
     Crie prova de {materia} ({objeto}). QTD: {qtd_total}. {inst_tipo}
-    DIRETRIZES:
+    
+    DIRETRIZES: 
     1. Baseie-se na BNCC e use a TAXONOMIA DE BLOOM adequada à série.
-    2. Contexto Real e Hiperfoco ({hiperfoco}) em 30%.
+    2. Contexto Real. Hiperfoco ({hiperfoco}) em 30%.
     3. {inst_img}
+    
     SAÍDA: [ANÁLISE PEDAGÓGICA] ... ---DIVISOR--- [ATIVIDADE] ...
     """
     try:
@@ -352,7 +381,7 @@ def gerar_dinamica_turma(api_key, aluno, componente, tema, feedback_anterior="")
     ajuste = f"AJUSTE: {feedback_anterior}" if feedback_anterior else ""
     prompt = f"""
     Crie uma DINÂMICA INCLUSIVA para toda a turma sobre {componente}: {tema}.
-    O aluno {aluno['nome']} deve participar ativamente sem barreiras.
+    O aluno {aluno['nome']} deve participar ativamente sem barreiras e sem gatilhos.
     PEI: {aluno.get('ia_sugestao','')[:600]}. {ajuste}
     """
     try:
@@ -368,6 +397,15 @@ def gerar_experiencia_ei_bncc(api_key, aluno, campo, obj, feedback=""):
     Crie EXPERIÊNCIA LÚDICA para Campo: {campo}. Objetivo: {obj}. {ajuste}
     SAÍDA MARKDOWN: ## 🧸 Experiência...
     """
+    try:
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
+        return resp.choices[0].message.content
+    except Exception as e: return str(e)
+
+def gerar_roteiro_rotina_ei(api_key, aluno, rotina_txt, feedback=""):
+    client = OpenAI(api_key=api_key)
+    ajuste = f"AJUSTE: {feedback}" if feedback else ""
+    prompt = f"Analise esta rotina de EI e sugira adaptações para {aluno['nome']}: {rotina_txt}. {ajuste}"
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
         return resp.choices[0].message.content
@@ -405,8 +443,7 @@ is_ei = "infantil" in serie_aluno or "creche" in serie_aluno or "pré" in serie_
 st.markdown(f"""<div class="student-header"><div class="student-info-item"><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div><div class="student-info-item"><div class="student-label">Série</div><div class="student-value">{aluno.get('serie', '-')}</div></div><div class="student-info-item"><div class="student-label">Hiperfoco</div><div class="student-value">{aluno.get('hiperfoco', '-')}</div></div></div>""", unsafe_allow_html=True)
 
 # Inicialização de Estado Global
-keys_init = ['res_scene_url', 'valid_scene', 'res_caa_url', 'valid_caa', 'res_ei_exp', 'valid_ei_exp', 
-             'res_roteiro', 'valid_roteiro', 'res_papo', 'valid_papo', 'res_dina', 'valid_dina', 'res_docx', 'res_img', 'res_create']
+keys_init = ['res_scene_url', 'valid_scene', 'res_caa_url', 'valid_caa', 'res_ei_exp', 'res_roteiro', 'res_papo', 'res_dina', 'res_docx', 'res_img', 'res_create']
 for k in keys_init:
     if k not in st.session_state: st.session_state[k] = None
 
@@ -439,7 +476,7 @@ if is_ei:
                         st.session_state.res_ei_exp = {'txt': gerar_experiencia_ei_bncc(api_key, aluno, campo, obj, fb), 'valid': False}; st.rerun()
 
     with tabs[1]:
-        st.markdown("<div class='pedagogia-box'>Apoio Visual: Cenas e Pictogramas.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='pedagogia-box'>Apoio Visual: Cenas e Pictogramas. (Sempre IA).</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("#### 🖼️ Cena")
@@ -468,9 +505,10 @@ if is_ei:
                         fb = st.text_input("Ajuste Picto"); 
                         if st.button("Refazer P"): st.session_state.res_caa_url = gerar_pictograma_caa(api_key, conc, fb); st.rerun()
 
-    with tabs[2]: # Rotina EI
+    with tabs[2]:
+        st.markdown("<div class='pedagogia-box'>Rotina & AVD.</div>", unsafe_allow_html=True)
         rotina = st.text_area("Rotina:"); 
-        if st.button("📝 Adaptar"): st.session_state.res_roteiro = {'txt': gerar_roteiro_aula(api_key, aluno, rotina), 'valid': False}
+        if st.button("📝 Adaptar"): st.session_state.res_roteiro = {'txt': gerar_roteiro_rotina_ei(api_key, aluno, rotina), 'valid': False}
         if st.session_state.res_roteiro:
             st.markdown(st.session_state.res_roteiro['txt'])
             if st.session_state.res_roteiro['valid']: st.markdown("<div class='validado-box'>✅ APROVADO</div>", unsafe_allow_html=True)
@@ -478,10 +516,11 @@ if is_ei:
                 if st.button("✅ Validar"): st.session_state.res_roteiro['valid'] = True; st.rerun()
                 with st.expander("Refazer"):
                     fb = st.text_input("Ajuste R"); 
-                    if st.button("Refazer"): st.session_state.res_roteiro = {'txt': gerar_roteiro_aula(api_key, aluno, rotina, fb), 'valid': False}; st.rerun()
+                    if st.button("Refazer"): st.session_state.res_roteiro = {'txt': gerar_roteiro_rotina_ei(api_key, aluno, rotina, fb), 'valid': False}; st.rerun()
 
-    with tabs[3]: # Dinamica EI
-        tema = st.text_input("Tema:"); 
+    with tabs[3]:
+        st.markdown("<div class='pedagogia-box'>Mediação Social e Brincar.</div>", unsafe_allow_html=True)
+        tema = st.text_input("Tema/Brincadeira:"); 
         if st.button("🤝 Gerar"): st.session_state.res_dina = {'txt': gerar_dinamica_turma(api_key, aluno, "EI", tema), 'valid': False}
         if st.session_state.res_dina:
             st.markdown(st.session_state.res_dina['txt'])
@@ -572,16 +611,16 @@ else:
 
     # 3. CRIAR DO ZERO
     with tabs[2]:
-        st.markdown("<div class='pedagogia-box'>Criação com BNCC, Bloom e DUA.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='pedagogia-box'>Criação com BNCC, Bloom e DUA. Prioridade Imagem: Stock -> IA.</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2); mat = c1.selectbox("Componente", ["Matemática", "Português", "Ciências", "História", "Geografia"], key="m3"); obj = c2.text_input("Assunto", key="t3")
-        c3, c4 = st.columns(2); qtd = c3.slider("Qtd", 1, 10, 5, key="q3"); tipo = c4.selectbox("Tipo", ["Objetiva", "Discursiva", "Mista"], key="tp3")
+        c3, c4 = st.columns(2); qtd = c3.slider("Qtd Questões", 1, 10, 5, key="q3"); tipo = c4.selectbox("Tipo", ["Objetiva", "Discursiva", "Mista"], key="tp3")
         st.write("---")
-        qtd_img = st.slider("Imagens", 0, qtd, min(3, qtd))
+        qtd_img = st.slider("Quantidade de Imagens", 0, qtd, min(3, qtd))
         
         if st.button("✨ CRIAR", type="primary", key="b3"):
             with st.spinner("Criando..."):
                 rac, txt = criar_profissional(api_key, aluno, mat, obj, qtd, tipo, qtd_img)
-                # Processa imagens
+                # Processa imagens (STOCK FIRST)
                 mapa = {}; cnt = 0; tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', txt)
                 for p in tags:
                     cnt+=1; u = obter_recurso_visual(api_key, p, unsplash_key, "stock_first")
@@ -624,9 +663,9 @@ else:
                     elif p.strip(): st.markdown(p.strip())
             st.download_button("📥 DOCX", construir_docx_final(res['txt'], aluno, mat, res['map'], None, "Criada"), "Atividade.docx")
 
-    # 4. ESTUDIO VISUAL
+    # 4. ESTUDIO VISUAL (IA STRICT)
     with tabs[3]:
-        st.markdown("<div class='pedagogia-box'>Recursos Visuais.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='pedagogia-box'>Recursos Visuais. (Sempre IA).</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("#### Cena")
