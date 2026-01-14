@@ -58,10 +58,10 @@ st.markdown(f"""
     html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; color: #2D3748; }}
     div[data-baseweb="tab-highlight"] {{ background-color: transparent !important; }}
 
-    /* HEADER DA PÁGINA (UNIFICADO/CLEAN) */
+    /* HEADER DA PÁGINA (UNIFICADO/CLEAN - AJUSTADO PARA FICAR MAIS ALTO) */
     .header-unified {{ 
         background-color: white; 
-        padding: 35px 40px; /* Altura ajustada */
+        padding: 35px 40px; /* <--- AJUSTE DE ALTURA AQUI (Era 20px 40px) */
         border-radius: 16px; 
         border: 1px solid #E2E8F0; 
         box-shadow: 0 2px 10px rgba(0,0,0,0.02); 
@@ -190,7 +190,7 @@ def get_img_tag_custom(file_path, width):
         return f'<img src="data:image/png;base64,{data}" width="{width}" style="object-fit: contain;">'
     return ""
 
-img_pae = get_img_tag_custom("pae.png", "220") # Logo Aumentada para 220px
+img_pae = get_img_tag_custom("pae.png", "220") # <--- AUMENTADO PARA 220px (Tamanho PEI)
 
 st.markdown(f"""
 <div class="header-unified">
