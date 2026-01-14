@@ -1,16 +1,10 @@
 import streamlit as st
-import omni_utils as core
-
-st.set_page_config(page_title="PAEE", layout="wide")
-
-if not core.verificar_acesso(): st.stop()
-
-# REPLICA O ESTILO MUDANDO SÓ O TEXTO E COR
-core.renderizar_header_padrao(
-    titulo="PAEE & T.A.", 
-    subtitulo="Plano de Atendimento Educacional Especializado e Sala de Recursos.",
-    cor_destaque="#805AD5" # Roxo
-)
+import os
+from openai import OpenAI
+import json
+import pandas as pd
+from datetime import date
+import base64
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
