@@ -21,7 +21,7 @@ from streamlit_cropper import st_cropper
 st.set_page_config(page_title="[TESTE] Omnisfera | Hub", page_icon="🚀", layout="wide")
 
 # ==============================================================================
-# ### BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA & ALERTA DE TESTE ###
+# 2. BLOCO VISUAL (DESIGN SYSTEM PREMIUM - AZUL SÓBRIO) & HEADER
 # ==============================================================================
 import os
 import base64
@@ -46,15 +46,124 @@ src_logo_giratoria = get_logo_base64()
 
 # 3. Definição Dinâmica de Cores (Card Branco ou Amarelo)
 if IS_TEST_ENV:
-    card_bg = "rgba(255, 220, 50, 0.95)" 
-    card_border = "rgba(200, 160, 0, 0.5)"
+    card_bg, card_border = "rgba(255, 220, 50, 0.95)", "rgba(200, 160, 0, 0.5)"
 else:
-    card_bg = "rgba(255, 255, 255, 0.85)"
-    card_border = "rgba(255, 255, 255, 0.6)"
+    card_bg, card_border = "rgba(255, 255, 255, 0.85)", "rgba(255, 255, 255, 0.6)"
 
 # 4. Renderização do CSS Global e Header Flutuante
 st.markdown(f"""
-<style>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+    /* VARIÁVEIS GLOBAIS - AZUL SÓBRIO */
+    :root {{ 
+        --brand-blue: #0F52BA; /* Azul Sóbrio */
+        --brand-hover: #0A3D8F;
+        --card-radius: 16px; 
+    }}
+    
+    /* 1. Fontes e Cores Base */
+    html, body, [class*="css"] {{ 
+        font-family: 'Nunito', sans-serif; 
+        color: #2D3748; 
+        background-color: #F7FAFC; 
+    }}
+    .block-container {{ 
+        padding-top: 1.5rem !important; 
+        padding-bottom: 5rem !important; 
+    }}
+
+    /* 2. Navegação em Abas "Glow" Clean */
+    div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] {{ display: none !important; }}
+    
+    .stTabs [data-baseweb="tab-list"] {{ 
+        gap: 8px; 
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 10px 5px;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }}
+    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {{ display: none; }}
+
+    /* ESTILO PADRÃO DAS ABAS (Pílula) */
+    .stTabs [data-baseweb="tab"] {{ 
+        height: 38px; 
+        border-radius: 20px !important; 
+        background-color: #FFFFFF; 
+        border: 1px solid #E2E8F0; 
+        color: #718096; 
+        font-weight: 700; 
+        font-size: 0.8rem; 
+        padding: 0 20px; 
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        flex-shrink: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }}
+    
+    .stTabs [data-baseweb="tab"]:hover {{
+        border-color: #CBD5E0;
+        color: #4A5568;
+        background-color: #EDF2F7;
+    }}
+
+    /* ESTADO SELECIONADO (AZUL COM GLOW) */
+    .stTabs [aria-selected="true"] {{ 
+        background-color: transparent !important; 
+        color: #3182CE !important; 
+        border: 1px solid #3182CE !important; 
+        font-weight: 800;
+        box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important;
+    }}
+
+    /* 3. Header Unificado (Com Divisor Vertical - SEM barra lateral) */
+    .header-unified {{ 
+        background-color: white; 
+        padding: 35px 40px; /* Altura ajustada */
+        border-radius: 16px; 
+        border: 1px solid #E2E8F0; 
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02); 
+        margin-bottom: 20px; 
+        display: flex; 
+        align-items: center; 
+        gap: 20px;
+        justify-content: flex-start; 
+    }}
+    
+    .header-subtitle {{ 
+        font-size: 1.2rem; 
+        color: #718096; 
+        font-weight: 600; 
+        border-left: 2px solid #E2E8F0; /* O DIVISOR VERTICAL */
+        padding-left: 20px; 
+        line-height: 1.2; 
+    }}
+
+    /* 5. Inputs e Botões (Arredondamento 8px) */
+    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {{ 
+        border-radius: 8px !important; 
+        border-color: #E2E8F0 !important; 
+    }}
+    
+    div[data-testid="column"] .stButton button {{ 
+        border-radius: 8px !important; 
+        font-weight: 800 !important; 
+        text-transform: uppercase; 
+        height: 50px !important; 
+        background-color: var(--brand-blue) !important; /* Azul Sóbrio */
+        color: white !important; 
+        border: none !important;
+        letter-spacing: 0.5px;
+    }}
+    div[data-testid="column"] .stButton button:hover {{ 
+        background-color: var(--brand-hover) !important; 
+    }}
+
     /* CARD FLUTUANTE (OMNISFERA) */
     .omni-badge {{
         position: fixed; top: 15px; right: 15px;
@@ -65,17 +174,36 @@ st.markdown(f"""
         z-index: 999990; display: flex; align-items: center; gap: 10px;
         pointer-events: none;
     }}
-    .omni-text {{
-        font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem;
-        color: #2D3748; letter-spacing: 1px; text-transform: uppercase;
-    }}
+    .omni-text {{ font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem; color: #2D3748; letter-spacing: 1px; text-transform: uppercase; }}
     @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
     .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
-</style>
-<div class="omni-badge">
-    <img src="{src_logo_giratoria}" class="omni-logo-spin">
-    <span class="omni-text">OMNISFERA</span>
-</div>
+
+    /* PEDAGOGIA BOX (Atualizado para Azul) */
+    .pedagogia-box {{ 
+        background-color: #F8FAFC; border-left: 4px solid var(--brand-blue); 
+        padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; 
+        font-size: 0.95rem; color: #4A5568; 
+    }}
+
+    /* CARD ALUNO */
+    .student-header {{ 
+        background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--card-radius); 
+        padding: 20px 30px; margin-bottom: 20px; 
+        display: flex; justify-content: space-between; align-items: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }}
+    .student-label {{ font-size: 0.8rem; color: #718096; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }}
+    .student-value {{ font-size: 1.2rem; color: #2D3748; font-weight: 800; }}
+
+    /* ANALISE & VALIDADOS */
+    .analise-box {{ background-color: #F0FFF4; border: 1px solid #C6F6D5; border-radius: 12px; padding: 20px; margin-bottom: 20px; color: #22543D; }}
+    .validado-box {{ background-color: #C6F6D5; color: #22543D; padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; margin-top: 15px; border: 1px solid #276749; }}
+    </style>
+    
+    <div class="omni-badge">
+        <img src="{src_logo_giratoria}" class="omni-logo-spin">
+        <span class="omni-text">OMNISFERA</span>
+    </div>
 """, unsafe_allow_html=True)
 
 def verificar_acesso():
@@ -113,86 +241,53 @@ def carregar_banco():
 if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
     st.session_state.banco_estudantes = carregar_banco()
 
-# --- CSS (DESIGN SYSTEM PREMIUM - ATUALIZADO) ---
-st.markdown("""
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
-    <style>
-    html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
-    :root { --brand-blue: #004E92; --brand-coral: #FF6B6B; --card-radius: 16px; }
-    
-    div[data-baseweb="tab-highlight"] { background-color: transparent !important; }
-
-    /* HEADER HUB */
-    .header-hub { 
-        background-color: white; padding: 25px 30px; border-radius: var(--card-radius); 
-        border-left: 6px solid var(--brand-blue); box-shadow: 0 4px 12px rgba(0,0,0,0.04); 
-        margin-bottom: 20px; display: flex; align-items: center; gap: 25px;
-    }
-
-    /* CARD ALUNO */
-    .student-header { 
-        background-color: #EBF8FF; border: 1px solid #BEE3F8; border-radius: var(--card-radius); 
-        padding: 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-    }
-    .student-label { font-size: 0.8rem; color: #5A67D8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-    .student-value { font-size: 1.1rem; color: #2C5282; font-weight: 800; }
-
-    /* PEDAGOGIA BOX */
-    .pedagogia-box { 
-        background-color: #F8FAFC; border-left: 4px solid var(--brand-blue); 
-        padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; 
-        font-size: 0.95rem; color: #4A5568; line-height: 1.6;
-    }
-    .pedagogia-title { color: var(--brand-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 1rem; }
-
-    /* ABAS PREMIUM (PÍLULAS) */
-    .stTabs [data-baseweb="tab-list"] { gap: 10px; padding-bottom: 15px; flex-wrap: wrap; }
-    .stTabs [data-baseweb="tab"] {
-        height: 45px; border-radius: 25px; padding: 0 25px; background-color: white;
-        border: 1px solid #E2E8F0; font-weight: 700; color: #718096; font-size: 0.9rem;
-        transition: all 0.3s ease;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: var(--brand-blue) !important; color: white !important;
-        border-color: var(--brand-blue) !important; box-shadow: 0 4px 10px rgba(0, 78, 146, 0.3);
-    }
-
-    /* INPUTS E BOTÕES */
-    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {
-        border-radius: 12px !important; border-color: #E2E8F0 !important;
-    }
-    div[data-testid="column"] .stButton button {
-        border-radius: 12px !important; font-weight: 800 !important; text-transform: uppercase; height: 50px !important; letter-spacing: 0.5px;
-    }
-    /* Botão Primário (Azul) */
-    div[data-testid="column"] .stButton button[kind="primary"] { 
-        background-color: var(--brand-blue) !important; border: none !important; color: white !important; 
-        box-shadow: 0 4px 6px rgba(0, 78, 146, 0.2);
-    }
-    div[data-testid="column"] .stButton button[kind="primary"]:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0, 78, 146, 0.3); }
-
-    /* Botão Secundário (Outline) */
-    div[data-testid="column"] .stButton button[kind="secondary"] { 
-        background-color: white !important; border: 2px solid #CBD5E0 !important; color: #4A5568 !important; 
-    }
-
-    .analise-box { background-color: #F0FFF4; border: 1px solid #C6F6D5; border-radius: 12px; padding: 20px; margin-bottom: 20px; color: #22543D; }
-    .validado-box { background-color: #C6F6D5; color: #22543D; padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; margin-top: 15px; border: 1px solid #276749; }
-    </style>
-""", unsafe_allow_html=True)
-
-# --- FUNÇÕES DE UTILIDADE E IA (MANTIDAS IGUAIS) ---
-
+# --- HEADER UNIFICADO (CLEAN COM DIVISOR - AZUL) ---
 def get_img_tag(file_path, width):
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
             data = base64.b64encode(f.read()).decode("utf-8")
-        return f'<img src="data:image/png;base64,{data}" width="{width}">'
+        return f'<img src="data:image/png;base64,{data}" width="{width}" style="object-fit: contain;">'
     return "🚀"
 
+img_hub_html = get_img_tag("hub.png", "220") # <--- AUMENTADO PARA 220px
+
+st.markdown(f"""
+    <div class="header-unified">
+        <div style="flex-shrink: 0;">{img_hub_html}</div>
+        <div class="header-subtitle">Adaptação de Materiais & Criação</div>
+    </div>
+""", unsafe_allow_html=True)
+
+if not st.session_state.banco_estudantes:
+    st.warning("⚠️ Nenhum aluno encontrado. Cadastre no PEI."); st.stop()
+
+lista = [a['nome'] for a in st.session_state.banco_estudantes]
+nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista)
+aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
+
+serie_aluno = aluno.get('serie', '').lower()
+is_ei = "infantil" in serie_aluno or "creche" in serie_aluno or "pré" in serie_aluno
+
+# --- HEADER DO ALUNO (ESTILO CARD) ---
+st.markdown(f"""
+    <div class="student-header">
+        <div><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div>
+        <div><div class="student-label">Série</div><div class="student-value">{aluno.get('serie', '-')}</div></div>
+        <div><div class="student-label">Hiperfoco</div><div class="student-value">{aluno.get('hiperfoco', '-')}</div></div>
+    </div>
+""", unsafe_allow_html=True)
+
+# --- EXPANDER RESUMO PEI (NOVIDADE) ---
+with st.expander("📄 Ver Resumo do PEI (Base para Adaptação)", expanded=False):
+    st.info(aluno.get('ia_sugestao', 'Nenhum dado de PEI processado ainda.'))
+
+# === INICIALIZAÇÃO ===
+if 'res_scene_url' not in st.session_state: st.session_state.res_scene_url = None
+if 'valid_scene' not in st.session_state: st.session_state.valid_scene = False
+if 'res_caa_url' not in st.session_state: st.session_state.res_caa_url = None
+if 'valid_caa' not in st.session_state: st.session_state.valid_caa = False
+
+# --- FUNÇÕES DE UTILIDADE E IA (MANTIDAS IGUAIS) ---
 def extrair_dados_docx(uploaded_file):
     uploaded_file.seek(0); imagens = []; texto = ""
     try:
@@ -411,58 +506,6 @@ def gerar_plano_aula_bncc(api_key, materia, assunto, metodologia, tecnica, qtd_a
         return resp.choices[0].message.content
     except Exception as e: return str(e)
 
-# --- INTERFACE ---
-with st.sidebar:
-    if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']; st.success("✅ OpenAI OK")
-    else: api_key = st.text_input("Chave OpenAI:", type="password")
-    st.markdown("---")
-    if 'UNSPLASH_ACCESS_KEY' in st.secrets: unsplash_key = st.secrets['UNSPLASH_ACCESS_KEY']; st.success("✅ Unsplash OK")
-    else: unsplash_key = st.text_input("Chave Unsplash (Opcional):", type="password")
-    st.markdown("---")
-    if st.button("🧹 Limpar Tudo e Reiniciar", type="secondary"):
-        for key in list(st.session_state.keys()):
-            if key not in ['banco_estudantes', 'OPENAI_API_KEY', 'UNSPLASH_ACCESS_KEY', 'autenticado']: del st.session_state[key]
-        st.rerun()
-
-# --- HEADER HUB ---
-img_hub_html = get_img_tag("hub.png", "220") 
-st.markdown(f"""
-    <div class="header-hub">
-        <div style="flex-shrink: 0;">{img_hub_html}</div>
-        <div style="flex-grow: 1; text-align: center;"> 
-            <p style="margin:0; color:#2C5282; font-size: 1.3rem; font-weight: 700;">Adaptação de Materiais & Criação</p>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
-
-if not st.session_state.banco_estudantes:
-    st.warning("⚠️ Nenhum aluno encontrado. Cadastre no PEI."); st.stop()
-
-lista = [a['nome'] for a in st.session_state.banco_estudantes]
-nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista)
-aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
-
-serie_aluno = aluno.get('serie', '').lower()
-is_ei = "infantil" in serie_aluno or "creche" in serie_aluno or "pré" in serie_aluno
-
-st.markdown(f"""
-    <div class="student-header">
-        <div><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div>
-        <div><div class="student-label">Série</div><div class="student-value">{aluno.get('serie', '-')}</div></div>
-        <div><div class="student-label">Hiperfoco</div><div class="student-value">{aluno.get('hiperfoco', '-')}</div></div>
-    </div>
-""", unsafe_allow_html=True)
-
-# --- EXPANDER RESUMO PEI (NOVIDADE) ---
-with st.expander("📄 Ver Resumo do PEI (Base para Adaptação)", expanded=False):
-    st.info(aluno.get('ia_sugestao', 'Nenhum dado de PEI processado ainda.'))
-
-# === INICIALIZAÇÃO ===
-if 'res_scene_url' not in st.session_state: st.session_state.res_scene_url = None
-if 'valid_scene' not in st.session_state: st.session_state.valid_scene = False
-if 'res_caa_url' not in st.session_state: st.session_state.res_caa_url = None
-if 'valid_caa' not in st.session_state: st.session_state.valid_caa = False
-
 if is_ei:
     st.info("🧸 **Modo Educação Infantil Ativado:** Foco em Experiências, BNCC e Brincar.")
     tabs = st.tabs(["🧸 Criar Experiência", "🎨 Estúdio Visual & CAA", "📝 Rotina", "🤝 Inclusão"])
@@ -505,14 +548,13 @@ if is_ei:
 
 else:
     # === MODO PADRÃO ===
-    # ABAS REORDENADAS E RENOMEADAS
     tabs = st.tabs([
         "📄 Adaptar Prova", 
         "✂️ Adaptar Atividade", 
         "✨ Criar do Zero", 
         "🎨 Estúdio Visual & CAA", 
         "📝 Roteiro Individual", 
-        "🧠 DUA | Plano de Aula",  # Movido para cá
+        "🧠 DUA | Plano de Aula", 
         "🧠 DUA | Papo de Mestre", 
         "🧠 DUA | Dinâmica Inclusiva"
     ])
@@ -611,7 +653,7 @@ else:
             doc = construir_docx_final(st.session_state['rc']['txt'], aluno, mat, st.session_state['rc']['map'], None, "Criada")
             st.download_button("📥 BAIXAR DOCX", doc, "Criada.docx", "primary")
 
-    # 4. ESTUDIO VISUAL (COM TEXTO ADICIONAL)
+    # 4. ESTUDIO VISUAL
     with tabs[3]:
         st.markdown("<div class='pedagogia-box'><div class='pedagogia-title'><i class='ri-image-line'></i> Recursos Visuais</div>Flashcards e CAA.</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
@@ -638,7 +680,7 @@ else:
         if st.button("📝 GERAR ROTEIRO", type="primary"):
             st.markdown(gerar_roteiro_aula(api_key, aluno, m, a))
 
-    # 6. PLANO DE AULA DUA (REORDENADO)
+    # 6. PLANO DE AULA DUA
     with tabs[5]:
         st.markdown("<div class='pedagogia-box'><div class='pedagogia-title'><i class='ri-book-open-line'></i> Plano de Aula DUA</div>Planejamento BNCC completo.</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
