@@ -151,6 +151,16 @@ with st.sidebar:
 # 2. O CÓDIGO DO HUB DE INCLUSÃO
 # ==============================================================================
 
+# --- DADOS BLOOM ---
+TAXONOMIA_BLOOM = {
+    "1. Lembrar (Memorizar)": ["Citar", "Definir", "Identificar", "Listar", "Nomear", "Reconhecer", "Recordar", "Relacionar", "Repetir", "Sublinhar"],
+    "2. Entender (Compreender)": ["Classificar", "Descrever", "Discutir", "Explicar", "Expressar", "Identificar", "Localizar", "Narrar", "Reafirmar", "Reportar", "Resumir", "Traduzir"],
+    "3. Aplicar": ["Aplicar", "Demonstrar", "Dramatizar", "Empregar", "Esboçar", "Ilustrar", "Interpretar", "Operar", "Praticar", "Programar", "Usar"],
+    "4. Analisar": ["Analisar", "Calcular", "Categorizar", "Comparar", "Contrastar", "Criticar", "Diferenciar", "Discriminar", "Distinguir", "Examinar", "Experimentar", "Testar"],
+    "5. Avaliar": ["Argumentar", "Avaliar", "Defender", "Escolher", "Estimar", "Julgar", "Prever", "Selecionar", "Suportar", "Validar", "Valorizar"],
+    "6. Criar": ["Compor", "Construir", "Criar", "Desenhar", "Desenvolver", "Formular", "Investigar", "Planejar", "Produzir", "Propor"]
+}
+
 # --- BANCO DE DADOS ---
 ARQUIVO_DB = "banco_alunos.json"
 
@@ -432,13 +442,19 @@ def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_at
         return analise, atividade
     except Exception as e: return str(e), ""
 
-def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, modo_profundo=False):
+def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, verbos_bloom=None, modo_profundo=False):
     client = OpenAI(api_key=api_key)
     hiperfoco = aluno.get('hiperfoco', 'Geral')
     
     # Nova lógica de instrução de imagem e posição
     instrucao_img = f"Incluir imagens em {qtd_imgs} questões (use [[GEN_IMG: termo]]). REGRA DE POSIÇÃO: A tag da imagem ([[GEN_IMG: termo]]) DEVE vir logo APÓS o enunciado e ANTES das alternativas." if qtd_imgs > 0 else "Sem imagens."
     
+    # Instrução de Bloom
+    instrucao_bloom = ""
+    if verbos_bloom:
+        lista_verbos = ", ".join(verbos_bloom)
+        instrucao_bloom = f"6. TAXONOMIA DE BLOOM: Utilize prioritaria e obrigatoriamente os seguintes verbos de ação nos enunciados das questões: {lista_verbos}."
+
     style = "Atue como uma banca examinadora rigorosa." if modo_profundo else "Atue como professor elaborador."
     prompt = f"""
     {style}
@@ -449,6 +465,7 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, m
     3. Distratores Inteligentes. 
     4. Imagens: {instrucao_img} (NUNCA repita a mesma imagem). 
     5. Divisão Clara.
+    {instrucao_bloom}
     
     SAÍDA OBRIGATÓRIA:
     [ANÁLISE PEDAGÓGICA]
@@ -1003,10 +1020,23 @@ else:
         # MUDANÇA: Slider numérico (0 até Qtd Questões)
         qtd_img_sel = col_img_pct.slider("Quantas questões terão imagens?", 0, qtd_c, int(qtd_c/2), disabled=not usar_img)
         
+        # --- BLOOM SECTION ---
+        st.write("---")
+        st.markdown("#### 🧠 Intencionalidade Pedagógica")
+        usar_bloom = st.checkbox("🎯 Usar Taxonomia de Bloom (Revisada)")
+        verbos_selecionados = []
+        if usar_bloom:
+            col_b1, col_b2 = st.columns(2)
+            cat_bloom = col_b1.selectbox("Categoria Cognitiva:", list(TAXONOMIA_BLOOM.keys()))
+            verbos_selecionados = col_b2.multiselect("Selecione os Verbos de Ação:", TAXONOMIA_BLOOM[cat_bloom])
+            if verbos_selecionados:
+                st.info(f"As questões serão criadas com foco em: **{', '.join(verbos_selecionados)}**")
+        # ---------------------
+
         if st.button("✨ CRIAR ATIVIDADE", type="primary", key="btn_c"):
             with st.spinner("Elaborando..."):
                 qtd_final = qtd_img_sel if usar_img else 0
-                rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final)
+                rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, verbos_bloom=verbos_selecionados if usar_bloom else None)
                 
                 novo_map = {}; count = 0
                 tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', txt)
@@ -1033,7 +1063,7 @@ else:
                 if col_r.button("🧠 Refazer (+Profundo)", key="redo_c"):
                     with st.spinner("Refazendo..."):
                         qtd_final = qtd_img_sel if usar_img else 0
-                        rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, modo_profundo=True)
+                        rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, verbos_bloom=verbos_selecionados if usar_bloom else None, modo_profundo=True)
                         st.session_state['res_create']['rac'] = rac
                         st.session_state['res_create']['txt'] = txt
                         st.session_state['res_create']['valid'] = False
