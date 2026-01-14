@@ -504,28 +504,79 @@ def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo, feedback_ante
     except Exception as e: return str(e)
 
 # --- UTILS (ROTEIRO, ETC) ---
-def gerar_roteiro_aula(api_key, aluno, assunto, feedback_anterior=""):
+def gerar_roteiro_aula(api_key, aluno, materia, assunto, feedback_anterior=""):
     client = OpenAI(api_key=api_key)
     ajuste = f"Ajuste com base neste feedback: {feedback_anterior}" if feedback_anterior else ""
-    prompt = f"Roteiro de aula/rotina {assunto} para {aluno['nome']}. PEI: {aluno.get('ia_sugestao','')[:500]}. {ajuste}"
+    prompt = f"""
+    Crie um Roteiro de Aula INDIVIDUALIZADO para {aluno['nome']}.
+    Componente: {materia}. Assunto: {assunto}.
+    PEI/Necessidades: {aluno.get('ia_sugestao','')[:500]}. 
+    Hiperfoco para engajamento: {aluno.get('hiperfoco', 'Geral')}.
+    {ajuste}
+    
+    Estrutura:
+    1. Objetivo da Aula (Individual)
+    2. Estratégia de Apresentação (Como conectar com o hiperfoco)
+    3. Atividade Prática (Passo a passo adaptado)
+    4. Verificação de Aprendizagem
+    """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
         return resp.choices[0].message.content
     except Exception as e: return str(e)
 
-def gerar_quebra_gelo_profundo(api_key, aluno, assunto, tema_extra=""):
+def gerar_quebra_gelo_profundo(api_key, aluno, materia, assunto, hiperfoco, tema_turma_extra=""):
     client = OpenAI(api_key=api_key)
-    tema = tema_extra if tema_extra else aluno.get('hiperfoco', 'Geral')
-    prompt = f"3 Tópicos profundos conectando {tema} e {assunto} para {aluno['nome']}."
+    prompt = f"""
+    Crie 3 sugestões de 'Papo de Mestre' (Quebra-gelo/Introdução) para conectar o estudante {aluno['nome']} à aula.
+    Matéria: {materia}. Assunto: {assunto}.
+    Hiperfoco do aluno: {hiperfoco}.
+    Tema de interesse da turma (DUA): {tema_turma_extra if tema_turma_extra else 'Não informado'}.
+    
+    O objetivo é usar o hiperfoco ou o interesse da turma como UMA PONTE (estratégia DUA de engajamento) para explicar o conceito de {assunto}.
+    Seja criativo e profundo.
+    """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.8)
         return resp.choices[0].message.content
     except Exception as e: return str(e)
 
-def gerar_dinamica_inclusiva(api_key, aluno, assunto, feedback_anterior=""):
+def gerar_dinamica_inclusiva(api_key, aluno, materia, assunto, qtd_alunos, caracteristicas_turma, feedback_anterior=""):
     client = OpenAI(api_key=api_key)
     ajuste = f"Refaça considerando: {feedback_anterior}" if feedback_anterior else ""
-    prompt = f"Dinâmica de grupo sobre {assunto} inclusiva para {aluno['nome']} (PEI: {aluno.get('ia_sugestao','')[:500]}). {ajuste}"
+    prompt = f"""
+    Crie uma Dinâmica de Grupo Inclusiva para {qtd_alunos} alunos.
+    Matéria: {materia}. Tema: {assunto}.
+    Aluno foco da inclusão: {aluno['nome']} (PEI: {aluno.get('ia_sugestao','')[:400]}).
+    Características da turma: {caracteristicas_turma}.
+    
+    O objetivo é que TODOS participem, mas que a atividade valorize as potências de {aluno['nome']}.
+    {ajuste}
+    """
+    try:
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
+        return resp.choices[0].message.content
+    except Exception as e: return str(e)
+
+def gerar_plano_aula_bncc(api_key, materia, assunto, metodologia, tecnica, qtd_alunos, recursos):
+    client = OpenAI(api_key=api_key)
+    prompt = f"""
+    ATUAR COMO: Coordenador Pedagógico Especialista em BNCC e Metodologias Ativas.
+    Crie um PLANO DE AULA detalhado.
+    
+    DADOS:
+    - Componente: {materia}
+    - Tema/Assunto: {assunto}
+    - Metodologia: {metodologia} ({tecnica if tecnica else 'Padrão'})
+    - Quantidade de Alunos: {qtd_alunos}
+    - Recursos Disponíveis: {', '.join(recursos)}
+    
+    SAÍDA ESPERADA (Markdown):
+    1. **Habilidades BNCC:** (Identifique os códigos alfanuméricos e descrições pertinentes ao tema).
+    2. **Objetivos de Aprendizagem:**
+    3. **Desenvolvimento (Passo a Passo):** Como a aula acontece usando a metodologia escolhida e os recursos marcados.
+    4. **Adaptação/Diferenciação:** Sugestão geral para alunos com dificuldades.
+    """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
         return resp.choices[0].message.content
@@ -734,7 +785,7 @@ if is_ei:
         if st.button("📝 ANALISAR E ADAPTAR ROTINA", type="primary"):
             with st.spinner("Analisando rotina..."):
                 prompt_rotina = f"Analise esta rotina de Educação Infantil e sugira adaptações sensoriais e visuais:\n\n{rotina_detalhada}\n\nFoco específico: {topico_foco}"
-                st.session_state.res_ei_rotina = gerar_roteiro_aula(api_key, aluno, prompt_rotina)
+                st.session_state.res_ei_rotina = gerar_roteiro_aula(api_key, aluno, "Geral", "Rotina", feedback_anterior=prompt_rotina) # Adaptação simples para usar função existente
                 st.session_state.valid_ei_rotina = False
 
         if st.session_state.res_ei_rotina:
@@ -751,7 +802,7 @@ if is_ei:
                     if st.button("Refazer Rotina"):
                         with st.spinner("Reajustando..."):
                             prompt_rotina = f"Analise esta rotina de Educação Infantil e sugira adaptações:\n\n{rotina_detalhada}\n\nFoco: {topico_foco}"
-                            st.session_state.res_ei_rotina = gerar_roteiro_aula(api_key, aluno, prompt_rotina, feedback_anterior=fb_rotina)
+                            st.session_state.res_ei_rotina = gerar_roteiro_aula(api_key, aluno, "Geral", "Rotina", feedback_anterior=prompt_rotina)
                             st.rerun()
 
     # 4. INCLUSÃO NO BRINCAR
@@ -770,7 +821,8 @@ if is_ei:
 
         if st.button("🤝 GERAR DINÂMICA", type="primary"): 
             with st.spinner("Criando ponte social..."):
-                st.session_state.res_ei_dina = gerar_dinamica_inclusiva(api_key, aluno, tema_d)
+                # Adaptação para usar função existente
+                st.session_state.res_ei_dina = gerar_dinamica_inclusiva(api_key, aluno, "Educação Infantil", tema_d, "pequeno grupo", "Crianças pequenas")
                 st.session_state.valid_ei_dina = False
 
         if st.session_state.res_ei_dina:
@@ -786,12 +838,13 @@ if is_ei:
                     fb_dina = st.text_input("O que ajustar?", key="fb_dina_input")
                     if st.button("Refazer Dinâmica"):
                         with st.spinner("Reajustando..."):
-                            st.session_state.res_ei_dina = gerar_dinamica_inclusiva(api_key, aluno, tema_d, feedback_anterior=fb_dina)
+                            st.session_state.res_ei_dina = gerar_dinamica_inclusiva(api_key, aluno, "Educação Infantil", tema_d, "pequeno grupo", "Crianças pequenas", feedback_anterior=fb_dina)
                             st.rerun()
 
 else:
     # === MODO PADRÃO (FUNDAMENTAL / MÉDIO) ===
-    tabs = st.tabs(["📄 Adaptar Prova", "✂️ Adaptar Atividade", "✨ Criar do Zero", "🎨 Estúdio Visual & CAA", "📝 Roteiro de Aula", "🗣️ Papo de Mestre", "🤝 Dinâmica Inclusiva"])
+    # AQUI ESTÃO AS NOVAS ABAS SOLICITADAS: Roteiro Individual, Papo de Mestre, Dinâmica, Plano de Aula
+    tabs = st.tabs(["📄 Adaptar Prova", "✂️ Adaptar Atividade", "✨ Criar do Zero", "🎨 Estúdio Visual & CAA", "📝 Roteiro Individual", "🗣️ Papo de Mestre", "🤝 Dinâmica Inclusiva", "📅 Plano de Aula (BNCC)"])
 
     # 1. ADAPTAR PROVA
     with tabs[0]:
@@ -1063,16 +1116,102 @@ else:
                                 st.session_state.res_caa_url = gerar_pictograma_caa(api_key, palavra_chave, feedback_anterior=fb_caa)
                                 st.rerun()
 
+    # 5. ROTEIRO DE AULA INDIVIDUAL
     with tabs[4]:
-        ass = st.text_input("Assunto:", key="rota")
-        if st.button("📝 ROTEIRO"): st.markdown(gerar_roteiro_aula(api_key, aluno, ass))
-
-    with tabs[5]:
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-user-follow-line"></i> Roteiro de Aula Individualizado</div>
+            Crie um passo a passo de aula <strong>específico para este estudante</strong> do PEI. 
+            A IA usará o hiperfoco como chave de acesso para o conteúdo.
+        </div>
+        """, unsafe_allow_html=True)
+        
         c1, c2 = st.columns(2)
-        ass_q = c1.text_input("Assunto:", key="qga")
-        tema_q = c2.text_input("Tema:", value=aluno.get('hiperfoco'), key="qgt")
-        if st.button("🗣️ CONVERSA"): st.markdown(gerar_quebra_gelo_profundo(api_key, aluno, ass_q, tema_q))
+        materia_rotina = c1.selectbox("Componente Curricular", discip, key="rot_materia")
+        tema_rotina = c2.text_input("Assunto/Tema da Aula:", key="rot_tema", placeholder="Ex: Ciclo da Água")
+        
+        if st.button("📝 GERAR ROTEIRO INDIVIDUAL", type="primary"): 
+            if tema_rotina:
+                st.markdown(gerar_roteiro_aula(api_key, aluno, materia_rotina, tema_rotina))
+            else:
+                st.warning("Preencha o Assunto/Tema.")
 
+    # 6. PAPO DE MESTRE (QUEBRA-GELO DUA)
+    with tabs[5]:
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-chat-smile-2-line"></i> Engajamento & DUA (Papo de Mestre)</div>
+            O hiperfoco é um <strong>caminho neurológico</strong> já aberto. Use-o para conectar o aluno à matéria.
+            Aqui você também pode adicionar um tema de interesse da turma toda (DUA) para criar conexões coletivas.
+        </div>
+        """, unsafe_allow_html=True)
+        
+        c1, c2 = st.columns(2)
+        materia_papo = c1.selectbox("Componente", discip, key="papo_mat")
+        assunto_papo = c2.text_input("Assunto da Aula:", key="papo_ass")
+        
+        c3, c4 = st.columns(2)
+        hiperfoco_papo = c3.text_input("Hiperfoco (Aluno):", value=aluno.get('hiperfoco', 'Geral'), key="papo_hip")
+        tema_turma = c4.text_input("Interesse da Turma (Opcional - DUA):", placeholder="Ex: Minecraft, Copa do Mundo...", key="papo_turma")
+        
+        if st.button("🗣️ CRIAR CONEXÕES", type="primary"): 
+            if assunto_papo:
+                st.markdown(gerar_quebra_gelo_profundo(api_key, aluno, materia_papo, assunto_papo, hiperfoco_papo, tema_turma))
+            else:
+                st.warning("Preencha o Assunto.")
+
+    # 7. DINÂMICA INCLUSIVA
     with tabs[6]:
-        ass_d = st.text_input("Tema:", key="dina")
-        if st.button("🤝 DINÂMICA"): st.markdown(gerar_dinamica_inclusiva(api_key, aluno, ass_d))
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-group-line"></i> Dinâmica Inclusiva</div>
+            Atividades em grupo onde todos participam, respeitando as singularidades.
+        </div>
+        """, unsafe_allow_html=True)
+        
+        c1, c2 = st.columns(2)
+        materia_din = c1.selectbox("Componente", discip, key="din_mat")
+        assunto_din = c2.text_input("Assunto:", key="din_ass")
+        
+        c3, c4 = st.columns(2)
+        qtd_alunos = c3.number_input("Número de Alunos:", min_value=5, max_value=50, value=25, key="din_qtd")
+        carac_turma = c4.text_input("Características da Turma (Opcional):", placeholder="Ex: Turma agitada, gostam de competição...", key="din_carac")
+        
+        if st.button("🤝 CRIAR DINÂMICA", type="primary"): 
+            if assunto_din:
+                st.markdown(gerar_dinamica_inclusiva(api_key, aluno, materia_din, assunto_din, qtd_alunos, carac_turma))
+            else:
+                st.warning("Preencha o Assunto.")
+
+    # 8. NOVO: PLANO DE AULA (BNCC)
+    with tabs[7]:
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-book-open-line"></i> Plano de Aula (BNCC)</div>
+            Gere um planejamento completo alinhado à BNCC, selecionando metodologias ativas e recursos.
+        </div>
+        """, unsafe_allow_html=True)
+        
+        c1, c2 = st.columns(2)
+        materia_plano = c1.selectbox("Componente Curricular", discip, key="plano_mat")
+        assunto_plano = c2.text_input("Assunto/Tema:", key="plano_ass")
+        
+        c3, c4 = st.columns(2)
+        metodologia = c3.selectbox("Metodologia", ["Aula Expositiva Dialogada", "Metodologia Ativa"], key="plano_met")
+        
+        tecnica_ativa = ""
+        if metodologia == "Metodologia Ativa":
+            tecnica_ativa = c4.selectbox("Técnica Ativa", ["Gamificação", "Sala de Aula Invertida", "Aprendizagem Baseada em Projetos (PBL)", "Rotação por Estações", "Peer Instruction"], key="plano_tec")
+        else:
+            c4.info("Metodologia tradicional selecionada.")
+
+        c5, c6 = st.columns(2)
+        qtd_alunos_plano = c5.number_input("Qtd Alunos:", min_value=1, value=30, key="plano_qtd")
+        recursos_plano = c6.multiselect("Recursos Disponíveis:", ["Quadro/Giz", "Projetor/Datashow", "Lousa Digital", "Tablets/Celulares", "Internet", "Materiais Maker (Papel, Cola, etc)", "Jogos de Tabuleiro"], key="plano_rec")
+        
+        if st.button("📅 GERAR PLANO DE AULA", type="primary"):
+            if assunto_plano:
+                with st.spinner("Consultando BNCC e planejando..."):
+                    st.markdown(gerar_plano_aula_bncc(api_key, materia_plano, assunto_plano, metodologia, tecnica_ativa, qtd_alunos_plano, recursos_plano))
+            else:
+                st.warning("Preencha o Assunto.")
