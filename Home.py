@@ -1,4 +1,3 @@
-
 import streamlit as st
 from datetime import date
 from openai import OpenAI
@@ -357,41 +356,27 @@ with st.sidebar:
         else:
             st.warning("Escreva uma mensagem.")
 
-# CSS GERAL (GLASS HEADER + SMOOTH TRANSITION)
+# CSS GERAL (STICKY HEADER + CLEAN UI)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Nunito:wght@400;600;700&display=swap');
     html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }
     
-    /* ANIMAÇÃO DE ENTRADA SUAVE PARA O CONTEÚDO */
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .block-container { 
-        padding-top: 180px !important; 
-        padding-bottom: 3rem !important; 
-        margin-top: 0rem !important;
-        animation: fadeIn 0.8s ease-out; /* Aplica a suavidade na carga */
-    }
-
-    /* HEADER COM EFEITO DE VIDRO (GLASSMORPHISM) */
+    /* HEADER CONGELADO */
     .logo-container {
         display: flex; align-items: center; justify-content: center;
         gap: 20px; 
         position: fixed; top: 0; left: 0; width: 100%;
-        
-        /* AQUI ESTÁ A MÁGICA DA TRANSIÇÃO */
-        background-color: rgba(247, 250, 252, 0.85); /* Fundo semi-transparente */
-        backdrop-filter: blur(12px); /* Desfoque do que passa atrás */
-        -webkit-backdrop-filter: blur(12px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.5); /* Borda sutil */
-        
-        z-index: 9999; 
+        background-color: #F7FAFC; z-index: 9999; 
         padding-top: 15px; padding-bottom: 15px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.03); /* Sombra mais difusa */
-        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    /* COMPENSAÇÃO DE CORPO */
+    .block-container { 
+        padding-top: 180px !important; 
+        padding-bottom: 3rem !important; 
+        margin-top: 0rem !important;
     }
 
     /* LOGO HOME ANIMADA */
@@ -411,8 +396,6 @@ st.markdown("""
         color: white; position: relative; overflow: hidden;
         padding: 50px 60px;
         display: flex; align-items: center; justify-content: flex-start;
-        /* Pequena margem extra para separar visualmente do vidro ao carregar */
-        margin-top: 10px; 
     }
     .hero-text-block { z-index: 2; text-align: left; max-width: 90%; }
     .hero-title {
@@ -476,6 +459,20 @@ st.markdown("""
 </style>
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 """, unsafe_allow_html=True)
+
+# --- HEADER STICKY ---
+icone_b64 = get_base64_image("omni_icone.png")
+texto_b64 = get_base64_image("omni_texto.png")
+
+if icone_b64 and texto_b64:
+    st.markdown(f"""
+    <div class="logo-container">
+        <img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">
+        <img src="data:image/png;base64,{texto_b64}" class="logo-text-static">
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("<div class='logo-container'><h1 style='color: #0F52BA; margin:0;'>🌐 OMNISFERA</h1></div>", unsafe_allow_html=True)
 
 
 # --- CONTEÚDO PRINCIPAL ---
