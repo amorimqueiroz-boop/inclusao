@@ -252,4 +252,113 @@ def sistema_seguranca():
                 st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
                 senha = st.text_input("senha_real", type="password", placeholder="Senha", label_visibility="collapsed")
 
-            st.markdown("<div style='height:20px'></div>", unsafe
+            st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+            
+            if st.button(btn_text):
+                if IS_TEST_ENV:
+                    st.session_state["autenticado"] = True
+                    st.session_state["usuario_nome"] = nome_user if nome_user else "Visitante Teste"
+                    st.session_state["usuario_cargo"] = cargo_user if cargo_user else "Dev"
+                    st.rerun()
+                else:
+                    hoje = date.today()
+                    senha_mestra = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
+                    if not concordo: st.warning("Aceite os termos.")
+                    elif not nome_user or not cargo_user: st.warning("Preencha seus dados.")
+                    elif senha != senha_mestra: st.error("Senha incorreta.")
+                    else:
+                        st.session_state["autenticado"] = True
+                        st.session_state["usuario_nome"] = nome_user
+                        st.session_state["usuario_cargo"] = cargo_user
+                        st.rerun()
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+        return False
+    return True
+
+if not sistema_seguranca(): st.stop()
+
+# ==============================================================================
+# 5. CONTEÚDO DA HOME (SÓ CARREGA APÓS LOGIN)
+# ==============================================================================
+
+# CARD OMNISFERA (Canto Direito)
+st.markdown(f"""<div class="omni-badge hover-spring"><span class="omni-text">{display_text}</span></div>""", unsafe_allow_html=True)
+
+# HEADER LOGO (SÓ APARECE AGORA)
+icone_b64 = get_base64_image("omni_icone.png")
+texto_b64 = get_base64_image("omni_texto.png")
+
+if icone_b64 and texto_b64:
+    st.markdown(f"""
+    <div class="logo-container">
+        <img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">
+        <img src="data:image/png;base64,{texto_b64}" class="logo-text-static">
+        <div class="header-subtitle-text">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("<div class='logo-container'><h1 style='color: #0F52BA; margin:0;'>🌐 OMNISFERA</h1><div class='header-subtitle-text'>Ecossistema de Inteligência Pedagógica e Inclusiva</div></div>", unsafe_allow_html=True)
+
+nome_display = st.session_state.get("usuario_nome", "Educador").split()[0]
+
+# Banner Message
+mensagem_banner = "Unindo ciência, dados e empatia para transformar a educação."
+if 'OPENAI_API_KEY' in st.secrets:
+    try:
+        if 'banner_msg' not in st.session_state:
+            client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
+            res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": f"Frase inspiradora curta para {nome_display} sobre inclusão."}])
+            st.session_state['banner_msg'] = res.choices[0].message.content
+        mensagem_banner = st.session_state['banner_msg']
+    except: pass
+
+# --- SIDEBAR (SÓ AGORA) ---
+with st.sidebar:
+    if "usuario_nome" in st.session_state:
+        st.markdown(f"**👤 {st.session_state['usuario_nome']}**")
+        st.caption(f"{st.session_state['usuario_cargo']}")
+        st.markdown("---")
+
+    st.markdown("### 📢 Central de Feedback")
+    tipo = st.selectbox("Tipo:", ["Sugestão", "Erro", "Elogio"])
+    msg = st.text_area("Mensagem:", height=100)
+    if st.button("Enviar"):
+        if msg: st.toast("Enviado!", icon="✅"); time.sleep(1)
+
+# --- HERO SECTION ---
+st.markdown(f"""
+<div class="dash-hero hover-spring">
+    <div class="hero-text-block">
+        <div class="hero-title">Olá, {nome_display}!</div>
+        <div class="hero-subtitle">"{mensagem_banner}"</div>
+    </div>
+    <i class="ri-heart-pulse-fill hero-bg-icon"></i>
+</div>
+""", unsafe_allow_html=True)
+
+# FERRAMENTAS
+st.markdown("<div class='section-title'><i class='ri-cursor-fill'></i> Acesso Rápido</div>", unsafe_allow_html=True)
+
+logo_pei = get_base64_image("360.png")
+logo_paee = get_base64_image("pae.png")
+logo_hub = get_base64_image("hub.png")
+
+c1, c2, c3 = st.columns(3)
+
+with c1:
+    img = f'<img src="data:image/png;base64,{logo_pei}" class="card-logo-img">' if logo_pei else '<i class="ri-book-read-line" style="font-size:4rem; color:#3182CE;"></i>'
+    st.markdown(f"""<div class="tool-card border-blue hover-spring"><div class="card-logo-box">{img}</div><div class="tool-desc-short">Plano de Ensino Individualizado Oficial.</div></div>""", unsafe_allow_html=True)
+    if st.button("➜ Acessar PEI", use_container_width=True): st.switch_page("pages/1_PEI.py")
+
+with c2:
+    img = f'<img src="data:image/png;base64,{logo_paee}" class="card-logo-img">' if logo_paee else '<i class="ri-puzzle-line" style="font-size:4rem; color:#805AD5;"></i>'
+    st.markdown(f"""<div class="tool-card border-purple hover-spring"><div class="card-logo-box">{img}</div><div class="tool-desc-short">Sala de Recursos e Tecnologias Assistivas.</div></div>""", unsafe_allow_html=True)
+    if st.button("➜ Acessar PAEE", use_container_width=True): st.switch_page("pages/2_PAE.py")
+
+with c3:
+    img = f'<img src="data:image/png;base64,{logo_hub}" class="card-logo-img">' if logo_hub else '<i class="ri-rocket-line" style="font-size:4rem; color:#38B2AC;"></i>'
+    st.markdown(f"""<div class="tool-card border-teal hover-spring"><div class="card-logo-box">{img}</div><div class="tool-desc-short">Adaptação de provas e materiais.</div></div>""", unsafe_allow_html=True)
+    if st.button("➜ Acessar Hub", use_container_width=True): st.switch_page("pages/3_Hub_Inclusao.py")
+
+st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.8rem; margin-top: 60px;'>Omnisfera © 2026</div>", unsafe_allow_html=True)
