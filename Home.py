@@ -85,10 +85,12 @@ st.markdown(f"""
 
     /* --- 3. HEADER DE VIDRO (GLASSMORPHISM) --- */
     .logo-container {{
-        display: flex; align-items: center; justify-content: center;
-        gap: 20px; 
-        position: fixed; top: 0; left: 0; width: 100%; height: 100px;
-        background-color: rgba(247, 250, 252, 0.8); 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between; /* Separa Logo (Esq) e Texto (Dir) */
+        padding: 0 40px;
+        position: fixed; top: 0; left: 0; width: 100%; height: 110px;
+        background-color: rgba(247, 250, 252, 0.85); 
         backdrop-filter: blur(16px) saturate(180%); 
         -webkit-backdrop-filter: blur(16px) saturate(180%);
         border-bottom: 1px solid rgba(255, 255, 255, 0.6);
@@ -96,28 +98,50 @@ st.markdown(f"""
         box-shadow: 0 4px 30px rgba(0,0,0,0.03);
     }}
 
+    /* LOGO + NOME (ESQUERDA) */
+    .logo-box-left {{
+        display: flex;
+        flex-direction: column; /* Um embaixo do outro */
+        align-items: flex-start; /* Alinhado à esquerda */
+        justify-content: center;
+        gap: 5px;
+    }}
+
     /* LOGO GIRATÓRIA */
     @keyframes spin {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
-    .logo-icon-spin {{ height: 80px; width: auto; animation: spin 45s linear infinite; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); }}
-    .logo-text-static {{ height: 50px; width: auto; }}
+    .logo-icon-spin {{ height: 60px; width: auto; animation: spin 45s linear infinite; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); margin-left: 10px; }}
+    
+    /* NOME OMNISFERA (EMBAIXO DA LOGO) */
+    .logo-text-static {{ height: 25px; width: auto; margin-top: 5px; }}
+
+    /* TEXTO DIREITA (ECOSSISTEMA) */
+    .header-slogan {{
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 1rem;
+        color: #718096;
+        text-align: right;
+        max-width: 300px;
+        line-height: 1.2;
+    }}
 
     /* --- 4. BADGE FLUTUANTE (STATUS) --- */
     .omni-badge {{
-        position: fixed; top: 20px; right: 20px;
+        position: fixed; top: 120px; right: 20px; /* Ajustado para baixo do header */
         background: {card_bg};
         border: 1px solid {card_border};
         backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-        padding: 8px 25px;
-        min-width: 200px;
-        border-radius: 16px;
+        padding: 5px 15px;
+        min-width: 150px;
+        border-radius: 12px;
         box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-        z-index: 999990;
+        z-index: 9990;
         display: flex; align-items: center; justify-content: center;
         pointer-events: none;
         transition: transform 0.3s ease;
     }}
     .omni-text {{
-        font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.7rem;
+        font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.6rem;
         color: #2D3748; letter-spacing: 2px; text-transform: uppercase;
     }}
 
@@ -130,7 +154,7 @@ st.markdown(f"""
     
     /* Botão Menu Lateral (Estilo iOS/Notion) */
     [data-testid="stSidebarCollapsedControl"] {{
-        position: fixed !important; top: 110px !important; left: 20px !important; z-index: 1000000 !important;
+        position: fixed !important; top: 120px !important; left: 20px !important; z-index: 1000000 !important;
         visibility: visible !important; display: flex !important;
         background-color: rgba(255,255,255,0.9) !important;
         backdrop-filter: blur(8px);
@@ -251,15 +275,21 @@ def get_base64_image(image_path):
 # CARD OMNISFERA (Canto Direito)
 st.markdown(f"""<div class="omni-badge hover-spring"><span class="omni-text">{display_text}</span></div>""", unsafe_allow_html=True)
 
-# HEADER LOGO (Centro/Topo - VIDRO)
+# HEADER LOGO (Esquerda e Direita - VIDRO)
 icone_b64 = get_base64_image("omni_icone.png")
-texto_b64 = get_base64_image("omni_texto.png")
+texto_b64 = get_base64_image("omni_texto.png") # Nome "Omnisfera"
 
 if icone_b64 and texto_b64:
     st.markdown(f"""
     <div class="logo-container">
-        <img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">
-        <img src="data:image/png;base64,{texto_b64}" class="logo-text-static">
+        <div class="logo-box-left">
+            <img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">
+            <img src="data:image/png;base64,{texto_b64}" class="logo-text-static">
+        </div>
+        
+        <div class="header-slogan">
+            Ecossistema de Inteligência<br>Pedagógica e Inclusiva
+        </div>
     </div>
     """, unsafe_allow_html=True)
 else:
@@ -285,6 +315,10 @@ def sistema_seguranca():
         <style>
             /* Esconde header padrão na tela de login */
             [data-testid="stHeader"] {{visibility: hidden !important; height: 0px !important;}}
+            
+            /* Remove Sidebar no Login */
+            [data-testid="stSidebar"] {{display: none !important;}}
+            [data-testid="stSidebarCollapsedControl"] {{display: none !important;}}
             
             .login-container {{ 
                 background-color: white; 
@@ -316,7 +350,7 @@ def sistema_seguranca():
                 font-size: 1rem !important; transition: all 0.2s;
             }}
             div[data-testid="column"] .stButton button:hover {{ transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }}
-            .teste-warning {{ color: #D69E2E; font-size: 0.85rem; font-weight: 700; margin-bottom: 15px; background: #FFFBEB; padding: 8px; border-radius: 8px; }}
+            .teste-warning {{ color: #D69E2E; font-size: 0.85rem; font-weight: 700; margin-bottom: 15px; background: #FFFBEB; padding: 8px; border-radius: 8px; display: none; }} /* Ocultando aviso amarelo conforme pedido */
         </style>
     """, unsafe_allow_html=True)
 
@@ -345,8 +379,7 @@ def sistema_seguranca():
             concordo = False
 
             if IS_TEST_ENV:
-                # MODO TESTE
-                st.markdown("<div class='teste-warning'>🛠️ MODO TESTE ATIVADO</div>", unsafe_allow_html=True)
+                # MODO TESTE (Sem o aviso amarelo)
                 with st.expander("📝 Preencher dados (Opcional)"):
                     nome_user = st.text_input("nome_fake", placeholder="Nome (Opcional)", label_visibility="collapsed")
                     st.markdown("<div style='height:5px'></div>", unsafe_allow_html=True)
@@ -411,7 +444,7 @@ if 'OPENAI_API_KEY' in st.secrets:
         mensagem_banner = st.session_state['banner_msg']
     except: pass
 
-# --- SIDEBAR ---
+# --- SIDEBAR (SÓ APARECE SE AUTENTICADO) ---
 with st.sidebar:
     if "usuario_nome" in st.session_state:
         st.markdown(f"**👤 {st.session_state['usuario_nome']}**")
