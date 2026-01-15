@@ -48,7 +48,7 @@ else:
     footer_visibility = "hidden"
 
 # ==============================================================================
-# 3. CSS GLOBAL (HEADER FIXO E CARDS CLICÁVEIS)
+# 3. CSS GLOBAL (COMPACTADO E ELEGANTE)
 # ==============================================================================
 css_estatico = """
 <style>
@@ -68,20 +68,20 @@ css_estatico = """
     .hover-spring { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; }
     .hover-spring:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 10px 20px rgba(0,0,0,0.06) !important; z-index: 10; }
 
-    /* Espaço para o Header Fixo */
+    /* CONTAINER PRINCIPAL MAIS APERTADO */
     .block-container { 
-        padding-top: 130px !important; 
-        padding-bottom: 2rem !important; 
+        padding-top: 90px !important; 
+        padding-bottom: 1rem !important; 
         margin-top: 0rem !important;
         animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
-    /* --- HEADER FIXO (GLASSMORPHISM) --- */
+    /* --- HEADER FIXO --- */
     .logo-container {
         display: flex; align-items: center; justify-content: flex-start; 
         gap: 15px; 
         position: fixed; 
-        top: 0; left: 0; width: 100%; height: 90px;
+        top: 0; left: 0; width: 100%; height: 80px; /* Altura reduzida */
         background-color: rgba(247, 250, 252, 0.85); 
         backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
         border-bottom: 1px solid rgba(255, 255, 255, 0.5);
@@ -91,14 +91,14 @@ css_estatico = """
         padding-top: 5px;
     }
     .header-subtitle-text {
-        font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 1.1rem;
+        font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 1rem;
         color: #718096; border-left: 2px solid #CBD5E0; padding-left: 15px;
-        height: 40px; display: flex; align-items: center; letter-spacing: -0.3px;
+        height: 35px; display: flex; align-items: center; letter-spacing: -0.3px;
     }
-    .logo-icon-spin { height: 75px; width: auto; animation: spin 45s linear infinite; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
-    .logo-text-static { height: 45px; width: auto; }
+    .logo-icon-spin { height: 70px; width: auto; animation: spin 45s linear infinite; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+    .logo-text-static { height: 40px; width: auto; }
 
-    /* --- LOGIN LIMPO --- */
+    /* Login Styles */
     .login-container { 
         background-color: white; padding: 30px; 
         border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); 
@@ -110,50 +110,61 @@ css_estatico = """
     .login-logo-static { height: 50px; width: auto; margin-left: 8px; }
     .logo-wrapper { display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
     .manifesto-login { font-family: 'Nunito', sans-serif; font-size: 0.85rem; color: #64748B; font-style: italic; line-height: 1.5; margin-bottom: 25px; }
+    
     .stTextInput input { border-radius: 10px !important; border: 1px solid #E2E8F0 !important; padding: 10px !important; background-color: #F8FAFC !important; font-size: 0.9rem !important;}
-
+    
     /* --- HERO COMPACTO --- */
     .dash-hero { 
         background: radial-gradient(circle at top right, #0F52BA, #062B61); 
-        border-radius: 16px; margin-bottom: 25px; margin-top: 10px;
+        border-radius: 16px; 
+        margin-bottom: 20px; /* Margem reduzida */
+        margin-top: 10px;
         box-shadow: 0 10px 25px -5px rgba(15, 82, 186, 0.3);
         color: white; position: relative; overflow: hidden; 
-        padding: 30px 40px; 
+        padding: 25px 35px; /* Padding reduzido */
         display: flex; align-items: center; justify-content: flex-start;
         border: 1px solid rgba(255,255,255,0.1);
-        min-height: 110px;
+        min-height: 100px;
     }
-    .hero-title { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1.6rem; margin: 0; line-height: 1.1; margin-bottom: 5px; }
-    .hero-subtitle { font-family: 'Inter', sans-serif; font-size: 0.9rem; opacity: 0.9; font-weight: 400; }
-    .hero-bg-icon { position: absolute; right: 20px; font-size: 7rem; opacity: 0.05; top: 5px; transform: rotate(-10deg); }
+    .hero-title { 
+        font-family: 'Inter', sans-serif; 
+        font-weight: 700; font-size: 1.5rem; /* Fonte menor */
+        margin: 0; line-height: 1.1; margin-bottom: 5px; 
+    }
+    .hero-subtitle { 
+        font-family: 'Inter', sans-serif; 
+        font-size: 0.9rem; opacity: 0.9; font-weight: 400; 
+    }
+    .hero-bg-icon { position: absolute; right: 20px; font-size: 6rem; opacity: 0.05; top: 5px; transform: rotate(-10deg); }
 
-    /* --- NOVOS CARDS CLICÁVEIS (Estilo Botão) --- */
+    /* --- CARDS FERRAMENTAS COMPACTOS (SEM TÍTULO) --- */
     .nav-btn-card {
-        background-color: white; border-radius: 16px; padding: 20px;
+        background-color: white; border-radius: 16px; padding: 15px;
         border: 1px solid #E2E8F0; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
         text-align: center; transition: all 0.2s ease; cursor: pointer;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        height: 160px; position: relative; overflow: hidden;
+        height: 130px; /* Altura reduzida */
+        position: relative; overflow: hidden;
         text-decoration: none !important;
     }
     .nav-btn-card:hover {
         transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.08);
         border-color: #CBD5E0;
     }
-    .nav-icon { height: 50px; width: auto; object-fit: contain; margin-bottom: 12px; }
-    .nav-title { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1rem; color: #2D3748; margin-bottom: 5px; }
+    .nav-icon { height: 45px; width: auto; object-fit: contain; margin-bottom: 10px; } /* Ícone menor */
     .nav-desc { font-size: 0.75rem; color: #718096; line-height: 1.3; font-weight: 500; }
     
-    /* Bordas inferiores coloridas para diferenciar */
     .b-blue { border-bottom: 4px solid #3182CE; }
     .b-purple { border-bottom: 4px solid #805AD5; }
     .b-teal { border-bottom: 4px solid #38B2AC; }
 
-    /* Esconde o botão padrão do Streamlit dentro da coluna para usar o card inteiro como clique (truque visual) */
     .stButton button { display: none !important; }
 
     /* --- BENTO GRID COMPACTO --- */
-    .bento-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 25px; }
+    .bento-grid { 
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+        gap: 12px; margin-bottom: 20px; /* Gap e margem reduzidos */
+    }
     .bento-item { 
         background: white; border-radius: 14px; padding: 15px; border: 1px solid #E2E8F0; 
         box-shadow: 0 2px 4px rgba(0,0,0,0.01); text-decoration: none; color: inherit; 
@@ -183,7 +194,7 @@ css_estatico = """
     
     .section-title { 
         font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1.1rem; 
-        color: #1A202C; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; margin-top: 30px; 
+        color: #1A202C; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; margin-top: 25px; 
     }
 
     /* Ocultar elementos padrão */
@@ -370,7 +381,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# FERRAMENTAS COMO BOTÕES GRANDES (CARDS CLICÁVEIS)
+# FERRAMENTAS COMO BOTÕES GRANDES (SEM TÍTULO, SÓ LOGO)
 st.markdown("<div class='section-title'><i class='ri-cursor-fill'></i> Acesso Rápido</div>", unsafe_allow_html=True)
 
 logo_pei = get_base64_image("360.png")
@@ -379,31 +390,30 @@ logo_hub = get_base64_image("hub.png")
 
 c1, c2, c3 = st.columns(3)
 
-def card_botao(coluna, img_b64, titulo, desc, chave_btn, page_path, cor_borda_class, fallback_icon):
+def card_botao(coluna, img_b64, desc, chave_btn, page_path, cor_borda_class, fallback_icon):
     with coluna:
-        # Renderiza o Card Visual
+        # Renderiza o Card Visual (Sem Título)
         img_html = f'<img src="data:image/png;base64,{img_b64}" class="nav-icon">' if img_b64 else f'<i class="{fallback_icon}" style="font-size:3rem; margin-bottom:10px;"></i>'
         
         st.markdown(f"""
         <div class="nav-btn-card {cor_borda_class}">
             {img_html}
-            <div class="nav-title">{titulo}</div>
             <div class="nav-desc">{desc}</div>
         </div>
         """, unsafe_allow_html=True)
         
         # Botão invisível esticado sobre o card para capturar o clique
-        if st.button(f"Acessar {titulo}", key=chave_btn, use_container_width=True):
+        if st.button(f"Acessar {desc[:5]}", key=chave_btn, use_container_width=True):
             st.switch_page(page_path)
 
 # Card 1: PEI
-card_botao(c1, logo_pei, "PEI 360º", "Plano de Ensino Individualizado Oficial.", "btn_pei", "pages/1_PEI.py", "b-blue", "ri-book-read-line")
+card_botao(c1, logo_pei, "Plano de Ensino Individualizado Oficial.", "btn_pei", "pages/1_PEI.py", "b-blue", "ri-book-read-line")
 
 # Card 2: PAEE
-card_botao(c2, logo_paee, "PAEE 360º", "Sala de Recursos e Tecnologias Assistivas.", "btn_paee", "pages/2_PAE.py", "b-purple", "ri-puzzle-line")
+card_botao(c2, logo_paee, "Sala de Recursos e Tecnologias Assistivas.", "btn_paee", "pages/2_PAE.py", "b-purple", "ri-puzzle-line")
 
 # Card 3: HUB
-card_botao(c3, logo_hub, "HUB Inclusão", "Adaptação de provas e roteiros.", "btn_hub", "pages/3_Hub_Inclusao.py", "b-teal", "ri-rocket-line")
+card_botao(c3, logo_hub, "Adaptação de provas e roteiros.", "btn_hub", "pages/3_Hub_Inclusao.py", "b-teal", "ri-rocket-line")
 
 # BENTO GRID (BASE DE CONHECIMENTO)
 st.markdown("<div class='section-title'><i class='ri-book-mark-fill'></i> Conhecimento</div>", unsafe_allow_html=True)
@@ -454,4 +464,4 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.8rem; margin-top: 40px;'>Criado e Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.7rem; margin-top: 40px;'>Criado e Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
