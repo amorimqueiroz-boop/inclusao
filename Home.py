@@ -34,9 +34,8 @@ def get_base64_image(image_path):
         return base64.b64encode(img_file.read()).decode()
 
 # ==============================================================================
-# 3. CSS GLOBAL (CARD = BOTÃO)
+# 3. CSS GLOBAL (ESTILO CANVA - HORIZONTAL)
 # ==============================================================================
-# Definição de cores
 cor_btn_login = "#E65100" if IS_TEST_ENV else "#0F52BA"
 
 css_estatico = """
@@ -81,14 +80,13 @@ css_estatico = """
         max-width: 600px; margin: 0 auto; margin-top: 50px;
     }
     .login-logo { height: 80px; margin-bottom: 20px; }
-    .login-manifesto { font-style: italic; color: #718096; margin-bottom: 30px; font-size: 0.95rem; }
+    .login-manifesto { font-style: italic; color: #718096; margin-bottom: 30px; font-size: 0.95rem; line-height: 1.5; }
     .termo-box {
         background-color: #F8FAFC; padding: 15px; border-radius: 10px;
         height: 100px; overflow-y: scroll; font-size: 0.75rem;
         border: 1px solid #E2E8F0; margin-bottom: 20px;
         text-align: justify; color: #4A5568;
     }
-    /* Input Senha */
     .stTextInput input { border-radius: 8px !important; border: 1px solid #E2E8F0 !important; height: 46px !important; }
 
     /* --- HERO --- */
@@ -102,44 +100,47 @@ css_estatico = """
     .hero-text { font-size: 1.1rem; opacity: 0.9; max-width: 800px; }
     .hero-bg-icon { position: absolute; right: -20px; bottom: -40px; font-size: 15rem; opacity: 0.05; transform: rotate(-15deg); }
 
-    /* --- MAGIC CARDS (ACESSO RÁPIDO) --- */
-    /* Aqui está a mágica: O botão se torna o card inteiro */
+    /* --- CARDS ACESSO RÁPIDO (Horizontal + Texto Clicável) --- */
     
-    /* 1. Container da Logo (HTML Absoluto) */
+    /* 1. Logo (Esquerda) - Absoluta sobre o botão */
     .card-logo-overlay {
         position: absolute;
-        top: 20px; left: 20px;
-        width: 100px; height: 100px;
+        top: 0; left: 0;
+        width: 35%; /* Ocupa 35% da esquerda */
+        height: 100%;
         display: flex; align-items: center; justify-content: center;
-        z-index: 2; /* Fica acima do botão visualmente */
-        pointer-events: none; /* O clique passa através da imagem para o botão */
+        z-index: 2; 
+        pointer-events: none; /* Clique passa para o botão */
+        border-right: 1px solid #F0F0F0;
     }
-    .card-logo-overlay img { max-height: 60px; max-width: 100%; object-fit: contain; }
+    .card-logo-overlay img { max-height: 60px; max-width: 80%; object-fit: contain; }
 
-    /* 2. O Botão Streamlit (O Card em si) */
+    /* 2. O Botão (Texto Descritivo) */
     .card-btn-wrapper button {
         background-color: white !important;
-        border: 2px solid #E2E8F0 !important;
+        border: 2px solid #E2E8F0 !important; /* Borda padrão */
         border-radius: 16px !important;
-        height: 140px !important;
+        height: 120px !important;
         width: 100% !important;
         
         /* Typography do Texto */
         color: #2D3748 !important;
         font-family: 'Nunito', sans-serif !important;
-        font-weight: 700 !important;
-        font-size: 1rem !important;
+        font-weight: 600 !important; /* Texto com peso médio */
+        font-size: 0.95rem !important;
         text-align: left !important;
+        text-decoration: underline !important; /* Parece link */
+        text-decoration-color: transparent !important; /* Esconde sublinhado normal */
         
-        /* Espaçamento para não bater na logo */
-        padding-left: 140px !important; 
+        /* Espaçamento para empurrar texto para a direita da logo */
+        padding-left: 40% !important; 
         padding-right: 20px !important;
         
         box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important;
         transition: all 0.2s ease !important;
         display: flex !important;
         align-items: center !important;
-        white-space: normal !important; /* Quebra de linha permitida */
+        white-space: normal !important; /* Permite quebra de linha */
         line-height: 1.4 !important;
     }
 
@@ -149,7 +150,10 @@ css_estatico = """
         transform: translateY(-3px) !important;
         box-shadow: 0 8px 20px rgba(0,0,0,0.06) !important;
         color: #0F52BA !important;
+        background-color: #FAFAFA !important;
     }
+    
+    /* Bordas Coloridas Específicas (Aplicadas via CSS inline no Python, mas classes ajudam) */
     
     /* --- CONHECIMENTO (Compacto) --- */
     .k-card-container {
@@ -185,7 +189,7 @@ css_estatico = """
 """
 st.markdown(css_estatico, unsafe_allow_html=True)
 
-# CSS Dinâmico para o botão de login
+# CSS Dinâmico para Login
 st.markdown(f"""
 <style>
     .btn-login-inline button {{
@@ -213,10 +217,17 @@ if not st.session_state["autenticado"]:
         if img_login: st.markdown(f"<img src='data:image/png;base64,{img_login}' class='login-logo'>", unsafe_allow_html=True)
         else: st.markdown("<h2 style='color:#0F52BA;'>OMNISFERA</h2>", unsafe_allow_html=True)
         
+        # MANIFESTO ATUALIZADO
         st.markdown("<div class='login-manifesto'>\"A Omnisfera foi desenvolvida com muito cuidado e carinho com o objetivo de auxiliar as escolas na tarefa de incluir. Ela tem o potencial para revolucionar o cenário da inclusão no Brasil.\"</div>", unsafe_allow_html=True)
         
-        with st.expander("📄 Ler Termos de Uso"):
-            st.markdown("<div class='termo-box'>1. Confidencialidade: Não insira dados reais...<br>2. Natureza Beta...<br>3. Responsabilidade...</div>", unsafe_allow_html=True)
+        with st.expander("📄 Ler Termos de Uso e Confidencialidade"):
+            st.markdown("""
+            <div class="termo-box">
+                <strong>1. Confidencialidade:</strong> É proibido inserir dados reais sensíveis (nomes completos, documentos) que identifiquem estudantes.<br>
+                <strong>2. Natureza Beta:</strong> O sistema está em evolução constante.<br>
+                <strong>3. Responsabilidade:</strong> As sugestões da IA são apoio pedagógico e devem ser validadas por um profissional humano.
+            </div>
+            """, unsafe_allow_html=True)
         
         concordo = st.checkbox("Li e concordo com os termos.")
         
@@ -262,39 +273,77 @@ with st.sidebar:
 nome = st.session_state.get("usuario_nome", "Visitante").split()[0]
 st.markdown(f"""<div class="hero-banner"><div class="hero-title">Olá, {nome}!</div><div class="hero-text">"A inclusão escolar transforma diferenças em oportunidades."</div><i class="ri-heart-pulse-fill hero-bg-icon"></i></div>""", unsafe_allow_html=True)
 
-# --- ACESSO RÁPIDO (CARD = BOTÃO) ---
+# --- ACESSO RÁPIDO (HORIZONTAL + TEXTO COMO BOTÃO) ---
 st.markdown('<div class="section-header"><i class="ri-cursor-fill"></i> Acesso Rápido</div>', unsafe_allow_html=True)
 
-def card_botao_total(coluna, img, texto, link):
+# Função atualizada para aplicar borda colorida e layout horizontal
+def card_horizontal_texto_botao(coluna, img, texto, link, cor_borda):
     with coluna:
-        # A logo é desenhada como HTML absoluto (flutua sobre o botão)
+        # A logo é desenhada como HTML absoluto (flutua sobre o botão à esquerda)
         img_b64 = get_base64_image(img)
+        
+        # Aplica a cor da borda específica via estilo inline na div container do botão
+        # O botão em si tem bg branco, então usamos uma div wrapper invisível para posicionar a logo
         st.markdown(f"""
-        <div style="position: relative; height: 140px;">
+        <style>
+            div[data-testid="stVerticalBlock"] > div:has(div.card-btn-wrapper) {{
+                /* Tenta isolar o estilo se possível, mas o inline abaixo é mais seguro */
+            }}
+        </style>
+        <div style="position: relative; height: 120px; margin-bottom: 20px;">
             <div class="card-logo-overlay">
                 <img src="data:image/png;base64,{img_b64}">
             </div>
+            <style>
+                div.row-widget.stButton > button[kind="secondary"] {{
+                    border-bottom: 4px solid {cor_borda} !important;
+                }}
+            </style>
             <div class="card-btn-wrapper">
         """, unsafe_allow_html=True)
         
-        # O botão do Streamlit é o corpo do card
+        # O botão do Streamlit é o corpo do card e contém o TEXTO
         if st.button(texto, key=f"btn_{img}"):
             st.switch_page(link)
             
         st.markdown("</div></div>", unsafe_allow_html=True)
 
+# Usando 3 colunas para os cards
 c1, c2, c3 = st.columns(3)
-card_botao_total(c1, "360.png", "Crie seu plano de ensino individualizado", "pages/1_PEI.py")
-card_botao_total(c2, "pae.png", "Sala de recursos e eliminação de barreiras", "pages/2_PAE.py")
-card_botao_total(c3, "hub.png", "Faça adaptação de atividades e roteiros", "pages/3_Hub_Inclusao.py")
+
+# Chamada com as cores exatas do mockup
+# PEI: Azul | PAEE: Roxo | HUB: Teal/Verde
+# Obs: O CSS global define .card-btn-wrapper button, o style inline ajusta a borda.
+# Como o Streamlit não permite passar ID para o botão, o style inline acima pode vazar se não formos cuidadosos.
+# WORKAROUND SEGURO: Usar st.markdown para criar a borda na div wrapper e deixar o botão sem borda inferior.
+
+def card_horizontal_seguro(coluna, img, texto, link, cor_borda):
+    with coluna:
+        img_b64 = get_base64_image(img)
+        # Borda aplicada na div wrapper para não depender de seletores instáveis
+        st.markdown(f"""
+        <div style="position: relative; height: 120px; margin-bottom: 15px;">
+            <div class="card-logo-overlay">
+                <img src="data:image/png;base64,{img_b64}">
+            </div>
+            <div class="card-btn-wrapper" style="border-bottom: 4px solid {cor_borda}; border-radius: 16px;">
+        """, unsafe_allow_html=True)
+        
+        if st.button(texto, key=f"btn_{img}"):
+            st.switch_page(link)
+            
+        st.markdown("</div></div>", unsafe_allow_html=True)
+
+card_horizontal_seguro(c1, "360.png", "Crie seu plano de ensino individualizado", "pages/1_PEI.py", "#3182CE")
+card_horizontal_seguro(c2, "pae.png", "Sala de recursos e eliminação de barreiras", "pages/2_PAE.py", "#805AD5")
+card_horizontal_seguro(c3, "hub.png", "Faça adaptação de atividades e roteiros", "pages/3_Hub_Inclusao.py", "#38B2AC")
 
 # --- CONHECIMENTO ---
-st.markdown('<div style="height:30px;"></div><div class="section-header"><i class="ri-book-mark-fill"></i> Conhecimento</div>', unsafe_allow_html=True)
+st.markdown('<div style="height:20px;"></div><div class="section-header"><i class="ri-book-mark-fill"></i> Conhecimento</div>', unsafe_allow_html=True)
 k1, k2, k3, k4 = st.columns(4)
 
 def card_know(coluna, icon, color, bg, title, link):
     with coluna:
-        # Usando link HTML para navegação externa correta
         st.markdown(f"""
         <a href="{link}" target="_blank" style="text-decoration:none;">
             <div class="k-card-container">
@@ -309,14 +358,14 @@ card_know(k2, "ri-scales-3-line", "#D69E2E", "#FFFFF0", "Legislação", "https:/
 card_know(k3, "ri-brain-line", "#D53F8C", "#FFF5F7", "Neurociência", "#")
 card_know(k4, "ri-compass-3-line", "#38A169", "#F0FFF4", "BNCC", "http://basenacionalcomum.mec.gov.br/")
 
-# --- INSIGHT ---
+# --- INSIGHT & FOOTER ---
 st.markdown('<div style="height:20px;"></div>', unsafe_allow_html=True)
 st.markdown("""
 <div class="insight-box">
     <div class="insight-icon"><i class="ri-lightbulb-flash-line"></i></div>
     <div>
         <div style="font-weight:800; font-size:0.8rem; color:#D69E2E;">INSIGHT DO DIA</div>
-        <div style="font-style:italic; color:#4A5568;">"Entender como o cérebro aprende é fundamental."</div>
+        <div style="font-style:italic; color:#4A5568;">"Entender como o cérebro aprende é fundamental para potencializar o ensino e criar ambientes de aprendizado mais eficazes e inclusivos."</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
