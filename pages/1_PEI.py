@@ -242,12 +242,6 @@ def extrair_metas_estruturadas(texto):
         elif "Longo" in l or "Ano" in l: metas["Longo"] = l_clean.split(":")[-1].strip()
     return metas
 
-# NOVA FUNÇÃO: EXTRAÇÃO DE CÓDIGOS BNCC
-def extrair_habilidades_bncc(texto):
-    # Procura padrões como EF01LP01 ou EI02CG01
-    padrao = r'[A-Z]{2}\d{2}[A-Z]{2}\d{2}'
-    return re.findall(padrao, texto)
-
 def extrair_campos_experiencia(texto):
     bloco = extrair_tag_ia(texto, "CAMPOS_EXPERIENCIA_PRIORITARIOS")
     if not bloco: return ["O eu, o outro e o nós", "Corpo, gestos e movimentos"]
@@ -604,7 +598,7 @@ with st.sidebar:
 logo_path = finding_logo(); b64_logo = get_base64_image(logo_path); mime = "image/png"
 img_html = f'<img src="data:{mime};base64,{b64_logo}" style="height: 110px;">' if logo_path else ""
 
-st.markdown(f"""<div class="header-unified">{img_html}<div class="header-subtitle">Ecossistema de Inteligência Pedagógica e Inclusiva</div></div>""", unsafe_allow_html=True)
+st.markdown(f"""<div class="header-unified">{img_html}<div class="header-subtitle">Planejamento Educacional Inclusivo Inteligente</div></div>""", unsafe_allow_html=True)
 
 abas = ["INÍCIO", "ESTUDANTE", "EVIDÊNCIAS", "REDE DE APOIO", "MAPEAMENTO", "PLANO DE AÇÃO", "MONITORAMENTO", "CONSULTORIA IA", "DASHBOARD & DOCS", "JORNADA GAMIFICADA"]
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
@@ -738,7 +732,6 @@ with tab7:
     
     elif st.session_state.dados.get('status_validacao_pei') in ['revisao', 'aprovado']:
         
-        # ABAS RETRÁTEIS EXPLICATIVAS (NOVA DEMANDA)
         with st.expander("🧠 Como a IA construiu este relatório"):
             st.markdown("""
             1. **Análise de Contexto:** Cruzamento entre diagnóstico, idade ({}) e série ({}).
@@ -825,19 +818,18 @@ with tab8:
             st.markdown(f"""<div class="soft-card sc-yellow"><div class="sc-head"><i class="ri-flag-2-fill" style="color:#D69E2E;"></i> Cronograma de Metas</div><div class="sc-body">{html_metas}</div></div>""", unsafe_allow_html=True)
 
         with c_r2:
-            # DASHBOARD: SUBSTITUIÇÃO DE VERBOS BLOOM POR CÓDIGOS BNCC
-            nivel = detectar_nivel_ensino(st.session_state.dados['serie'])
-            if nivel == "EI":
-                itens = extrair_campos_experiencia(st.session_state.dados['ia_sugestao'])
-                card_title = "Objetivos de Aprendizagem (EI)"; card_icon = "🧸"
-            else:
-                # Extrai códigos tipo EF01LP02
-                itens = extrair_habilidades_bncc(st.session_state.dados['ia_sugestao'])
-                if not itens: itens = ["Gerar Plano IA para ver habilidades"]
-                card_title = "Habilidades BNCC (Códigos)"; card_icon = "📚"
+            # SUBSTITUIÇÃO: HABILIDADES BNCC (Causava erro) -> ESTRATÉGIAS SELECIONADAS (Dados Reais)
+            n_acc = len(st.session_state.dados['estrategias_acesso'])
+            n_ens = len(st.session_state.dados['estrategias_ensino'])
+            n_ava = len(st.session_state.dados['estrategias_avaliacao'])
+            card_title = "Estratégias Ativas"; card_icon = "🛠️"
             
-            html_tags = "".join([f'<span class="bloom-tag">{i}</span>' for i in itens])
-            st.markdown(f"""<div class="soft-card sc-blue"><div class="sc-head"><i class="ri-lightbulb-flash-fill" style="color:#3182CE;"></i> {card_title}</div><div class="sc-body">{html_tags}</div><div class="bg-icon">{card_icon}</div></div>""", unsafe_allow_html=True)
+            html_tags = f"""
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:4px 0;"><span>Acesso/Recursos:</span> <b>{n_acc}</b></div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:4px 0;"><span>Ensino/Metodologia:</span> <b>{n_ens}</b></div>
+            <div style="display:flex; justify-content:space-between; padding:4px 0;"><span>Avaliação:</span> <b>{n_ava}</b></div>
+            """
+            st.markdown(f"""<div class="soft-card sc-blue"><div class="sc-head"><i class="ri-tools-fill" style="color:#3182CE;"></i> {card_title}</div><div class="sc-body">{html_tags}</div><div class="bg-icon">{card_icon}</div></div>""", unsafe_allow_html=True)
             
             st.write("")
             rede_html = "".join([f'<span class="rede-chip">{get_pro_icon(p)} {p}</span> ' for p in st.session_state.dados['rede_apoio']]) if st.session_state.dados['rede_apoio'] else "<span style='opacity:0.6;'>Sem rede.</span>"
@@ -857,18 +849,15 @@ with tab8:
             # BOTÕES REORGANIZADOS POR GRUPOS
             st.markdown("#### 📤 Exportação e Salvar")
             col_docs, col_data, col_sys = st.columns(3)
-            
             with col_docs:
                 st.caption("📄 Documentos")
                 pdf = gerar_pdf_final(st.session_state.dados, len(st.session_state.pdf_text)>0)
                 st.download_button("Baixar PDF Oficial", pdf, f"PEI_{st.session_state.dados['nome']}.pdf", "application/pdf", use_container_width=True)
                 docx = gerar_docx_final(st.session_state.dados)
                 st.download_button("Baixar Word Editável", docx, f"PEI_{st.session_state.dados['nome']}.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
-            
             with col_data:
                 st.caption("💾 Backup Local")
                 st.download_button("Salvar Arquivo .JSON", json.dumps(st.session_state.dados, default=str), f"PEI_{st.session_state.dados['nome']}.json", "application/json", use_container_width=True, help="Salve este arquivo no seu computador para editar depois.")
-            
             with col_sys:
                 st.caption("🌐 Sistema")
                 if st.button("Sincronizar (Omnisfera)", type="primary", use_container_width=True):
@@ -886,7 +875,6 @@ with tab_mapa:
     st.info("ℹ️ **O que é isso?** Esta ferramenta gera um material **para o estudante**. É uma tradução gamificada do PEI para que a própria criança/jovem entenda seus desafios e potências de forma lúdica. Imprima e cole no caderno!")
 
     if st.session_state.dados['ia_sugestao']:
-        # FLUXO DE VALIDAÇÃO GAMIFICADA
         if st.session_state.dados.get('status_validacao_game') == 'rascunho':
             if st.button("🎮 Criar Roteiro Gamificado", type="primary"):
                 with st.spinner("Game Master criando..."):
@@ -901,14 +889,11 @@ with tab_mapa:
             st.markdown("### 📜 Roteiro Gerado")
             st.markdown(st.session_state.dados['ia_mapa_texto'])
             st.divider()
-            
             c_ok, c_refaz = st.columns(2)
             if c_ok.button("✅ Aprovar Missão"):
-                st.session_state.dados['status_validacao_game'] = 'aprovado'
-                st.rerun()
+                st.session_state.dados['status_validacao_game'] = 'aprovado'; st.rerun()
             if c_refaz.button("❌ Refazer"):
-                st.session_state.dados['status_validacao_game'] = 'ajustando'
-                st.rerun()
+                st.session_state.dados['status_validacao_game'] = 'ajustando'; st.rerun()
 
         elif st.session_state.dados.get('status_validacao_game') == 'aprovado':
             st.success("Missão Aprovada! Pronto para imprimir.")
@@ -916,8 +901,7 @@ with tab_mapa:
             pdf_mapa = gerar_pdf_tabuleiro_simples(st.session_state.dados['ia_mapa_texto'])
             st.download_button("📥 Baixar Missão em PDF", pdf_mapa, f"Missao_{st.session_state.dados['nome']}.pdf", "application/pdf", type="primary")
             if st.button("Criar Nova Missão"):
-                st.session_state.dados['status_validacao_game'] = 'rascunho'
-                st.rerun()
+                st.session_state.dados['status_validacao_game'] = 'rascunho'; st.rerun()
 
         elif st.session_state.dados.get('status_validacao_game') == 'ajustando':
             fb_game = st.text_input("O que mudar na história?", placeholder="Ex: Use super-heróis em vez de exploração...")
@@ -926,8 +910,7 @@ with tab_mapa:
                     texto_game, err = gerar_roteiro_gamificado(api_key, st.session_state.dados, st.session_state.dados['ia_sugestao'], fb_game)
                     if texto_game:
                         st.session_state.dados['ia_mapa_texto'] = texto_game.replace("[MAPA_TEXTO_GAMIFICADO]", "").strip()
-                        st.session_state.dados['status_validacao_game'] = 'revisao'
-                        st.rerun()
+                        st.session_state.dados['status_validacao_game'] = 'revisao'; st.rerun()
 
     else: st.warning("⚠️ Gere o PEI Técnico na aba 'Consultoria IA' primeiro.")
 
