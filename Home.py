@@ -48,7 +48,7 @@ else:
     footer_visibility = "hidden"
 
 # ==============================================================================
-# 3. CSS GLOBAL (COMPACTADO E ELEGANTE)
+# 3. CSS GLOBAL (BLINDADO E AJUSTADO)
 # ==============================================================================
 css_estatico = """
 <style>
@@ -68,10 +68,10 @@ css_estatico = """
     .hover-spring { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; }
     .hover-spring:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 10px 20px rgba(0,0,0,0.06) !important; z-index: 10; }
 
-    /* CONTAINER PRINCIPAL MAIS APERTADO */
+    /* Espaço para o Header Fixo */
     .block-container { 
-        padding-top: 90px !important; 
-        padding-bottom: 1rem !important; 
+        padding-top: 130px !important; 
+        padding-bottom: 2rem !important; 
         margin-top: 0rem !important;
         animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
@@ -81,7 +81,7 @@ css_estatico = """
         display: flex; align-items: center; justify-content: flex-start; 
         gap: 15px; 
         position: fixed; 
-        top: 0; left: 0; width: 100%; height: 80px; /* Altura reduzida */
+        top: 0; left: 0; width: 100%; height: 90px;
         background-color: rgba(247, 250, 252, 0.85); 
         backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
         border-bottom: 1px solid rgba(255, 255, 255, 0.5);
@@ -91,45 +91,61 @@ css_estatico = """
         padding-top: 5px;
     }
     .header-subtitle-text {
-        font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 1rem;
+        font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 1.1rem;
         color: #718096; border-left: 2px solid #CBD5E0; padding-left: 15px;
-        height: 35px; display: flex; align-items: center; letter-spacing: -0.3px;
+        height: 40px; display: flex; align-items: center; letter-spacing: -0.3px;
     }
-    .logo-icon-spin { height: 70px; width: auto; animation: spin 45s linear infinite; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
-    .logo-text-static { height: 40px; width: auto; }
+    .logo-icon-spin { height: 75px; width: auto; animation: spin 45s linear infinite; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+    .logo-text-static { height: 45px; width: auto; }
 
-    /* Login Styles */
+    /* --- LOGIN LIMPO --- */
     .login-container { 
         background-color: white; padding: 30px; 
         border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); 
         text-align: center; border: 1px solid #E2E8F0; 
-        max-width: 500px; margin: 0 auto; margin-top: 40px;
+        max-width: 480px; margin: 0 auto; margin-top: 40px;
         animation: fadeInUp 0.8s ease-out;
     }
     .login-logo-spin { height: 80px; width: auto; animation: spin 45s linear infinite; margin-bottom: 5px; }
     .login-logo-static { height: 50px; width: auto; margin-left: 8px; }
     .logo-wrapper { display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
-    .manifesto-login { font-family: 'Nunito', sans-serif; font-size: 0.85rem; color: #64748B; font-style: italic; line-height: 1.5; margin-bottom: 25px; }
     
-    /* Inputs */
+    /* Manifesto */
+    .manifesto-login { 
+        font-family: 'Nunito', sans-serif; 
+        font-size: 0.9rem; 
+        color: #64748B; 
+        font-style: italic; 
+        line-height: 1.6; 
+        margin-bottom: 30px; 
+        text-align: center;
+        padding: 0 10px;
+    }
+    
+    /* Termo de Confidencialidade */
+    .termo-box { 
+        background-color: #F8FAFC; padding: 12px; border-radius: 10px; 
+        height: 90px; overflow-y: scroll; font-size: 0.7rem; 
+        border: 1px solid #CBD5E0; margin-bottom: 15px; 
+        text-align: justify; color: #4A5568; line-height: 1.3; 
+    }
+
     .stTextInput input { border-radius: 10px !important; border: 1px solid #E2E8F0 !important; padding: 10px !important; background-color: #F8FAFC !important; font-size: 0.9rem !important;}
 
     /* --- HERO COMPACTO --- */
     .dash-hero { 
         background: radial-gradient(circle at top right, #0F52BA, #062B61); 
-        border-radius: 16px; 
-        margin-bottom: 20px; /* Margem reduzida */
-        margin-top: 10px;
+        border-radius: 16px; margin-bottom: 20px; margin-top: 10px;
         box-shadow: 0 10px 25px -5px rgba(15, 82, 186, 0.3);
         color: white; position: relative; overflow: hidden; 
-        padding: 25px 35px; /* Padding reduzido */
+        padding: 25px 35px; 
         display: flex; align-items: center; justify-content: flex-start;
         border: 1px solid rgba(255,255,255,0.1);
         min-height: 100px;
     }
     .hero-title { 
         font-family: 'Inter', sans-serif; 
-        font-weight: 700; font-size: 1.5rem; /* Fonte menor */
+        font-weight: 700; font-size: 1.5rem; 
         margin: 0; line-height: 1.1; margin-bottom: 5px; 
     }
     .hero-subtitle { 
@@ -138,21 +154,17 @@ css_estatico = """
     }
     .hero-bg-icon { position: absolute; right: 20px; font-size: 6rem; opacity: 0.05; top: 5px; transform: rotate(-10deg); }
 
-    /* --- CARDS FERRAMENTAS COMPACTOS (SEM TÍTULO) --- */
+    /* --- CARDS FERRAMENTAS --- */
     .nav-btn-card {
         background-color: white; border-radius: 16px; padding: 15px;
         border: 1px solid #E2E8F0; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
         text-align: center; transition: all 0.2s ease; cursor: pointer;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        height: 130px; /* Altura reduzida */
-        position: relative; overflow: hidden;
+        height: 130px; position: relative; overflow: hidden;
         text-decoration: none !important;
     }
-    .nav-btn-card:hover {
-        transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.08);
-        border-color: #CBD5E0;
-    }
-    .nav-icon { height: 45px; width: auto; object-fit: contain; margin-bottom: 10px; } /* Ícone menor */
+    .nav-btn-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.08); border-color: #CBD5E0; }
+    .nav-icon { height: 45px; width: auto; object-fit: contain; margin-bottom: 10px; }
     .nav-desc { font-size: 0.75rem; color: #718096; line-height: 1.3; font-weight: 500; }
     
     .b-blue { border-bottom: 4px solid #3182CE; }
@@ -206,7 +218,7 @@ css_estatico = """
 """
 st.markdown(css_estatico, unsafe_allow_html=True)
 
-# CSS DINÂMICO
+# CSS DINÂMICO (Cores variáveis)
 st.markdown(f"""
 <style>
     .omni-badge {{
@@ -228,7 +240,7 @@ st.markdown(f"""
     .login-btn-area button {{
         width: 100%; border-radius: 10px !important; border: none !important;
         font-family: 'Inter', sans-serif; font-weight: 700 !important; font-size: 0.9rem !important;
-        padding: 10px 0; transition: all 0.3s ease; height: 43px !important;
+        padding: 8px 0; transition: all 0.3s ease; height: 43px !important;
         background-color: #0F52BA !important; color: white !important;
         display: block !important; 
     }}
@@ -255,7 +267,7 @@ def sistema_seguranca():
         </style>
         """, unsafe_allow_html=True)
 
-        btn_text = "ENTRAR" if IS_TEST_ENV else "ACESSAR OMNISFERA"
+        btn_text = "🚀 ENTRAR (TESTE)" if IS_TEST_ENV else "ACESSAR OMNISFERA"
         
         c1, c_login, c2 = st.columns([1, 2, 1])
         
@@ -274,6 +286,7 @@ def sistema_seguranca():
             else:
                 st.markdown(f"<h2 style='color:#0F52BA; margin:0; margin-bottom:10px;'>OMNISFERA</h2>", unsafe_allow_html=True)
 
+            # MANIFESTO
             st.markdown("""<div class="manifesto-login">"A Omnisfera foi desenvolvida com muito cuidado e carinho com o objetivo de auxiliar as escolas na tarefa de incluir. Ela tem o potencial para revolucionar o cenário da inclusão no Brasil."</div>""", unsafe_allow_html=True)
             
             if IS_TEST_ENV:
@@ -285,13 +298,12 @@ def sistema_seguranca():
                 nome_user = st.text_input("nome_real", placeholder="Seu Nome", label_visibility="collapsed")
                 st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
                 cargo_user = st.text_input("cargo_real", placeholder="Seu Cargo", label_visibility="collapsed")
-                
                 st.markdown("---")
                 
                 # --- TERMO DE CONFIDENCIALIDADE ---
                 st.markdown("<div style='text-align:left; font-weight:700; color:#475569; font-size:0.8rem; margin-bottom:5px;'>Termos de Uso</div>", unsafe_allow_html=True)
                 st.markdown("""
-                <div style="background-color: #F8FAFC; padding: 12px; border-radius: 10px; height: 100px; overflow-y: scroll; font-size: 0.75rem; border: 1px solid #CBD5E0; margin-bottom: 15px; text-align: justify; color: #4A5568; line-height: 1.4;">
+                <div class="termo-box">
                     <strong>ACORDO DE CONFIDENCIALIDADE E USO DE DADOS (Versão Beta)</strong><br><br>
                     1. <strong>Natureza do Software:</strong> O usuário reconhece que o sistema "Omnisfera" encontra-se em fase de testes (BETA) e pode conter instabilidades.<br>
                     2. <strong>Proteção de Dados (LGPD):</strong> É estritamente proibida a inserção de dados reais sensíveis de estudantes (nomes completos, endereços, documentos) que permitam a identificação direta, salvo em ambientes controlados e autorizados pela instituição de ensino.<br>
@@ -303,41 +315,45 @@ def sistema_seguranca():
                 
                 concordo = st.checkbox("Li, compreendi e concordo com os termos.")
                 
-                # Layout Senha + Botão na mesma linha (70% senha / 30% botão)
+                # --- AJUSTE: BOTÃO E SENHA NA MESMA LINHA E ALINHADOS ---
                 st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+                
+                # CSS Específico para forçar o alinhamento
+                st.markdown("""
+                <style>
+                    /* Classe para empurrar o botão para baixo e alinhar com o input */
+                    .login-btn-fix button { margin-top: 0px !important; }
+                </style>
+                """, unsafe_allow_html=True)
+
                 c_senha, c_btn = st.columns([2, 1])
                 
                 with c_senha:
                     senha = st.text_input("senha_real", type="password", placeholder="Senha de Acesso", label_visibility="collapsed")
                 
                 with c_btn:
-                    st.markdown('<div class="login-btn-area">', unsafe_allow_html=True)
-                    # Variável para controlar o clique
-                    login_click = st.button(btn_text)
+                    # Aplica a classe de correção e renderiza o botão
+                    st.markdown('<div class="login-btn-area login-btn-fix">', unsafe_allow_html=True)
+                    if st.button(btn_text, key="btn_login"):
+                        if IS_TEST_ENV:
+                            st.session_state["autenticado"] = True
+                            st.session_state["usuario_nome"] = nome_user if nome_user else "Visitante Teste"
+                            st.session_state["usuario_cargo"] = cargo_user if cargo_user else "Dev"
+                            st.rerun()
+                        else:
+                            hoje = date.today()
+                            senha_mestra = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
+                            if not concordo: st.warning("Aceite os termos.")
+                            elif not nome_user or not cargo_user: st.warning("Preencha seus dados.")
+                            elif senha != senha_mestra: st.error("Senha incorreta.")
+                            else:
+                                st.session_state["autenticado"] = True
+                                st.session_state["usuario_nome"] = nome_user
+                                st.session_state["usuario_cargo"] = cargo_user
+                                st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
 
-            st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-            
-            # Lógica de Validação (Fora das colunas para evitar erro de rerun)
-            if IS_TEST_ENV:
-                # No modo teste o botão pode estar em outro lugar, mas mantive a lógica simplificada
-                if 'login_click' in locals() and login_click:
-                    st.session_state["autenticado"] = True
-                    st.session_state["usuario_nome"] = nome_user if nome_user else "Visitante Teste"
-                    st.session_state["usuario_cargo"] = cargo_user if cargo_user else "Dev"
-                    st.rerun()
-            else:
-                if 'login_click' in locals() and login_click:
-                    hoje = date.today()
-                    senha_mestra = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
-                    if not concordo: st.warning("Aceite os termos.")
-                    elif not nome_user or not cargo_user: st.warning("Preencha seus dados.")
-                    elif senha != senha_mestra: st.error("Senha incorreta.")
-                    else:
-                        st.session_state["autenticado"] = True
-                        st.session_state["usuario_nome"] = nome_user
-                        st.session_state["usuario_cargo"] = cargo_user
-                        st.rerun()
+            st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
             
             st.markdown("</div>", unsafe_allow_html=True)
         return False
@@ -375,6 +391,7 @@ if 'OPENAI_API_KEY' in st.secrets:
     try:
         if 'banner_msg' not in st.session_state:
             client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
+            # Prompt alterado para NÃO usar nomes na frase
             res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": f"Crie uma frase curta e inspiradora sobre inclusão escolar. Não use nomes. Máximo 20 palavras."}])
             st.session_state['banner_msg'] = res.choices[0].message.content
         mensagem_banner = st.session_state['banner_msg']
