@@ -28,7 +28,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 2. DEFINIÇÃO DE ESTILO E FLUIDEZ (CSS BENTO & MOTION)
+# 2. DEFINIÇÃO DE CORES E UTILITÁRIOS
 # ==============================================================================
 
 # Definição Dinâmica de Cores
@@ -45,46 +45,52 @@ else:
     display_text = f"OMNISFERA {APP_VERSION}"
     footer_visibility = "hidden"
 
-# CSS GLOBAL (BENTO UI + FRAMER MOTION FEEL)
-st.markdown(f"""
+def get_base64_image(image_path):
+    if not os.path.exists(image_path): return ""
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
+
+# ==============================================================================
+# 3. CSS GLOBAL (CORRIGIDO E SEGURO)
+# ==============================================================================
+# Separamos o CSS estático do dinâmico para evitar SyntaxError nas f-strings
+
+css_estatico = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
     
-    /* --- 1. RESET E BASE --- */
-    html {{ scroll-behavior: smooth; }}
-    html, body, [class*="css"] {{ 
+    /* --- RESET E BASE --- */
+    html { scroll-behavior: smooth; }
+    html, body, [class*="css"] { 
         font-family: 'Nunito', sans-serif; 
         color: #2D3748; 
-        background-color: #F7FAFC; /* Fundo neutro suave */
-    }}
+        background-color: #F7FAFC;
+    }
 
-    /* --- 2. ANIMAÇÕES TIPO FRAMER MOTION --- */
-    /* Entrada suave (Fade Up) */
-    @keyframes fadeInUp {{
-        from {{ opacity: 0; transform: translateY(20px); }}
-        to {{ opacity: 1; transform: translateY(0); }}
-    }}
+    /* --- ANIMAÇÕES --- */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
     
-    /* Física de Mola para Hover (Bounce) */
-    .hover-spring {{
+    .hover-spring {
         transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
-    }}
-    .hover-spring:hover {{
+    }
+    .hover-spring:hover {
         transform: translateY(-8px) scale(1.01);
         box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important;
         z-index: 10;
-    }}
+    }
 
-    /* Aplica animação de entrada no container principal */
-    .block-container {{ 
+    .block-container { 
         padding-top: 140px !important; 
         padding-bottom: 3rem !important; 
         margin-top: 0rem !important;
         animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }}
+    }
 
-    /* --- 3. HEADER DE VIDRO (GLASSMORPHISM) --- */
-    .logo-container {{
+    /* --- HEADER (APENAS LOGADOS) --- */
+    .logo-container {
         display: flex; 
         align-items: center; 
         justify-content: flex-start; 
@@ -97,10 +103,9 @@ st.markdown(f"""
         z-index: 9998; 
         box-shadow: 0 4px 30px rgba(0,0,0,0.03);
         padding-left: 40px;
-    }}
+    }
 
-    /* Estilo do Subtítulo no Header */
-    .header-subtitle-text {{
+    .header-subtitle-text {
         font-family: 'Nunito', sans-serif;
         font-weight: 600;
         font-size: 1.2rem;
@@ -111,42 +116,17 @@ st.markdown(f"""
         display: flex;
         align-items: center;
         letter-spacing: -0.5px;
-    }}
+    }
 
-    /* LOGO GIRATÓRIA */
-    @keyframes spin {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
-    .logo-icon-spin {{ height: 80px; width: auto; animation: spin 45s linear infinite; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); }}
-    .logo-text-static {{ height: 50px; width: auto; }}
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .logo-icon-spin { height: 80px; width: auto; animation: spin 45s linear infinite; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); }
+    .logo-text-static { height: 50px; width: auto; }
 
-    /* --- 4. BADGE FLUTUANTE (STATUS) --- */
-    .omni-badge {{
-        position: fixed; top: 20px; right: 20px;
-        background: {card_bg};
-        border: 1px solid {card_border};
-        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-        padding: 8px 25px;
-        min-width: 200px;
-        border-radius: 16px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-        z-index: 999990;
-        display: flex; align-items: center; justify-content: center;
-        pointer-events: none;
-        transition: transform 0.3s ease;
-    }}
-    .omni-text {{
-        font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.7rem;
-        color: #2D3748; letter-spacing: 2px; text-transform: uppercase;
-    }}
-
-    /* --- 5. COMPONENTES DE UI --- */
+    /* --- COMPONENTES --- */
+    header[data-testid="stHeader"] { background-color: transparent !important; z-index: 9999 !important; pointer-events: none; }
+    [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
     
-    /* Controles do Streamlit */
-    footer {{ visibility: {footer_visibility} !important; }}
-    header[data-testid="stHeader"] {{ background-color: transparent !important; z-index: 9999 !important; pointer-events: none; }}
-    [data-testid="stToolbar"] {{ visibility: hidden !important; display: none !important; }}
-    
-    /* Botão Menu Lateral (Estilo iOS/Notion) */
-    [data-testid="stSidebarCollapsedControl"] {{
+    [data-testid="stSidebarCollapsedControl"] {
         position: fixed !important; top: 110px !important; left: 20px !important; z-index: 1000000 !important;
         visibility: visible !important; display: flex !important;
         background-color: rgba(255,255,255,0.9) !important;
@@ -157,15 +137,13 @@ st.markdown(f"""
         align-items: center !important; justify-content: center !important;
         color: #4A5568 !important; pointer-events: auto !important; 
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
-    }}
-    [data-testid="stSidebarCollapsedControl"]:hover {{
+    }
+    [data-testid="stSidebarCollapsedControl"]:hover {
         background-color: #3182CE !important; color: white !important; transform: scale(1.1); box-shadow: 0 8px 20px rgba(49, 130, 206, 0.3) !important;
-    }}
+    }
 
-    /* --- 6. LAYOUTS TIPO BENTO GRID --- */
-    
-    /* Hero Section */
-    .dash-hero {{ 
+    /* --- BENTO GRID & CARDS --- */
+    .dash-hero { 
         background: radial-gradient(circle at top right, #0F52BA, #062B61); 
         border-radius: 24px; margin-bottom: 40px; 
         box-shadow: 0 20px 40px -10px rgba(15, 82, 186, 0.4);
@@ -174,49 +152,17 @@ st.markdown(f"""
         display: flex; align-items: center; justify-content: flex-start;
         margin-top: 20px;
         border: 1px solid rgba(255,255,255,0.1);
-    }}
-    .hero-title {{ font-family: 'Inter', sans-serif; font-weight: 800; font-size: 2.4rem; margin: 0; line-height: 1.1; margin-bottom: 15px; letter-spacing: -1px; }}
-    .hero-subtitle {{ font-family: 'Inter', sans-serif; font-size: 1.15rem; opacity: 0.9; font-weight: 400; max-width: 600px; }}
-    .hero-bg-icon {{ position: absolute; right: 30px; font-size: 10rem; opacity: 0.05; top: 10px; transform: rotate(-10deg); pointer-events: none; }}
+    }
+    .hero-title { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 2.4rem; margin: 0; line-height: 1.1; margin-bottom: 15px; letter-spacing: -1px; }
+    .hero-subtitle { font-family: 'Inter', sans-serif; font-size: 1.15rem; opacity: 0.9; font-weight: 400; max-width: 600px; }
+    .hero-bg-icon { position: absolute; right: 30px; font-size: 10rem; opacity: 0.05; top: 10px; transform: rotate(-10deg); pointer-events: none; }
 
-    /* Tool Cards (Bento Style) */
-    .tool-card {{ 
+    .tool-card { 
         background: white; border-radius: 24px; padding: 30px 25px; 
         box-shadow: 0 2px 10px rgba(0,0,0,0.02); border: 1px solid #E2E8F0; 
         height: 100%; display: flex; flex-direction: column; justify-content: space-between; 
         text-align: center; position: relative; overflow: hidden;
-    }}
-    
-    .card-logo-box {{ height: 90px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }}
-    .card-logo-img {{ max-height: 85px; width: auto; object-fit: contain; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1)); }}
-    .tool-desc-short {{ font-size: 0.95rem; color: #718096; font-weight: 500; margin-bottom: 25px; min-height: 45px; line-height: 1.5; }}
-    
-    /* Botões dentro dos cards */
-    div[data-testid="column"] .stButton button {{
-        width: 100%; border-radius: 14px; border: none;
-        background-color: #F1F5F9; color: #475569; font-family: 'Inter', sans-serif; font-weight: 700; 
-        font-size: 0.95rem; padding: 14px 0; transition: all 0.3s ease;
-        border: 1px solid transparent;
-    }}
-    div[data-testid="column"] .stButton button:hover {{ 
-        background-color: #3182CE; color: white; box-shadow: 0 8px 15px rgba(49, 130, 206, 0.25); transform: translateY(-2px);
-    }}
-    
-    /* Bordas inferiores coloridas */
-    .border-blue {{ border-bottom: 6px solid #3182CE; }} 
-    .border-purple {{ border-bottom: 6px solid #805AD5; }} 
-    .border-teal {{ border-bottom: 6px solid #38B2AC; }}
-
-    /* BENTO GRID (Links) */
-    .bento-grid {{ 
-        display: grid; 
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
-        gap: 20px; margin-bottom: 40px; 
-    }}
-    
-    .bento-item {{ 
-        background: white; border-radius: 20px; padding: 25px; 
-        border: 1px solid #E2E8F0; 
-        box-shadow: 0 4px 6px rgba(0,0,0,0.01); 
-        text-decoration: none; color: inherit; 
-        display: flex; flex-direction: column; align-items: center; text-align:
+    }
+    .card-logo-box { height: 90px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+    .card-logo-img { max-height: 85px; width: auto; object-fit: contain; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1)); }
+    .tool-desc-short { font-size: 0.95rem; color: #7
