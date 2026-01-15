@@ -48,7 +48,7 @@ else:
     footer_visibility = "hidden"
 
 # ==============================================================================
-# 3. CSS GLOBAL (COMPACTADO E ELEGANTE)
+# 3. CSS GLOBAL (HEADER FIXO E CARDS CLICÁVEIS)
 # ==============================================================================
 css_estatico = """
 <style>
@@ -68,20 +68,20 @@ css_estatico = """
     .hover-spring { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; }
     .hover-spring:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 10px 20px rgba(0,0,0,0.06) !important; z-index: 10; }
 
-    /* CONTAINER PRINCIPAL */
+    /* Espaço para o Header Fixo */
     .block-container { 
-        padding-top: 90px !important; 
-        padding-bottom: 1rem !important; 
+        padding-top: 130px !important; 
+        padding-bottom: 2rem !important; 
         margin-top: 0rem !important;
         animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
-    /* --- HEADER FIXO --- */
+    /* --- HEADER FIXO (GLASSMORPHISM) --- */
     .logo-container {
         display: flex; align-items: center; justify-content: flex-start; 
         gap: 15px; 
         position: fixed; 
-        top: 0; left: 0; width: 100%; height: 80px; 
+        top: 0; left: 0; width: 100%; height: 90px;
         background-color: rgba(247, 250, 252, 0.85); 
         backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
         border-bottom: 1px solid rgba(255, 255, 255, 0.5);
@@ -91,57 +91,55 @@ css_estatico = """
         padding-top: 5px;
     }
     .header-subtitle-text {
-        font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 1rem;
+        font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 1.1rem;
         color: #718096; border-left: 2px solid #CBD5E0; padding-left: 15px;
-        height: 35px; display: flex; align-items: center; letter-spacing: -0.3px;
+        height: 40px; display: flex; align-items: center; letter-spacing: -0.3px;
     }
-    .logo-icon-spin { height: 70px; width: auto; animation: spin 45s linear infinite; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
-    .logo-text-static { height: 40px; width: auto; }
+    .logo-icon-spin { height: 75px; width: auto; animation: spin 45s linear infinite; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+    .logo-text-static { height: 45px; width: auto; }
 
-    /* Login Styles */
+    /* --- LOGIN LIMPO --- */
     .login-container { 
         background-color: white; padding: 30px; 
         border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); 
         text-align: center; border: 1px solid #E2E8F0; 
-        max-width: 450px; margin: 0 auto; margin-top: 40px;
+        max-width: 480px; margin: 0 auto; margin-top: 40px;
         animation: fadeInUp 0.8s ease-out;
     }
     .login-logo-spin { height: 80px; width: auto; animation: spin 45s linear infinite; margin-bottom: 5px; }
     .login-logo-static { height: 50px; width: auto; margin-left: 8px; }
     .logo-wrapper { display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
-    .manifesto-login { font-family: 'Nunito', sans-serif; font-size: 0.85rem; color: #64748B; font-style: italic; line-height: 1.5; margin-bottom: 25px; }
     
-    /* Box do Termo de Confidencialidade */
-    .termo-box { 
-        background-color: #F8FAFC; padding: 15px; border-radius: 10px; 
-        height: 100px; overflow-y: scroll; font-size: 0.75rem; 
-        border: 1px solid #CBD5E0; margin-bottom: 15px; 
-        text-align: justify; color: #4A5568; line-height: 1.4; 
+    /* Ajuste do Manifesto: Centralizado e Bonito */
+    .manifesto-login { 
+        font-family: 'Nunito', sans-serif; 
+        font-size: 0.9rem; 
+        color: #64748B; 
+        font-style: italic; 
+        line-height: 1.6; 
+        margin-bottom: 30px; 
+        text-align: center;
+        padding: 0 10px;
     }
-
-    .stTextInput input { border-radius: 10px !important; border: 1px solid #E2E8F0 !important; padding: 10px !important; background-color: #F8FAFC !important; font-size: 0.9rem !important;}
     
+    .stTextInput input { border-radius: 10px !important; border: 1px solid #E2E8F0 !important; padding: 10px !important; background-color: #F8FAFC !important; font-size: 0.9rem !important;}
+
     /* --- HERO COMPACTO --- */
     .dash-hero { 
         background: radial-gradient(circle at top right, #0F52BA, #062B61); 
-        border-radius: 16px; margin-bottom: 20px; margin-top: 10px;
+        border-radius: 16px; margin-bottom: 25px; margin-top: 10px;
         box-shadow: 0 10px 25px -5px rgba(15, 82, 186, 0.3);
         color: white; position: relative; overflow: hidden; 
-        padding: 25px 35px; 
+        padding: 30px 40px; 
         display: flex; align-items: center; justify-content: flex-start;
         border: 1px solid rgba(255,255,255,0.1);
-        min-height: 100px;
+        min-height: 110px;
     }
-    .hero-title { 
-        font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1.5rem; 
-        margin: 0; line-height: 1.1; margin-bottom: 5px; 
-    }
-    .hero-subtitle { 
-        font-family: 'Inter', sans-serif; font-size: 0.9rem; opacity: 0.9; font-weight: 400; 
-    }
-    .hero-bg-icon { position: absolute; right: 20px; font-size: 6rem; opacity: 0.05; top: 5px; transform: rotate(-10deg); }
+    .hero-title { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1.6rem; margin: 0; line-height: 1.1; margin-bottom: 5px; }
+    .hero-subtitle { font-family: 'Inter', sans-serif; font-size: 0.9rem; opacity: 0.9; font-weight: 400; }
+    .hero-bg-icon { position: absolute; right: 20px; font-size: 7rem; opacity: 0.05; top: 5px; transform: rotate(-10deg); }
 
-    /* --- CARDS FERRAMENTAS --- */
+    /* --- CARDS CLICÁVEIS (Estilo Botão) --- */
     .nav-btn-card {
         background-color: white; border-radius: 16px; padding: 15px;
         border: 1px solid #E2E8F0; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
@@ -150,7 +148,10 @@ css_estatico = """
         height: 130px; position: relative; overflow: hidden;
         text-decoration: none !important;
     }
-    .nav-btn-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.08); border-color: #CBD5E0; }
+    .nav-btn-card:hover {
+        transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.08);
+        border-color: #CBD5E0;
+    }
     .nav-icon { height: 45px; width: auto; object-fit: contain; margin-bottom: 10px; }
     .nav-desc { font-size: 0.75rem; color: #718096; line-height: 1.3; font-weight: 500; }
     
@@ -160,8 +161,8 @@ css_estatico = """
 
     .stButton button { display: none !important; }
 
-    /* --- BENTO GRID --- */
-    .bento-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    /* --- BENTO GRID COMPACTO --- */
+    .bento-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 25px; }
     .bento-item { 
         background: white; border-radius: 14px; padding: 15px; border: 1px solid #E2E8F0; 
         box-shadow: 0 2px 4px rgba(0,0,0,0.01); text-decoration: none; color: inherit; 
@@ -176,7 +177,7 @@ css_estatico = """
     .bento-title { font-weight: 700; font-size: 0.85rem; color: #1A202C; margin-bottom: 2px; }
     .bento-desc { font-size: 0.75rem; color: #718096; line-height: 1.2; }
 
-    /* --- INSIGHT CARD --- */
+    /* --- INSIGHT CARD COMPACTO --- */
     .insight-card-end { 
         background: linear-gradient(135deg, #FFFBEB 0%, #FFFFFF 100%); 
         border-radius: 14px; padding: 15px 20px; 
@@ -191,7 +192,7 @@ css_estatico = """
     
     .section-title { 
         font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1.1rem; 
-        color: #1A202C; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; margin-top: 25px; 
+        color: #1A202C; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; margin-top: 30px; 
     }
 
     /* Ocultar elementos padrão */
@@ -271,9 +272,9 @@ def sistema_seguranca():
             else:
                 st.markdown(f"<h2 style='color:#0F52BA; margin:0; margin-bottom:10px;'>OMNISFERA</h2>", unsafe_allow_html=True)
 
-            st.markdown("""<div class="manifesto-login">"A Omnisfera é um ecossistema vivo onde a <strong>Neurociência</strong> encontra a <strong>Pedagogia</strong>."</div>""", unsafe_allow_html=True)
+            # MANIFESTO ATUALIZADO
+            st.markdown("""<div class="manifesto-login">"A Omnisfera foi desenvolvida com muito cuidado e carinho com o objetivo de auxiliar as escolas na tarefa de incluir. Ela tem o potencial para revolucionar o cenário da inclusão no Brasil."</div>""", unsafe_allow_html=True)
             
-            # --- FORMULÁRIO DE IDENTIFICAÇÃO ---
             if IS_TEST_ENV:
                 with st.expander("📝 Dados (Opcional)"):
                     nome_user = st.text_input("nome_fake", placeholder="Nome", label_visibility="collapsed")
@@ -283,26 +284,11 @@ def sistema_seguranca():
                 nome_user = st.text_input("nome_real", placeholder="Seu Nome", label_visibility="collapsed")
                 st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
                 cargo_user = st.text_input("cargo_real", placeholder="Seu Cargo", label_visibility="collapsed")
-                
                 st.markdown("---")
-                
-                # --- TERMO DE CONFIDENCIALIDADE (ADICIONADO) ---
-                st.markdown("<div style='text-align:left; font-weight:700; color:#475569; font-size:0.85rem; margin-bottom:5px;'>Termos de Uso e Confidencialidade</div>", unsafe_allow_html=True)
-                st.markdown("""
-                <div class="termo-box">
-                    <strong>ACORDO DE CONFIDENCIALIDADE E USO DE DADOS (Versão Beta)</strong><br><br>
-                    1. <strong>Natureza do Software:</strong> O usuário reconhece que o sistema "Omnisfera" encontra-se em fase de testes (BETA) e pode conter instabilidades.<br>
-                    2. <strong>Proteção de Dados (LGPD):</strong> É estritamente proibida a inserção de dados reais sensíveis de estudantes (nomes completos, endereços, documentos) que permitam a identificação direta, salvo em ambientes controlados e autorizados pela instituição de ensino.<br>
-                    3. <strong>Propriedade Intelectual:</strong> Todo o código, design e inteligência gerada são de propriedade exclusiva dos desenvolvedores. É vedada a cópia, reprodução ou comercialização sem autorização.<br>
-                    4. <strong>Responsabilidade:</strong> O uso das sugestões pedagógicas geradas pela IA é de responsabilidade do educador, devendo sempre passar por crivo humano antes da aplicação.<br>
-                    Ao prosseguir, você declara estar ciente e de acordo com estes termos.
-                </div>
-                """, unsafe_allow_html=True)
-                
-                concordo = st.checkbox("Li, compreendi e concordo com os termos.")
-                
+                st.caption("ℹ️ Software em fase Beta.")
+                concordo = st.checkbox("Concordo com os termos.")
                 st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-                senha = st.text_input("senha_real", type="password", placeholder="Senha de Acesso", label_visibility="collapsed")
+                senha = st.text_input("senha_real", type="password", placeholder="Senha", label_visibility="collapsed")
 
             st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
             
@@ -317,9 +303,9 @@ def sistema_seguranca():
                 else:
                     hoje = date.today()
                     senha_mestra = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
-                    if not concordo: st.warning("⚠️ Você precisa ler e aceitar os termos de uso.")
-                    elif not nome_user or not cargo_user: st.warning("⚠️ Preencha seus dados de identificação.")
-                    elif senha != senha_mestra: st.error("🚫 Senha incorreta.")
+                    if not concordo: st.warning("Aceite os termos.")
+                    elif not nome_user or not cargo_user: st.warning("Preencha seus dados.")
+                    elif senha != senha_mestra: st.error("Senha incorreta.")
                     else:
                         st.session_state["autenticado"] = True
                         st.session_state["usuario_nome"] = nome_user
@@ -358,15 +344,13 @@ else:
 nome_display = st.session_state.get("usuario_nome", "Educador").split()[0]
 
 # Banner Message
-# AQUI ESTAVA A DUPLICIDADE: O prompt gerava "Rodrigo, a inclusão..." e o título já tinha "Olá, Rodrigo!"
-# ALTERADO: Prompt pede para não usar nomes.
 mensagem_banner = "Unindo ciência, dados e empatia para transformar a educação."
 if 'OPENAI_API_KEY' in st.secrets:
     try:
         if 'banner_msg' not in st.session_state:
             client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
-            # Prompt Ajustado: "Não inicie com nomes"
-            res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": "Crie uma frase curta, poética e inspiradora sobre inclusão escolar. Não use nomes. Máximo 20 palavras."}])
+            # Prompt alterado para NÃO usar nomes na frase
+            res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": f"Crie uma frase curta e inspiradora sobre inclusão escolar. Não use nomes. Máximo 20 palavras."}])
             st.session_state['banner_msg'] = res.choices[0].message.content
         mensagem_banner = st.session_state['banner_msg']
     except: pass
@@ -480,4 +464,5 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.7rem; margin-top: 40px;'>Criado e Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
+# ASSINATURA FINAL COMPLETA
+st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.7rem; margin-top: 40px;'>Omnisfera desenvolvida e CRIADA por RODRIGO A. QUEIROZ; assim como PEI360, PAEE360 & HUB de Inclusão</div>", unsafe_allow_html=True)
