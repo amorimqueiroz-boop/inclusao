@@ -424,20 +424,17 @@ def aplicar_estilo_visual():
         html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }
         .block-container { padding-top: 1.5rem !important; padding-bottom: 5rem !important; }
         
-        /* 1. NAVEGAÇÃO "GLOW" CLEAN - CORREÇÃO DE ROLAGEM */
+        /* 1. NAVEGAÇÃO "GLOW" CLEAN - CORREÇÃO DE ROLAGEM (AJUSTE CIRÚRGICO) */
         div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] { display: none !important; }
         
         .stTabs [data-baseweb="tab-list"] { 
             gap: 8px; 
             display: flex;
-            flex-wrap: nowrap;
-            overflow-x: auto !important; /* Força a rolagem */
-            white-space: nowrap;
+            flex-wrap: wrap !important; /* PERMITE QUEBRA DE LINHA */
+            white-space: normal !important; /* TEXTO PODE QUEBRAR SE NECESSÁRIO */
+            overflow-x: visible !important; /* REMOVE SCROLL */
             padding: 10px 5px;
-            -ms-overflow-style: none;
-            scrollbar-width: thin; /* Permite scroll fino */
             width: 100%;
-            min-width: 100%; /* Garante largura total */
         }
         
         /* ESTILO PADRÃO DAS ABAS */
@@ -455,6 +452,7 @@ def aplicar_estilo_visual():
             flex-shrink: 0;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            margin-bottom: 5px; /* Espaço extra quando quebrar linha */
         }
         
         .stTabs [data-baseweb="tab"]:hover {
@@ -1130,7 +1128,7 @@ abas = [
 ]
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
 
-with tab0: # INÍCIO - AJUSTE PARA ÍCONES PADRÃO (SEM EMOJIS)
+with tab0: # INÍCIO - REVERTIDO PARA EMOJIS ORIGINAIS
     st.markdown("### 🏛️ Central de Fundamentos e Legislação")
 
     # Bloco 1: O PEI (Azul)
@@ -1140,7 +1138,7 @@ with tab0: # INÍCIO - AJUSTE PARA ÍCONES PADRÃO (SEM EMOJIS)
         <div class="sc-body" style="font-size: 0.95rem; line-height: 1.6;">
             O <b>Plano de Ensino Individualizado (PEI)</b> é o instrumento norteador da inclusão escolar. Ele não é apenas um documento burocrático, mas um mapa vivo que descreve as potencialidades, as barreiras e, principalmente, as <b>estratégias de eliminação de barreiras</b> para garantir o acesso ao currículo. O PEI baseia-se no Desenho Universal para a Aprendizagem (DUA) e deve ser revisado periodicamente. Ele garante que a escola não apenas "receba" o aluno, mas planeje ativamente sua permanência e sucesso.
         </div>
-        <div class="bg-icon"><i class="ri-book-open-line"></i></div>
+        <div class="bg-icon">📘</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1162,7 +1160,7 @@ with tab0: # INÍCIO - AJUSTE PARA ÍCONES PADRÃO (SEM EMOJIS)
                 🔗 <a href="https://www.planalto.gov.br/ccivil_03/leis/l9394.htm" target="_blank" style="color:#718096; text-decoration:none;">Consultar LDB na íntegra</a>
             </div>
         </div>
-        <div class="bg-icon"><i class="ri-government-line"></i></div>
+        <div class="bg-icon">⚖️</div>
     </div>
     """, unsafe_allow_html=True)
 
