@@ -10,7 +10,6 @@ import time
 # ==============================================================================
 APP_VERSION = "v116.0"
 
-# Detecção de Ambiente
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
 except:
@@ -35,8 +34,11 @@ def get_base64_image(image_path):
         return base64.b64encode(img_file.read()).decode()
 
 # ==============================================================================
-# 3. CSS "ESTILO CANVA" (Horizontal & Clean)
+# 3. CSS GLOBAL (CARD = BOTÃO)
 # ==============================================================================
+# Definição de cores
+cor_btn_login = "#E65100" if IS_TEST_ENV else "#0F52BA"
+
 css_estatico = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
@@ -47,7 +49,7 @@ css_estatico = """
         background-color: #F8F9FA;
     }
 
-    /* --- HEADER (LOGO | SLOGAN ..... BADGE) --- */
+    /* --- HEADER FIXO --- */
     .header-bar {
         position: fixed; top: 0; left: 0; width: 100%; height: 90px;
         background-color: rgba(255, 255, 255, 0.95);
@@ -55,7 +57,7 @@ css_estatico = """
         z-index: 9999;
         display: flex; align-items: center; justify-content: space-between;
         padding: 0 40px;
-        backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+        backdrop-filter: blur(5px);
         box-shadow: 0 2px 10px rgba(0,0,0,0.03);
     }
     .header-left { display: flex; align-items: center; gap: 20px; }
@@ -68,7 +70,7 @@ css_estatico = """
         font-size: 0.75rem; font-weight: 800; color: #4A5568; letter-spacing: 1px;
     }
 
-    /* Container Principal */
+    /* Ajuste Container */
     .block-container { padding-top: 110px !important; padding-bottom: 3rem !important; }
 
     /* --- LOGIN --- */
@@ -80,15 +82,16 @@ css_estatico = """
     }
     .login-logo { height: 80px; margin-bottom: 20px; }
     .login-manifesto { font-style: italic; color: #718096; margin-bottom: 30px; font-size: 0.95rem; }
-    .stTextInput input { border-radius: 8px !important; border: 1px solid #E2E8F0 !important; height: 46px !important; }
     .termo-box {
         background-color: #F8FAFC; padding: 15px; border-radius: 10px;
         height: 100px; overflow-y: scroll; font-size: 0.75rem;
         border: 1px solid #E2E8F0; margin-bottom: 20px;
         text-align: justify; color: #4A5568;
     }
+    /* Input Senha */
+    .stTextInput input { border-radius: 8px !important; border: 1px solid #E2E8F0 !important; height: 46px !important; }
 
-    /* --- HERO (Azul Degradê) --- */
+    /* --- HERO --- */
     .hero-banner {
         background: linear-gradient(90deg, #0F52BA 0%, #2c5282 100%);
         border-radius: 16px; padding: 40px; color: white;
@@ -99,40 +102,56 @@ css_estatico = """
     .hero-text { font-size: 1.1rem; opacity: 0.9; max-width: 800px; }
     .hero-bg-icon { position: absolute; right: -20px; bottom: -40px; font-size: 15rem; opacity: 0.05; transform: rotate(-15deg); }
 
-    /* --- CARDS HORIZONTAIS (ACESSO RÁPIDO) --- */
-    .h-card-container {
-        background: white; border: 2px solid #E2E8F0; border-radius: 16px;
-        padding: 20px; height: 140px;
-        display: flex; align-items: center; gap: 20px;
-        transition: all 0.2s ease; position: relative;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-    }
-    .h-card-container:hover { 
-        border-color: #3182CE; transform: translateY(-3px); 
-        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-    }
+    /* --- MAGIC CARDS (ACESSO RÁPIDO) --- */
+    /* Aqui está a mágica: O botão se torna o card inteiro */
     
-    /* Logo no Card */
-    .h-card-logo-area { 
-        width: 140px; height: 100%;
-        display: flex; justify-content: center; align-items: center; 
-        border-right: 1px solid #F0F0F0; padding-right: 20px; flex-shrink: 0;
+    /* 1. Container da Logo (HTML Absoluto) */
+    .card-logo-overlay {
+        position: absolute;
+        top: 20px; left: 20px;
+        width: 100px; height: 100px;
+        display: flex; align-items: center; justify-content: center;
+        z-index: 2; /* Fica acima do botão visualmente */
+        pointer-events: none; /* O clique passa através da imagem para o botão */
     }
-    .h-card-logo-img { max-height: 50px; max-width: 100%; object-fit: contain; }
+    .card-logo-overlay img { max-height: 60px; max-width: 100%; object-fit: contain; }
 
-    /* Botão Link (Direita) */
-    .h-card-btn-area button {
-        background: transparent !important; border: none !important;
-        color: #2D3748 !important; text-decoration: underline;
-        font-weight: 700 !important; font-size: 1rem !important;
-        padding: 0 !important; margin: 0 !important;
-        text-align: left !important; white-space: normal !important;
-        height: auto !important; line-height: 1.4 !important;
-        display: flex !important; justify-content: flex-start !important;
+    /* 2. O Botão Streamlit (O Card em si) */
+    .card-btn-wrapper button {
+        background-color: white !important;
+        border: 2px solid #E2E8F0 !important;
+        border-radius: 16px !important;
+        height: 140px !important;
+        width: 100% !important;
+        
+        /* Typography do Texto */
+        color: #2D3748 !important;
+        font-family: 'Nunito', sans-serif !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+        text-align: left !important;
+        
+        /* Espaçamento para não bater na logo */
+        padding-left: 140px !important; 
+        padding-right: 20px !important;
+        
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important;
+        transition: all 0.2s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        white-space: normal !important; /* Quebra de linha permitida */
+        line-height: 1.4 !important;
     }
-    .h-card-btn-area button:hover { color: #0F52BA !important; text-decoration: none !important; }
+
+    /* Hover Effect */
+    .card-btn-wrapper button:hover {
+        border-color: #3182CE !important;
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06) !important;
+        color: #0F52BA !important;
+    }
     
-    /* Cards Conhecimento */
+    /* --- CONHECIMENTO (Compacto) --- */
     .k-card-container {
         background: white; border: 1px solid #E2E8F0; border-radius: 12px;
         padding: 15px; height: 90px;
@@ -145,16 +164,10 @@ css_estatico = """
         display: flex; align-items: center; justify-content: center;
         font-size: 1.5rem; flex-shrink: 0;
     }
-    .k-btn-area button {
-        background: transparent !important; border: none !important;
-        color: #1A202C !important; font-size: 0.9rem !important;
-        font-weight: 700 !important; text-align: left !important;
-        padding: 0 !important;
-    }
+    .k-link { text-decoration: none; color: #1A202C; font-weight: 700; font-size: 0.9rem; }
 
+    /* Headers e Insight */
     .section-header { font-size: 1.2rem; font-weight: 800; color: #1A202C; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-    
-    /* Insight */
     .insight-box {
         background: #FFFBEB; border: 1px solid #F6E05E; border-radius: 12px;
         padding: 20px; display: flex; align-items: center; gap: 20px; margin-top: 30px;
@@ -165,20 +178,30 @@ css_estatico = """
         color: #D69E2E; font-size: 1.5rem; flex-shrink: 0;
     }
 
-    [data-testid="stHeader"] { visibility: hidden; height: 0; }
-    [data-testid="stToolbar"] { visibility: hidden; }
+    [data-testid="stHeader"], [data-testid="stToolbar"] { visibility: hidden; height: 0; }
     section[data-testid="stSidebar"] { display: none; }
 </style>
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 """
 st.markdown(css_estatico, unsafe_allow_html=True)
 
-# CSS DINÂMICO PARA BOTÃO DE LOGIN
-cor_btn = "#E65100" if IS_TEST_ENV else "#0F52BA"
-st.markdown(f"""<style>.btn-login-inline button {{ margin-top: 29px !important; height: 46px !important; background-color: {cor_btn} !important; color: white !important; border-radius: 8px !important; font-weight: 700 !important; width: 100%; }}</style>""", unsafe_allow_html=True)
+# CSS Dinâmico para o botão de login
+st.markdown(f"""
+<style>
+    .btn-login-inline button {{
+        margin-top: 29px !important;
+        height: 46px !important;
+        background-color: {cor_btn_login} !important;
+        color: white !important;
+        border-radius: 8px !important; font-weight: 700 !important;
+        border: none !important; width: 100%;
+    }}
+    .btn-login-inline button:hover {{ opacity: 0.9; }}
+</style>
+""", unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. SISTEMA DE LOGIN
+# 4. LOGIN
 # ==============================================================================
 if "autenticado" not in st.session_state: st.session_state["autenticado"] = False
 
@@ -188,37 +211,40 @@ if not st.session_state["autenticado"]:
         st.markdown("<div class='login-box'>", unsafe_allow_html=True)
         img_login = get_base64_image("omni_icone.png")
         if img_login: st.markdown(f"<img src='data:image/png;base64,{img_login}' class='login-logo'>", unsafe_allow_html=True)
-        st.markdown("<h2 style='color:#0F52BA; margin:0;'>OMNISFERA</h2>", unsafe_allow_html=True)
-        st.markdown("<div class='login-manifesto'>\"A Omnisfera foi desenvolvida com muito cuidado e carinho...\"</div>", unsafe_allow_html=True)
+        else: st.markdown("<h2 style='color:#0F52BA;'>OMNISFERA</h2>", unsafe_allow_html=True)
+        
+        st.markdown("<div class='login-manifesto'>\"A Omnisfera foi desenvolvida com muito cuidado e carinho com o objetivo de auxiliar as escolas na tarefa de incluir. Ela tem o potencial para revolucionar o cenário da inclusão no Brasil.\"</div>", unsafe_allow_html=True)
         
         with st.expander("📄 Ler Termos de Uso"):
-            st.markdown("<div class='termo-box'>1. Confidencialidade...<br>2. Beta...<br>3. Responsabilidade...</div>", unsafe_allow_html=True)
+            st.markdown("<div class='termo-box'>1. Confidencialidade: Não insira dados reais...<br>2. Natureza Beta...<br>3. Responsabilidade...</div>", unsafe_allow_html=True)
         
         concordo = st.checkbox("Li e concordo com os termos.")
+        
         c_pass, c_btn = st.columns([3, 1])
         with c_pass: senha = st.text_input("Senha de Acesso", type="password")
-        with c_btn: 
+        with c_btn:
             st.markdown('<div class="btn-login-inline">', unsafe_allow_html=True)
-            entrar = st.button("ENTRAR")
+            entrar = st.button("ENTRAR" if IS_TEST_ENV else "ACESSAR")
             st.markdown('</div>', unsafe_allow_html=True)
         
         if entrar:
-            senha_correta = "PEI_START_2026"
-            if IS_TEST_ENV: senha_correta = ""
+            senha_ok = "PEI_START_2026"
+            if IS_TEST_ENV: senha_ok = ""
             if not concordo: st.warning("Aceite os termos.")
-            elif senha != senha_correta and not IS_TEST_ENV: st.error("Senha incorreta.")
+            elif senha != senha_ok and not IS_TEST_ENV: st.error("Senha incorreta.")
             else:
                 st.session_state["autenticado"] = True; st.session_state["usuario_nome"] = "Visitante"; st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
 # ==============================================================================
-# 5. DASHBOARD HOME
+# 5. DASHBOARD
 # ==============================================================================
-img_header = get_base64_image("omni_icone.png")
-text_header = get_base64_image("omni_texto.png")
-logo_html = f"<img src='data:image/png;base64,{img_header}' class='header-logo-img'>" if img_header else "🌐"
-nome_html = f"<img src='data:image/png;base64,{text_header}' style='height:30px; margin-left:10px;'>" if text_header else "<span style='font-weight:800; font-size:1.5rem; color:#0F52BA;'>OMNISFERA</span>"
+# Header
+img_h = get_base64_image("omni_icone.png")
+text_h = get_base64_image("omni_texto.png")
+logo_html = f"<img src='data:image/png;base64,{img_h}' class='header-logo-img'>" if img_h else "🌐"
+nome_html = f"<img src='data:image/png;base64,{text_h}' style='height:30px; margin-left:10px;'>" if text_h else "<span style='font-weight:800; font-size:1.5rem; color:#0F52BA;'>OMNISFERA</span>"
 
 st.markdown(f"""
 <div class="header-bar">
@@ -227,42 +253,72 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# HERO
+# Sidebar
+with st.sidebar:
+    st.markdown("**👤 Educador**"); st.markdown("---")
+    if st.button("Enviar Feedback"): st.toast("Obrigado!", icon="✅")
+
+# Hero
 nome = st.session_state.get("usuario_nome", "Visitante").split()[0]
 st.markdown(f"""<div class="hero-banner"><div class="hero-title">Olá, {nome}!</div><div class="hero-text">"A inclusão escolar transforma diferenças em oportunidades."</div><i class="ri-heart-pulse-fill hero-bg-icon"></i></div>""", unsafe_allow_html=True)
 
-# ACESSO RÁPIDO (HORIZONTAL)
+# --- ACESSO RÁPIDO (CARD = BOTÃO) ---
 st.markdown('<div class="section-header"><i class="ri-cursor-fill"></i> Acesso Rápido</div>', unsafe_allow_html=True)
-c1, c2, c3 = st.columns(3)
 
-def card_horizontal(coluna, img, texto, link):
+def card_botao_total(coluna, img, texto, link):
     with coluna:
+        # A logo é desenhada como HTML absoluto (flutua sobre o botão)
         img_b64 = get_base64_image(img)
-        st.markdown(f"""<div class="h-card-container"><div class="h-card-logo-area"><img src="data:image/png;base64,{img_b64}" class="h-card-logo-img"></div><div style="flex-grow:1;" class="h-card-btn-area">""", unsafe_allow_html=True)
-        if st.button(texto, key=f"btn_{img}"): st.switch_page(link)
+        st.markdown(f"""
+        <div style="position: relative; height: 140px;">
+            <div class="card-logo-overlay">
+                <img src="data:image/png;base64,{img_b64}">
+            </div>
+            <div class="card-btn-wrapper">
+        """, unsafe_allow_html=True)
+        
+        # O botão do Streamlit é o corpo do card
+        if st.button(texto, key=f"btn_{img}"):
+            st.switch_page(link)
+            
         st.markdown("</div></div>", unsafe_allow_html=True)
 
-card_horizontal(c1, "360.png", "Crie seu plano de ensino individualizado", "pages/1_PEI.py")
-card_horizontal(c2, "pae.png", "Sala de recursos e eliminação de barreiras", "pages/2_PAE.py")
-card_horizontal(c3, "hub.png", "Faça adaptação de atividades e roteiros", "pages/3_Hub_Inclusao.py")
+c1, c2, c3 = st.columns(3)
+card_botao_total(c1, "360.png", "Crie seu plano de ensino individualizado", "pages/1_PEI.py")
+card_botao_total(c2, "pae.png", "Sala de recursos e eliminação de barreiras", "pages/2_PAE.py")
+card_botao_total(c3, "hub.png", "Faça adaptação de atividades e roteiros", "pages/3_Hub_Inclusao.py")
 
-# CONHECIMENTO (HORIZONTAL COMPACTO)
+# --- CONHECIMENTO ---
 st.markdown('<div style="height:30px;"></div><div class="section-header"><i class="ri-book-mark-fill"></i> Conhecimento</div>', unsafe_allow_html=True)
 k1, k2, k3, k4 = st.columns(4)
 
 def card_know(coluna, icon, color, bg, title, link):
     with coluna:
-        st.markdown(f"""<div class="k-card-container"><div class="k-icon" style="background:{bg}; color:{color};"><i class="{icon}"></i></div><div class="k-btn-area" style="flex-grow:1;">""", unsafe_allow_html=True)
-        if link.startswith("http"): st.markdown(f"<a href='{link}' target='_blank' style='text-decoration:none; color:#1A202C; font-weight:700; font-size:0.9rem;'>{title}</a>", unsafe_allow_html=True)
-        else: st.button(title, key=f"kb_{title}", disabled=True)
-        st.markdown("</div></div>", unsafe_allow_html=True)
+        # Usando link HTML para navegação externa correta
+        st.markdown(f"""
+        <a href="{link}" target="_blank" style="text-decoration:none;">
+            <div class="k-card-container">
+                <div class="k-icon" style="background:{bg}; color:{color};"><i class="{icon}"></i></div>
+                <div class="k-link">{title}</div>
+            </div>
+        </a>
+        """, unsafe_allow_html=True)
 
 card_know(k1, "ri-file-text-line", "#3182CE", "#EBF8FF", "PEI vs PAEE", "#")
 card_know(k2, "ri-scales-3-line", "#D69E2E", "#FFFFF0", "Legislação", "https://planalto.gov.br")
 card_know(k3, "ri-brain-line", "#D53F8C", "#FFF5F7", "Neurociência", "#")
 card_know(k4, "ri-compass-3-line", "#38A169", "#F0FFF4", "BNCC", "http://basenacionalcomum.mec.gov.br/")
 
-# INSIGHT & FOOTER
-st.markdown('<div style="height:30px;"></div>', unsafe_allow_html=True)
-st.markdown("""<div class="insight-box"><div class="insight-icon"><i class="ri-lightbulb-flash-line"></i></div><div><div style="font-weight:800; font-size:0.8rem; color:#D69E2E;">INSIGHT DO DIA</div><div style="font-style:italic; color:#4A5568;">"Entender como o cérebro aprende é fundamental."</div></div></div>""", unsafe_allow_html=True)
-st.markdown("<div style='text-align:center; color:#CBD5E0; font-size:0.8rem; margin-top:60px;'>Omnisfera desenvolvida e CRIADA por RODRIGO A. QUEIROZ; assim como PEI360, PAEE360 & HUB de Inclusão</div>", unsafe_allow_html=True)
+# --- INSIGHT ---
+st.markdown('<div style="height:20px;"></div>', unsafe_allow_html=True)
+st.markdown("""
+<div class="insight-box">
+    <div class="insight-icon"><i class="ri-lightbulb-flash-line"></i></div>
+    <div>
+        <div style="font-weight:800; font-size:0.8rem; color:#D69E2E;">INSIGHT DO DIA</div>
+        <div style="font-style:italic; color:#4A5568;">"Entender como o cérebro aprende é fundamental."</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("<div style='text-align:center; color:#CBD5E0; font-size:0.8rem; margin-top:50px;'>Omnisfera desenvolvida e CRIADA por RODRIGO A. QUEIROZ; assim como PEI360, PAEE360 & HUB de Inclusão</div>", unsafe_allow_html=True)
