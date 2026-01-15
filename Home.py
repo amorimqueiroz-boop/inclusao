@@ -24,7 +24,7 @@ st.set_page_config(
     page_title=titulo_pag,
     page_icon=icone_pag,
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded" # Será ocultada via CSS no login
 )
 
 # ==============================================================================
@@ -83,65 +83,58 @@ st.markdown(f"""
         animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
     }}
 
-    /* --- 3. HEADER DE VIDRO (GLASSMORPHISM) --- */
+    /* --- 3. HEADER DE VIDRO (GLASSMORPHISM) - ALTERADO PARA ALINHAMENTO À ESQUERDA --- */
     .logo-container {{
         display: flex; 
         align-items: center; 
-        justify-content: space-between; /* Separa Logo (Esq) e Texto (Dir) */
-        padding: 0 40px;
-        position: fixed; top: 0; left: 0; width: 100%; height: 110px;
-        background-color: rgba(247, 250, 252, 0.85); 
+        justify-content: flex-start; /* Alterado de center para flex-start */
+        gap: 20px; 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100px;
+        background-color: rgba(247, 250, 252, 0.8); 
         backdrop-filter: blur(16px) saturate(180%); 
         -webkit-backdrop-filter: blur(16px) saturate(180%);
         border-bottom: 1px solid rgba(255, 255, 255, 0.6);
         z-index: 9998; 
         box-shadow: 0 4px 30px rgba(0,0,0,0.03);
+        padding-left: 40px; /* Adicionado padding lateral */
     }}
 
-    /* LOGO + NOME (ESQUERDA) */
-    .logo-box-left {{
+    /* Estilo do Subtítulo no Header */
+    .header-subtitle-text {{
+        font-family: 'Nunito', sans-serif;
+        font-weight: 600;
+        font-size: 1.2rem;
+        color: #718096;
+        border-left: 2px solid #CBD5E0;
+        padding-left: 20px;
+        height: 50px;
         display: flex;
-        flex-direction: column; /* Um embaixo do outro */
-        align-items: flex-start; /* Alinhado à esquerda */
-        justify-content: center;
-        gap: 5px;
+        align-items: center;
+        letter-spacing: -0.5px;
     }}
 
     /* LOGO GIRATÓRIA */
     @keyframes spin {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
-    .logo-icon-spin {{ height: 60px; width: auto; animation: spin 45s linear infinite; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); margin-left: 10px; }}
-    
-    /* NOME OMNISFERA (EMBAIXO DA LOGO) */
-    .logo-text-static {{ height: 25px; width: auto; margin-top: 5px; }}
-
-    /* TEXTO DIREITA (ECOSSISTEMA) */
-    .header-slogan {{
-        font-family: 'Inter', sans-serif;
-        font-weight: 600;
-        font-size: 1rem;
-        color: #718096;
-        text-align: right;
-        max-width: 300px;
-        line-height: 1.2;
-    }}
+    .logo-icon-spin {{ height: 80px; width: auto; animation: spin 45s linear infinite; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); }}
+    .logo-text-static {{ height: 50px; width: auto; }}
 
     /* --- 4. BADGE FLUTUANTE (STATUS) --- */
     .omni-badge {{
-        position: fixed; top: 120px; right: 20px; /* Ajustado para baixo do header */
+        position: fixed; top: 20px; right: 20px;
         background: {card_bg};
         border: 1px solid {card_border};
         backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-        padding: 5px 15px;
-        min-width: 150px;
-        border-radius: 12px;
+        padding: 8px 25px;
+        min-width: 200px;
+        border-radius: 16px;
         box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-        z-index: 9990;
+        z-index: 999990;
         display: flex; align-items: center; justify-content: center;
         pointer-events: none;
         transition: transform 0.3s ease;
     }}
     .omni-text {{
-        font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.6rem;
+        font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.7rem;
         color: #2D3748; letter-spacing: 2px; text-transform: uppercase;
     }}
 
@@ -154,7 +147,7 @@ st.markdown(f"""
     
     /* Botão Menu Lateral (Estilo iOS/Notion) */
     [data-testid="stSidebarCollapsedControl"] {{
-        position: fixed !important; top: 120px !important; left: 20px !important; z-index: 1000000 !important;
+        position: fixed !important; top: 110px !important; left: 20px !important; z-index: 1000000 !important;
         visibility: visible !important; display: flex !important;
         background-color: rgba(255,255,255,0.9) !important;
         backdrop-filter: blur(8px);
@@ -275,25 +268,20 @@ def get_base64_image(image_path):
 # CARD OMNISFERA (Canto Direito)
 st.markdown(f"""<div class="omni-badge hover-spring"><span class="omni-text">{display_text}</span></div>""", unsafe_allow_html=True)
 
-# HEADER LOGO (Esquerda e Direita - VIDRO)
+# HEADER LOGO (ALINHADO À ESQUERDA COM SUBTÍTULO)
 icone_b64 = get_base64_image("omni_icone.png")
-texto_b64 = get_base64_image("omni_texto.png") # Nome "Omnisfera"
+texto_b64 = get_base64_image("omni_texto.png")
 
 if icone_b64 and texto_b64:
     st.markdown(f"""
     <div class="logo-container">
-        <div class="logo-box-left">
-            <img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">
-            <img src="data:image/png;base64,{texto_b64}" class="logo-text-static">
-        </div>
-        
-        <div class="header-slogan">
-            Ecossistema de Inteligência<br>Pedagógica e Inclusiva
-        </div>
+        <img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">
+        <img src="data:image/png;base64,{texto_b64}" class="logo-text-static">
+        <div class="header-subtitle-text">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
     </div>
     """, unsafe_allow_html=True)
 else:
-    st.markdown("<div class='logo-container'><h1 style='color: #0F52BA; margin:0;'>🌐 OMNISFERA</h1></div>", unsafe_allow_html=True)
+    st.markdown("<div class='logo-container'><h1 style='color: #0F52BA; margin:0;'>🌐 OMNISFERA</h1><div class='header-subtitle-text'>Ecossistema de Inteligência Pedagógica e Inclusiva</div></div>", unsafe_allow_html=True)
 
 # ==============================================================================
 # 4. SISTEMA DE SEGURANÇA E LOGIN
@@ -311,14 +299,15 @@ def sistema_seguranca():
         btn_text = "🔒 ACESSAR OMNISFERA"
         btn_color = "#0F52BA"
 
+    # CSS ESPECÍFICO PARA A TELA DE LOGIN (Esconde Sidebar e Header Padrão)
     st.markdown(f"""
         <style>
             /* Esconde header padrão na tela de login */
             [data-testid="stHeader"] {{visibility: hidden !important; height: 0px !important;}}
             
-            /* Remove Sidebar no Login */
-            [data-testid="stSidebar"] {{display: none !important;}}
-            [data-testid="stSidebarCollapsedControl"] {{display: none !important;}}
+            /* ESCONDE A SIDEBAR SE NÃO ESTIVER LOGADO */
+            section[data-testid="stSidebar"] {{ display: none !important; }}
+            [data-testid="stSidebarCollapsedControl"] {{ display: none !important; }}
             
             .login-container {{ 
                 background-color: white; 
@@ -350,7 +339,6 @@ def sistema_seguranca():
                 font-size: 1rem !important; transition: all 0.2s;
             }}
             div[data-testid="column"] .stButton button:hover {{ transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }}
-            .teste-warning {{ color: #D69E2E; font-size: 0.85rem; font-weight: 700; margin-bottom: 15px; background: #FFFBEB; padding: 8px; border-radius: 8px; display: none; }} /* Ocultando aviso amarelo conforme pedido */
         </style>
     """, unsafe_allow_html=True)
 
@@ -379,7 +367,7 @@ def sistema_seguranca():
             concordo = False
 
             if IS_TEST_ENV:
-                # MODO TESTE (Sem o aviso amarelo)
+                # MODO TESTE - Retângulo amarelo REMOVIDO conforme solicitado
                 with st.expander("📝 Preencher dados (Opcional)"):
                     nome_user = st.text_input("nome_fake", placeholder="Nome (Opcional)", label_visibility="collapsed")
                     st.markdown("<div style='height:5px'></div>", unsafe_allow_html=True)
@@ -430,6 +418,7 @@ if not sistema_seguranca(): st.stop()
 # ==============================================================================
 # 5. CONTEÚDO DA HOME (DASHBOARD BENTO)
 # ==============================================================================
+# SÓ CARREGA SE ESTIVER AUTENTICADO
 nome_display = st.session_state.get("usuario_nome", "Educador").split()[0]
 
 # Banner Message
@@ -444,7 +433,7 @@ if 'OPENAI_API_KEY' in st.secrets:
         mensagem_banner = st.session_state['banner_msg']
     except: pass
 
-# --- SIDEBAR (SÓ APARECE SE AUTENTICADO) ---
+# --- SIDEBAR (SÓ APARECE AQUI) ---
 with st.sidebar:
     if "usuario_nome" in st.session_state:
         st.markdown(f"**👤 {st.session_state['usuario_nome']}**")
