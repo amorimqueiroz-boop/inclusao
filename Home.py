@@ -48,10 +48,8 @@ else:
     footer_visibility = "hidden"
 
 # ==============================================================================
-# 3. CSS GLOBAL (SEPARADO PARA EVITAR ERROS)
+# 3. CSS GLOBAL BLINDADO
 # ==============================================================================
-
-# CSS ESTÁTICO (Estrutura e Animações) - Sem f-string para evitar conflito de chaves
 css_estatico = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
@@ -69,7 +67,6 @@ css_estatico = """
         to { opacity: 1; transform: translateY(0); }
     }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
     .hover-spring { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; }
     .hover-spring:hover { transform: translateY(-8px) scale(1.01); box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important; z-index: 10; }
@@ -110,17 +107,16 @@ css_estatico = """
     .login-logo-spin { height: 100px; width: auto; animation: spin 45s linear infinite; margin-bottom: 10px; }
     .login-logo-static { height: 60px; width: auto; margin-left: 10px; }
     .logo-wrapper { display: flex; justify-content: center; align-items: center; margin-bottom: 25px; }
-    
     .manifesto-login { font-family: 'Nunito', sans-serif; font-size: 0.95rem; color: #64748B; font-style: italic; line-height: 1.6; margin-bottom: 30px; }
     
-    /* Inputs & Buttons */
+    /* Inputs */
     .stTextInput input { border-radius: 12px !important; border: 1px solid #E2E8F0 !important; padding: 12px !important; background-color: #F8FAFC !important; }
     .stTextInput input:focus { border-color: #3182CE !important; box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1); }
     
-    /* Bento Grid */
+    /* Dash Hero */
     .dash-hero { 
         background: radial-gradient(circle at top right, #0F52BA, #062B61); 
-        border-radius: 24px; margin-bottom: 40px; margin-top: 100px; /* Espaço para o header */
+        border-radius: 24px; margin-bottom: 40px; margin-top: 100px;
         box-shadow: 0 20px 40px -10px rgba(15, 82, 186, 0.4);
         color: white; position: relative; overflow: hidden; padding: 60px;
         display: flex; align-items: center; justify-content: flex-start;
@@ -130,6 +126,7 @@ css_estatico = """
     .hero-subtitle { font-family: 'Inter', sans-serif; font-size: 1.15rem; opacity: 0.9; }
     .hero-bg-icon { position: absolute; right: 30px; font-size: 10rem; opacity: 0.05; top: 10px; transform: rotate(-10deg); }
 
+    /* Tool Cards */
     .tool-card { 
         background: white; border-radius: 24px; padding: 30px 25px; 
         box-shadow: 0 2px 10px rgba(0,0,0,0.02); border: 1px solid #E2E8F0; 
@@ -144,7 +141,42 @@ css_estatico = """
     .border-purple { border-bottom: 6px solid #805AD5; } 
     .border-teal { border-bottom: 6px solid #38B2AC; }
 
-    /* Hide Elements */
+    /* BENTO GRID (4 Cards) */
+    .bento-grid { 
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 40px; 
+    }
+    .bento-item { 
+        background: white; border-radius: 20px; padding: 25px; border: 1px solid #E2E8F0; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.01); text-decoration: none; color: inherit; 
+        display: flex; flex-direction: column; align-items: center; text-align: center; 
+        position: relative; overflow: hidden; height: 100%; 
+    }
+    .bento-icon { 
+        width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; 
+        font-size: 1.5rem; margin-bottom: 15px; transition: transform 0.3s ease;
+    }
+    .bento-item:hover .bento-icon { transform: scale(1.1) rotate(5deg); }
+    .bento-title { font-weight: 800; font-size: 1rem; color: #1A202C; margin-bottom: 5px; }
+    .bento-desc { font-size: 0.8rem; color: #718096; line-height: 1.4; }
+
+    /* Insight Card */
+    .insight-card-end { 
+        background: linear-gradient(135deg, #FFFBEB 0%, #FFFFFF 100%); 
+        border-radius: 20px; padding: 30px; 
+        color: #2D3748; display: flex; align-items: center; gap: 30px; 
+        box-shadow: 0 10px 25px rgba(214, 158, 46, 0.1); 
+        border: 1px solid rgba(214, 158, 46, 0.2); margin-bottom: 30px; 
+    }
+    .insight-icon-end { 
+        font-size: 2.2rem; color: #D69E2E; background: rgba(214, 158, 46, 0.1); 
+        width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    }
+    .section-title { 
+        font-family: 'Inter', sans-serif; font-weight: 800; font-size: 1.5rem; 
+        color: #1A202C; margin-bottom: 30px; display: flex; align-items: center; gap: 12px; margin-top: 60px; 
+    }
+
+    /* Hide Default Streamlit Elements */
     [data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
     [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
 </style>
@@ -152,7 +184,7 @@ css_estatico = """
 """
 st.markdown(css_estatico, unsafe_allow_html=True)
 
-# CSS DINÂMICO (Cores e Visibilidade)
+# CSS DINÂMICO
 st.markdown(f"""
 <style>
     .omni-badge {{
@@ -170,7 +202,6 @@ st.markdown(f"""
     }}
     footer {{ visibility: {footer_visibility} !important; }}
     
-    /* Botões Dinâmicos */
     div[data-testid="column"] .stButton button {{
         width: 100%; border-radius: 14px !important; border: none !important;
         font-family: 'Inter', sans-serif; font-weight: 700 !important; font-size: 0.95rem !important;
@@ -204,7 +235,6 @@ def sistema_seguranca():
         btn_text = "🚀 ENTRAR (TESTE)" if IS_TEST_ENV else "🔒 ACESSAR OMNISFERA"
         btn_color = "#E65100" if IS_TEST_ENV else "#0F52BA"
 
-        # CSS Específico para botão de login (cor forte)
         st.markdown(f"""
         <style>
             div.stButton > button {{
@@ -218,23 +248,20 @@ def sistema_seguranca():
         with c_login:
             st.markdown("<div class='login-container'>", unsafe_allow_html=True)
             
-            # LOGO CENTRALIZADA
-            icone_b64 = get_base64_image("omni_icone.png")
-            texto_b64 = get_base64_image("omni_texto.png")
+            icone_b64_login = get_base64_image("omni_icone.png")
+            texto_b64_login = get_base64_image("omni_texto.png")
             
-            if icone_b64 and texto_b64:
+            if icone_b64_login and texto_b64_login:
                 st.markdown(f"""
                 <div class="logo-wrapper">
-                    <img src="data:image/png;base64,{icone_b64}" class="login-logo-spin">
-                    <img src="data:image/png;base64,{texto_b64}" class="login-logo-static">
+                    <img src="data:image/png;base64,{icone_b64_login}" class="login-logo-spin">
+                    <img src="data:image/png;base64,{texto_b64_login}" class="login-logo-static">
                 </div>""", unsafe_allow_html=True)
             else:
                 st.markdown(f"<h2 style='color:#0F52BA; margin:0; margin-bottom:10px;'>OMNISFERA</h2>", unsafe_allow_html=True)
 
-            # MANIFESTO
             st.markdown("""<div class="manifesto-login">"A Omnisfera é um ecossistema vivo onde a <strong>Neurociência</strong> encontra a <strong>Pedagogia</strong>."</div>""", unsafe_allow_html=True)
             
-            # FORMULÁRIO
             if IS_TEST_ENV:
                 with st.expander("📝 Dados (Opcional)"):
                     nome_user = st.text_input("nome_fake", placeholder="Nome", label_visibility="collapsed")
@@ -244,11 +271,9 @@ def sistema_seguranca():
                 nome_user = st.text_input("nome_real", placeholder="Seu Nome", label_visibility="collapsed")
                 st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
                 cargo_user = st.text_input("cargo_real", placeholder="Seu Cargo", label_visibility="collapsed")
-                
                 st.markdown("---")
                 st.caption("ℹ️ Software em fase Beta. Uso restrito.")
                 concordo = st.checkbox("Concordo com os termos.")
-                
                 st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
                 senha = st.text_input("senha_real", type="password", placeholder="Senha", label_visibility="collapsed")
 
@@ -358,7 +383,56 @@ with c2:
 
 with c3:
     img = f'<img src="data:image/png;base64,{logo_hub}" class="card-logo-img">' if logo_hub else '<i class="ri-rocket-line" style="font-size:4rem; color:#38B2AC;"></i>'
-    st.markdown(f"""<div class="tool-card border-teal hover-spring"><div class="card-logo-box">{img}</div><div class="tool-desc-short">Adaptação de provas e materiais.</div></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="tool-card border-teal hover-spring"><div class="card-logo-box">{img}</div><div class="tool-desc-short">Adaptação automática de provas e criação de roteiros.</div></div>""", unsafe_allow_html=True)
     if st.button("➜ Acessar Hub", use_container_width=True): st.switch_page("pages/3_Hub_Inclusao.py")
+
+# BENTO GRID (BASE DE CONHECIMENTO - RESTAURADO)
+st.markdown("<div class='section-title'><i class='ri-book-mark-fill'></i> Base de Conhecimento</div>", unsafe_allow_html=True)
+
+st.markdown("""
+<div class="bento-grid">
+    <a href="#" class="bento-item hover-spring">
+        <div class="bento-icon" style="background:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
+        <div class="bento-title">PEI vs PAEE</div>
+        <div class="bento-desc">Diferenças fundamentais.</div>
+    </a>
+    <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="bento-item hover-spring">
+        <div class="bento-icon" style="background:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
+        <div class="bento-title">Legislação</div>
+        <div class="bento-desc">LBI e Decretos.</div>
+    </a>
+    <a href="https://institutoneurosaber.com.br/" target="_blank" class="bento-item hover-spring">
+        <div class="bento-icon" style="background:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
+        <div class="bento-title">Neurociência</div>
+        <div class="bento-desc">Desenvolvimento atípico.</div>
+    </a>
+    <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="bento-item hover-spring">
+        <div class="bento-icon" style="background:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
+        <div class="bento-title">BNCC</div>
+        <div class="bento-desc">Currículo oficial.</div>
+    </a>
+</div>
+""", unsafe_allow_html=True)
+
+# INSIGHT DO DIA (RESTAURADO)
+noticia_insight = "A aprendizagem acontece quando o cérebro se emociona. Crie vínculos antes de cobrar conteúdos."
+if 'OPENAI_API_KEY' in st.secrets:
+    try:
+        if 'insight_dia' not in st.session_state:
+            client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
+            res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": "Dica de 1 frase sobre neurociência para professores."}])
+            st.session_state['insight_dia'] = res.choices[0].message.content
+        noticia_insight = st.session_state['insight_dia']
+    except: pass
+
+st.markdown(f"""
+<div class="insight-card-end hover-spring">
+    <div class="insight-icon-end"><i class="ri-lightbulb-flash-line"></i></div>
+    <div>
+        <div style="font-weight: 800; font-size: 0.95rem; color: #D69E2E; letter-spacing: 0.5px; text-transform: uppercase;">Insight do Dia</div>
+        <p style="margin:5px 0 0 0; font-size:1.05rem; opacity:0.9; color:#4A5568; font-style: italic; font-weight: 500;">"{noticia_insight}"</p>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.8rem; margin-top: 60px;'>Omnisfera © 2026</div>", unsafe_allow_html=True)
