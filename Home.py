@@ -10,7 +10,7 @@ import time
 # ==============================================================================
 APP_VERSION = "v116.0"
 
-# Detecção de Ambiente (Secrets)
+# Detecção de Ambiente
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
 except:
@@ -19,7 +19,7 @@ except:
 # Configurações da Página
 titulo_pag = "[TESTE] Omnisfera" if IS_TEST_ENV else "Omnisfera | Ecossistema"
 
-# Lógica para usar a logo como ícone da aba
+# Tenta usar a logo como ícone, senão usa um globo
 icone_pag = "omni_icone.png" if os.path.exists("omni_icone.png") else "🌐"
 
 st.set_page_config(
@@ -50,8 +50,9 @@ else:
     footer_visibility = "hidden"
 
 # ==============================================================================
-# 3. CSS GLOBAL (BLINDADO E AJUSTADO)
+# 3. CSS BLINDADO (SEM F-STRING NO BLOCO GRANDE)
 # ==============================================================================
+# Este bloco não usa f""" para evitar o erro de SyntaxError com as chaves do CSS
 css_estatico = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
@@ -73,32 +74,32 @@ css_estatico = """
     .hover-spring { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; }
     .hover-spring:hover { transform: translateY(-5px) scale(1.01); box-shadow: 0 15px 30px rgba(0,0,0,0.08) !important; z-index: 10; }
 
+    /* Ajuste de Padding do Container Principal */
     .block-container { 
-        padding-top: 120px !important; 
+        padding-top: 110px !important; 
         padding-bottom: 2rem !important; 
         margin-top: 0rem !important;
         animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
-    /* --- HEADER (ABSOLUTE) --- */
+    /* --- HEADER (ABSOLUTE - Rola junto com a página) --- */
     .logo-container {
         display: flex; align-items: center; justify-content: flex-start; 
         gap: 20px; 
-        position: absolute; 
-        top: 0; left: 0; width: 100%; height: 110px;
+        position: absolute; /* Rola com o conteúdo */
+        top: 0; left: 0; width: 100%; height: 100px;
         background: linear-gradient(to bottom, #F7FAFC 0%, rgba(247, 250, 252, 0) 100%);
         z-index: 9998; 
         padding-left: 40px;
-        padding-top: 15px;
+        padding-top: 10px;
     }
     .header-subtitle-text {
-        font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 1.15rem;
+        font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 1.1rem;
         color: #718096; border-left: 2px solid #CBD5E0; padding-left: 20px;
-        height: 50px; display: flex; align-items: center; letter-spacing: -0.3px;
+        height: 45px; display: flex; align-items: center; letter-spacing: -0.3px;
     }
-    /* AUMENTADO DE 70PX PARA 95PX */
     .logo-icon-spin { height: 95px; width: auto; animation: spin 45s linear infinite; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); }
-    .logo-text-static { height: 50px; width: auto; }
+    .logo-text-static { height: 45px; width: auto; }
 
     /* Login Styles */
     .login-container { 
@@ -122,22 +123,22 @@ css_estatico = """
     .dash-hero { 
         background: radial-gradient(circle at top right, #0F52BA, #062B61); 
         border-radius: 20px; 
-        margin-bottom: 30px; 
-        margin-top: 20px;
+        margin-bottom: 25px; /* Compactado */
+        margin-top: 10px;
         box-shadow: 0 20px 40px -10px rgba(15, 82, 186, 0.4);
         color: white; position: relative; overflow: hidden; 
-        padding: 40px 50px; 
+        padding: 35px 45px; /* Compactado */
         display: flex; align-items: center; justify-content: flex-start;
         border: 1px solid rgba(255,255,255,0.1);
     }
     .hero-title { 
         font-family: 'Inter', sans-serif; 
-        font-weight: 700; font-size: 1.8rem; 
-        margin: 0; line-height: 1.2; margin-bottom: 8px; 
+        font-weight: 700; font-size: 1.7rem; /* Fonte menor e elegante */
+        margin: 0; line-height: 1.2; margin-bottom: 6px; 
     }
     .hero-subtitle { 
         font-family: 'Inter', sans-serif; 
-        font-size: 1rem; opacity: 0.9; font-weight: 400; 
+        font-size: 0.95rem; opacity: 0.9; font-weight: 400; 
     }
     .hero-bg-icon { position: absolute; right: 30px; font-size: 8rem; opacity: 0.05; top: 10px; transform: rotate(-10deg); }
 
@@ -155,7 +156,7 @@ css_estatico = """
     .border-purple { border-bottom: 5px solid #805AD5; } 
     .border-teal { border-bottom: 5px solid #38B2AC; }
 
-    /* BENTO GRID (Restaurado) */
+    /* BENTO GRID COMPACTADO */
     .bento-grid { 
         display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
         gap: 15px; margin-bottom: 30px; 
@@ -174,7 +175,7 @@ css_estatico = """
     .bento-title { font-weight: 700; font-size: 0.95rem; color: #1A202C; margin-bottom: 4px; }
     .bento-desc { font-size: 0.8rem; color: #718096; line-height: 1.3; }
 
-    /* Insight Card (Restaurado) */
+    /* Insight Card */
     .insight-card-end { 
         background: linear-gradient(135deg, #FFFBEB 0%, #FFFFFF 100%); 
         border-radius: 16px; padding: 25px; 
@@ -188,10 +189,10 @@ css_estatico = """
     }
     .section-title { 
         font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1.3rem; 
-        color: #1A202C; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; margin-top: 40px; 
+        color: #1A202C; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; margin-top: 30px; 
     }
 
-    /* Hide Default Streamlit Elements */
+    /* Ocultar elementos padrão */
     [data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
     [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
 </style>
@@ -199,7 +200,7 @@ css_estatico = """
 """
 st.markdown(css_estatico, unsafe_allow_html=True)
 
-# CSS DINÂMICO
+# CSS DINÂMICO (Cores variáveis)
 st.markdown(f"""
 <style>
     .omni-badge {{
@@ -239,6 +240,7 @@ def sistema_seguranca():
 
     if not st.session_state["autenticado"]:
         
+        # Oculta sidebar no login
         st.markdown("""
         <style>
             section[data-testid="stSidebar"] { display: none !important; }
@@ -254,7 +256,7 @@ def sistema_seguranca():
             div.stButton > button {{
                 background-color: {btn_color} !important; color: white !important; height: 50px !important;
             }}
-            .login-container {{ border-color: #E2E8F0 !important; }}
+            .login-container {{ border-color: #E2E8F0 !important; }} /* Garante borda cinza */
         </style>
         """, unsafe_allow_html=True)
 
@@ -325,7 +327,7 @@ if not sistema_seguranca(): st.stop()
 # CARD OMNISFERA (Canto Direito)
 st.markdown(f"""<div class="omni-badge hover-spring"><span class="omni-text">{display_text}</span></div>""", unsafe_allow_html=True)
 
-# HEADER LOGO (SÓ APARECE AGORA)
+# HEADER LOGO (ABSOLUTE - SOBE COM O SCROLL)
 icone_b64 = get_base64_image("omni_icone.png")
 texto_b64 = get_base64_image("omni_texto.png")
 
@@ -450,5 +452,4 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ASSINATURA ATUALIZADA
 st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.8rem; margin-top: 60px;'>Criado e Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
