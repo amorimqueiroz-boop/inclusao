@@ -25,13 +25,15 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ### BLOCO VISUAL INTELIGENTE ###
+# ### BLOCO VISUAL E UTILITÁRIOS ###
 # ==============================================================================
+# 1. Detecção Automática de Ambiente
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
 except:
     IS_TEST_ENV = False
 
+# 2. Função para carregar a logo em Base64
 def get_logo_base64():
     caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
     for c in caminhos:
@@ -42,6 +44,7 @@ def get_logo_base64():
 
 src_logo_giratoria = get_logo_base64()
 
+# 3. Definição Dinâmica de Cores
 if IS_TEST_ENV:
     card_bg = "rgba(255, 220, 50, 0.95)" 
     card_border = "rgba(200, 160, 0, 0.5)"
@@ -49,44 +52,20 @@ else:
     card_bg = "rgba(255, 255, 255, 0.85)"
     card_border = "rgba(255, 255, 255, 0.6)"
 
-st.markdown(f"""
-<style>
-    .omni-badge {{
-        position: fixed; top: 15px; right: 15px;
-        background: {card_bg}; border: 1px solid {card_border};
-        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        padding: 4px 30px; min-width: 260px; justify-content: center;
-        border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        z-index: 999990; display: flex; align-items: center; gap: 10px;
-        pointer-events: none;
-    }}
-    .omni-text {{
-        font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem;
-        color: #2D3748; letter-spacing: 1px; text-transform: uppercase;
-    }}
-    @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
-    .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
-</style>
-<div class="omni-badge">
-    <img src="{src_logo_giratoria}" class="omni-logo-spin">
-    <span class="omni-text">OMNISFERA</span>
-</div>
-""", unsafe_allow_html=True)
-
-# ==============================================================================
-# 1. VERIFICAÇÃO DE SEGURANÇA
-# ==============================================================================
+# 4. Verificação de Acesso
 def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
         st.stop()
+
 verificar_acesso()
 
 # ==============================================================================
 # 2. LÓGICA DO BANCO DE DADOS
 # ==============================================================================
 ARQUIVO_DB_CENTRAL = "banco_alunos.json"
-PASTA_BANCO = "banco_alunos_backup" 
+PASTA_BANCO = "banco_alunos_backup"
+
 if not os.path.exists(PASTA_BANCO): os.makedirs(PASTA_BANCO)
 
 def carregar_banco():
@@ -102,12 +81,15 @@ if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estu
 
 def salvar_aluno_integrado(dados):
     if not dados['nome']: return False, "Nome é obrigatório."
+    
+    # Backup Local
     nome_arq = re.sub(r'[^a-zA-Z0-9]', '_', dados['nome'].lower()) + ".json"
     try:
         with open(os.path.join(PASTA_BANCO, nome_arq), 'w', encoding='utf-8') as f:
             json.dump(dados, f, default=str, ensure_ascii=False, indent=4)
     except Exception as e: return False, f"Erro backup: {str(e)}"
 
+    # Integração Omnisfera
     st.session_state.banco_estudantes = [a for a in st.session_state.banco_estudantes if a['nome'] != dados['nome']]
     novo_registro = {
         "nome": dados['nome'],
@@ -119,6 +101,7 @@ def salvar_aluno_integrado(dados):
         "data_criacao": str(date.today())
     }
     st.session_state.banco_estudantes.append(novo_registro)
+    
     try:
         with open(ARQUIVO_DB_CENTRAL, "w", encoding="utf-8") as f:
             json.dump(st.session_state.banco_estudantes, f, default=str, ensure_ascii=False, indent=4)
@@ -127,7 +110,7 @@ def salvar_aluno_integrado(dados):
         return False, f"Erro integração: {str(e)}"
 
 # ==============================================================================
-# 3. LISTAS DE DADOS
+# 3. LISTAS E GERENCIAMENTO DE ESTADO
 # ==============================================================================
 LISTA_SERIES = [
     "Educação Infantil (Creche)", "Educação Infantil (Pré-Escola)", 
@@ -135,27 +118,27 @@ LISTA_SERIES = [
     "6º Ano (Fund. II)", "7º Ano (Fund. II)", "8º Ano (Fund. II)", "9º Ano (Fund. II)", 
     "1ª Série (EM)", "2ª Série (EM)", "3ª Série (EM)", "EJA (Educação de Jovens e Adultos)"
 ]
-LISTA_ALFABETIZACAO = ["Não se aplica (Educação Infantil)", "Pré-Silábico (Garatuja/Desenho sem letras)", "Pré-Silábico (Letras aleatórias sem valor sonoro)", "Silábico (Sem valor sonoro convencional)", "Silábico (Com valor sonoro vogais/consoantes)", "Silábico-Alfabético (Transição)", "Alfabético (Escrita fonética, com erros ortográficos)", "Ortográfico (Escrita convencional consolidada)"]
-LISTAS_BARREIRAS = {"Funções Cognitivas": ["Atenção Sustentada/Focada", "Memória de Trabalho (Operacional)", "Flexibilidade Mental", "Planejamento e Organização", "Velocidade de Processamento", "Abstração e Generalização"], "Comunicação e Linguagem": ["Linguagem Expressiva (Fala)", "Linguagem Receptiva (Compreensão)", "Pragmática (Uso social da língua)", "Processamento Auditivo", "Intenção Comunicativa"], "Socioemocional": ["Regulação Emocional (Autocontrole)", "Tolerância à Frustração", "Interação Social com Pares", "Autoestima e Autoimagem", "Reconhecimento de Emoções"], "Sensorial e Motor": ["Praxias Globais (Coordenação Grossa)", "Praxias Finas (Coordenação Fina)", "Hipersensibilidade Sensorial", "Hipossensibilidade (Busca Sensorial)", "Planejamento Motor"], "Acadêmico": ["Decodificação Leitora", "Compreensão Textual", "Raciocínio Lógico-Matemático", "Grafomotricidade (Escrita manual)", "Produção Textual"]}
-LISTA_POTENCIAS = ["Memória Visual", "Musicalidade/Ritmo", "Interesse em Tecnologia", "Hiperfoco Construtivo", "Liderança Natural", "Habilidades Cinestésicas (Esportes)", "Expressão Artística (Desenho)", "Cálculo Mental Rápido", "Oralidade/Vocabulário", "Criatividade/Imaginação", "Empatia/Cuidado com o outro", "Resolução de Problemas", "Curiosidade Investigativa"]
-LISTA_PROFISSIONAIS = ["Psicólogo Clínico", "Neuropsicólogo", "Fonoaudiólogo", "Terapeuta Ocupacional", "Neuropediatra", "Psiquiatra Infantil", "Psicopedagogo Clínico", "Professor de Apoio (Mediador)", "Acompanhante Terapêutico (AT)", "Musicoterapeuta", "Equoterapeuta", "Oftalmologista"]
-LISTA_FAMILIA = ["Mãe", "Pai", "Madrasta", "Padrasto", "Avó Materna", "Avó Paterna", "Avô Materno", "Avô Paterno", "Irmãos", "Tios", "Primos", "Tutor Legal", "Abrigo Institucional"]
+LISTA_ALFABETIZACAO = ["Não se aplica (EI)", "Pré-Silábico", "Silábico", "Silábico-Alfabético", "Alfabético", "Ortográfico"]
+LISTAS_BARREIRAS = {
+    "Funções Cognitivas": ["Atenção", "Memória", "Flexibilidade"],
+    "Comunicação": ["Fala", "Compreensão", "Pragmática"],
+    "Socioemocional": ["Regulação", "Interação", "Autoestima"],
+    "Sensorial/Motor": ["Coordenação", "Hipersensibilidade", "Planejamento Motor"],
+    "Acadêmico": ["Leitura", "Escrita", "Raciocínio"]
+}
+LISTA_POTENCIAS = ["Memória Visual", "Musicalidade", "Tecnologia", "Hiperfoco", "Liderança", "Esportes", "Artes", "Oralidade", "Criatividade", "Empatia"]
+LISTA_PROFISSIONAIS = ["Psicólogo", "Fonoaudiólogo", "Terapeuta Ocupacional", "Neuropediatra", "Psicopedagogo", "Prof. Apoio"]
+LISTA_FAMILIA = ["Mãe", "Pai", "Avós", "Irmãos", "Tios", "Tutor"]
 
-# ==============================================================================
-# 4. GERENCIAMENTO DE ESTADO
-# ==============================================================================
 default_state = {
     'nome': '', 'nasc': date(2015, 1, 1), 'serie': None, 'turma': '', 'diagnostico': '', 
     'lista_medicamentos': [], 'composicao_familiar_tags': [], 'historico': '', 'familia': '', 
     'hiperfoco': '', 'potencias': [], 'rede_apoio': [], 'orientacoes_especialistas': '',
-    'checklist_evidencias': {}, 
-    'nivel_alfabetizacao': 'Não se aplica (Educação Infantil)',
+    'checklist_evidencias': {}, 'nivel_alfabetizacao': 'Não se aplica (EI)',
     'barreiras_selecionadas': {k: [] for k in LISTAS_BARREIRAS.keys()},
-    'niveis_suporte': {}, 
-    'estrategias_acesso': [], 'estrategias_ensino': [], 'estrategias_avaliacao': [], 
+    'niveis_suporte': {}, 'estrategias_acesso': [], 'estrategias_ensino': [], 'estrategias_avaliacao': [], 
     'ia_sugestao': '', 'ia_mapa_texto': '', 'outros_acesso': '', 'outros_ensino': '', 
-    'monitoramento_data': date.today(), 
-    'status_meta': 'Não Iniciado', 'parecer_geral': 'Manter Estratégias', 'proximos_passos_select': [],
+    'monitoramento_data': date.today(), 'status_meta': 'Não Iniciado', 'parecer_geral': 'Manter Estratégias', 'proximos_passos_select': [],
     # CONTROLE DE FLUXO DE VALIDAÇÃO
     'status_validacao_pei': 'rascunho', 
     'feedback_ajuste': '',
@@ -171,11 +154,8 @@ else:
 if 'pdf_text' not in st.session_state: st.session_state.pdf_text = ""
 
 # ==============================================================================
-# 5. LÓGICA E UTILITÁRIOS
+# 4. FUNÇÕES UTILITÁRIAS
 # ==============================================================================
-PASTA_BANCO = "banco_alunos"
-if not os.path.exists(PASTA_BANCO): os.makedirs(PASTA_BANCO)
-
 def calcular_idade(data_nasc):
     if not data_nasc: return ""
     hoje = date.today()
@@ -185,22 +165,19 @@ def calcular_idade(data_nasc):
 def get_hiperfoco_emoji(texto):
     if not texto: return "🚀"
     t = texto.lower()
-    if "jogo" in t or "game" in t or "minecraft" in t or "roblox" in t: return "🎮"
+    if "jogo" in t: return "🎮"
     if "dino" in t: return "🦖"
-    if "fute" in t or "bola" in t: return "⚽"
-    if "desenho" in t or "arte" in t: return "🎨"
-    if "músic" in t: return "🎵"
-    if "anim" in t or "gato" in t or "cachorro" in t: return "🐾"
-    if "carro" in t: return "🏎️"
-    if "espaço" in t: return "🪐"
     return "🚀"
+
+def detecting_nivel_ensino(serie_str):
+    return detectar_nivel_ensino(serie_str)
 
 def detectar_nivel_ensino(serie_str):
     if not serie_str: return "INDEFINIDO"
     s = serie_str.lower()
     if "infantil" in s: return "EI"
-    if "1º ano" in s or "2º ano" in s or "3º ano" in s or "4º ano" in s or "5º ano" in s: return "FI"
-    if "6º ano" in s or "7º ano" in s or "8º ano" in s or "9º ano" in s: return "FII"
+    if "1º" in s or "2º" in s or "3º" in s or "4º" in s or "5º" in s: return "FI"
+    if "6º" in s or "7º" in s or "8º" in s or "9º" in s: return "FII"
     if "série" in s or "médio" in s or "eja" in s: return "EM"
     return "INDEFINIDO"
 
@@ -210,147 +187,183 @@ def get_segmento_info_visual(serie):
     elif nivel == "FI": return "Anos Iniciais (Fund. I)", "#48bb78", "Foco: Alfabetização e BNCC."
     elif nivel == "FII": return "Anos Finais (Fund. II)", "#ed8936", "Foco: Autonomia e Identidade."
     elif nivel == "EM": return "Ensino Médio / EJA", "#9f7aea", "Foco: Projeto de Vida."
-    else: return "Selecione a Série", "grey", "Aguardando seleção..."
+    return "Selecione a Série", "grey", "..."
 
 def calcular_complexidade_pei(dados):
     n_bar = sum(len(v) for v in dados['barreiras_selecionadas'].values())
-    n_suporte_alto = sum(1 for v in dados['niveis_suporte'].values() if v in ["Substancial", "Muito Substancial"])
-    recursos = 0
-    if dados['rede_apoio']: recursos += 3
-    if dados['lista_medicamentos']: recursos += 2
-    saldo = (n_bar + n_suporte_alto) - recursos
+    saldo = n_bar - (3 if dados['rede_apoio'] else 0)
     if saldo <= 2: return "FLUIDA", "#F0FFF4", "#276749"
     if saldo <= 7: return "ATENÇÃO", "#FFFFF0", "#D69E2E"
     return "CRÍTICA", "#FFF5F5", "#C53030"
 
 def extrair_tag_ia(texto, tag):
-    if not texto: return ""
-    padrao = fr'\[{tag}\](.*?)(\[|$)'
-    match = re.search(padrao, texto, re.DOTALL)
-    if match: return match.group(1).strip()
-    return ""
+    match = re.search(fr'\[{tag}\](.*?)(\[|$)', texto, re.DOTALL)
+    return match.group(1).strip() if match else ""
 
 def extrair_metas_estruturadas(texto):
-    bloco = extrair_tag_ia(texto, "METAS_SMART")
-    if not bloco: return {"Curto": "Definir...", "Medio": "...", "Longo": "..."}
-    metas = {"Curto": "Definir...", "Medio": "Definir...", "Longo": "Definir..."}
-    linhas = bloco.split('\n')
-    for l in linhas:
-        l_clean = re.sub(r'^[\-\*]+', '', l).strip()
-        if "Curto" in l or "2 meses" in l: metas["Curto"] = l_clean.split(":")[-1].strip()
-        elif "Médio" in l or "Semestre" in l: metas["Medio"] = l_clean.split(":")[-1].strip()
-        elif "Longo" in l or "Ano" in l: metas["Longo"] = l_clean.split(":")[-1].strip()
+    raw = extrair_tag_ia(texto, "METAS_SMART")
+    if not raw: return None
+    metas = {"Curto": "...", "Medio": "...", "Longo": "..."}
+    for l in raw.split('\n'):
+        if "Curto" in l: metas["Curto"] = l.split(":")[-1].strip()
+        elif "Médio" in l: metas["Medio"] = l.split(":")[-1].strip()
+        elif "Longo" in l: metas["Longo"] = l.split(":")[-1].strip()
     return metas
 
-def extrair_campos_experiencia(texto):
-    bloco = extrair_tag_ia(texto, "CAMPOS_EXPERIENCIA_PRIORITARIOS")
-    if not bloco: return ["O eu, o outro e o nós", "Corpo, gestos e movimentos"]
-    linhas = [l.strip().replace('- ','') for l in bloco.split('\n') if l.strip()]
-    return linhas[:3]
-
-def get_pro_icon(nome_profissional):
-    p = nome_profissional.lower()
-    if "psic" in p: return "🧠"
-    if "fono" in p: return "🗣️"
-    if "terapeuta" in p or "equo" in p or "musico" in p: return "🧩"
-    if "neuro" in p or "psiq" in p or "medico" in p: return "🩺"
-    return "👨‍⚕️"
-
-def finding_logo():
-    possiveis = ["360.png", "360.jpg", "logo.png", "logo.jpg", "iconeaba.png"]
-    for nome in possiveis:
-        if os.path.exists(nome): return nome
-    return None
-
-def get_base64_image(image_path):
-    if not image_path: return ""
-    with open(image_path, "rb") as img_file: return base64.b64encode(img_file.read()).decode()
-
-def ler_pdf(arquivo):
-    try:
-        reader = PdfReader(arquivo); texto = ""
-        for i, page in enumerate(reader.pages):
-            if i >= 6: break 
-            texto += page.extract_text() + "\n"
-        return texto
-    except: return ""
-
-def limpar_texto_pdf(texto):
-    if not texto: return ""
-    t = texto.replace('**', '').replace('__', '').replace('#', '').replace('•', '-')
-    return t.encode('latin-1', 'replace').decode('latin-1')
-
 def calcular_progresso():
-    if st.session_state.dados['ia_sugestao']: return 100
-    pontos = 0; total = 7
-    d = st.session_state.dados
-    if d['nome']: pontos += 1
-    if d['serie']: pontos += 1
-    if d['nivel_alfabetizacao'] and d['nivel_alfabetizacao'] != 'Não se aplica (Educação Infantil)': pontos += 1
-    if any(d['checklist_evidencias'].values()): pontos += 1
-    if d['hiperfoco']: pontos += 1
-    if any(d['barreiras_selecionadas'].values()): pontos += 1
-    if d['estrategias_ensino']: pontos += 1
-    return int((pontos / total) * 90)
+    return 100 if st.session_state.dados['ia_sugestao'] else 20
+
+# ----------------- BARRA DE PROGRESSO COM LOGO GIRATÓRIA -----------------
+def render_progresso():
+    p = calcular_progresso()
+    # Usando a logo giratória carregada (Base64)
+    icon_html = f'<img src="{src_logo_giratoria}" class="prog-logo-spin">'
+    
+    bar_color = "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)"
+    if p >= 100: bar_color = "linear-gradient(90deg, #00C6FF 0%, #0072FF 100%)"
+    
+    st.markdown(f"""
+    <div class="prog-container">
+        <div class="prog-track">
+            <div class="prog-fill" style="width: {p}%; background: {bar_color};"></div>
+        </div>
+        <div class="prog-icon" style="left: {p}%;">{icon_html}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 6. ESTILO VISUAL
+# 5. ESTILO VISUAL (DESIGN SYSTEM PREMIUM - AZUL SÓBRIO)
 # ==============================================================================
 def aplicar_estilo_visual():
     estilo = """
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-        html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }
+        
+        /* 1. Fontes e Cores Base */
+        html, body, [class*="css"] { 
+            font-family: 'Nunito', sans-serif; 
+            color: #2D3748; 
+            background-color: #F7FAFC; 
+        }
         .block-container { padding-top: 1.5rem !important; padding-bottom: 5rem !important; }
         
+        /* 2. Navegação em Abas "Glow" Clean */
         div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] { display: none !important; }
         
+        /* CORREÇÃO DE SCROLL NAS ABAS - SOLUÇÃO PARA MENU LATERAL ABERTO */
         .stTabs [data-baseweb="tab-list"] { 
-            gap: 8px; display: flex; flex-wrap: wrap !important;
-            white-space: normal !important; overflow-x: visible !important;
-            padding: 10px 5px; width: 100%;
+            gap: 8px; 
+            display: flex; 
+            flex-wrap: nowrap; 
+            overflow-x: auto; 
+            white-space: nowrap; 
+            padding: 10px 5px; 
+            -ms-overflow-style: none; 
+            scrollbar-width: auto;
         }
-        
+        .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar { height: 4px; }
+        .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-thumb { background: #CBD5E0; border-radius: 4px; }
+
+        /* ESTILO PADRÃO DAS ABAS (PÍLULA) */
         .stTabs [data-baseweb="tab"] { 
-            height: 38px; border-radius: 20px !important; 
-            background-color: #FFFFFF; border: 1px solid #E2E8F0; 
-            color: #718096; font-weight: 700; font-size: 0.8rem; 
-            padding: 0 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;
+            height: 38px; 
+            border-radius: 20px !important; 
+            background-color: #FFFFFF; 
+            border: 1px solid #E2E8F0; 
+            color: #718096; 
+            font-weight: 700; 
+            font-size: 0.8rem; 
+            padding: 0 20px; 
+            transition: all 0.2s ease; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03); 
+            flex-shrink: 0; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
         }
         
-        .stTabs [data-baseweb="tab"]:hover { border-color: #CBD5E0; color: #4A5568; background-color: #EDF2F7; }
+        .stTabs [data-baseweb="tab"]:hover {
+            border-color: #CBD5E0;
+            color: #4A5568;
+            background-color: #EDF2F7;
+        }
+
+        /* ESTADO SELECIONADO (PADRÃO AZUL) */
         .stTabs [aria-selected="true"] { 
-            background-color: transparent !important; color: #3182CE !important; 
-            border: 1px solid #3182CE !important; font-weight: 800;
+            background-color: transparent !important; 
+            color: #3182CE !important; 
+            border: 1px solid #3182CE !important; 
+            font-weight: 800; 
             box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important;
         }
-        .stTabs [data-baseweb="tab"]:last-of-type { border-color: #F6E05E !important; color: #B7791F !important; }
+
+        /* AJUSTE PARA A ÚLTIMA ABA (JORNADA GAMIFICADA) */
+        .stTabs [data-baseweb="tab"]:last-of-type {
+            border-color: #F6E05E !important; 
+            color: #B7791F !important;
+        }
         .stTabs [data-baseweb="tab"]:last-of-type[aria-selected="true"] {
-            background-color: transparent !important; color: #D69E2E !important;
+            background-color: transparent !important;
+            color: #D69E2E !important;
             border: 1px solid #D69E2E !important;
             box-shadow: 0 0 12px rgba(214, 158, 46, 0.5), inset 0 0 5px rgba(214, 158, 46, 0.1) !important;
         }
 
-        .insight-card { background-color: #FFFFF0; border-radius: 12px; padding: 20px; color: #2D3748; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #D69E2E; margin-top: 30px; }
-        .insight-icon { font-size: 1.5rem; color: #D69E2E; background: rgba(214, 158, 46, 0.15); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-
-        .rich-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; text-align: center; height: 100%; }
-        .rich-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.06); border-color: #CBD5E0; }
+        /* 3. CARDS DA HOME */
+        .soft-card { 
+            border-radius: 12px; padding: 20px; display: flex; flex-direction: column; 
+            position: relative; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); border-left: 5px solid; 
+        }
+        .sc-blue { background-color: #EBF8FF; border-left-color: #3182CE; }
+        .sc-yellow { background-color: #FFFFF0; border-left-color: #D69E2E; }
+        .sc-orange { background-color: #FFF5F5; border-left-color: #DD6B20; }
+        .sc-green { background-color: #F0FFF4; border-left-color: #38A169; }
+        .sc-cyan { background-color: #E6FFFA; border-left-color: #0BC5EA; }
         
-        .header-unified { background-color: white; padding: 20px 40px; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }
-        .header-subtitle { font-size: 1.2rem; color: #718096; font-weight: 600; border-left: 2px solid #E2E8F0; padding-left: 20px; line-height: 1.2; }
+        .sc-head { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1rem; margin-bottom: 10px; color: #2D3748; }
+        .sc-body { font-size: 0.85rem; color: #4A5568; line-height: 1.5; flex-grow: 1; }
+        .bg-icon { position: absolute; bottom: -10px; right: 10px; font-size: 6rem; opacity: 0.08; pointer-events: none; }
 
-        .prog-container { width: 100%; position: relative; margin: 0 0 30px 0; }
+        /* 4. HEADER UNIFICADO (CLEAN COM DIVISOR) */
+        .header-unified { 
+            background-color: white; 
+            padding: 20px 40px; 
+            border-radius: 16px; 
+            border: 1px solid #E2E8F0; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02); 
+            margin-bottom: 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 20px; 
+            justify-content: flex-start;
+        }
+        .header-subtitle { 
+            font-size: 1.2rem; 
+            color: #718096; 
+            font-weight: 600; 
+            border-left: 2px solid #E2E8F0; 
+            padding-left: 20px; 
+            line-height: 1.2; 
+        }
+
+        /* 5. BARRA DE PROGRESSO E LOGO */
+        .prog-container { width: 100%; position: relative; margin: 0 0 35px 0; }
         .prog-track { width: 100%; height: 3px; background-color: #E2E8F0; border-radius: 1.5px; }
-        .prog-fill { height: 100%; border-radius: 1.5px; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1), background 1.5s ease; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-        .prog-icon { position: absolute; top: -14px; width: 30px; height: 30px; transition: left 1.5s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-50%); z-index: 10; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15)); display: flex; align-items: center; justify-content: center; }
-        
-        .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stMultiSelect div[data-baseweb="select"] { border-radius: 8px !important; border-color: #E2E8F0 !important; }
-        div[data-testid="column"] .stButton button { border-radius: 8px !important; font-weight: 700 !important; height: 45px !important; background-color: #0F52BA !important; color: white !important; border: none !important; }
+        .prog-fill { height: 100%; border-radius: 1.5px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1), background 1.5s ease; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .prog-icon { position: absolute; top: -16px; transition: left 1s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-50%); z-index: 10; }
+        .prog-logo-spin { height: 35px; width: 35px; animation: spin 10s linear infinite; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15)); }
+
+        /* 6. INPUTS E BOTÕES */
+        .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stMultiSelect div[data-baseweb="select"], .stNumberInput input { 
+            border-radius: 8px !important; border-color: #E2E8F0 !important; 
+        }
+        div[data-testid="column"] .stButton button { 
+            border-radius: 8px !important; font-weight: 700 !important; height: 45px !important; 
+            background-color: #0F52BA !important; color: white !important; border: none !important; 
+        }
         div[data-testid="column"] .stButton button:hover { background-color: #0A3D8F !important; }
         .segmento-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.75rem; color: white; margin-top: 5px; }
         
+        /* DASHBOARD ELEMENTS */
         .css-donut { --p: 0; --fill: #e5e7eb; width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(var(--fill) var(--p), #F3F4F6 0); position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
         .css-donut:after { content: ""; position: absolute; width: 60px; height: 60px; border-radius: 50%; background: white; }
         .d-val { position: relative; z-index: 10; font-weight: 800; font-size: 1.2rem; color: #2D3748; }
@@ -366,74 +379,112 @@ def aplicar_estilo_visual():
         .dash-hero { background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); border-radius: 16px; padding: 25px; color: white; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(15, 82, 186, 0.15); }
         .apple-avatar { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4); color: white; font-weight: 800; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; }
         .metric-card { background: white; border-radius: 16px; padding: 15px; border: 1px solid #E2E8F0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 140px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        .soft-card { border-radius: 12px; padding: 20px; min-height: 220px; height: 100%; display: flex; flex-direction: column; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); border-left: 5px solid; position: relative; overflow: hidden; }
-        .sc-orange { background-color: #FFF5F5; border-left-color: #DD6B20; }
-        .sc-blue { background-color: #EBF8FF; border-left-color: #3182CE; }
-        .sc-yellow { background-color: #FFFFF0; border-left-color: #D69E2E; }
-        .sc-cyan { background-color: #E6FFFA; border-left-color: #0BC5EA; }
-        .sc-green { background-color: #F0FFF4; border-left-color: #38A169; }
         .footer-signature { margin-top: 50px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center; font-size: 0.8rem; color: #A0AEC0; }
         .meta-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 5px; }
-        .sc-head { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.95rem; margin-bottom: 15px; color: #2D3748; }
-        .sc-body { font-size: 0.85rem; color: #4A5568; line-height: 1.5; flex-grow: 1; }
-        .bg-icon { position: absolute; bottom: -10px; right: -10px; font-size: 5rem; opacity: 0.08; pointer-events: none; }
+        
+        .omni-badge {
+            position: fixed; top: 15px; right: 15px; background: rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.6);
+            backdrop-filter: blur(8px); padding: 4px 30px; border-radius: 20px; z-index: 9999; display: flex; align-items: center; gap: 10px;
+        }
+        .omni-text { font-family: 'Nunito'; font-weight: 800; font-size: 0.9rem; color: #2D3748; letter-spacing: 1px; }
+        .omni-logo-spin { height: 26px; animation: spin 10s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     """
     st.markdown(estilo, unsafe_allow_html=True)
 
 aplicar_estilo_visual()
-def render_progresso():
-    p = calcular_progresso()
-    icon_html = f'<img src="{src_logo_giratoria}" class="omni-logo-spin" style="width: 25px; height: 25px;">'
-    bar_color = "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)"
-    if p >= 100: bar_color = "linear-gradient(90deg, #00C6FF 0%, #0072FF 100%)" 
-    st.markdown(f"""<div class="prog-container"><div class="prog-track"><div class="prog-fill" style="width: {p}%; background: {bar_color};"></div></div><div class="prog-icon" style="left: {p}%;">{icon_html}</div></div>""", unsafe_allow_html=True)
 
 # ==============================================================================
-# 7. INTELIGÊNCIA ARTIFICIAL
+# 6. FUNÇÕES IA
 # ==============================================================================
 def extrair_dados_pdf_ia(api_key, texto_pdf):
     if not api_key: return None, "Configure a Chave API."
     try:
         client = OpenAI(api_key=api_key)
-        prompt = f"""Analise este laudo médico/escolar. Extraia: 1. Diagnóstico; 2. Medicamentos. JSON: {{ "diagnostico": "...", "medicamentos": [ {{"nome": "...", "posologia": "..."}} ] }} Texto: {texto_pdf[:4000]}"""
+        prompt = f"Extraia do texto em JSON: {{'diagnostico': '...', 'medicamentos': [{{'nome':'...','posologia':'...'}}]}}. Texto: {texto_pdf[:3000]}"
         res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], response_format={"type": "json_object"})
         return json.loads(res.choices[0].message.content), None
     except Exception as e: return None, str(e)
 
 def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False, feedback_usuario=""):
-    if not api_key: return None, "⚠️ Configure a Chave API."
+    if not api_key: return None, "Configure a API."
     try:
         client = OpenAI(api_key=api_key)
+        
+        # --- PREPARAÇÃO DO CONTEXTO DO ALUNO ---
         familia = ", ".join(dados['composicao_familiar_tags']) if dados['composicao_familiar_tags'] else "Não informado"
         evid = "\n".join([f"- {k.replace('?', '')}" for k, v in dados['checklist_evidencias'].items() if v])
-        meds_info = "\n".join([f"- {m['nome']} ({m['posologia']})." for m in dados['lista_medicamentos']]) if dados['lista_medicamentos'] else "Nenhuma medicação informada."
+        meds_info = "Nenhuma medicação informada."
+        if dados['lista_medicamentos']:
+            meds_info = "\n".join([f"- {m['nome']} ({m['posologia']}). Admin Escola: {'Sim' if m.get('escola') else 'Não'}." for m in dados['lista_medicamentos']])
 
         serie = dados['serie'] or ""
         nivel_ensino = detectar_nivel_ensino(serie)
         alfabetizacao = dados.get('nivel_alfabetizacao', 'Não Avaliado')
         
-        prompt_identidade = """
-        [PERFIL_NARRATIVO] Inicie com "👤 QUEM É O ESTUDANTE?". Parágrafo humanizado mostrando a criança além do diagnóstico. [/PERFIL_NARRATIVO]
+        # --- PROMPTS DE DIRECIONAMENTO (SYSTEM PROMPTS) ---
+        
+        # 1. Identidade e Diagnóstico Contextual
+        prompt_identidade = f"""
+        [PERFIL_NARRATIVO]
+        Inicie OBRIGATORIAMENTE com uma seção "👤 QUEM É O ESTUDANTE?".
+        Escreva um parágrafo humanizado sintetizando o histórico familiar, escolar e as potencialidades (pontos fortes).
+        
+        LOGO EM SEGUIDA, crie uma subseção "**Contexto Clínico e Impacto na Aprendizagem**":
+        - Analise o diagnóstico: {dados['diagnostico']}.
+        - Explique TECNICAMENTE como este diagnóstico, neste nível de suporte específico, impacta a aprendizagem e a socialização.
+        - Diferencie claramente (ex: Se for TEA Nível 2, explique a necessidade de mediação; se for TDAH, foco atencional).
+        - NÃO apenas cite o CID, explique a funcionalidade para o professor.
+        [/PERFIL_NARRATIVO]
+        """
+
+        # 2. Protocolo de Adaptação Curricular (Questionário)
+        prompt_questionario_adaptacao = """
+        [PROTOCOLO_ADAPTACAO_CURRICULAR]
+        Com base nas evidências e no perfil do aluno, responda OBRIGATORIAMENTE a este questionário de diretrizes para o professor regente:
+
+        1. **O estudante necessita de questões mais desafiadoras?** (Sim/Não) - Justifique brevemente.
+        2. **O estudante compreende instruções complexas?** (Sim/Não)
+        3. **O estudante necessita de instruções passo a passo de como realizar tarefas?** (Sim/Não)
+        4. **Dividir a questão em etapas menores e mais gerenciáveis melhora o desempenho?** (Sim/Não)
+        5. **Textos com parágrafos curtos melhoram a compreensão?** (Sim/Não)
+        6. **O estudante precisa de dicas de apoio para resolver as questões?** (Sim/Não) - Ex: Banco de palavras, calculadora.
+        7. **O estudante compreende figuras de linguagem e faz inferências?** (Sim/Não)
+        8. **O estudante necessita de descrição de imagens?** (Sim/Não)
+        9. **O estudante precisa de adaptação na formatação de textos?** (Sim/Não) - Se sim, especifique: (Ex: Espaçamento 1.5, Fonte Arial 14, Caixa Alta, Negrito em palavras-chave).
+        [/PROTOCOLO_ADAPTACAO_CURRICULAR]
         """
         
+        # 3. Lógica de Alfabetização
         prompt_literacia = ""
         if "Alfabético" not in alfabetizacao and alfabetizacao != "Não se aplica (Educação Infantil)":
-             prompt_literacia = f"""[ATENÇÃO CRÍTICA: ALFABETIZAÇÃO] Fase: {alfabetizacao}. Inclua 2 ações de consciência fonológica.[/ATENÇÃO CRÍTICA]"""
+             prompt_literacia = f"""
+             [ATENÇÃO CRÍTICA: ALFABETIZAÇÃO]
+             O aluno está na fase: {alfabetizacao}.
+             OBRIGATÓRIO: Dentro das estratégias de adaptação, inclua 2 ações específicas de consciência fonológica ou conversão grafema-fonema para avançar para a próxima hipótese de escrita.
+             [/ATENÇÃO CRÍTICA]
+             """
 
-        # ESTRUTURA MODIFICADA: PLANO DE INTERVENÇÃO E ESTRATÉGIAS + FARMA NO FINAL
+        # 4. Definição do Perfil por Segmento
         if nivel_ensino == "EI":
-            perfil_ia = "Especialista em EDUCAÇÃO INFANTIL e BNCC."
+            perfil_ia = """
+            Você é um Especialista em EDUCAÇÃO INFANTIL e Inclusão.
+            FOCO: BNCC (Campos de Experiência e Direitos de Aprendizagem).
+            NÃO use Taxonomia de Bloom. NÃO foque em alfabetização formal ou notas.
+            Foque em: Brincar heurístico, interações, corpo, gestos e movimentos.
+            """
             estrutura_req = f"""
             ESTRUTURA OBRIGATÓRIA (EI):
             {prompt_identidade}
+            {prompt_questionario_adaptacao}
+            
             1. 🌟 AVALIAÇÃO DE REPERTÓRIO:
-            [CAMPOS_EXPERIENCIA_PRIORITARIOS] Destaque 2 ou 3 Campos BNCC. [/CAMPOS_EXPERIENCIA_PRIORITARIOS]
-            [OBJETIVOS_DESENVOLVIMENTO]
-            - OBJETIVO 1: ...
-            - OBJETIVO 2: ...
-            [FIM_OBJETIVOS]
+            [ANALISE_FARMA] Analise os fármacos (se houver) e impacto no comportamento. [/ANALISE_FARMA]
+            [CAMPOS_EXPERIENCIA_PRIORITARIOS] Destaque 2 ou 3 Campos de Experiência da BNCC essenciais. Use emojis. [/CAMPOS_EXPERIENCIA_PRIORITARIOS]
+            [DIREITOS_APRENDIZAGEM] Liste como garantir: Conviver, Brincar, Participar, Explorar, Expressar, Conhecer-se. [/DIREITOS_APRENDIZAGEM]
+            [OBJETIVOS_DESENVOLVIMENTO] - OBJETIVO 1: ... - OBJETIVO 2: ... [FIM_OBJETIVOS]
             
             2. 🚀 PLANO DE INTERVENÇÃO E ESTRATÉGIAS:
             (Estratégias de acolhimento, rotina e adaptação sensorial).
@@ -441,37 +492,74 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
             3. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
             [ANALISE_FARMA] Se houver medicação, cite efeitos colaterais (sono, sede, etc) e impactos em sala. [/ANALISE_FARMA]
             """
-        else:
-            perfil_ia = "Especialista em Inclusão Escolar e BNCC."
-            instrucao_bncc = """[MAPEAMENTO_BNCC] Separe por Componente Curricular. CÓDIGO ALFANUMÉRICO OBRIGATÓRIO (ex: EF01LP02). [/MAPEAMENTO_BNCC]"""
-            instrucao_bloom = """[TAXONOMIA_BLOOM] Explique a categoria cognitiva escolhida. Liste 3 verbos de comando. [/TAXONOMIA_BLOOM]"""
+            
+        else: # FI, FII, EM
+            if nivel_ensino == "FI":
+                perfil_ia = "Você é um Especialista em ANOS INICIAIS (Fund I). Foco: Alfabetização, Letramento e BNCC."
+            elif nivel_ensino == "FII":
+                perfil_ia = "Você é um Especialista em ANOS FINAIS (Fund II). Foco: Autonomia, Identidade, Organização e Habilidades BNCC."
+            elif nivel_ensino == "EM":
+                perfil_ia = "Você é um Especialista em ENSINO MÉDIO. Foco: Projeto de Vida e Habilidades BNCC."
+            else:
+                perfil_ia = "Você é um Especialista em Inclusão Escolar."
 
             estrutura_req = f"""
             ESTRUTURA OBRIGATÓRIA (Padrão):
             {prompt_identidade}
+            {prompt_questionario_adaptacao}
+            
             1. 🌟 AVALIAÇÃO DE REPERTÓRIO:
-            {instrucao_bncc}
-            {instrucao_bloom}
-            [METAS_SMART] Metas de Curto, Médio e Longo prazo. [FIM_METAS_SMART]
+            [ANALISE_FARMA] Analise os fármacos. [/ANALISE_FARMA]
+            [MAPEAMENTO_BNCC]
+            - **Habilidades Basais (Defasagem/Anos Anteriores):** Quais pré-requisitos precisam ser resgatados?
+            - **Habilidades Focais (Ano Atual):** Quais habilidades essenciais do ano devem ser priorizadas/adaptadas?
+            [/MAPEAMENTO_BNCC]
+            [TAXONOMIA_BLOOM] Liste 3 verbos de comando. [/TAXONOMIA_BLOOM]
+            [METAS_SMART] - CURTO PRAZO (2 meses): ... - MÉDIO PRAZO (Semestre): ... - LONGO PRAZO (Ano): ... [FIM_METAS_SMART]
             
-            2. 🚀 PLANO DE INTERVENÇÃO E ESTRATÉGIAS:
-            (Adaptações curriculares e de acesso).
+            2. 🧩 DIRETRIZES DE ADAPTAÇÃO:
+            (Adaptações curriculares e de acesso detalhadas).
             {prompt_literacia}
-            
-            3. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
-            [ANALISE_FARMA] Se houver medicação, cite efeitos colaterais (sono, sede, etc) e impactos em sala. [/ANALISE_FARMA]
             """
 
-        prompt_feedback = f"AJUSTE SOLICITADO: {feedback_usuario}" if feedback_usuario else ""
-
-        prompt_sys = f"""{perfil_ia} MISSÃO: Criar PEI Técnico. {estrutura_req} {prompt_feedback}"""
-        
+        # --- SELEÇÃO DE FORMATO (TÉCNICO VS PRÁTICO) ---
         if modo_pratico:
-            prompt_sys = f"""{perfil_ia} GUIA PRÁTICO PARA SALA DE AULA. {prompt_feedback} # GUIA PRÁTICO {serie} ..."""
+            prompt_sys = f"""
+            {perfil_ia}
+            SUA MISSÃO: Criar um GUIA PRÁTICO E DIRETO para o professor usar em sala de aula AMANHÃ.
+            ESTRUTURA:
+            # GUIA PRÁTICO PARA {serie.upper()}
+            {prompt_identidade}
+            1. 🎯 O QUE FAZER AMANHÃ (3 ações simples).
+            {prompt_literacia}
+            2. 🗣️ COMO FALAR (Exemplos de comandos).
+            3. 🏠 ROTINA E AMBIENTE (Organização).
+            """
+        else:
+            prompt_sys = f"""
+            {perfil_ia}
+            SUA MISSÃO: Cruzar dados para criar um PEI Técnico Oficial e Profundo.
+            {estrutura_req}
+            """
         
-        prompt_user = f"ALUNO: {dados['nome']} | SÉRIE: {serie} | HISTÓRICO: {dados['historico']} | DIAGNÓSTICO: {dados['diagnostico']} | MEDS: {meds_info} | EVIDÊNCIAS: {evid} | LAUDO: {contexto_pdf[:3000]}"
+        prompt_user = f"""
+        ALUNO: {dados['nome']} | SÉRIE: {serie}
+        HISTÓRICO ESCOLAR: {dados['historico']}
+        DINÂMICA FAMILIAR: {dados['familia']}
+        POTENCIALIDADES: {', '.join(dados['potencias'])}
+        DIAGNÓSTICO: {dados['diagnostico']}
+        NÍVEL ALFABETIZAÇÃO: {alfabetizacao}
+        MEDICAÇÃO: {meds_info}
+        HIPERFOCO: {dados['hiperfoco']}
+        BARREIRAS: {json.dumps(dados['barreiras_selecionadas'], ensure_ascii=False)}
+        EVIDÊNCIAS: {evid}
+        LAUDO: {contexto_pdf[:3000] if contexto_pdf else "Nenhum."}
+        """
         
-        res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "system", "content": prompt_sys}, {"role": "user", "content": prompt_user}])
+        # --- CHAMADA API COM O MODELO SELECIONADO NA HOME ---
+        modelo_escolhido = st.session_state.get('nome_modelo', 'gpt-4o-mini')
+        
+        res = client.chat.completions.create(model=modelo_escolhido, messages=[{"role": "system", "content": prompt_sys}, {"role": "user", "content": prompt_user}])
         return res.choices[0].message.content, None
     except Exception as e: return None, str(e)
 
