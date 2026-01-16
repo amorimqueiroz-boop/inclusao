@@ -3,7 +3,7 @@ import streamlit as st
 
 # --- CONFIGURAÇÃO ---
 # https://sheetdb.io/api/v1/jr7on4w9yqczn)
-SHEET_DB_URL = "COLE_SEU_LINK_SHEETDB_AQUI"
+SHEET_DB_URL = "https://sheetdb.io/api/v1/d8098eian87x9"
 
 def enviar_checkin(dados):
     """Envia o check-in para a aba Logs_Checkin"""
