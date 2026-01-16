@@ -151,6 +151,16 @@ with st.sidebar:
 # 2. O CÓDIGO DO HUB DE INCLUSÃO
 # ==============================================================================
 
+# --- DADOS BLOOM ---
+TAXONOMIA_BLOOM = {
+    "1. Lembrar (Memorizar)": ["Citar", "Definir", "Identificar", "Listar", "Nomear", "Reconhecer", "Recordar", "Relacionar", "Repetir", "Sublinhar"],
+    "2. Entender (Compreender)": ["Classificar", "Descrever", "Discutir", "Explicar", "Expressar", "Identificar", "Localizar", "Narrar", "Reafirmar", "Reportar", "Resumir", "Traduzir"],
+    "3. Aplicar": ["Aplicar", "Demonstrar", "Dramatizar", "Empregar", "Esboçar", "Ilustrar", "Interpretar", "Operar", "Praticar", "Programar", "Usar"],
+    "4. Analisar": ["Analisar", "Calcular", "Categorizar", "Comparar", "Contrastar", "Criticar", "Diferenciar", "Discriminar", "Distinguir", "Examinar", "Experimentar", "Testar"],
+    "5. Avaliar": ["Argumentar", "Avaliar", "Defender", "Escolher", "Estimar", "Julgar", "Prever", "Selecionar", "Suportar", "Validar", "Valorizar"],
+    "6. Criar": ["Compor", "Construir", "Criar", "Desenhar", "Desenvolver", "Formular", "Investigar", "Planejar", "Produzir", "Propor"]
+}
+
 # --- BANCO DE DADOS ---
 ARQUIVO_DB = "banco_alunos.json"
 
@@ -309,6 +319,26 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
 
+def criar_docx_simples(texto, titulo="Documento"):
+    doc = Document()
+    doc.add_heading(titulo, 0)
+    for para in texto.split('\n'):
+        if para.strip():
+            doc.add_paragraph(para.strip())
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+
+def criar_pdf_generico(texto):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    # Sanitização básica para latin-1 (FPDF padrão não suporta todos caracteres UTF-8 diretamente sem fontes externas)
+    texto_safe = texto.encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 10, texto_safe)
+    return pdf.output(dest='S').encode('latin-1')
+
 # --- IA FUNCTIONS (BLINDADAS CONTRA TEXTO) ---
 
 def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anterior="", prioridade="IA"):
@@ -432,23 +462,52 @@ def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_at
         return analise, atividade
     except Exception as e: return str(e), ""
 
-def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, modo_profundo=False):
+def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, verbos_bloom=None, modo_profundo=False):
     client = OpenAI(api_key=api_key)
     hiperfoco = aluno.get('hiperfoco', 'Geral')
     
     # Nova lógica de instrução de imagem e posição
     instrucao_img = f"Incluir imagens em {qtd_imgs} questões (use [[GEN_IMG: termo]]). REGRA DE POSIÇÃO: A tag da imagem ([[GEN_IMG: termo]]) DEVE vir logo APÓS o enunciado e ANTES das alternativas." if qtd_imgs > 0 else "Sem imagens."
     
+    # Instrução de Bloom
+    instrucao_bloom = ""
+    if verbos_bloom:
+        lista_verbos = ", ".join(verbos_bloom)
+        instrucao_bloom = f"""
+        6. TAXONOMIA DE BLOOM (RIGOROSO):
+           - Utilize OBRIGATORIAMENTE os seguintes verbos de ação selecionados: {lista_verbos}.
+           - Distribua esses verbos entre as questões criadas.
+           - REGRA DE FORMATAÇÃO: O verbo de comando deve vir no início do enunciado, em **NEGRITO E CAIXA ALTA** (Ex: **ANALISE**, **IDENTIFIQUE**, **EXPLIQUE**).
+           - Use apenas UM verbo de comando por questão.
+        """
+
+    # --- AJUSTE: INSTRUÇÃO DE FORMATO BASEADA NO TIPO_Q ---
+    diretriz_tipo = ""
+    if tipo_q == "Discursiva":
+        diretriz_tipo = "3. FORMATO DISCURSIVO (RIGOROSO): Crie apenas questões abertas. NÃO inclua alternativas, apenas linhas para resposta."
+    else: # Objetiva
+        diretriz_tipo = "3. FORMATO OBJETIVO: Crie questões de múltipla escolha com distratores inteligentes."
+    # --------------------------------------------------------
+
     style = "Atue como uma banca examinadora rigorosa." if modo_profundo else "Atue como professor elaborador."
     prompt = f"""
     {style}
     Crie prova de {materia} ({objeto}). QTD: {qtd} ({tipo_q}).
+    
     DIRETRIZES: 
     1. Contexto Real. 
     2. Hiperfoco ({hiperfoco}) em 30%. 
-    3. Distratores Inteligentes. 
+    {diretriz_tipo}
     4. Imagens: {instrucao_img} (NUNCA repita a mesma imagem). 
     5. Divisão Clara.
+    
+    REGRA DE OURO GRAMATICAL (IMPERATIVO):
+    - TODOS os comandos das questões devem estar no modo IMPERATIVO (Ex: "Cite", "Explique", "Calcule", "Analise", "Escreva").
+    - JAMAIS use o infinitivo (Ex: "Citar", "Explicar", "Calcular").
+    - Se houver verbos de Bloom selecionados, CONJUGUE-OS para o IMPERATIVO.
+    - O verbo de comando deve vir no início do enunciado, em **NEGRITO E CAIXA ALTA** (Ex: **ANALISE**, **IDENTIFIQUE**).
+    
+    {instrucao_bloom}
     
     SAÍDA OBRIGATÓRIA:
     [ANÁLISE PEDAGÓGICA]
@@ -844,7 +903,7 @@ if is_ei:
 else:
     # === MODO PADRÃO (FUNDAMENTAL / MÉDIO) ===
     # AQUI ESTÃO AS NOVAS ABAS SOLICITADAS: Roteiro Individual, Papo de Mestre, Dinâmica, Plano de Aula
-    tabs = st.tabs(["📄 Adaptar Prova", "✂️ Adaptar Atividade", "✨ Criar do Zero", "🎨 Estúdio Visual & CAA", "📝 Roteiro Individual", "🗣️ Papo de Mestre", "🤝 Dinâmica Inclusiva", "📅 Plano de Aula (BNCC)"])
+    tabs = st.tabs(["📄 Adaptar Prova", "✂️ Adaptar Atividade", "✨ Criar do Zero", "🎨 Estúdio Visual & CAA", "📝 Roteiro Individual", "🗣️ Papo de Mestre", "🤝 Dinâmica Inclusiva", "📅 Plano de Aula DUA"])
 
     # 1. ADAPTAR PROVA
     with tabs[0]:
@@ -910,8 +969,13 @@ else:
                         im = res['map'].get(num)
                         if im: st.image(im, width=300)
                     elif p.strip(): st.markdown(p.strip())
+            
+            c_down1, c_down2 = st.columns(2)
             docx = construir_docx_final(res['txt'], aluno, materia_d, res['map'], None, tipo_d)
-            st.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Prova_Adaptada.docx", "primary")
+            c_down1.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Prova_Adaptada.docx", "primary")
+            
+            pdf_bytes = criar_pdf_generico(res['txt'])
+            c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Prova_Adaptada.pdf", mime="application/pdf", type="secondary")
 
     # 2. ADAPTAR ATIVIDADE
     with tabs[1]:
@@ -978,6 +1042,9 @@ else:
                     elif p.strip(): st.markdown(p.strip())
             docx = construir_docx_final(res['txt'], aluno, materia_i, res['map'], None, tipo_i)
             st.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Atividade.docx", "primary")
+            
+            pdf_bytes = criar_pdf_generico(res['txt'])
+            c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Atividade.pdf", mime="application/pdf", type="secondary")
 
     # 3. CRIAR DO ZERO
     with tabs[2]:
@@ -995,7 +1062,9 @@ else:
         
         cc3, cc4 = st.columns(2)
         qtd_c = cc3.slider("Qtd Questões", 1, 10, 5, key="cq")
-        tipo_quest = cc4.selectbox("Tipo", ["Objetiva", "Discursiva", "Mista"], key="ctq")
+        
+        # --- MUDANÇA: REMOVIDA OPÇÃO 'MISTA' ---
+        tipo_quest = cc4.selectbox("Tipo", ["Objetiva", "Discursiva"], key="ctq")
         
         col_img_opt, col_img_pct = st.columns([1, 2])
         usar_img = col_img_opt.checkbox("📸 Incluir Imagens?", value=True)
@@ -1003,10 +1072,50 @@ else:
         # MUDANÇA: Slider numérico (0 até Qtd Questões)
         qtd_img_sel = col_img_pct.slider("Quantas questões terão imagens?", 0, qtd_c, int(qtd_c/2), disabled=not usar_img)
         
+        # --- BLOOM SECTION ---
+        st.write("---")
+        st.markdown("#### 🧠 Intencionalidade Pedagógica (Taxonomia de Bloom)")
+        usar_bloom = st.checkbox("🎯 Usar Taxonomia de Bloom (Revisada)")
+        
+        # Inicializa memória de seleção no session state se não existir
+        if 'bloom_memoria' not in st.session_state:
+            st.session_state.bloom_memoria = {cat: [] for cat in TAXONOMIA_BLOOM.keys()}
+
+        verbos_finais_para_ia = []
+
+        if usar_bloom:
+            col_b1, col_b2 = st.columns(2)
+            
+            # 1. Seleciona a Categoria (Gaveta)
+            cat_atual = col_b1.selectbox("Categoria Cognitiva:", list(TAXONOMIA_BLOOM.keys()))
+            
+            # 2. Mostra Multiselect apenas para essa categoria, carregando o que já estava na memória
+            selecao_atual = col_b2.multiselect(
+                f"Verbos de '{cat_atual}':", 
+                TAXONOMIA_BLOOM[cat_atual],
+                default=st.session_state.bloom_memoria[cat_atual],
+                key=f"ms_bloom_{cat_atual}" # Chave única para o widget
+            )
+            
+            # 3. Atualiza a memória com o que o usuário acabou de mexer
+            st.session_state.bloom_memoria[cat_atual] = selecao_atual
+            
+            # 4. Agrega tudo para mostrar ao usuário e enviar para a IA
+            for cat in st.session_state.bloom_memoria:
+                verbos_finais_para_ia.extend(st.session_state.bloom_memoria[cat])
+            
+            if verbos_finais_para_ia:
+                st.info(f"**Verbos Tagueados (Total):** {', '.join(verbos_finais_para_ia)}")
+            else:
+                st.caption("Nenhum verbo selecionado ainda.")
+        # ---------------------
+
         if st.button("✨ CRIAR ATIVIDADE", type="primary", key="btn_c"):
             with st.spinner("Elaborando..."):
                 qtd_final = qtd_img_sel if usar_img else 0
-                rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final)
+                
+                # Passamos a lista agregada 'verbos_finais_para_ia'
+                rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, verbos_bloom=verbos_finais_para_ia if usar_bloom else None)
                 
                 novo_map = {}; count = 0
                 tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', txt)
@@ -1033,7 +1142,13 @@ else:
                 if col_r.button("🧠 Refazer (+Profundo)", key="redo_c"):
                     with st.spinner("Refazendo..."):
                         qtd_final = qtd_img_sel if usar_img else 0
-                        rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, modo_profundo=True)
+                        # Mesmo aqui, passamos a lista agregada atualizada
+                        verbos_profundos = []
+                        if usar_bloom:
+                             for cat in st.session_state.bloom_memoria:
+                                verbos_profundos.extend(st.session_state.bloom_memoria[cat])
+
+                        rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, verbos_bloom=verbos_profundos if usar_bloom else None, modo_profundo=True)
                         st.session_state['res_create']['rac'] = rac
                         st.session_state['res_create']['txt'] = txt
                         st.session_state['res_create']['valid'] = False
@@ -1053,8 +1168,9 @@ else:
             c_down1, c_down2 = st.columns(2)
             docx = construir_docx_final(res['txt'], aluno, mat_c, {}, None, "Criada")
             c_down1.download_button("📥 DOCX", docx, "Criada.docx", "primary")
-            docx_clean = construir_docx_final(res['txt'], aluno, mat_c, {}, None, "Criada", sem_cabecalho=True)
-            c_down2.download_button("📥 DOCX (Sem Cabeçalho)", docx_clean, "Criada_Clean.docx", "secondary")
+            
+            pdf_bytes = criar_pdf_generico(res['txt'])
+            c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Criada.pdf", mime="application/pdf", type="secondary")
 
     # 4. ESTÚDIO VISUAL (ATUALIZADO COM FEEDBACK)
     with tabs[3]:
@@ -1132,9 +1248,16 @@ else:
         
         if st.button("📝 GERAR ROTEIRO INDIVIDUAL", type="primary"): 
             if tema_rotina:
-                st.markdown(gerar_roteiro_aula(api_key, aluno, materia_rotina, tema_rotina))
+                res = gerar_roteiro_aula(api_key, aluno, materia_rotina, tema_rotina)
+                st.session_state['res_roteiro'] = res
             else:
                 st.warning("Preencha o Assunto/Tema.")
+        
+        if 'res_roteiro' in st.session_state:
+            st.markdown(st.session_state['res_roteiro'])
+            c_d1, c_d2 = st.columns(2)
+            c_d1.download_button("📥 DOCX", criar_docx_simples(st.session_state['res_roteiro'], "Roteiro Individual"), "Roteiro.docx", "primary")
+            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_roteiro']), "Roteiro.pdf", mime="application/pdf", type="secondary")
 
     # 6. PAPO DE MESTRE (QUEBRA-GELO DUA)
     with tabs[5]:
@@ -1156,9 +1279,16 @@ else:
         
         if st.button("🗣️ CRIAR CONEXÕES", type="primary"): 
             if assunto_papo:
-                st.markdown(gerar_quebra_gelo_profundo(api_key, aluno, materia_papo, assunto_papo, hiperfoco_papo, tema_turma))
+                res = gerar_quebra_gelo_profundo(api_key, aluno, materia_papo, assunto_papo, hiperfoco_papo, tema_turma)
+                st.session_state['res_papo'] = res
             else:
                 st.warning("Preencha o Assunto.")
+        
+        if 'res_papo' in st.session_state:
+            st.markdown(st.session_state['res_papo'])
+            c_d1, c_d2 = st.columns(2)
+            c_d1.download_button("📥 DOCX", criar_docx_simples(st.session_state['res_papo'], "Papo de Mestre"), "Papo_Mestre.docx", "primary")
+            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_papo']), "Papo_Mestre.pdf", mime="application/pdf", type="secondary")
 
     # 7. DINÂMICA INCLUSIVA
     with tabs[6]:
@@ -1179,15 +1309,22 @@ else:
         
         if st.button("🤝 CRIAR DINÂMICA", type="primary"): 
             if assunto_din:
-                st.markdown(gerar_dinamica_inclusiva(api_key, aluno, materia_din, assunto_din, qtd_alunos, carac_turma))
+                res = gerar_dinamica_inclusiva(api_key, aluno, materia_din, assunto_din, qtd_alunos, carac_turma)
+                st.session_state['res_dinamica'] = res
             else:
                 st.warning("Preencha o Assunto.")
+        
+        if 'res_dinamica' in st.session_state:
+            st.markdown(st.session_state['res_dinamica'])
+            c_d1, c_d2 = st.columns(2)
+            c_d1.download_button("📥 DOCX", criar_docx_simples(st.session_state['res_dinamica'], "Dinâmica Inclusiva"), "Dinamica.docx", "primary")
+            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_dinamica']), "Dinamica.pdf", mime="application/pdf", type="secondary")
 
-    # 8. NOVO: PLANO DE AULA (BNCC)
+    # 8. NOVO: PLANO DE AULA DUA
     with tabs[7]:
         st.markdown("""
         <div class="pedagogia-box">
-            <div class="pedagogia-title"><i class="ri-book-open-line"></i> Plano de Aula (BNCC)</div>
+            <div class="pedagogia-title"><i class="ri-book-open-line"></i> Plano de Aula DUA</div>
             Gere um planejamento completo alinhado à BNCC, selecionando metodologias ativas e recursos.
         </div>
         """, unsafe_allow_html=True)
@@ -1212,6 +1349,13 @@ else:
         if st.button("📅 GERAR PLANO DE AULA", type="primary"):
             if assunto_plano:
                 with st.spinner("Consultando BNCC e planejando..."):
-                    st.markdown(gerar_plano_aula_bncc(api_key, materia_plano, assunto_plano, metodologia, tecnica_ativa, qtd_alunos_plano, recursos_plano))
+                    res = gerar_plano_aula_bncc(api_key, materia_plano, assunto_plano, metodologia, tecnica_ativa, qtd_alunos_plano, recursos_plano)
+                    st.session_state['res_plano'] = res
             else:
                 st.warning("Preencha o Assunto.")
+        
+        if 'res_plano' in st.session_state:
+            st.markdown(st.session_state['res_plano'])
+            c_d1, c_d2 = st.columns(2)
+            c_d1.download_button("📥 DOCX", criar_docx_simples(st.session_state['res_plano'], "Plano de Aula DUA"), "Plano_Aula.docx", "primary")
+            c_d2.download_button("📕 PDF", criar_pdf_generico(st.session_state['res_plano']), "Plano_Aula.pdf", mime="application/pdf", type="secondary")
