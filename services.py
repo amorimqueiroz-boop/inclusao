@@ -1,5 +1,6 @@
-import requests
+iimport requests
 import streamlit as st
+import pandas as pd
 
 # --- CONFIGURAÇÃO ---
 # https://sheetdb.io/api/v1/jr7on4w9yqczn)
@@ -9,26 +10,32 @@ def enviar_checkin(dados):
     """Envia o check-in para a aba Logs_Checkin"""
     url = f"{SHEET_DB_URL}?sheet=Logs_Checkin"
     headers = {"Content-Type": "application/json"}
-    
-    # Prepara o pacote de dados
     payload = {"data": [dados]}
     
     try:
         response = requests.post(url, json=payload, headers=headers)
-        if response.status_code == 201:
-            return True
-        else:
-            st.error(f"Erro no envio: {response.text}")
-            return False
+        return response.status_code == 201
     except Exception as e:
         st.error(f"Erro de conexão: {e}")
         return False
 
-def buscar_metas():
-    """Busca as metas da aba Metas_PEI"""
-    url = f"{SHEET_DB_URL}?sheet=Metas_PEI"
+@st.cache_data(ttl=60) # Guarda os dados por 60 segundos para não travar
+def buscar_logs():
+    """Busca todo o histórico de check-ins"""
+    url = f"{SHEET_DB_URL}?sheet=Logs_Checkin"
     try:
         response = requests.get(url)
-        return response.json()
+        data = response.json()
+        # Transforma em Tabela Inteligente (DataFrame)
+        if data:
+            df = pd.DataFrame(data)
+            return df
+        return pd.DataFrame()
     except:
-        return []
+        return pd.DataFrame()
+
+
+
+
+
+
