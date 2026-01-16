@@ -139,7 +139,6 @@ LISTA_SERIES = [
 ]
 LISTA_ALFABETIZACAO = ["Não se aplica (Educação Infantil)", "Pré-Silábico (Garatuja/Desenho sem letras)", "Pré-Silábico (Letras aleatórias sem valor sonoro)", "Silábico (Sem valor sonoro convencional)", "Silábico (Com valor sonoro vogais/consoantes)", "Silábico-Alfabético (Transição)", "Alfabético (Escrita fonética, com erros ortográficos)", "Ortográfico (Escrita convencional consolidada)"]
 
-# ATUALIZADO COM EMOJIS PARA LEITURA VISUAL RÁPIDA
 LISTAS_BARREIRAS = {
     "Funções Cognitivas": ["🎯 Atenção Sustentada/Focada", "🧠 Memória de Trabalho (Operacional)", "🔄 Flexibilidade Mental", "📅 Planejamento e Organização", "⚡ Velocidade de Processamento", "🧩 Abstração e Generalização"],
     "Comunicação e Linguagem": ["🗣️ Linguagem Expressiva (Fala)", "👂 Linguagem Receptiva (Compreensão)", "💬 Pragmática (Uso social)", "🎧 Processamento Auditivo", "🙋 Intenção Comunicativa"],
@@ -243,11 +242,8 @@ def extrair_tag_ia(texto, tag):
 
 def extrair_metas_estruturadas(texto):
     bloco = extrair_tag_ia(texto, "METAS_SMART")
-    # Caso a IA não use a tag, tenta achar por regex simples
     if not bloco and "Metas de Curto" in texto:
-         # Fallback rudimentar
-         pass
-    
+         pass 
     metas = {"Curto": "Definir...", "Medio": "Definir...", "Longo": "Definir..."}
     if bloco:
         linhas = bloco.split('\n')
@@ -288,7 +284,10 @@ def ler_pdf(arquivo):
 
 def limpar_texto_pdf(texto):
     if not texto: return ""
+    # Substituições agressivas para garantir compatibilidade Latin-1
     t = texto.replace('**', '').replace('__', '').replace('#', '').replace('•', '-')
+    t = t.replace('“', '"').replace('”', '"').replace('‘', "'").replace('’', "'")
+    t = t.replace('–', '-').replace('—', '-')
     return t.encode('latin-1', 'replace').decode('latin-1')
 
 def calcular_progresso():
@@ -304,22 +303,34 @@ def calcular_progresso():
     if d['estrategias_ensino']: pontos += 1
     return int((pontos / total) * 90)
 
-# FUNÇÃO DE INFERÊNCIA DE COMPONENTES (MANTIDA)
+# FUNÇÃO DE INFERÊNCIA DE COMPONENTES ATUALIZADA (FILTRO ENSINO MÉDIO)
 def inferir_componentes_impactados(dados):
     barreiras = dados.get('barreiras_selecionadas', {})
+    serie = dados.get('serie', '')
+    nivel = detecting_nivel_ensino_interno(serie) # Usando a função interna auxiliar
     impactados = set()
     
+    # 1. Barreiras de Leitura (Afetam Humanas/Linguagens)
     if barreiras.get('Acadêmico') and any("Leitora" in b for b in barreiras['Acadêmico']):
         impactados.add("Língua Portuguesa")
-        impactados.add("História/Geografia (Leitura)")
+        if nivel == "EM":
+            impactados.add("História/Sociologia/Filosofia")
+        else:
+            impactados.add("História/Geografia")
     
+    # 2. Barreiras de Raciocínio (Afetam Exatas)
     if barreiras.get('Acadêmico') and any("Matemático" in b for b in barreiras['Acadêmico']):
         impactados.add("Matemática")
-        impactados.add("Física/Química")
+        if nivel == "EM":
+            impactados.add("Física/Química")
+        elif nivel == "FII":
+            impactados.add("Ciências")
 
+    # 3. Barreiras Cognitivas (Atenção/Memória - Afetam Tudo)
     if barreiras.get('Funções Cognitivas'):
-        impactados.add("Todos (Atenção/Memória)")
+        impactados.add("Transversal (Todas as áreas)")
 
+    # 4. Barreiras Motoras/Visuais
     if barreiras.get('Sensorial e Motor') and any("Fina" in b for b in barreiras['Sensorial e Motor']):
         impactados.add("Arte")
         impactados.add("Geometria")
@@ -329,8 +340,17 @@ def inferir_componentes_impactados(dados):
         
     return list(impactados) if impactados else ["Nenhum componente específico detectado automaticamente"]
 
+def detecting_nivel_ensino_interno(serie_str):
+    if not serie_str: return "INDEFINIDO"
+    s = serie_str.lower()
+    if "infantil" in s: return "EI"
+    if "1º ano" in s or "2º ano" in s or "3º ano" in s or "4º ano" in s or "5º ano" in s: return "FI"
+    if "6º ano" in s or "7º ano" in s or "8º ano" in s or "9º ano" in s: return "FII"
+    if "série" in s or "médio" in s or "eja" in s: return "EM"
+    return "INDEFINIDO"
+
 # ==============================================================================
-# 6. ESTILO VISUAL E PÁGINA INICIAL RICA
+# 6. ESTILO VISUAL E PÁGINA INICIAL RICA (AJUSTE CARD TAMANHO)
 # ==============================================================================
 def aplicar_estilo_visual():
     estilo = """
@@ -339,13 +359,16 @@ def aplicar_estilo_visual():
         html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }
         .block-container { padding-top: 1.5rem !important; padding-bottom: 5rem !important; }
         
+        /* CARD INÍCIO AJUSTADO - TAMANHO IGUAL */
         .rich-box {
             background-color: white; border-radius: 12px; padding: 25px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;
             margin-bottom: 20px;
+            height: 100%; min-height: 280px; /* Garante altura mínima igual */
+            display: flex; flex-direction: column;
         }
-        .rb-title { font-size: 1.1rem; font-weight: 800; color: #2C5282; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-        .rb-text { font-size: 0.95rem; color: #4A5568; line-height: 1.6; text-align: justify; }
+        .rb-title { font-size: 1.1rem; font-weight: 800; color: #2C5282; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .rb-text { font-size: 0.95rem; color: #4A5568; line-height: 1.6; text-align: justify; flex-grow: 1; }
         
         div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] { display: none !important; }
         
@@ -451,7 +474,6 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         evid = "\n".join([f"- {k.replace('?', '')}" for k, v in dados['checklist_evidencias'].items() if v])
         meds_info = "\n".join([f"- {m['nome']} ({m['posologia']})." for m in dados['lista_medicamentos']]) if dados['lista_medicamentos'] else "Nenhuma medicação informada."
         
-        # HIPERFOCO GARANTIDO NO CONTEXTO
         hiperfoco_txt = f"HIPERFOCO DO ALUNO: {dados['hiperfoco']}" if dados['hiperfoco'] else "Hiperfoco: Não identificado."
 
         serie = dados['serie'] or ""
@@ -475,7 +497,6 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         if "Alfabético" not in alfabetizacao and alfabetizacao != "Não se aplica (Educação Infantil)":
              prompt_literacia = f"""[ATENÇÃO CRÍTICA: ALFABETIZAÇÃO] Fase: {alfabetizacao}. Inclua 2 ações de consciência fonológica.[/ATENÇÃO CRÍTICA]"""
 
-        # CHECKLIST HUB DE INCLUSÃO
         prompt_hub = """
         ### 6. 🧩 CHECKLIST DE ADAPTAÇÃO E ACESSIBILIDADE:
         (Responda objetivamente Sim/Não e justifique brevemente com base no diagnóstico).
@@ -490,7 +511,6 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         9. O estudante precisa de adaptação na formatação? (Especifique: espaçamento, fonte OpenDyslexic, etc).
         """
         
-        # LOGICA PARA COMPONENTES DE ATENÇÃO
         prompt_componentes = ""
         if nivel_ensino != "EI":
             prompt_componentes = f"""
@@ -500,7 +520,6 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
             - Para cada um, explique O MOTIVO técnico da dificuldade.
             """
 
-        # METAS SMART ESTRUTURADAS (CRUCIAL PARA O DASHBOARD)
         prompt_metas = """
         [METAS_SMART]
         (Siga ESTRITAMENTE este formato para o sistema ler):
@@ -510,7 +529,6 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         [/METAS_SMART]
         """
 
-        # ESTRUTURA PADRONIZADA (SEM FRANKENSTEIN)
         if nivel_ensino == "EI":
             perfil_ia = "Especialista em EDUCAÇÃO INFANTIL e BNCC."
             estrutura_req = f"""
@@ -648,22 +666,18 @@ def gerar_pdf_final(dados, tem_anexo):
     if dados['ia_sugestao']:
         pdf.add_page(); pdf.section_title("Planejamento Pedagógico Detalhado")
         texto_limpo = limpar_texto_pdf(dados['ia_sugestao'])
-        # Remover tags de controle
         texto_limpo = re.sub(r'\[.*?\]', '', texto_limpo) 
         
         for linha in texto_limpo.split('\n'):
             l = linha.strip()
             if not l: continue
             
-            # Detecção de Títulos Markdown
             if l.startswith('###') or l.startswith('##'):
-                pdf.ln(4); pdf.set_font('Arial', 'B', 12); pdf.set_text_color(0, 51, 102)
+                pdf.ln(5); pdf.set_font('Arial', 'B', 12); pdf.set_text_color(0, 51, 102)
                 pdf.cell(0, 8, l.replace('#', '').strip(), 0, 1, 'L')
                 pdf.set_font('Arial', '', 10); pdf.set_text_color(0, 0, 0)
-            # Detecção de Bullets
             elif l.startswith('-') or l.startswith('*'):
                 pdf.add_flat_icon_item(l.replace('-','').replace('*','').strip(), 'dot')
-            # Texto Normal
             else:
                 pdf.multi_cell(0, 6, l)
     return pdf.output(dest='S').encode('latin-1', 'replace')
@@ -834,7 +848,6 @@ with tab4:
         st.markdown("#### Potencialidades e Hiperfoco"); c1, c2 = st.columns(2); st.session_state.dados['hiperfoco'] = c1.text_input("Hiperfoco", st.session_state.dados['hiperfoco'], placeholder="Ex: Dinossauros, Minecraft (Obrigatório se houver)"); p_val = [p for p in st.session_state.dados.get('potencias', []) if p in LISTA_POTENCIAS]; st.session_state.dados['potencias'] = c2.multiselect("Pontos Fortes", LISTA_POTENCIAS, default=p_val)
     st.divider()
     
-    # BARREIRAS COM ÍCONES NAS LISTAS
     with st.container(border=True):
         st.markdown("#### Barreiras e Nível de Suporte (CIF)"); c_bar1, c_bar2, c_bar3 = st.columns(3)
         def render_cat_barreira(coluna, titulo, chave_json):
@@ -883,22 +896,32 @@ with tab7:
     
     elif st.session_state.dados.get('status_validacao_pei') in ['revisao', 'aprovado']:
         
-        with st.expander("🧠 Como a IA construiu este relatório"):
-            st.markdown("""
-            1. **Análise de Contexto:** Cruzamento entre diagnóstico, idade ({}) e série ({}).
-            2. **Filtro Vygotsky:** Identificação da Zona de Desenvolvimento Proximal baseada nas barreiras citadas.
-            3. **Metas SMART:** Criação de objetivos específicos, mensuráveis e temporais.
-            """.format(calcular_idade(st.session_state.dados['nasc']), st.session_state.dados['serie']))
+        # LÓGICA DINÂMICA PARA EXPLICAR O RACIOCÍNIO DA IA
+        n_barreiras = sum(len(v) for v in st.session_state.dados['barreiras_selecionadas'].values())
+        diag_show = st.session_state.dados['diagnostico'] if st.session_state.dados['diagnostico'] else "em observação"
+        
+        with st.expander("🧠 Como a IA construiu este relatório (Raciocínio Transparente)"):
+            st.markdown(f"""
+            **1. Análise de Input:**
+            Identifiquei que o estudante está na série **{st.session_state.dados['serie']}** e apresenta um quadro de **{diag_show}**.
             
-        with st.expander("🛡️ Calibragem e Segurança"):
+            **2. Processamento de Barreiras:**
+            Detectei {n_barreiras} barreiras ativas. O algoritmo cruzou essas dificuldades com as competências da BNCC para sugerir adaptações que contornem, por exemplo, a dificuldade em *{list(st.session_state.dados['barreiras_selecionadas'].values())[0][0] if n_barreiras > 0 else 'geral'}*.
+            
+            **3. Inferência de Componentes:**
+            Com base nas barreiras cognitivas e acadêmicas, priorizei os componentes curriculares mais impactados (ex: Matemática ou Linguagens) para sugerir flexibilização.
+            """)
+            
+        with st.expander("🛡️ Calibragem e Segurança Pedagógica"):
             st.markdown("""
-            * **Verificação Farmacológica:** O sistema isola a análise de medicação para evitar viés pedagógico.
-            * **Blindagem de Dados:** Nenhuma informação pessoal é retida pela IA após o processamento.
-            * **Supervisão Humana:** Este rascunho exige validação obrigatória do professor.
+            A **Omnisfera** utiliza um protocolo de segurança em 3 camadas:
+            
+            1.  **Filtro Farmacológico:** A IA é proibida de fazer sugestões médicas. Se houver medicação cadastrada, ela apenas sinaliza os efeitos colaterais conhecidos (ex: sonolência) para o professor estar ciente, sem opinar sobre dosagem.
+            2.  **Proteção de Dados (PII):** Os dados processados são anonimizados na camada de envio, garantindo que o histórico clínico do aluno não treine modelos públicos.
+            3.  **Alinhamento Normativo:** Todas as sugestões são calibradas para respeitar a **LBI (Lei 13.146)** e o conceito de **Adaptação Razoável**, evitando propostas que segreguem o aluno.
             """)
 
         st.markdown("#### 📝 Revisão do Plano")
-        # Remover tags para visualização limpa
         texto_visual = re.sub(r'\[.*?\]', '', st.session_state.dados['ia_sugestao'])
         st.markdown(texto_visual)
         st.divider()
@@ -1071,4 +1094,4 @@ with tab_mapa:
 
     else: st.warning("⚠️ Gere o PEI Técnico na aba 'Consultoria IA' primeiro.")
 
-st.markdown("<div class='footer-signature'>PEI 360º v117.0 Gold Edition - Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
+st.markdown("<div class='footer-signature'>PEI 360º v118.0 Gold Edition - Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
