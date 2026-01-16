@@ -28,12 +28,6 @@ st.set_page_config(
 )
 
 
-import auth # Chama o arquivo que criamos
-usuario_email = auth.check_login() # Só passa daqui se logar
-
-with st.sidebar:
-    st.write(f"👤 Logado como: {usuario_email}")
-
 
 # ==============================================================================
 # 2. UTILITÁRIOS E CORES
