@@ -269,15 +269,6 @@ st.markdown(f"""
 # 4. SISTEMA DE SEGURANÇA E LOGIN
 # ==============================================================================
 def sistema_seguranca():
-    # --- NOVO: BYPASS IMEDIATO SE FOR AMBIENTE DE TESTE ---
-    if IS_TEST_ENV:
-        if "autenticado" not in st.session_state:
-            st.session_state["autenticado"] = True
-            st.session_state["usuario_nome"] = "Visitante Teste"
-            st.session_state["usuario_cargo"] = "Desenvolvedor"
-        return True # Retorna True e sai da função, não carrega a tela de login
-
-    # --- LÓGICA DE PRODUÇÃO (Só executa se NÃO for teste) ---
     if "autenticado" not in st.session_state:
         st.session_state["autenticado"] = False
 
@@ -291,7 +282,8 @@ def sistema_seguranca():
         </style>
         """, unsafe_allow_html=True)
 
-        btn_text = "ACESSAR OMNISFERA"
+        # TEXTO DO BOTÃO MUDA CONFORME AMBIENTE
+        btn_text = "🚀 ENTRAR (TESTE)" if IS_TEST_ENV else "ACESSAR OMNISFERA"
         
         c1, c_login, c2 = st.columns([1, 2, 1])
         
@@ -312,41 +304,49 @@ def sistema_seguranca():
 
             st.markdown("""<div class="manifesto-login">"A Omnisfera foi desenvolvida com muito cuidado e carinho com o objetivo de auxiliar as escolas na tarefa de incluir. Ela tem o potencial para revolucionar o cenário da inclusão no Brasil."</div>""", unsafe_allow_html=True)
             
-            # LOGIN APENAS PARA PRODUÇÃO AGORA
-            st.markdown("<div style='text-align:left; font-weight:700; color:#475569; font-size:0.85rem; margin-bottom:5px;'>Identificação</div>", unsafe_allow_html=True)
-            nome_user = st.text_input("nome_real", placeholder="Seu Nome", label_visibility="collapsed")
-            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-            cargo_user = st.text_input("cargo_real", placeholder="Seu Cargo", label_visibility="collapsed")
-            st.markdown("---")
-            
-            # --- TERMO DE CONFIDENCIALIDADE ---
-            st.markdown("<div style='text-align:left; font-weight:700; color:#475569; font-size:0.8rem; margin-bottom:5px;'>Termos de Uso</div>", unsafe_allow_html=True)
-            st.markdown("""
-            <div class="termo-box">
-                <strong>ACORDO DE CONFIDENCIALIDADE E USO DE DADOS (Versão Beta)</strong><br><br>
-                1. <strong>Natureza do Software:</strong> O usuário reconhece que o sistema "Omnisfera" encontra-se em fase de testes (BETA) e pode conter instabilidades.<br>
-                2. <strong>Proteção de Dados (LGPD):</strong> É estritamente proibida a inserção de dados reais sensíveis de estudantes (nomes completos, endereços, documentos) que permitam a identificação direta, salvo em ambientes controlados e autorizados pela instituição de ensino.<br>
-                3. <strong>Propriedade Intelectual:</strong> Todo o código, design e inteligência gerada são de propriedade exclusiva dos desenvolvedores. É vedada a cópia, reprodução ou comercialização sem autorização.<br>
-                4. <strong>Responsabilidade:</strong> O uso das sugestões pedagógicas geradas pela IA é de responsabilidade do educador, devendo sempre passar por crivo humano antes da aplicação.<br>
-                Ao prosseguir, você declara estar ciente e de acordo com estes termos.
-            </div>
-            """, unsafe_allow_html=True)
-            
-            concordo = st.checkbox("Li, compreendi e concordo com os termos.")
-            
-            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-            
-            # CSS PARA ALINHAR BOTÃO COM INPUT
-            st.markdown("""
-            <style>
-                .login-btn-fix button { margin-top: 28px !important; }
-            </style>
-            """, unsafe_allow_html=True)
+            # ------------------------------------------------------------------
+            # DIFERENCIAÇÃO VISUAL: TESTE VS PRODUÇÃO
+            # ------------------------------------------------------------------
+            if IS_TEST_ENV:
+                # SE FOR TESTE: SÓ AVISA E MOSTRA O BOTÃO MAIS ABAIXO
+                st.info("🔧 MODO DE TESTE: Identificação simplificada.")
+                st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+            else:
+                # SE FOR PRODUÇÃO: PEDE OS DADOS
+                st.markdown("<div style='text-align:left; font-weight:700; color:#475569; font-size:0.85rem; margin-bottom:5px;'>Identificação</div>", unsafe_allow_html=True)
+                nome_user = st.text_input("nome_real", placeholder="Seu Nome", label_visibility="collapsed")
+                st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+                cargo_user = st.text_input("cargo_real", placeholder="Seu Cargo", label_visibility="collapsed")
+                st.markdown("---")
+                
+                # TERMO DE CONFIDENCIALIDADE (SÓ PRODUÇÃO)
+                st.markdown("<div style='text-align:left; font-weight:700; color:#475569; font-size:0.8rem; margin-bottom:5px;'>Termos de Uso</div>", unsafe_allow_html=True)
+                st.markdown("""
+                <div class="termo-box">
+                    <strong>ACORDO DE CONFIDENCIALIDADE E USO DE DADOS (Versão Beta)</strong><br><br>
+                    1. <strong>Natureza do Software:</strong> O usuário reconhece que o sistema "Omnisfera" encontra-se em fase de testes (BETA) e pode conter instabilidades.<br>
+                    2. <strong>Proteção de Dados (LGPD):</strong> É estritamente proibida a inserção de dados reais sensíveis de estudantes (nomes completos, endereços, documentos) que permitam a identificação direta, salvo em ambientes controlados e autorizados pela instituição de ensino.<br>
+                    3. <strong>Propriedade Intelectual:</strong> Todo o código, design e inteligência gerada são de propriedade exclusiva dos desenvolvedores. É vedada a cópia, reprodução ou comercialização sem autorização.<br>
+                    4. <strong>Responsabilidade:</strong> O uso das sugestões pedagógicas geradas pela IA é de responsabilidade do educador, devendo sempre passar por crivo humano antes da aplicação.<br>
+                    Ao prosseguir, você declara estar ciente e de acordo com estes termos.
+                </div>
+                """, unsafe_allow_html=True)
+                
+                concordo = st.checkbox("Li, compreendi e concordo com os termos.")
+                st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
+            # CSS PARA ALINHAR BOTÃO COM INPUT (SE HOUVER INPUT DE SENHA)
+            st.markdown("""<style>.login-btn-fix button { margin-top: 28px !important; }</style>""", unsafe_allow_html=True)
+
+            # ÁREA DE SENHA E BOTÃO
             c_senha, c_btn = st.columns([2, 1])
             
             with c_senha:
-                senha = st.text_input("senha_real", type="password", placeholder="Senha de Acesso")
+                # Se for teste, não pede senha visualmente (ou deixa hidden)
+                if not IS_TEST_ENV:
+                    senha = st.text_input("senha_real", type="password", placeholder="Senha de Acesso")
+                else:
+                    st.markdown("") # Placeholder vazio
             
             with c_btn:
                 st.markdown('<div class="login-btn-area login-btn-fix">', unsafe_allow_html=True)
@@ -355,18 +355,31 @@ def sistema_seguranca():
 
             st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
             
-            # Validação (SÓ RODA SE HOUVER CLIQUE - MODO PRODUÇÃO)
+            # ------------------------------------------------------------------
+            # VALIDAÇÃO DO LOGIN
+            # ------------------------------------------------------------------
             if 'login_click' in locals() and login_click:
-                hoje = date.today()
-                senha_mestra = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
-                if not concordo: st.warning("Aceite os termos.")
-                elif not nome_user or not cargo_user: st.warning("Preencha seus dados.")
-                elif senha != senha_mestra: st.error("Senha incorreta.")
-                else:
+                
+                # LÓGICA MODO TESTE: ENTRA DIRETO
+                if IS_TEST_ENV:
                     st.session_state["autenticado"] = True
-                    st.session_state["usuario_nome"] = nome_user
-                    st.session_state["usuario_cargo"] = cargo_user
+                    st.session_state["usuario_nome"] = "Visitante Teste"
+                    st.session_state["usuario_cargo"] = "Desenvolvedor"
                     st.rerun()
+                
+                # LÓGICA MODO PRODUÇÃO: VALIDA TUDO
+                else:
+                    hoje = date.today()
+                    senha_mestra = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
+                    
+                    if not concordo: st.warning("Aceite os termos.")
+                    elif not nome_user or not cargo_user: st.warning("Preencha seus dados.")
+                    elif senha != senha_mestra: st.error("Senha incorreta.")
+                    else:
+                        st.session_state["autenticado"] = True
+                        st.session_state["usuario_nome"] = nome_user
+                        st.session_state["usuario_cargo"] = cargo_user
+                        st.rerun()
             
             st.markdown("</div>", unsafe_allow_html=True)
         return False
