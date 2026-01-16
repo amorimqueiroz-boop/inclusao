@@ -1,9 +1,5 @@
 import streamlit as st
 import os
-import base64
-import re
-import json
-import requests
 from openai import OpenAI
 from datetime import date
 from io import BytesIO
@@ -12,21 +8,32 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Inches
 from pypdf import PdfReader
 from fpdf import FPDF
+import base64
+import re
+import json
+import requests
 from PIL import Image
+from streamlit_cropper import st_cropper
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
 # ==============================================================================
-st.set_page_config(page_title="Omnisfera | Hub", page_icon="🚀", layout="wide")
+st.set_page_config(page_title="[TESTE] Omnisfera | Hub", page_icon="🚀", layout="wide")
 
 # ==============================================================================
-# 2. BLOCO VISUAL (DESIGN SYSTEM PREMIUM - AZUL SÓBRIO)
+# 2. BLOCO VISUAL (DESIGN SYSTEM PREMIUM - AZUL SÓBRIO) & HEADER
 # ==============================================================================
+import os
+import base64
+import streamlit as st
+
+# 1. Detecção Automática de Ambiente (Via st.secrets)
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
 except:
     IS_TEST_ENV = False
 
+# 2. Função para carregar a logo em Base64
 def get_logo_base64():
     caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
     for c in caminhos:
@@ -37,47 +44,160 @@ def get_logo_base64():
 
 src_logo_giratoria = get_logo_base64()
 
+# 3. Definição Dinâmica de Cores (Card Branco ou Amarelo)
 if IS_TEST_ENV:
     card_bg, card_border = "rgba(255, 220, 50, 0.95)", "rgba(200, 160, 0, 0.5)"
 else:
     card_bg, card_border = "rgba(255, 255, 255, 0.85)", "rgba(255, 255, 255, 0.6)"
 
+# 4. Renderização do CSS Global e Header Flutuante
 st.markdown(f"""
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
+    /* VARIÁVEIS GLOBAIS - AZUL SÓBRIO */
     :root {{ 
-        --brand-blue: #0F52BA;
+        --brand-blue: #0F52BA; /* Azul Sóbrio */
         --brand-hover: #0A3D8F;
         --card-radius: 16px; 
     }}
-    html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }}
-    .block-container {{ padding-top: 1.5rem !important; padding-bottom: 5rem !important; }}
+    
+    /* 1. Fontes e Cores Base */
+    html, body, [class*="css"] {{ 
+        font-family: 'Nunito', sans-serif; 
+        color: #2D3748; 
+        background-color: #F7FAFC; 
+    }}
+    .block-container {{ 
+        padding-top: 1.5rem !important; 
+        padding-bottom: 5rem !important; 
+    }}
 
+    /* 2. Navegação em Abas "Glow" Clean */
     div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] {{ display: none !important; }}
-    .stTabs [data-baseweb="tab-list"] {{ gap: 8px; display: flex; flex-wrap: nowrap; overflow-x: auto; padding: 10px 5px; scrollbar-width: none; }}
-    .stTabs [data-baseweb="tab"] {{ height: 38px; border-radius: 20px !important; background-color: #FFFFFF; border: 1px solid #E2E8F0; color: #718096; font-weight: 700; font-size: 0.8rem; padding: 0 20px; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.03); flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.5px; }}
-    .stTabs [data-baseweb="tab"]:hover {{ border-color: #CBD5E0; color: #4A5568; background-color: #EDF2F7; }}
-    .stTabs [aria-selected="true"] {{ background-color: transparent !important; color: #3182CE !important; border: 1px solid #3182CE !important; font-weight: 800; box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important; }}
+    
+    .stTabs [data-baseweb="tab-list"] {{ 
+        gap: 8px; 
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 10px 5px;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }}
+    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {{ display: none; }}
 
-    .header-unified {{ background-color: white; padding: 35px 40px; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; display: flex; align-items: center; gap: 20px; justify-content: flex-start; }}
-    .header-subtitle {{ font-size: 1.2rem; color: #718096; font-weight: 600; border-left: 2px solid #E2E8F0; padding-left: 20px; line-height: 1.2; }}
+    /* ESTILO PADRÃO DAS ABAS (Pílula) */
+    .stTabs [data-baseweb="tab"] {{ 
+        height: 38px; 
+        border-radius: 20px !important; 
+        background-color: #FFFFFF; 
+        border: 1px solid #E2E8F0; 
+        color: #718096; 
+        font-weight: 700; 
+        font-size: 0.8rem; 
+        padding: 0 20px; 
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        flex-shrink: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }}
+    
+    .stTabs [data-baseweb="tab"]:hover {{
+        border-color: #CBD5E0;
+        color: #4A5568;
+        background-color: #EDF2F7;
+    }}
 
-    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {{ border-radius: 8px !important; border-color: #E2E8F0 !important; }}
-    div[data-testid="column"] .stButton button {{ border-radius: 8px !important; font-weight: 800 !important; text-transform: uppercase; height: 50px !important; background-color: var(--brand-blue) !important; color: white !important; border: none !important; letter-spacing: 0.5px; }}
-    div[data-testid="column"] .stButton button:hover {{ background-color: var(--brand-hover) !important; }}
+    /* ESTADO SELECIONADO (AZUL COM GLOW) */
+    .stTabs [aria-selected="true"] {{ 
+        background-color: transparent !important; 
+        color: #3182CE !important; 
+        border: 1px solid #3182CE !important; 
+        font-weight: 800;
+        box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important;
+    }}
 
-    .omni-badge {{ position: fixed; top: 15px; right: 15px; background: {card_bg}; border: 1px solid {card_border}; backdrop-filter: blur(8px); padding: 4px 30px; min-width: 260px; justify-content: center; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); z-index: 999990; display: flex; align-items: center; gap: 10px; pointer-events: none; }}
+    /* 3. Header Unificado (Com Divisor Vertical - SEM barra lateral) */
+    .header-unified {{ 
+        background-color: white; 
+        padding: 35px 40px; /* Altura ajustada */
+        border-radius: 16px; 
+        border: 1px solid #E2E8F0; 
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02); 
+        margin-bottom: 20px; 
+        display: flex; 
+        align-items: center; 
+        gap: 20px;
+        justify-content: flex-start; 
+    }}
+    
+    .header-subtitle {{ 
+        font-size: 1.2rem; 
+        color: #718096; 
+        font-weight: 600; 
+        border-left: 2px solid #E2E8F0; /* O DIVISOR VERTICAL */
+        padding-left: 20px; 
+        line-height: 1.2; 
+    }}
+
+    /* 5. Inputs e Botões (Arredondamento 8px) */
+    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {{ 
+        border-radius: 8px !important; 
+        border-color: #E2E8F0 !important; 
+    }}
+    
+    div[data-testid="column"] .stButton button {{ 
+        border-radius: 8px !important; 
+        font-weight: 800 !important; 
+        text-transform: uppercase; 
+        height: 50px !important; 
+        background-color: var(--brand-blue) !important; /* Azul Sóbrio */
+        color: white !important; 
+        border: none !important;
+        letter-spacing: 0.5px;
+    }}
+    div[data-testid="column"] .stButton button:hover {{ 
+        background-color: var(--brand-hover) !important; 
+    }}
+
+    /* CARD FLUTUANTE (OMNISFERA) */
+    .omni-badge {{
+        position: fixed; top: 15px; right: 15px;
+        background: {card_bg}; border: 1px solid {card_border};
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        padding: 4px 30px; min-width: 260px; justify-content: center;
+        border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        z-index: 999990; display: flex; align-items: center; gap: 10px;
+        pointer-events: none;
+    }}
     .omni-text {{ font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem; color: #2D3748; letter-spacing: 1px; text-transform: uppercase; }}
     @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
     .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
 
-    .pedagogia-box {{ background-color: #F8FAFC; border-left: 4px solid var(--brand-blue); padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; font-size: 0.95rem; color: #4A5568; }}
-    .student-header {{ background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--card-radius); padding: 20px 30px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }}
+    /* PEDAGOGIA BOX (Atualizado para Azul) */
+    .pedagogia-box {{ 
+        background-color: #F8FAFC; border-left: 4px solid var(--brand-blue); 
+        padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; 
+        font-size: 0.95rem; color: #4A5568; 
+    }}
+
+    /* CARD ALUNO */
+    .student-header {{ 
+        background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--card-radius); 
+        padding: 20px 30px; margin-bottom: 20px; 
+        display: flex; justify-content: space-between; align-items: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }}
     .student-label {{ font-size: 0.8rem; color: #718096; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }}
     .student-value {{ font-size: 1.2rem; color: #2D3748; font-weight: 800; }}
+
+    /* ANALISE & VALIDADOS */
     .analise-box {{ background-color: #F0FFF4; border: 1px solid #C6F6D5; border-radius: 12px; padding: 20px; margin-bottom: 20px; color: #22543D; }}
+    .validado-box {{ background-color: #C6F6D5; color: #22543D; padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; margin-top: 15px; border: 1px solid #276749; }}
     </style>
     
     <div class="omni-badge">
@@ -94,26 +214,18 @@ def verificar_acesso():
 
 verificar_acesso()
 
-# --- BARRA LATERAL (API KEY) ---
+# --- BARRA LATERAL ---
 with st.sidebar:
     try: st.image("ominisfera.png", width=150)
     except: st.write("🌐 OMNISFERA")
-    st.markdown("---")
-    
-    if 'OPENAI_API_KEY' in st.secrets:
-        api_key = st.secrets['OPENAI_API_KEY']
-    else:
-        api_key = st.text_input("Chave OpenAI:", type="password")
-    
-    unsplash_key = st.secrets.get("UNSPLASH_KEY") 
-        
     st.markdown("---")
     if st.button("🏠 Voltar para Home", use_container_width=True): st.switch_page("Home.py")
     st.markdown("---")
 
 # ==============================================================================
-# 3. DADOS DO ESTUDANTE (CARREGAR PEI)
+# 2. O CÓDIGO DO HUB DE INCLUSÃO
 # ==============================================================================
+
 ARQUIVO_DB = "banco_alunos.json"
 
 def carregar_banco():
@@ -129,7 +241,7 @@ def carregar_banco():
 if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
     st.session_state.banco_estudantes = carregar_banco()
 
-# --- HEADER HUB ---
+# --- HEADER UNIFICADO (CLEAN COM DIVISOR - AZUL) ---
 def get_img_tag(file_path, width):
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
@@ -137,7 +249,7 @@ def get_img_tag(file_path, width):
         return f'<img src="data:image/png;base64,{data}" width="{width}" style="object-fit: contain;">'
     return "🚀"
 
-img_hub_html = get_img_tag("hub.png", "220")
+img_hub_html = get_img_tag("hub.png", "220") # <--- AUMENTADO PARA 220px
 
 st.markdown(f"""
     <div class="header-unified">
@@ -156,7 +268,7 @@ aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_a
 serie_aluno = aluno.get('serie', '').lower()
 is_ei = "infantil" in serie_aluno or "creche" in serie_aluno or "pré" in serie_aluno
 
-# --- HEADER CARD ALUNO ---
+# --- HEADER DO ALUNO (ESTILO CARD) ---
 st.markdown(f"""
     <div class="student-header">
         <div><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div>
@@ -165,18 +277,17 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
+# --- EXPANDER RESUMO PEI (NOVIDADE) ---
 with st.expander("📄 Ver Resumo do PEI (Base para Adaptação)", expanded=False):
     st.info(aluno.get('ia_sugestao', 'Nenhum dado de PEI processado ainda.'))
 
-# === STATES INICIAIS ===
+# === INICIALIZAÇÃO ===
 if 'res_scene_url' not in st.session_state: st.session_state.res_scene_url = None
 if 'valid_scene' not in st.session_state: st.session_state.valid_scene = False
 if 'res_caa_url' not in st.session_state: st.session_state.res_caa_url = None
 if 'valid_caa' not in st.session_state: st.session_state.valid_caa = False
 
-# ==============================================================================
-# 4. FUNÇÕES DE UTILIDADE
-# ==============================================================================
+# --- FUNÇÕES DE UTILIDADE E IA (MANTIDAS IGUAIS) ---
 def extrair_dados_docx(uploaded_file):
     uploaded_file.seek(0); imagens = []; texto = ""
     try:
@@ -237,112 +348,91 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
                 sub_match = re.search(r'(\d+)', parte)
                 if ("IMG" in parte.upper() or "GEN_IMG" in parte.upper()) and sub_match:
                     num = int(sub_match.group(1))
-                    if mapa_imgs:
-                        img_bytes = mapa_imgs.get(num)
-                        if not img_bytes and len(mapa_imgs) == 1: img_bytes = list(mapa_imgs.values())[0]
-                        if img_bytes:
-                            try:
-                                p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                                r = p.add_run(); r.add_picture(BytesIO(img_bytes), width=Inches(3.5))
-                            except: pass
+                    img_bytes = mapa_imgs.get(num)
+                    if not img_bytes and len(mapa_imgs) == 1: img_bytes = list(mapa_imgs.values())[0]
+                    if img_bytes:
+                        try:
+                            p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                            r = p.add_run(); r.add_picture(BytesIO(img_bytes), width=Inches(3.5))
+                        except: pass
                 elif parte.strip(): doc.add_paragraph(parte.strip())
         else:
             if linha.strip(): doc.add_paragraph(linha.strip())
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
 
-# ==============================================================================
-# 5. CÉREBRO PEDAGÓGICO (IA)
-# ==============================================================================
+def criar_docx_simples(texto, titulo="Documento"):
+    doc = Document(); doc.add_heading(titulo, 0)
+    for para in texto.split('\n'):
+        if para.strip(): doc.add_paragraph(para.strip())
+    buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
+    return buffer
 
+def criar_pdf_generico(texto):
+    pdf = FPDF(); pdf.add_page(); pdf.set_font("Arial", size=12)
+    texto_safe = texto.encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 10, texto_safe); return pdf.output(dest='S').encode('latin-1')
+
+# --- IA FUNCTIONS ---
 def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anterior="", prioridade="IA"):
     client = OpenAI(api_key=api_key)
     prompt_final = f"{prompt}. Adjustment requested: {feedback_anterior}" if feedback_anterior else prompt
+
     if prioridade == "BANCO" and unsplash_key:
         termo = prompt.split('.')[0] if '.' in prompt else prompt
         url_banco = buscar_imagem_unsplash(termo, unsplash_key)
         if url_banco: return url_banco
+
     try:
         didactic_prompt = f"Educational textbook illustration, clean flat vector style, white background. CRITICAL RULE: STRICTLY NO TEXT, NO TYPOGRAPHY. Just visual: {prompt_final}"
         resp = client.images.generate(model="dall-e-3", prompt=didactic_prompt, size="1024x1024", quality="standard", n=1)
         return resp.data[0].url
-    except: return None
+    except:
+        if prioridade == "IA" and unsplash_key:
+            termo = prompt.split('.')[0] if '.' in prompt else prompt
+            return buscar_imagem_unsplash(termo, unsplash_key)
+        return None
 
 def gerar_pictograma_caa(api_key, conceito, feedback_anterior=""):
     client = OpenAI(api_key=api_key)
-    prompt_caa = f"Create a COMMUNICATION SYMBOL (AAC/PECS) for: '{conceito}'. STYLE: Flat vector icon (ARASAAC style), Solid WHITE background, Thick BLACK outlines. CRITICAL: MUTE IMAGE. NO TEXT."
+    ajuste = f" CORREÇÃO PEDIDA: {feedback_anterior}" if feedback_anterior else ""
+    prompt_caa = f"""
+    Create a COMMUNICATION SYMBOL (AAC/PECS) for: '{conceito}'. {ajuste}
+    STYLE: Flat vector icon (ARASAAC style), Solid WHITE background, Thick BLACK outlines, High contrast. CRITICAL: MUTE IMAGE. NO TEXT.
+    """
     try:
         resp = client.images.generate(model="dall-e-3", prompt=prompt_caa, size="1024x1024", quality="standard", n=1)
         return resp.data[0].url
-    except: return None
+    except Exception as e: return None
 
-# --- FUNÇÃO 1: ADAPTAR CONTEÚDO (DOCX) ---
-def adaptar_conteudo_docx(api_key, aluno, texto, materia, tema, tipo_atv, remover_resp, questoes_mapeadas, estrategia_media="Automática (Seguir PEI)"):
+def adaptar_conteudo_docx(api_key, aluno, texto, materia, tema, tipo_atv, remover_resp, questoes_mapeadas, modo_profundo=False):
     client = OpenAI(api_key=api_key)
     lista_q = ", ".join([str(n) for n in questoes_mapeadas])
-    pei_contexto = aluno.get('ia_sugestao', '')[:4000] # Contexto expandido
-    
-    instrucao_estrategia = ""
-    if estrategia_media == "Instruções Passo a Passo":
-        instrucao_estrategia = "PRIORIDADE ABSOLUTA: Use 'INSTRUÇÕES PASSO A PASSO'. Reescreva cada enunciado adicionando (1. Primeiro faça isso... 2. Depois aquilo...). Ignore outras formas de mediação se conflitarem."
-    elif estrategia_media == "Fragmentação de Tarefas":
-        instrucao_estrategia = "PRIORIDADE ABSOLUTA: Use 'FRAGMENTAÇÃO'. Quebre cada questão em letras (a, b, c) com micro-tarefas simples. Não deixe questões longas."
-    elif estrategia_media == "Dicas de Apoio (Scaffolding)":
-        instrucao_estrategia = "PRIORIDADE ABSOLUTA: Use 'SCAFFOLDING'. Adicione caixas de dicas, fórmulas ou palavras-chave antes de cada pergunta para ativar a memória."
-
+    style = "Seja didático." if modo_profundo else "Seja objetivo."
     prompt = f"""
-    ATUE COMO ESPECIALISTA EM DUA E ADAPTAÇÃO CURRICULAR.
-    
-    --- DADOS DO ALUNO (PEI) ---
-    {pei_contexto}
-    ----------------------------
-    
-    ⚠️ COMANDO DE MEDIAÇÃO DO PROFESSOR:
-    {instrucao_estrategia}
-    
-    (Se a estratégia for 'Automática', siga o CHECKLIST encontrado no PEI).
-    
-    REGRA IMAGEM: O professor indicou imagens nas questões originais: {lista_q}. Mantenha a referência [[IMG_número]] no local certo.
-    
-    SAÍDA: [ANÁLISE PEDAGÓGICA (Explique qual estratégia usou)]...---DIVISOR---[ATIVIDADE ADAPTADA]...
-    CONTEXTO: {materia} | {tema}. TEXTO ORIGINAL: {texto}
+    ESPECIALISTA EM DUA. {style}
+    PERFIL: {aluno.get('ia_sugestao', '')[:1000]}
+    REGRA IMAGEM: O professor indicou imagens nas questões: {lista_q}.
+    ESTRUTURA OBRIGATÓRIA: 1. Enunciado -> 2. [[IMG_número]] -> 3. Alternativas.
+    SAÍDA: [ANÁLISE PEDAGÓGICA]...---DIVISOR---[ATIVIDADE]...
+    CONTEXTO: {materia} | {tema}. TEXTO: {texto}
     """
     try:
-        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.5)
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7 if modo_profundo else 0.4)
         full_text = resp.choices[0].message.content
         if "---DIVISOR---" in full_text:
             parts = full_text.split("---DIVISOR---")
-            return parts[0].replace("[ANÁLISE PEDAGÓGICA]", "").strip(), parts[1].replace("[ATIVIDADE ADAPTADA]", "").strip()
+            return parts[0].replace("[ANÁLISE PEDAGÓGICA]", "").strip(), parts[1].replace("[ATIVIDADE]", "").strip()
         return "Análise indisponível.", full_text
     except Exception as e: return str(e), ""
 
-# --- FUNÇÃO 2: ADAPTAR ATIVIDADE (IMAGEM/OCR) ---
-def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_atv, livro_professor, estrategia_media="Automática (Seguir PEI)"):
+def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_atv, livro_professor, modo_profundo=False):
     client = OpenAI(api_key=api_key)
     b64 = base64.b64encode(imagem_bytes).decode('utf-8')
-    pei_contexto = aluno.get('ia_sugestao', '')[:4000]
-    
-    instrucao_estrategia = ""
-    if estrategia_media == "Instruções Passo a Passo":
-        instrucao_estrategia = "USE 'PASSO A PASSO': Numere os comandos (1., 2., 3.) para guiar a execução."
-    elif estrategia_media == "Fragmentação de Tarefas":
-        instrucao_estrategia = "USE 'FRAGMENTAÇÃO': Divida a atividade em partes menores (Letra A, B, C)."
-    elif estrategia_media == "Dicas de Apoio (Scaffolding)":
-        instrucao_estrategia = "USE 'SCAFFOLDING': Insira um box de 'Lembrete' ou 'Dica' antes da questão."
-
     prompt = f"""
-    ATUAR COMO: Especialista em Acessibilidade e Leitura de Imagens.
-    
-    CONTEXTO DO ALUNO (PEI):
-    {pei_contexto}
-    
-    ESTRATÉGIA PRIORITÁRIA: {instrucao_estrategia}
-    
-    MISSÃO:
-    1. Transcreva o conteúdo da imagem (OCR Inteligente).
-    2. Adapte o conteúdo seguindo a estratégia acima e o PEI.
-    3. Insira a tag [[IMG_1]] UMA ÚNICA VEZ, logo após o enunciado, para manter a imagem original.
-    
+    ATUAR COMO: Especialista em Acessibilidade.
+    1. Transcreva e Adapte para (PEI: {aluno.get('ia_sugestao', '')[:800]}).
+    2. REGRA DE OURO: Insira a tag [[IMG_1]] UMA ÚNICA VEZ, logo após o enunciado.
     SAÍDA: [ANÁLISE PEDAGÓGICA]...---DIVISOR---[ATIVIDADE]...
     """
     msgs = [{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}}]}]
@@ -355,41 +445,20 @@ def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_at
         return "Análise indisponível.", full_text
     except Exception as e: return str(e), ""
 
-# --- FUNÇÃO 3: CRIAR DO ZERO ---
-def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, estrategia_media="Automática (Seguir PEI)"):
+def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, modo_profundo=False):
     client = OpenAI(api_key=api_key)
     hiperfoco = aluno.get('hiperfoco', 'Geral')
-    pei_contexto = aluno.get('ia_sugestao', '')[:4000]
-    
     instrucao_img = f"Incluir imagens em {qtd_imgs} questões (use [[GEN_IMG: termo]]). POSIÇÃO: Tag APÓS enunciado." if qtd_imgs > 0 else "Sem imagens."
+    diretriz_tipo = "FORMATO DISCURSIVO (Sem alternativas)." if tipo_q == "Discursiva" else "FORMATO OBJETIVO (Múltipla escolha)."
     
-    instrucao_estrategia = ""
-    if estrategia_media == "Instruções Passo a Passo":
-        instrucao_estrategia = "MODELO MENTAL: Crie enunciados que guiem o aluno: '1. Leia... 2. Identifique... 3. Responda'."
-    elif estrategia_media == "Fragmentação de Tarefas":
-        instrucao_estrategia = "MODELO MENTAL: Não faça perguntas diretas complexas. Crie perguntas em cadeia (Item A leva ao Item B)."
-    elif estrategia_media == "Dicas de Apoio (Scaffolding)":
-        instrucao_estrategia = "MODELO MENTAL: Antes da pergunta, forneça um 'Lembrete' ou 'Dica' visual/texto que ajude a recordar o conceito."
-
     prompt = f"""
-    Crie uma prova de {materia} ({objeto}). QTD: {qtd} questões ({tipo_q}).
-    
-    --- PERFIL DO ALUNO (PEI) ---
-    {pei_contexto}
-    -----------------------------
-    
-    DIRETRIZ DE CRIAÇÃO (PRIORITÁRIA):
-    {instrucao_estrategia}
-    
-    OUTRAS REGRAS:
-    - Use o Hiperfoco ({hiperfoco}) para contextualizar.
-    - Comandos no IMPERATIVO.
-    - Imagens: {instrucao_img}.
-    
+    Crie prova de {materia} ({objeto}). QTD: {qtd} ({tipo_q}).
+    DIRETRIZES: 1. Contexto Real. 2. Hiperfoco ({hiperfoco}). 3. {diretriz_tipo}. 4. Imagens: {instrucao_img}.
+    REGRA: COMANDOS NO IMPERATIVO (Ex: Analise, Calcule).
     SAÍDA: [ANÁLISE PEDAGÓGICA]...---DIVISOR---[ATIVIDADE]...
     """
     try:
-        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.8 if modo_profundo else 0.6)
         full_text = resp.choices[0].message.content
         if "---DIVISOR---" in full_text:
             parts = full_text.split("---DIVISOR---")
@@ -397,42 +466,51 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, e
         return "Análise indisponível.", full_text
     except Exception as e: return str(e), ""
 
-# Outras funções (mantidas simplificadas)
-def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo, feedback=""):
+def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo, feedback_anterior=""):
     client = OpenAI(api_key=api_key)
-    prompt = f"Crie EXPERIÊNCIA LÚDICA (BNCC) para {aluno['nome']} (EI). Campo: {campo_exp}. Objetivo: {objetivo}. Hiperfoco: {aluno.get('hiperfoco')}. Saída Markdown."
-    try: return client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}]).choices[0].message.content
-    except: return ""
+    prompt = f"Crie EXPERIÊNCIA LÚDICA (BNCC) para {aluno['nome']} (EI). Campo: {campo_exp}. Objetivo: {objetivo}. Hiperfoco: {aluno.get('hiperfoco')}. SAÍDA: Markdown."
+    try:
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
+        return resp.choices[0].message.content
+    except Exception as e: return str(e)
 
-def gerar_roteiro_aula(api_key, aluno, materia, assunto, feedback=""):
+def gerar_roteiro_aula(api_key, aluno, materia, assunto, feedback_anterior=""):
     client = OpenAI(api_key=api_key)
-    prompt = f"Roteiro de aula {assunto} para {aluno['nome']}. PEI: {aluno.get('ia_sugestao','')[:2000]}. Markdown."
-    try: return client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}]).choices[0].message.content
-    except: return ""
+    prompt = f"Roteiro de aula {assunto} para {aluno['nome']}. PEI: {aluno.get('ia_sugestao','')[:500]}. Estrutura: Objetivo, Estratégia, Prática, Verificação."
+    try:
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
+        return resp.choices[0].message.content
+    except Exception as e: return str(e)
 
-def gerar_quebra_gelo_profundo(api_key, aluno, materia, assunto, hiperfoco):
+def gerar_quebra_gelo_profundo(api_key, aluno, materia, assunto, hiperfoco, tema_turma_extra=""):
     client = OpenAI(api_key=api_key)
     prompt = f"3 'Papos de Mestre' para conectar {aluno['nome']} ({hiperfoco}) ao tema {assunto} ({materia})."
-    try: return client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}]).choices[0].message.content
-    except: return ""
+    try:
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.8)
+        return resp.choices[0].message.content
+    except Exception as e: return str(e)
 
-def gerar_dinamica_inclusiva(api_key, aluno, materia, assunto, qtd, tipo):
+def gerar_dinamica_inclusiva(api_key, aluno, materia, assunto, qtd_alunos, caracteristicas_turma, feedback_anterior=""):
     client = OpenAI(api_key=api_key)
-    prompt = f"Dinâmica Inclusiva ({assunto}) para {qtd} alunos. Foco inclusão de {aluno['nome']}."
-    try: return client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}]).choices[0].message.content
-    except: return ""
+    prompt = f"Dinâmica Inclusiva ({assunto}) para {qtd_alunos} alunos. Foco inclusão de {aluno['nome']}."
+    try:
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
+        return resp.choices[0].message.content
+    except Exception as e: return str(e)
 
-def gerar_plano_aula_bncc(api_key, materia, assunto, metodologia, tecnica, qtd, recursos):
+def gerar_plano_aula_bncc(api_key, materia, assunto, metodologia, tecnica, qtd_alunos, recursos):
     client = OpenAI(api_key=api_key)
-    prompt = f"PLANO DE AULA (BNCC). Componente: {materia}. Assunto: {assunto}. Metodologia: {metodologia}. Markdown."
-    try: return client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}]).choices[0].message.content
-    except: return ""
+    prompt = f"PLANO DE AULA (BNCC). Componente: {materia}. Assunto: {assunto}. Metodologia: {metodologia}. Alunos: {qtd_alunos}. Saída Markdown."
+    try:
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
+        return resp.choices[0].message.content
+    except Exception as e: return str(e)
 
 if is_ei:
     st.info("🧸 **Modo Educação Infantil Ativado:** Foco em Experiências, BNCC e Brincar.")
     tabs = st.tabs(["🧸 Criar Experiência", "🎨 Estúdio Visual & CAA", "📝 Rotina", "🤝 Inclusão"])
     
-    with tabs[0]: 
+    with tabs[0]: # Criar Experiência
         st.markdown("<div class='pedagogia-box'><div class='pedagogia-title'><i class='ri-lightbulb-line'></i> Pedagogia do Brincar</div>Criar vivências intencionais.</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         campo = c1.selectbox("Campo de Experiência", ["O eu, o outro e o nós", "Corpo, gestos e movimentos", "Traços, sons, cores e formas", "Escuta, fala, pensamento e imaginação", "Espaços, tempos, quantidades, relações e transformações"])
@@ -441,14 +519,14 @@ if is_ei:
             with st.spinner("Criando..."): st.session_state.res_ei_exp = gerar_experiencia_ei_bncc(api_key, aluno, campo, obj)
         if st.session_state.get('res_ei_exp'): st.markdown(st.session_state.res_ei_exp)
 
-    with tabs[1]: 
+    with tabs[1]: # Visual EI
         st.markdown("<div class='pedagogia-box'><div class='pedagogia-title'><i class='ri-eye-line'></i> Apoio Visual</div>Cenas e Pictogramas.</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("#### 🖼️ Cena")
             desc = st.text_area("Descreva:", height=100, key="vdmei")
             if st.button("🎨 Gerar", key="btnei"): 
-                with st.spinner("."): st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, f"{desc}. Context: Child education.", None)
+                with st.spinner("."): st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, f"{desc}. Context: Child education.", unsplash_key)
             if st.session_state.res_scene_url: st.image(st.session_state.res_scene_url)
         with c2:
             st.markdown("#### 🗣️ CAA")
@@ -458,12 +536,12 @@ if is_ei:
                 with st.spinner("."): st.session_state.res_caa_url = gerar_pictograma_caa(api_key, pal)
             if st.session_state.res_caa_url: st.image(st.session_state.res_caa_url, width=300)
 
-    with tabs[2]: 
+    with tabs[2]: # Rotina EI
         st.markdown("<div class='pedagogia-box'>Rotina & Previsibilidade</div>", unsafe_allow_html=True)
         rot = st.text_area("Rotina:")
         if st.button("📝 ADAPTAR", type="primary"): st.markdown(gerar_roteiro_aula(api_key, aluno, "Geral", "Rotina", feedback_anterior=rot))
 
-    with tabs[3]: 
+    with tabs[3]: # Inclusão
         st.markdown("<div class='pedagogia-box'>Mediação Social</div>", unsafe_allow_html=True)
         tem = st.text_input("Tema:")
         if st.button("🤝 DINÂMICA", type="primary"): st.markdown(gerar_dinamica_inclusiva(api_key, aluno, "EI", tem, "Pequeno grupo", "Crianças"))
@@ -490,14 +568,6 @@ else:
         tip = c3.selectbox("Tipo", ["Prova", "Tarefa"], key="tp1")
         arq = st.file_uploader("Upload DOCX", type=["docx"], key="f1")
         
-        st.markdown("##### 🛠️ Estratégia de Mediação")
-        estrat_med = st.selectbox(
-            "Qual técnica priorizar nesta adaptação?",
-            ["Automática (Seguir PEI)", "Instruções Passo a Passo", "Fragmentação de Tarefas", "Dicas de Apoio (Scaffolding)"],
-            key="estrat1",
-            help="Escolha uma estratégia dominante para evitar sobrecarga cognitiva no aluno."
-        )
-        
         if arq and arq.file_id != st.session_state.get('ld'):
             st.session_state.ld = arq.file_id
             txt, imgs = extrair_dados_docx(arq)
@@ -517,57 +587,33 @@ else:
         if st.button("🚀 ADAPTAR", type="primary", key="b1"):
             if not st.session_state.get('dt'): st.warning("Arquivo?"); st.stop()
             with st.spinner("Adaptando..."):
-                r, t = adaptar_conteudo_docx(api_key, aluno, st.session_state.dt, mat, tem, tip, True, qs_d, estrat_med)
+                r, t = adaptar_conteudo_docx(api_key, aluno, st.session_state.dt, mat, tem, tip, True, qs_d)
                 st.session_state['rd'] = {'rac': r, 'txt': t}
         
         if 'rd' in st.session_state:
-            st.markdown("### 🧠 Análise Pedagógica")
-            st.info(st.session_state['rd']['rac'])
-            st.markdown("### 📝 Atividade Adaptada")
-            st.text_area("Preview", value=st.session_state['rd']['txt'], height=300)
-            
-            col_d, col_l = st.columns([3, 1])
+            st.markdown(f"<div class='analise-box'>{st.session_state['rd']['rac']}</div>", unsafe_allow_html=True)
             doc = construir_docx_final(st.session_state['rd']['txt'], aluno, mat, {}, None, tip)
-            col_d.download_button("📥 BAIXAR DOCX", doc, "Adaptada.docx", "primary", use_container_width=True)
-            if col_l.button("🗑️ Limpar", key="cl1", use_container_width=True):
-                del st.session_state['rd']
-                st.rerun()
+            st.download_button("📥 BAIXAR DOCX", doc, "Adaptada.docx", "primary")
 
-    # 2. ATIVIDADE (OCR) - RESTAURADA E COMPLETA
+    # 2. ATIVIDADE (OCR)
     with tabs[1]:
         st.markdown("<div class='pedagogia-box'><div class='pedagogia-title'><i class='ri-scissors-cut-line'></i> OCR & Adaptação</div>Foto do livro/caderno.</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         mat = c1.selectbox("Matéria", ["Matemática", "Português", "Ciências", "História"], key="m2")
         arq = st.file_uploader("Upload Imagem", type=["png","jpg"], key="f2")
         
-        # Estratégia também para Atividade
-        st.markdown("##### 🛠️ Estratégia de Mediação")
-        estrat_med_ocr = st.selectbox(
-            "Qual técnica priorizar?",
-            ["Automática (Seguir PEI)", "Instruções Passo a Passo", "Fragmentação de Tarefas", "Dicas de Apoio (Scaffolding)"],
-            key="estrat2"
-        )
-        
         if arq:
             img = Image.open(arq)
-            st.image(img, width=400)
+            st.image(img, width=300)
             if st.button("🚀 ADAPTAR", type="primary", key="b2"):
-                with st.spinner("Lendo e Adaptando..."):
-                    r, t = adaptar_conteudo_imagem(api_key, aluno, arq.getvalue(), mat, "", "Atividade", False, estrat_med_ocr)
+                with st.spinner("Lendo..."):
+                    r, t = adaptar_conteudo_imagem(api_key, aluno, arq.getvalue(), mat, "", "Atividade", False)
                     st.session_state['ri'] = {'rac': r, 'txt': t}
         
         if 'ri' in st.session_state:
-            st.markdown("### 🧠 Análise Pedagógica")
-            st.info(st.session_state['ri']['rac'])
-            st.markdown("### 📝 Atividade Adaptada")
-            st.text_area("Preview", value=st.session_state['ri']['txt'], height=300)
-            
-            col_d, col_l = st.columns([3, 1])
+            st.markdown(f"<div class='analise-box'>{st.session_state['ri']['rac']}</div>", unsafe_allow_html=True)
             doc = construir_docx_final(st.session_state['ri']['txt'], aluno, mat, {}, None, "Atividade")
-            col_d.download_button("📥 BAIXAR DOCX", doc, "Atividade.docx", "primary", use_container_width=True)
-            if col_l.button("🗑️ Limpar", key="cl2", use_container_width=True):
-                del st.session_state['ri']
-                st.rerun()
+            st.download_button("📥 BAIXAR DOCX", doc, "Atividade.docx", "primary")
 
     # 3. CRIAR DO ZERO
     with tabs[2]:
@@ -579,27 +625,20 @@ else:
         qtd = c3.slider("Qtd", 1, 10, 5)
         tip = c4.selectbox("Tipo", ["Objetiva", "Discursiva"])
         
-        st.markdown("##### 🛠️ Estratégia de Mediação")
-        estrat_med_cria = st.selectbox(
-            "Qual técnica usar na criação?",
-            ["Automática (Seguir PEI)", "Instruções Passo a Passo", "Fragmentação de Tarefas", "Dicas de Apoio (Scaffolding)"],
-            key="estrat3",
-            help="Defina como a IA deve estruturar os enunciados."
-        )
-        
         use_img = st.checkbox("Incluir Imagens?")
         qtd_img = st.slider("Quantas com imagem?", 0, qtd, 2, disabled=not use_img)
 
         if st.button("✨ CRIAR", type="primary", key="b3"):
             with st.spinner("Criando..."):
-                r, t = criar_profissional(api_key, aluno, mat, obj, qtd, tip, qtd_img if use_img else 0, estrat_med_cria)
+                r, t = criar_profissional(api_key, aluno, mat, obj, qtd, tip, qtd_img if use_img else 0)
                 st.session_state['rc'] = {'rac': r, 'txt': t}
                 
+                # Processa imagens (Banco > IA)
                 tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', t)
                 new_map = {}; cnt = 0
                 for tg in tags:
                     cnt += 1
-                    url = gerar_imagem_inteligente(api_key, tg, None, prioridade="BANCO")
+                    url = gerar_imagem_inteligente(api_key, tg, unsplash_key, prioridade="BANCO")
                     if url:
                         io = baixar_imagem_url(url)
                         if io: new_map[cnt] = io.getvalue()
@@ -610,17 +649,9 @@ else:
                 st.session_state['rc']['map'] = new_map
 
         if 'rc' in st.session_state:
-            st.markdown("### 🧠 Análise Pedagógica")
-            st.info(st.session_state['rc']['rac'])
-            st.markdown("### 📝 Atividade Criada")
-            st.text_area("Preview", value=st.session_state['rc']['txt'], height=300)
-            
-            col_d, col_l = st.columns([3, 1])
+            st.markdown(f"<div class='analise-box'>{st.session_state['rc']['rac']}</div>", unsafe_allow_html=True)
             doc = construir_docx_final(st.session_state['rc']['txt'], aluno, mat, st.session_state['rc']['map'], None, "Criada")
-            col_d.download_button("📥 BAIXAR DOCX", doc, "Criada.docx", "primary", use_container_width=True)
-            if col_l.button("🗑️ Limpar", key="cl3", use_container_width=True):
-                del st.session_state['rc']
-                st.rerun()
+            st.download_button("📥 BAIXAR DOCX", doc, "Criada.docx", "primary")
 
     # 4. ESTUDIO VISUAL
     with tabs[3]:
@@ -630,7 +661,7 @@ else:
             st.markdown("#### 🖼️ Ilustração")
             d = st.text_area("Descreva:", key="d4")
             if st.button("🎨 Gerar", key="b4"):
-                with st.spinner("."): st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, f"{d}. Education context.", None)
+                with st.spinner("."): st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, f"{d}. Education context.", unsplash_key)
             if st.session_state.res_scene_url: st.image(st.session_state.res_scene_url)
         with c2:
             st.markdown("#### 🗣️ Símbolo CAA")
