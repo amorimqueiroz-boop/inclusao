@@ -497,18 +497,22 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         if "Alfabético" not in alfabetizacao and alfabetizacao != "Não se aplica (Educação Infantil)":
              prompt_literacia = f"""[ATENÇÃO CRÍTICA: ALFABETIZAÇÃO] Fase: {alfabetizacao}. Inclua 2 ações de consciência fonológica.[/ATENÇÃO CRÍTICA]"""
 
+        # --- CHECKLIST AJUSTADO (PRIORIZAÇÃO) ---
         prompt_hub = """
         ### 6. 🧩 CHECKLIST DE ADAPTAÇÃO E ACESSIBILIDADE:
-        (Responda objetivamente Sim/Não e justifique brevemente com base no diagnóstico).
-        1. O estudante necessita de questões mais desafiadoras?
-        2. O estudante compreende instruções complexas?
-        3. O estudante necessita de instruções passo a passo?
-        4. Dividir a questão em etapas melhora o desempenho?
-        5. Textos com parágrafos curtos melhoram a compreensão?
-        6. O estudante precisa de dicas de apoio?
-        7. O estudante compreende figuras de linguagem/inferências?
-        8. O estudante necessita de descrição de imagens?
-        9. O estudante precisa de adaptação na formatação? (Especifique: espaçamento, fonte OpenDyslexic, etc).
+        (Responda objetivamente. Este bloco guiará a adaptação automática de materiais).
+
+        **A. ESTRATÉGIAS DE MEDIAÇÃO (O "TRIÂNGULO DE OURO"):**
+        (Escolha a estratégia predominante para este aluno e responda Sim/Não com justificativa rápida):
+        1. **Instruções passo a passo?** (Necessita de numeração 1, 2, 3 no enunciado?)
+        2. **Fragmentação de tarefas?** (Dividir questões longas em etapas a, b, c?)
+        3. **Dicas de Apoio (Scaffolding)?** (Precisa de lembretes visuais ou palavras-chave no enunciado?)
+
+        **B. FORMATAÇÃO E ACESSIBILIDADE VISUAL:**
+        4. Compreende figuras de linguagem/inferências?
+        5. Necessita de descrição de imagens (Alt text)?
+        6. Precisa de adaptação visual (Fonte/Espaçamento)?
+        7. Questões desafiadoras são adequadas (Sim/Não)?
         """
         
         prompt_componentes = ""
@@ -1094,4 +1098,4 @@ with tab_mapa:
 
     else: st.warning("⚠️ Gere o PEI Técnico na aba 'Consultoria IA' primeiro.")
 
-st.markdown("<div class='footer-signature'>PEI 360º v118.0 Gold Edition - Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
+st.markdown("<div class='footer-signature'>PEI 360º v119.0 Gold Edition - Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
