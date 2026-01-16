@@ -1,9 +1,9 @@
-iimport requests
+import requests
 import streamlit as st
 import pandas as pd
 
 # --- CONFIGURAÇÃO ---
-# https://sheetdb.io/api/v1/jr7on4w9yqczn)
+# ⚠️ SUBSTITUA O LINK ABAIXO PELO SEU LINK DO SHEETDB
 SHEET_DB_URL = "https://sheetdb.io/api/v1/d8098eian87x9"
 
 def enviar_checkin(dados):
@@ -19,23 +19,15 @@ def enviar_checkin(dados):
         st.error(f"Erro de conexão: {e}")
         return False
 
-@st.cache_data(ttl=60) # Guarda os dados por 60 segundos para não travar
+@st.cache_data(ttl=60) # Guarda os dados por 60s para não ficar lento
 def buscar_logs():
-    """Busca todo o histórico de check-ins"""
+    """Busca todo o histórico de check-ins para gerar os gráficos"""
     url = f"{SHEET_DB_URL}?sheet=Logs_Checkin"
     try:
         response = requests.get(url)
         data = response.json()
-        # Transforma em Tabela Inteligente (DataFrame)
-        if data:
-            df = pd.DataFrame(data)
-            return df
+        if isinstance(data, list):
+            return pd.DataFrame(data)
         return pd.DataFrame()
     except:
         return pd.DataFrame()
-
-
-
-
-
-
