@@ -140,6 +140,7 @@ LISTAS_BARREIRAS = {"Funções Cognitivas": ["Atenção Sustentada/Focada", "Mem
 LISTA_POTENCIAS = ["Memória Visual", "Musicalidade/Ritmo", "Interesse em Tecnologia", "Hiperfoco Construtivo", "Liderança Natural", "Habilidades Cinestésicas (Esportes)", "Expressão Artística (Desenho)", "Cálculo Mental Rápido", "Oralidade/Vocabulário", "Criatividade/Imaginação", "Empatia/Cuidado com o outro", "Resolução de Problemas", "Curiosidade Investigativa"]
 LISTA_PROFISSIONAIS = ["Psicólogo Clínico", "Neuropsicólogo", "Fonoaudiólogo", "Terapeuta Ocupacional", "Neuropediatra", "Psiquiatra Infantil", "Psicopedagogo Clínico", "Professor de Apoio (Mediador)", "Acompanhante Terapêutico (AT)", "Musicoterapeuta", "Equoterapeuta", "Oftalmologista"]
 LISTA_FAMILIA = ["Mãe", "Pai", "Madrasta", "Padrasto", "Avó Materna", "Avó Paterna", "Avô Materno", "Avô Paterno", "Irmãos", "Tios", "Primos", "Tutor Legal", "Abrigo Institucional"]
+LISTA_COMPONENTES = ["Língua Portuguesa", "Matemática", "História", "Geografia", "Ciências", "Arte", "Educação Física", "Inglês", "Ensino Religioso", "Projeto de Vida", "Física", "Química", "Biologia", "Sociologia", "Filosofia"]
 
 # ==============================================================================
 # 4. GERENCIAMENTO DE ESTADO
@@ -152,6 +153,7 @@ default_state = {
     'nivel_alfabetizacao': 'Não se aplica (Educação Infantil)',
     'barreiras_selecionadas': {k: [] for k in LISTAS_BARREIRAS.keys()},
     'niveis_suporte': {}, 
+    'componentes_atencao': [], # NOVO: Para o radar de atenção
     'estrategias_acesso': [], 'estrategias_ensino': [], 'estrategias_avaliacao': [], 
     'ia_sugestao': '', 'ia_mapa_texto': '', 'outros_acesso': '', 'outros_ensino': '', 
     'monitoramento_data': date.today(), 
@@ -377,6 +379,9 @@ def aplicar_estilo_visual():
         .sc-head { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.95rem; margin-bottom: 15px; color: #2D3748; }
         .sc-body { font-size: 0.85rem; color: #4A5568; line-height: 1.5; flex-grow: 1; }
         .bg-icon { position: absolute; bottom: -10px; right: -10px; font-size: 5rem; opacity: 0.08; pointer-events: none; }
+        
+        .pulse-alert { animation: pulse 2s infinite; color: #E53E3E; font-weight: bold; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     """
@@ -409,6 +414,7 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         familia = ", ".join(dados['composicao_familiar_tags']) if dados['composicao_familiar_tags'] else "Não informado"
         evid = "\n".join([f"- {k.replace('?', '')}" for k, v in dados['checklist_evidencias'].items() if v])
         meds_info = "\n".join([f"- {m['nome']} ({m['posologia']})." for m in dados['lista_medicamentos']]) if dados['lista_medicamentos'] else "Nenhuma medicação informada."
+        componentes_atencao = ", ".join(dados['componentes_atencao']) if dados['componentes_atencao'] else "Não especificado"
 
         serie = dados['serie'] or ""
         nivel_ensino = detectar_nivel_ensino(serie)
@@ -418,14 +424,21 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         [PERFIL_NARRATIVO] Inicie com "👤 QUEM É O ESTUDANTE?". Parágrafo humanizado mostrando a criança além do diagnóstico. [/PERFIL_NARRATIVO]
         """
         
+        prompt_diagnostico = f"""
+        1. 🏥 DIAGNÓSTICO E IMPACTO (FUNDAMENTAL):
+        - Cite o Diagnóstico (e o CID se disponível no laudo).
+        - Descreva os **impactos diretos na aprendizagem**.
+        - Liste Cuidados e Pontos de Atenção essenciais.
+        """
+
         prompt_literacia = ""
         if "Alfabético" not in alfabetizacao and alfabetizacao != "Não se aplica (Educação Infantil)":
              prompt_literacia = f"""[ATENÇÃO CRÍTICA: ALFABETIZAÇÃO] Fase: {alfabetizacao}. Inclua 2 ações de consciência fonológica.[/ATENÇÃO CRÍTICA]"""
 
-        # CHECKLIST HUB DE INCLUSÃO - ADICIONADO AQUI
+        # CHECKLIST HUB DE INCLUSÃO - INTEGRADO AO PEI
         prompt_hub = """
-        ### 4. 🧩 CHECKLIST DE ADAPTAÇÃO (CRUCIAL PARA O HUB):
-        Responda objetivamente (Sim/Não) e justifique brevemente com base no diagnóstico:
+        ### 4. 🧩 CHECKLIST DE ADAPTAÇÃO E ACESSIBILIDADE:
+        (Responda objetivamente Sim/Não e justifique brevemente com base no diagnóstico. Não mencione 'Hub' no título).
         1. O estudante necessita de questões mais desafiadoras?
         2. O estudante compreende instruções complexas?
         3. O estudante necessita de instruções passo a passo?
@@ -436,54 +449,68 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         8. O estudante necessita de descrição de imagens?
         9. O estudante precisa de adaptação na formatação? (Especifique: espaçamento, fonte OpenDyslexic, etc).
         """
+        
+        # SEÇÃO DE COMPONENTES DE ATENÇÃO
+        prompt_componentes = f"""
+        3. ⚠️ COMPONENTES CURRICULARES DE ATENÇÃO:
+        Os seguintes componentes exigem cuidado: {componentes_atencao}.
+        - Para cada um, explique O MOTIVO técnico da dificuldade (Ex: Matemática exige abstração que o diagnóstico X dificulta) e uma estratégia rápida.
+        """
 
         # ESTRUTURA MODIFICADA: PLANO DE INTERVENÇÃO E ESTRATÉGIAS + FARMA NO FINAL
         if nivel_ensino == "EI":
-            perfil_ia = "Especialista em EDUCAÇÃO INFANTIL e BNCC. ATENÇÃO: Considere o Diagnóstico como guia mestre (ex: TEA exige suporte diferente de TDAH)."
+            perfil_ia = "Especialista em EDUCAÇÃO INFANTIL e BNCC."
             estrutura_req = f"""
             ESTRUTURA OBRIGATÓRIA (EI):
             {prompt_identidade}
-            1. 🌟 AVALIAÇÃO DE REPERTÓRIO:
+            {prompt_diagnostico}
+            
+            2. 🌟 AVALIAÇÃO DE REPERTÓRIO:
             [CAMPOS_EXPERIENCIA_PRIORITARIOS] Destaque 2 ou 3 Campos BNCC. [/CAMPOS_EXPERIENCIA_PRIORITARIOS]
+            - **Habilidades de Anos Anteriores (Basais):** O que precisa ser resgatado.
+            - **Habilidades do Ano Atual (Prioritárias):** O foco agora.
             [OBJETIVOS_DESENVOLVIMENTO]
             - OBJETIVO 1: ...
             - OBJETIVO 2: ...
             [FIM_OBJETIVOS]
             
-            2. 🚀 PLANO DE INTERVENÇÃO E ESTRATÉGIAS:
-            (Estratégias de acolhimento, rotina e adaptação sensorial).
+            {prompt_componentes}
             
-            3. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
+            5. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
             [ANALISE_FARMA] Se houver medicação, cite efeitos colaterais (sono, sede, etc) e impactos em sala. [/ANALISE_FARMA]
 
             {prompt_hub}
             """
         else:
-            perfil_ia = "Especialista em Inclusão Escolar e BNCC. ATENÇÃO: Considere o Diagnóstico como guia mestre (ex: TEA exige suporte diferente de TDAH)."
+            perfil_ia = "Especialista em Inclusão Escolar e BNCC."
             instrucao_bncc = """[MAPEAMENTO_BNCC] Separe por Componente Curricular. CÓDIGO ALFANUMÉRICO OBRIGATÓRIO (ex: EF01LP02). [/MAPEAMENTO_BNCC]"""
             instrucao_bloom = """[TAXONOMIA_BLOOM] Explique a categoria cognitiva escolhida. Liste 3 verbos de comando. [/TAXONOMIA_BLOOM]"""
 
             estrutura_req = f"""
             ESTRUTURA OBRIGATÓRIA (Padrão):
             {prompt_identidade}
-            1. 🌟 AVALIAÇÃO DE REPERTÓRIO:
+            {prompt_diagnostico}
+            
+            2. 🌟 AVALIAÇÃO DE REPERTÓRIO:
+            - **Habilidades de Anos Anteriores (Defasagens/Basais):** O que o aluno ainda não consolidou.
+            - **Habilidades Fundamentais do Ano Atual:** Onde vamos focar.
             {instrucao_bncc}
             {instrucao_bloom}
             [METAS_SMART] Metas de Curto, Médio e Longo prazo. [FIM_METAS_SMART]
             
-            2. 🚀 PLANO DE INTERVENÇÃO E ESTRATÉGIAS:
-            (Adaptações curriculares e de acesso).
+            {prompt_componentes}
             {prompt_literacia}
             
-            3. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
+            5. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
             [ANALISE_FARMA] Se houver medicação, cite efeitos colaterais (sono, sede, etc) e impactos em sala. [/ANALISE_FARMA]
 
             {prompt_hub}
             """
 
         prompt_feedback = f"AJUSTE SOLICITADO: {feedback_usuario}" if feedback_usuario else ""
+        prompt_formatacao = "Mantenha a formatação em MARKDOWN limpo (Use ### para títulos, ** para negrito). Não use tabelas complexas."
 
-        prompt_sys = f"""{perfil_ia} MISSÃO: Criar PEI Técnico. {estrutura_req} {prompt_feedback}"""
+        prompt_sys = f"""{perfil_ia} MISSÃO: Criar PEI Técnico. {estrutura_req} {prompt_feedback} {prompt_formatacao}"""
         
         if modo_pratico:
             prompt_sys = f"""{perfil_ia} GUIA PRÁTICO PARA SALA DE AULA. {prompt_feedback} # GUIA PRÁTICO {serie} ... {prompt_hub}"""
@@ -564,8 +591,8 @@ def gerar_pdf_final(dados, tem_anexo):
         for linha in texto_limpo.split('\n'):
             l = linha.strip()
             if not l: continue
-            if re.match(r'^[1-9]\.', l) or l.isupper():
-                pdf.ln(3); pdf.set_font('Arial', 'B', 10); pdf.multi_cell(0, 6, l); pdf.set_font('Arial', '', 10)
+            if re.match(r'^[1-9]\.', l) or l.isupper() or l.startswith("###") or l.startswith("##"):
+                pdf.ln(3); pdf.set_font('Arial', 'B', 10); pdf.multi_cell(0, 6, l.replace('#', '').strip()); pdf.set_font('Arial', '', 10)
             elif l.startswith('-') or l.startswith('*'):
                 pdf.add_flat_icon_item(l.replace('-','').replace('*','').strip(), 'dot')
             else: pdf.multi_cell(0, 6, l)
@@ -703,6 +730,14 @@ with tab4:
     with st.container(border=True):
         st.markdown("#### Potencialidades e Hiperfoco"); c1, c2 = st.columns(2); st.session_state.dados['hiperfoco'] = c1.text_input("Hiperfoco", st.session_state.dados['hiperfoco']); p_val = [p for p in st.session_state.dados.get('potencias', []) if p in LISTA_POTENCIAS]; st.session_state.dados['potencias'] = c2.multiselect("Pontos Fortes", LISTA_POTENCIAS, default=p_val)
     st.divider()
+    
+    # NOVA SEÇÃO PARA COMPONENTES DE ATENÇÃO
+    with st.container(border=True):
+        st.markdown("#### ⚠️ Componentes Curriculares de Atenção")
+        st.info("Selecione quais matérias exigem adaptação prioritária. A IA detalhará o motivo no relatório.")
+        st.session_state.dados['componentes_atencao'] = st.multiselect("Matérias:", LISTA_COMPONENTES, default=st.session_state.dados['componentes_atencao'])
+
+    st.divider()
     with st.container(border=True):
         st.markdown("#### Barreiras e Nível de Suporte (CIF)"); c_bar1, c_bar2, c_bar3 = st.columns(3)
         def render_cat_barreira(coluna, titulo, chave_json):
@@ -737,7 +772,6 @@ with tab7:
     if not st.session_state.dados['ia_sugestao'] or st.session_state.dados.get('status_validacao_pei') == 'rascunho':
         col_btn, col_info = st.columns([1, 2])
         with col_btn:
-            # CORREÇÃO/SEGURANÇA DA LINHA 663 AQUI
             if st.button(f"✨ Gerar Estratégia Técnica", type="primary", use_container_width=True):
                 res, err = consultar_gpt_pedagogico(api_key, st.session_state.dados, st.session_state.pdf_text, modo_pratico=False)
                 if res: 
@@ -828,28 +862,34 @@ with tab8:
 
         st.write(""); c_r1, c_r2 = st.columns(2)
         with c_r1:
-            if len(st.session_state.dados['lista_medicamentos']) > 0:
-                st.markdown(f"""<div class="soft-card sc-orange"><div class="sc-head"><i class="ri-medicine-bottle-fill" style="color:#DD6B20;"></i> Atenção Farmacológica</div><div class="sc-body">Aluno em uso de medicação contínua.</div><div class="bg-icon">💊</div></div>""", unsafe_allow_html=True)
+            # CARD DE MEDICAÇÃO MELHORADO
+            lista_meds = st.session_state.dados['lista_medicamentos']
+            if len(lista_meds) > 0:
+                nomes_meds = ", ".join([m['nome'] for m in lista_meds])
+                alerta_escola = any(m.get('escola') for m in lista_meds)
+                
+                icon_alerta = '<i class="ri-alarm-warning-fill pulse-alert" style="font-size:1.2rem; margin-left:10px;"></i>' if alerta_escola else ""
+                msg_escola = '<div style="margin-top:5px; color:#C53030; font-weight:bold; font-size:0.8rem;">🚨 ATENÇÃO: ADMINISTRAÇÃO NA ESCOLA NECESSÁRIA</div>' if alerta_escola else ""
+                
+                st.markdown(f"""<div class="soft-card sc-orange"><div class="sc-head"><i class="ri-medicine-bottle-fill" style="color:#DD6B20;"></i> Atenção Farmacológica {icon_alerta}</div><div class="sc-body"><b>Uso Contínuo:</b> {nomes_meds} {msg_escola}</div><div class="bg-icon">💊</div></div>""", unsafe_allow_html=True)
             else:
                 st.markdown(f"""<div class="soft-card sc-green"><div class="sc-head"><i class="ri-checkbox-circle-fill" style="color:#38A169;"></i> Medicação</div><div class="sc-body">Nenhuma medicação informada.</div><div class="bg-icon">✅</div></div>""", unsafe_allow_html=True)
+            
             st.write("")
             metas = extrair_metas_estruturadas(st.session_state.dados['ia_sugestao'])
             html_metas = f"""<div class="meta-row"><span style="font-size:1.2rem;">🏁</span> <b>Curto:</b> {metas['Curto']}</div><div class="meta-row"><span style="font-size:1.2rem;">🧗</span> <b>Médio:</b> {metas['Medio']}</div><div class="meta-row"><span style="font-size:1.2rem;">🏔️</span> <b>Longo:</b> {metas['Longo']}</div>""" if metas else "Gere o plano na aba IA."
             st.markdown(f"""<div class="soft-card sc-yellow"><div class="sc-head"><i class="ri-flag-2-fill" style="color:#D69E2E;"></i> Cronograma de Metas</div><div class="sc-body">{html_metas}</div></div>""", unsafe_allow_html=True)
 
         with c_r2:
-            # SUBSTITUIÇÃO: HABILIDADES BNCC (Causava erro) -> ESTRATÉGIAS SELECIONADAS (Dados Reais)
-            n_acc = len(st.session_state.dados['estrategias_acesso'])
-            n_ens = len(st.session_state.dados['estrategias_ensino'])
-            n_ava = len(st.session_state.dados['estrategias_avaliacao'])
-            card_title = "Estratégias Ativas"; card_icon = "🛠️"
+            # CARD SUBSTITUÍDO: RADAR DE COMPONENTES DE ATENÇÃO
+            comps = st.session_state.dados['componentes_atencao']
+            n_comps = len(comps)
             
-            html_tags = f"""
-            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:4px 0;"><span>Acesso/Recursos:</span> <b>{n_acc}</b></div>
-            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:4px 0;"><span>Ensino/Metodologia:</span> <b>{n_ens}</b></div>
-            <div style="display:flex; justify-content:space-between; padding:4px 0;"><span>Avaliação:</span> <b>{n_ava}</b></div>
-            """
-            st.markdown(f"""<div class="soft-card sc-blue"><div class="sc-head"><i class="ri-tools-fill" style="color:#3182CE;"></i> {card_title}</div><div class="sc-body">{html_tags}</div><div class="bg-icon">{card_icon}</div></div>""", unsafe_allow_html=True)
+            if n_comps > 0:
+                html_comps = "".join([f'<span class="rede-chip" style="border-color:#FC8181; color:#C53030;">{c}</span> ' for c in comps])
+                st.markdown(f"""<div class="soft-card sc-orange" style="border-left-color: #FC8181; background-color: #FFF5F5;"><div class="sc-head"><i class="ri-radar-fill" style="color:#C53030;"></i> Radar Curricular de Atenção</div><div class="sc-body" style="margin-bottom:10px;">Componentes que exigem maior flexibilização:</div><div>{html_comps}</div><div class="bg-icon">🎯</div></div>""", unsafe_allow_html=True)
+            else:
+                st.markdown(f"""<div class="soft-card sc-blue"><div class="sc-head"><i class="ri-radar-line" style="color:#3182CE;"></i> Radar Curricular</div><div class="sc-body">Nenhum componente específico marcado como crítico.</div><div class="bg-icon">🎯</div></div>""", unsafe_allow_html=True)
             
             st.write("")
             rede_html = "".join([f'<span class="rede-chip">{get_pro_icon(p)} {p}</span> ' for p in st.session_state.dados['rede_apoio']]) if st.session_state.dados['rede_apoio'] else "<span style='opacity:0.6;'>Sem rede.</span>"
