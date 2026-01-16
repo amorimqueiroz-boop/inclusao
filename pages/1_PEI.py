@@ -85,48 +85,165 @@ def verificar_acesso():
 verificar_acesso()
 
 # ==============================================================================
-# 2. LÓGICA DO BANCO DE DADOS
+# 2. LÓGICA DO BANCO DE DADOS (GOOGLE SHEETS)
 # ==============================================================================
-ARQUIVO_DB_CENTRAL = "banco_alunos.json"
-PASTA_BANCO = "banco_alunos_backup" 
-if not os.path.exists(PASTA_BANCO): os.makedirs(PASTA_BANCO)
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+# Nome da Planilha no Google Sheets (Crie ela lá com este nome exato ou mude aqui)
+NOME_PLANILHA = "Banco_Omnisfera_PEI"
+
+def conectar_gsheets():
+    """Conecta ao Google Sheets usando st.secrets"""
+    try:
+        # Cria o objeto de credenciais a partir dos segredos do Streamlit
+        creds_dict = dict(st.secrets["gcp_service_account"])
+        # Ajuste para garantir que a quebra de linha da chave privada seja lida corretamente
+        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+        
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+        client = gspread.authorize(creds)
+        
+        # Tenta abrir a planilha
+        try:
+            sheet = client.open(NOME_PLANILHA).sheet1
+        except:
+            # Se não existir, avisa (ideal criar manualmente antes e compartilhar com o email da API)
+            st.error(f"⚠️ Não encontrei a planilha '{NOME_PLANILHA}'. Crie-a no Google Drive e compartilhe com o email: {creds_dict['client_email']}")
+            return None
+            
+        return sheet
+    except Exception as e:
+        st.error(f"Erro de conexão com Google Sheets: {e}")
+        return None
 
 def carregar_banco():
-    if os.path.exists(ARQUIVO_DB_CENTRAL):
-        try:
-            with open(ARQUIVO_DB_CENTRAL, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except: return []
-    return []
+    """Lê a planilha e reconstrói o JSON complexo"""
+    sheet = conectar_gsheets()
+    if not sheet: return []
+    
+    try:
+        # Pega todos os registros (retorna lista de dicionários)
+        registros = sheet.get_all_records()
+        
+        dados_formatados = []
+        for reg in registros:
+            # Precisamos 'desempacotar' as strings JSON de volta para listas/dicionários
+            try:
+                # Recupera campos complexos que foram salvos como texto
+                reg['lista_medicamentos'] = json.loads(reg.get('lista_medicamentos', '[]'))
+                reg['composicao_familiar_tags'] = json.loads(reg.get('composicao_familiar_tags', '[]'))
+                reg['checklist_evidencias'] = json.loads(reg.get('checklist_evidencias', '{}'))
+                reg['barreiras_selecionadas'] = json.loads(reg.get('barreiras_selecionadas', '{}'))
+                reg['niveis_suporte'] = json.loads(reg.get('niveis_suporte', '{}'))
+                reg['estrategias_acesso'] = json.loads(reg.get('estrategias_acesso', '[]'))
+                reg['estrategias_ensino'] = json.loads(reg.get('estrategias_ensino', '[]'))
+                reg['estrategias_avaliacao'] = json.loads(reg.get('estrategias_avaliacao', '[]'))
+                reg['potencias'] = json.loads(reg.get('potencias', '[]'))
+                reg['rede_apoio'] = json.loads(reg.get('rede_apoio', '[]'))
+                reg['proximos_passos_select'] = json.loads(reg.get('proximos_passos_select', '[]'))
+            except:
+                continue # Se der erro na conversão de um aluno, pula (evita quebrar tudo)
+            
+            dados_formatados.append(reg)
+            
+        return dados_formatados
+    except Exception as e:
+        st.error(f"Erro ao ler dados: {e}")
+        return []
 
+# Inicializa banco na memória
 if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
     st.session_state.banco_estudantes = carregar_banco()
 
 def salvar_aluno_integrado(dados):
+    """Salva ou Atualiza o aluno no Google Sheets"""
+    sheet = conectar_gsheets()
+    if not sheet: return False, "Erro de conexão com a planilha."
+    
     if not dados['nome']: return False, "Nome é obrigatório."
-    nome_arq = re.sub(r'[^a-zA-Z0-9]', '_', dados['nome'].lower()) + ".json"
-    try:
-        with open(os.path.join(PASTA_BANCO, nome_arq), 'w', encoding='utf-8') as f:
-            json.dump(dados, f, default=str, ensure_ascii=False, indent=4)
-    except Exception as e: return False, f"Erro backup: {str(e)}"
+    
+    # 1. Preparar linha para salvar (Serializar dados complexos para JSON String)
+    # Copiamos para não alterar o objeto original da sessão
+    linha_salvar = dados.copy()
+    
+    # Converte datas para string
+    if isinstance(linha_salvar.get('nasc'), date): linha_salvar['nasc'] = str(linha_salvar['nasc'])
+    if isinstance(linha_salvar.get('monitoramento_data'), date): linha_salvar['monitoramento_data'] = str(linha_salvar['monitoramento_data'])
+    
+    # Converte listas e dicts para Texto JSON (para caber na célula do Excel)
+    campos_complexos = [
+        'lista_medicamentos', 'composicao_familiar_tags', 'checklist_evidencias',
+        'barreiras_selecionadas', 'niveis_suporte', 'estrategias_acesso',
+        'estrategias_ensino', 'estrategias_avaliacao', 'potencias', 'rede_apoio',
+        'proximos_passos_select'
+    ]
+    
+    for campo in campos_complexos:
+        linha_salvar[campo] = json.dumps(linha_salvar.get(campo, [] if 'lista' in campo or 'tags' in campo else {}), ensure_ascii=False)
+    
+    # Adiciona metadados
+    linha_salvar["responsavel"] = st.session_state.get("usuario_nome", "Desconhecido")
+    linha_salvar["data_criacao"] = str(date.today())
 
-    st.session_state.banco_estudantes = [a for a in st.session_state.banco_estudantes if a['nome'] != dados['nome']]
-    novo_registro = {
-        "nome": dados['nome'],
-        "serie": dados.get('serie', ''),
-        "hiperfoco": dados.get('hiperfoco', ''),
-        "ia_sugestao": dados.get('ia_sugestao', ''),
-        "diagnostico": dados.get('diagnostico', ''),
-        "responsavel": st.session_state.get("usuario_nome", "Desconhecido"),
-        "data_criacao": str(date.today())
-    }
-    st.session_state.banco_estudantes.append(novo_registro)
     try:
-        with open(ARQUIVO_DB_CENTRAL, "w", encoding="utf-8") as f:
-            json.dump(st.session_state.banco_estudantes, f, default=str, ensure_ascii=False, indent=4)
-        return True, f"Aluno {dados['nome']} integrado à Omnisfera!"
+        # Verifica se o aluno já existe (busca pelo nome)
+        cell = sheet.find(dados['nome'])
+        
+        # Se achou, atualiza a linha
+        # (Para simplificar, deletamos e inserimos de novo ou atualizamos células. 
+        # A forma mais robusta é montar a lista de valores na ordem das colunas)
+        
+        # Estratégia Robusta: Mapear Colunas
+        # Se a planilha estiver vazia, cria o cabeçalho
+        if not sheet.get_all_values():
+            header = list(linha_salvar.keys())
+            sheet.append_row(header)
+            
+        # Pega o cabeçalho atual para garantir a ordem
+        header_atual = sheet.row_values(1)
+        
+        # Se houver colunas novas no código que não tem na planilha, adiciona no final (opcional, mas bom prevenir)
+        # (Aqui assumimos que o header bate. Se não, o append resolve para novos)
+        
+        valores_ordenados = [linha_salvar.get(h, "") for h in header_atual]
+        
+        if cell:
+            # Atualiza linha existente
+            # sheet.update(f"A{cell.row}", [valores_ordenados]) # gspread mais novo usa range
+            # Método compatível com gspreads variados: deletar e inserir é brusco mas funciona, 
+            # melhor é achar a linha e fazer update cell a cell ou batch.
+            
+            # Vamos usar update range baseado na linha encontrada
+            col_count = len(header_atual)
+            # Converte para string para garantir
+            valores_str = [str(v) for v in valores_ordenados]
+            sheet.update(range_name=f"A{cell.row}:ZZ{cell.row}", values=[valores_str]) # Atualiza a linha toda
+            msg = f"Aluno {dados['nome']} ATUALIZADO no Google Sheets!"
+            
+        else:
+            # Cria novo
+            # Se o header tiver colunas que não temos, preenche vazio. 
+            # Se nós temos dados que o header não tem, ignoramos (ou recriamos o header)
+            
+            # Para garantir, vamos usar apenas append_row com chaves se o gspread suportasse, mas ele pede lista.
+            # Vamos forçar o append. Se for o primeiro aluno, o header já foi criado acima.
+            
+            valores_ordenados = [linha_salvar.get(h, "") for h in header_atual]
+            sheet.append_row(valores_ordenados)
+            msg = f"Aluno {dados['nome']} SALVO no Google Sheets!"
+
+        # Atualiza a sessão local para refletir imediatamente
+        st.session_state.banco_estudantes = carregar_banco()
+        return True, msg
+
     except Exception as e:
-        return False, f"Erro integração: {str(e)}"
+        # Fallback: Se der erro de coluna/header, tenta append bruto ou avisa
+        return False, f"Erro ao salvar no Sheets: {str(e)}"
+
+
+
 
 # ==============================================================================
 # 3. LISTAS DE DADOS (COM ÍCONES)
