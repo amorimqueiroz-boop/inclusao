@@ -18,8 +18,8 @@ import requests
 # 0. CONFIGURAÇÃO DE PÁGINA
 # ==============================================================================
 st.set_page_config(
-    page_title="Omnisfera | PEI",
-    page_icon="📘",
+    page_title="Omnisfera | PEI 360",
+    page_icon="🧩",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -51,6 +51,8 @@ else:
 
 st.markdown(f"""
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+    
     .omni-badge {{
         position: fixed; top: 15px; right: 15px;
         background: {card_bg}; border: 1px solid {card_border};
@@ -127,7 +129,7 @@ def salvar_aluno_integrado(dados):
         return False, f"Erro integração: {str(e)}"
 
 # ==============================================================================
-# 3. LISTAS DE DADOS
+# 3. LISTAS DE DADOS (COM ÍCONES)
 # ==============================================================================
 LISTA_SERIES = [
     "Educação Infantil (Creche)", "Educação Infantil (Pré-Escola)", 
@@ -136,8 +138,17 @@ LISTA_SERIES = [
     "1ª Série (EM)", "2ª Série (EM)", "3ª Série (EM)", "EJA (Educação de Jovens e Adultos)"
 ]
 LISTA_ALFABETIZACAO = ["Não se aplica (Educação Infantil)", "Pré-Silábico (Garatuja/Desenho sem letras)", "Pré-Silábico (Letras aleatórias sem valor sonoro)", "Silábico (Sem valor sonoro convencional)", "Silábico (Com valor sonoro vogais/consoantes)", "Silábico-Alfabético (Transição)", "Alfabético (Escrita fonética, com erros ortográficos)", "Ortográfico (Escrita convencional consolidada)"]
-LISTAS_BARREIRAS = {"Funções Cognitivas": ["Atenção Sustentada/Focada", "Memória de Trabalho (Operacional)", "Flexibilidade Mental", "Planejamento e Organização", "Velocidade de Processamento", "Abstração e Generalização"], "Comunicação e Linguagem": ["Linguagem Expressiva (Fala)", "Linguagem Receptiva (Compreensão)", "Pragmática (Uso social da língua)", "Processamento Auditivo", "Intenção Comunicativa"], "Socioemocional": ["Regulação Emocional (Autocontrole)", "Tolerância à Frustração", "Interação Social com Pares", "Autoestima e Autoimagem", "Reconhecimento de Emoções"], "Sensorial e Motor": ["Praxias Globais (Coordenação Grossa)", "Praxias Finas (Coordenação Fina)", "Hipersensibilidade Sensorial", "Hipossensibilidade (Busca Sensorial)", "Planejamento Motor"], "Acadêmico": ["Decodificação Leitora", "Compreensão Textual", "Raciocínio Lógico-Matemático", "Grafomotricidade (Escrita manual)", "Produção Textual"]}
-LISTA_POTENCIAS = ["Memória Visual", "Musicalidade/Ritmo", "Interesse em Tecnologia", "Hiperfoco Construtivo", "Liderança Natural", "Habilidades Cinestésicas (Esportes)", "Expressão Artística (Desenho)", "Cálculo Mental Rápido", "Oralidade/Vocabulário", "Criatividade/Imaginação", "Empatia/Cuidado com o outro", "Resolução de Problemas", "Curiosidade Investigativa"]
+
+# ATUALIZADO COM EMOJIS PARA LEITURA VISUAL RÁPIDA
+LISTAS_BARREIRAS = {
+    "Funções Cognitivas": ["🎯 Atenção Sustentada/Focada", "🧠 Memória de Trabalho (Operacional)", "🔄 Flexibilidade Mental", "📅 Planejamento e Organização", "⚡ Velocidade de Processamento", "🧩 Abstração e Generalização"],
+    "Comunicação e Linguagem": ["🗣️ Linguagem Expressiva (Fala)", "👂 Linguagem Receptiva (Compreensão)", "💬 Pragmática (Uso social)", "🎧 Processamento Auditivo", "🙋 Intenção Comunicativa"],
+    "Socioemocional": ["😡 Regulação Emocional", "⛔ Tolerância à Frustração", "🤝 Interação Social com Pares", "🪞 Autoestima e Autoimagem", "😢 Reconhecimento de Emoções"],
+    "Sensorial e Motor": ["🏃 Praxias Globais (Grossa)", "✍️ Praxias Finas", "🔊 Hipersensibilidade Sensorial", "🔍 Hipossensibilidade (Busca)", "🧱 Planejamento Motor"],
+    "Acadêmico": ["📖 Decodificação Leitora", "📜 Compreensão Textual", "➗ Raciocínio Lógico-Matemático", "📝 Grafomotricidade (Escrita)", "🖊️ Produção Textual"]
+}
+LISTA_POTENCIAS = ["📸 Memória Visual", "🎵 Musicalidade/Ritmo", "💻 Interesse em Tecnologia", "🧱 Hiperfoco Construtivo", "👑 Liderança Natural", "⚽ Habilidades Cinestésicas (Esportes)", "🎨 Expressão Artística (Desenho)", "🔢 Cálculo Mental Rápido", "🗣️ Oralidade/Vocabulário", "🚀 Criatividade/Imaginação", "❤️ Empatia/Cuidado", "🧩 Resolução de Problemas", "🕵️ Curiosidade Investigativa"]
+
 LISTA_PROFISSIONAIS = ["Psicólogo Clínico", "Neuropsicólogo", "Fonoaudiólogo", "Terapeuta Ocupacional", "Neuropediatra", "Psiquiatra Infantil", "Psicopedagogo Clínico", "Professor de Apoio (Mediador)", "Acompanhante Terapêutico (AT)", "Musicoterapeuta", "Equoterapeuta", "Oftalmologista"]
 LISTA_FAMILIA = ["Mãe", "Pai", "Madrasta", "Padrasto", "Avó Materna", "Avó Paterna", "Avô Materno", "Avô Paterno", "Irmãos", "Tios", "Primos", "Tutor Legal", "Abrigo Institucional"]
 
@@ -232,14 +243,20 @@ def extrair_tag_ia(texto, tag):
 
 def extrair_metas_estruturadas(texto):
     bloco = extrair_tag_ia(texto, "METAS_SMART")
-    if not bloco: return {"Curto": "Definir...", "Medio": "...", "Longo": "..."}
+    # Caso a IA não use a tag, tenta achar por regex simples
+    if not bloco and "Metas de Curto" in texto:
+         # Fallback rudimentar
+         pass
+    
     metas = {"Curto": "Definir...", "Medio": "Definir...", "Longo": "Definir..."}
-    linhas = bloco.split('\n')
-    for l in linhas:
-        l_clean = re.sub(r'^[\-\*]+', '', l).strip()
-        if "Curto" in l or "2 meses" in l: metas["Curto"] = l_clean.split(":")[-1].strip()
-        elif "Médio" in l or "Semestre" in l: metas["Medio"] = l_clean.split(":")[-1].strip()
-        elif "Longo" in l or "Ano" in l: metas["Longo"] = l_clean.split(":")[-1].strip()
+    if bloco:
+        linhas = bloco.split('\n')
+        for l in linhas:
+            l_clean = re.sub(r'^[\-\*]+', '', l).strip()
+            if not l_clean: continue
+            if "Curto" in l or "2 meses" in l: metas["Curto"] = l_clean.split(":")[-1].strip()
+            elif "Médio" in l or "Semestre" in l: metas["Medio"] = l_clean.split(":")[-1].strip()
+            elif "Longo" in l or "Ano" in l: metas["Longo"] = l_clean.split(":")[-1].strip()
     return metas
 
 def get_pro_icon(nome_profissional):
@@ -287,12 +304,11 @@ def calcular_progresso():
     if d['estrategias_ensino']: pontos += 1
     return int((pontos / total) * 90)
 
-# FUNÇÃO NOVA: INFERIR COMPONENTES AUTOMATICAMENTE
+# FUNÇÃO DE INFERÊNCIA DE COMPONENTES (MANTIDA)
 def inferir_componentes_impactados(dados):
     barreiras = dados.get('barreiras_selecionadas', {})
     impactados = set()
     
-    # Lógica de Inferência Baseada em Evidências
     if barreiras.get('Acadêmico') and any("Leitora" in b for b in barreiras['Acadêmico']):
         impactados.add("Língua Portuguesa")
         impactados.add("História/Geografia (Leitura)")
@@ -314,7 +330,7 @@ def inferir_componentes_impactados(dados):
     return list(impactados) if impactados else ["Nenhum componente específico detectado automaticamente"]
 
 # ==============================================================================
-# 6. ESTILO VISUAL
+# 6. ESTILO VISUAL E PÁGINA INICIAL RICA
 # ==============================================================================
 def aplicar_estilo_visual():
     estilo = """
@@ -322,6 +338,14 @@ def aplicar_estilo_visual():
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
         html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }
         .block-container { padding-top: 1.5rem !important; padding-bottom: 5rem !important; }
+        
+        .rich-box {
+            background-color: white; border-radius: 12px; padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;
+            margin-bottom: 20px;
+        }
+        .rb-title { font-size: 1.1rem; font-weight: 800; color: #2C5282; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .rb-text { font-size: 0.95rem; color: #4A5568; line-height: 1.6; text-align: justify; }
         
         div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] { display: none !important; }
         
@@ -352,12 +376,6 @@ def aplicar_estilo_visual():
             box-shadow: 0 0 12px rgba(214, 158, 46, 0.5), inset 0 0 5px rgba(214, 158, 46, 0.1) !important;
         }
 
-        .insight-card { background-color: #FFFFF0; border-radius: 12px; padding: 20px; color: #2D3748; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #D69E2E; margin-top: 30px; }
-        .insight-icon { font-size: 1.5rem; color: #D69E2E; background: rgba(214, 158, 46, 0.15); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-
-        .rich-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; text-align: center; height: 100%; }
-        .rich-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.06); border-color: #CBD5E0; }
-        
         .header-unified { background-color: white; padding: 20px 40px; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }
         .header-subtitle { font-size: 1.2rem; color: #718096; font-weight: 600; border-left: 2px solid #E2E8F0; padding-left: 20px; line-height: 1.2; }
 
@@ -414,7 +432,7 @@ def render_progresso():
     st.markdown(f"""<div class="prog-container"><div class="prog-track"><div class="prog-fill" style="width: {p}%; background: {bar_color};"></div></div><div class="prog-icon" style="left: {p}%;">{icon_html}</div></div>""", unsafe_allow_html=True)
 
 # ==============================================================================
-# 7. INTELIGÊNCIA ARTIFICIAL
+# 7. INTELIGÊNCIA ARTIFICIAL (CORREÇÃO DE METAS E FORMATO)
 # ==============================================================================
 def extrair_dados_pdf_ia(api_key, texto_pdf):
     if not api_key: return None, "Configure a Chave API."
@@ -433,18 +451,23 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         evid = "\n".join([f"- {k.replace('?', '')}" for k, v in dados['checklist_evidencias'].items() if v])
         meds_info = "\n".join([f"- {m['nome']} ({m['posologia']})." for m in dados['lista_medicamentos']]) if dados['lista_medicamentos'] else "Nenhuma medicação informada."
         
+        # HIPERFOCO GARANTIDO NO CONTEXTO
+        hiperfoco_txt = f"HIPERFOCO DO ALUNO: {dados['hiperfoco']}" if dados['hiperfoco'] else "Hiperfoco: Não identificado."
+
         serie = dados['serie'] or ""
         nivel_ensino = detectar_nivel_ensino(serie)
         alfabetizacao = dados.get('nivel_alfabetizacao', 'Não Avaliado')
         
-        prompt_identidade = """
-        [PERFIL_NARRATIVO] Inicie com "👤 QUEM É O ESTUDANTE?". Parágrafo humanizado mostrando a criança além do diagnóstico. [/PERFIL_NARRATIVO]
+        prompt_identidade = f"""
+        [PERFIL_NARRATIVO] 
+        Inicie com "👤 QUEM É O ESTUDANTE?". Crie um parágrafo humanizado. {hiperfoco_txt}. Use o hiperfoco para conectar com a aprendizagem. 
+        [/PERFIL_NARRATIVO]
         """
         
         prompt_diagnostico = f"""
-        1. 🏥 DIAGNÓSTICO E IMPACTO (FUNDAMENTAL):
-        - Cite o Diagnóstico (e o CID se disponível no laudo).
-        - Descreva os **impactos diretos na aprendizagem**.
+        ### 1. 🏥 DIAGNÓSTICO E IMPACTO (FUNDAMENTAL):
+        - Cite o Diagnóstico (e o CID se disponível).
+        - Descreva os **impactos diretos na aprendizagem** para este aluno.
         - Liste Cuidados e Pontos de Atenção essenciais.
         """
 
@@ -454,8 +477,8 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
 
         # CHECKLIST HUB DE INCLUSÃO
         prompt_hub = """
-        ### 4. 🧩 CHECKLIST DE ADAPTAÇÃO E ACESSIBILIDADE:
-        (Responda objetivamente Sim/Não e justifique brevemente com base no diagnóstico. Não mencione 'Hub' no título).
+        ### 6. 🧩 CHECKLIST DE ADAPTAÇÃO E ACESSIBILIDADE:
+        (Responda objetivamente Sim/Não e justifique brevemente com base no diagnóstico).
         1. O estudante necessita de questões mais desafiadoras?
         2. O estudante compreende instruções complexas?
         3. O estudante necessita de instruções passo a passo?
@@ -467,68 +490,87 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         9. O estudante precisa de adaptação na formatação? (Especifique: espaçamento, fonte OpenDyslexic, etc).
         """
         
-        # LOGICA PARA COMPONENTES DE ATENÇÃO (Somente se não for EI)
+        # LOGICA PARA COMPONENTES DE ATENÇÃO
         prompt_componentes = ""
         if nivel_ensino != "EI":
             prompt_componentes = f"""
-            3. ⚠️ COMPONENTES CURRICULARES DE ATENÇÃO (Análise da IA):
-            Com base EXCLUSIVAMENTE no diagnóstico ({dados['diagnostico']}) e nas barreiras citadas, identifique quais Componentes Curriculares (ex: Matemática, História, etc.) exigirão maior flexibilização.
+            ### 4. ⚠️ COMPONENTES CURRICULARES DE ATENÇÃO (Análise da IA):
+            Com base EXCLUSIVAMENTE no diagnóstico ({dados['diagnostico']}) e nas barreiras citadas, identifique quais Componentes Curriculares exigirão maior flexibilização.
             - Liste os componentes.
-            - Para cada um, explique O MOTIVO técnico da dificuldade (Ex: "Matemática devido à dificuldade em abstração típica do diagnóstico X").
+            - Para cada um, explique O MOTIVO técnico da dificuldade.
             """
 
-        # ESTRUTURA MODIFICADA: PLANO DE INTERVENÇÃO E ESTRATÉGIAS + FARMA NO FINAL
+        # METAS SMART ESTRUTURADAS (CRUCIAL PARA O DASHBOARD)
+        prompt_metas = """
+        [METAS_SMART]
+        (Siga ESTRITAMENTE este formato para o sistema ler):
+        - Meta de Curto Prazo (2 meses): [Descreva a meta]
+        - Meta de Médio Prazo (1 semestre): [Descreva a meta]
+        - Meta de Longo Prazo (1 ano): [Descreva a meta]
+        [/METAS_SMART]
+        """
+
+        # ESTRUTURA PADRONIZADA (SEM FRANKENSTEIN)
         if nivel_ensino == "EI":
             perfil_ia = "Especialista em EDUCAÇÃO INFANTIL e BNCC."
             estrutura_req = f"""
-            ESTRUTURA OBRIGATÓRIA (EI):
+            ESTRUTURA OBRIGATÓRIA (EI) - USE MARKDOWN LIMPO:
             {prompt_identidade}
             {prompt_diagnostico}
             
-            2. 🌟 AVALIAÇÃO DE REPERTÓRIO:
+            ### 2. 🌟 AVALIAÇÃO DE REPERTÓRIO:
             [CAMPOS_EXPERIENCIA_PRIORITARIOS] Destaque 2 ou 3 Campos BNCC. [/CAMPOS_EXPERIENCIA_PRIORITARIOS]
-            - **Habilidades de Anos Anteriores (Basais):** O que precisa ser resgatado.
-            - **Habilidades do Ano Atual (Prioritárias):** O foco agora.
+            - **Habilidades Basais:** O que precisa ser resgatado.
+            - **Habilidades Prioritárias:** O foco agora.
             [OBJETIVOS_DESENVOLVIMENTO]
             - OBJETIVO 1: ...
             - OBJETIVO 2: ...
             [FIM_OBJETIVOS]
             
-            5. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
-            [ANALISE_FARMA] Se houver medicação, cite efeitos colaterais (sono, sede, etc) e impactos em sala. [/ANALISE_FARMA]
+            ### 3. 🚀 ESTRATÉGIAS DE INTERVENÇÃO:
+            (Estratégias de acolhimento, rotina e adaptação sensorial).
+            
+            {prompt_metas}
+            
+            ### 5. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
+            [ANALISE_FARMA] Se houver medicação, cite efeitos colaterais. [/ANALISE_FARMA]
 
             {prompt_hub}
             """
         else:
             perfil_ia = "Especialista em Inclusão Escolar e BNCC."
             instrucao_bncc = """[MAPEAMENTO_BNCC] Separe por Componente Curricular. CÓDIGO ALFANUMÉRICO OBRIGATÓRIO (ex: EF01LP02). [/MAPEAMENTO_BNCC]"""
-            instrucao_bloom = """[TAXONOMIA_BLOOM] Explique a categoria cognitiva escolhida. Liste 3 verbos de comando. [/TAXONOMIA_BLOOM]"""
+            instrucao_bloom = """[TAXONOMIA_BLOOM] Explique a categoria cognitiva escolhida. [/TAXONOMIA_BLOOM]"""
 
             estrutura_req = f"""
-            ESTRUTURA OBRIGATÓRIA (Padrão):
+            ESTRUTURA OBRIGATÓRIA (Padrão) - USE MARKDOWN LIMPO:
             {prompt_identidade}
             {prompt_diagnostico}
             
-            2. 🌟 AVALIAÇÃO DE REPERTÓRIO:
-            - **Habilidades de Anos Anteriores (Defasagens/Basais):** O que o aluno ainda não consolidou.
+            ### 2. 🌟 AVALIAÇÃO DE REPERTÓRIO:
+            - **Habilidades de Anos Anteriores (Defasagens):** O que o aluno ainda não consolidou.
             - **Habilidades Fundamentais do Ano Atual:** Onde vamos focar.
             {instrucao_bncc}
             {instrucao_bloom}
-            [METAS_SMART] Metas de Curto, Médio e Longo prazo. [FIM_METAS_SMART]
             
-            {prompt_componentes}
+            ### 3. 🚀 ESTRATÉGIAS DE INTERVENÇÃO:
+            (Adaptações curriculares e de acesso).
             {prompt_literacia}
             
-            5. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
-            [ANALISE_FARMA] Se houver medicação, cite efeitos colaterais (sono, sede, etc) e impactos em sala. [/ANALISE_FARMA]
+            {prompt_componentes}
+            
+            {prompt_metas}
+            
+            ### 5. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
+            [ANALISE_FARMA] Se houver medicação, cite efeitos colaterais. [/ANALISE_FARMA]
 
             {prompt_hub}
             """
 
         prompt_feedback = f"AJUSTE SOLICITADO: {feedback_usuario}" if feedback_usuario else ""
-        prompt_formatacao = "Mantenha a formatação em MARKDOWN limpo (Use ### para títulos, ** para negrito). Não use tabelas complexas."
+        prompt_formatacao = "IMPORTANTE: Não invente seções novas. Use títulos H3 (###). Não use tabelas complexas, prefira listas."
 
-        prompt_sys = f"""{perfil_ia} MISSÃO: Criar PEI Técnico. {estrutura_req} {prompt_feedback} {prompt_formatacao}"""
+        prompt_sys = f"""{perfil_ia} MISSÃO: Criar PEI Técnico Oficial. {estrutura_req} {prompt_feedback} {prompt_formatacao}"""
         
         if modo_pratico:
             prompt_sys = f"""{perfil_ia} GUIA PRÁTICO PARA SALA DE AULA. {prompt_feedback} # GUIA PRÁTICO {serie} ... {prompt_hub}"""
@@ -560,7 +602,7 @@ def gerar_roteiro_gamificado(api_key, dados, pei_tecnico, feedback_game=""):
     except Exception as e: return None, str(e)
 
 # ==============================================================================
-# 8. GERADOR PDF
+# 8. GERADOR PDF (REFINADO E LIMPO)
 # ==============================================================================
 class PDF_Classic(FPDF):
     def header(self):
@@ -582,6 +624,7 @@ class PDF_Classic(FPDF):
         self.set_font('ZapfDingbats', '', 10); self.set_text_color(80, 80, 80)
         char = '3' if bullet_type == 'check' else 'PARAGRAPH' if bullet_type == 'arrow' else 'l'
         self.cell(6, 5, char, 0, 0); self.set_font('Arial', '', 10); self.set_text_color(0); self.multi_cell(0, 5, texto); self.ln(1)
+
 class PDF_Simple_Text(FPDF):
     def header(self):
         self.set_font('Arial', 'B', 16); self.set_text_color(50); self.cell(0, 10, 'ROTEIRO DE MISSÃO', 0, 1, 'C'); self.set_draw_color(150); self.line(10, 25, 200, 25); self.ln(10)
@@ -603,17 +646,26 @@ def gerar_pdf_final(dados, tem_anexo):
                     pdf.add_flat_icon_item(limpar_texto_pdf(f"{item} (Nível: {nivel})"), 'check')
 
     if dados['ia_sugestao']:
-        pdf.add_page(); pdf.section_title("Planejamento Pedagógico")
+        pdf.add_page(); pdf.section_title("Planejamento Pedagógico Detalhado")
         texto_limpo = limpar_texto_pdf(dados['ia_sugestao'])
+        # Remover tags de controle
         texto_limpo = re.sub(r'\[.*?\]', '', texto_limpo) 
+        
         for linha in texto_limpo.split('\n'):
             l = linha.strip()
             if not l: continue
-            if re.match(r'^[1-9]\.', l) or l.isupper() or l.startswith("###") or l.startswith("##"):
-                pdf.ln(3); pdf.set_font('Arial', 'B', 10); pdf.multi_cell(0, 6, l.replace('#', '').strip()); pdf.set_font('Arial', '', 10)
+            
+            # Detecção de Títulos Markdown
+            if l.startswith('###') or l.startswith('##'):
+                pdf.ln(4); pdf.set_font('Arial', 'B', 12); pdf.set_text_color(0, 51, 102)
+                pdf.cell(0, 8, l.replace('#', '').strip(), 0, 1, 'L')
+                pdf.set_font('Arial', '', 10); pdf.set_text_color(0, 0, 0)
+            # Detecção de Bullets
             elif l.startswith('-') or l.startswith('*'):
                 pdf.add_flat_icon_item(l.replace('-','').replace('*','').strip(), 'dot')
-            else: pdf.multi_cell(0, 6, l)
+            # Texto Normal
+            else:
+                pdf.multi_cell(0, 6, l)
     return pdf.output(dest='S').encode('latin-1', 'replace')
 
 def gerar_pdf_tabuleiro_simples(texto):
@@ -669,8 +721,41 @@ tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
 
 with tab0:
     st.markdown("### 🏛️ Central de Fundamentos e Legislação")
-    st.markdown("""<div class="soft-card sc-blue" style="min-height: auto; margin-bottom: 20px;"><div class="sc-head"><i class="ri-article-line" style="color:#3182CE;"></i> O que é o PEI? (Definição Técnica)</div><div class="sc-body">O <b>Plano de Ensino Individualizado (PEI)</b> é o instrumento norteador da inclusão escolar, baseado no DUA.</div><div class="bg-icon">📘</div></div>""", unsafe_allow_html=True)
-    st.markdown("""<div class="soft-card sc-yellow" style="min-height: auto;"><div class="sc-head"><i class="ri-balance-line" style="color:#D69E2E;"></i> Marco Legal (2025)</div><div class="sc-body">LDB e LBI. <b>📢 Decretos 12.686 e 12.773 (Dez/2025).</b></div><div class="bg-icon">⚖️</div></div>""", unsafe_allow_html=True)
+    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("""
+        <div class="rich-box">
+            <div class="rb-title"><i class="ri-book-open-line"></i> O que é o PEI?</div>
+            <div class="rb-text">
+                O <b>Plano de Ensino Individualizado (PEI)</b> não é apenas um documento burocrático, mas o mapa de navegação da inclusão escolar. Ele materializa o conceito de equidade, garantindo que o currículo seja acessível a todos. Baseado no <b>DUA (Desenho Universal para Aprendizagem)</b>, o PEI foca em eliminar barreiras, não em "consertar" o estudante.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_b:
+        st.markdown("""
+        <div class="rich-box">
+            <div class="rb-title"><i class="ri-government-line"></i> Base Legal (Atualizada)</div>
+            <div class="rb-text">
+                O PEI é respaldado pela <b>LBI (Lei Brasileira de Inclusão - Lei 13.146/2015)</b> e pela LDB. Recentemente, decretos de 2025 reforçaram a obrigatoriedade de um planejamento que contemple não apenas adaptações de conteúdo, mas também de <b>tempo, espaço e avaliação</b>. A recusa em fornecer o PEI pode configurar discriminação.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="rich-box" style="background-color: #EBF8FF; border-color: #3182CE;">
+        <div class="rb-title" style="color: #2B6CB0;"><i class="ri-compass-3-line"></i> Como usar este Sistema?</div>
+        <div class="rb-text">
+            A <b>Omnisfera</b> guia você em 4 passos:
+            <ol>
+                <li><b>Mapeamento:</b> Preencha os dados, o diagnóstico e as barreiras reais do aluno.</li>
+                <li><b>Consultoria IA:</b> Nossa inteligência cruzará o diagnóstico com a BNCC para sugerir estratégias.</li>
+                <li><b>Validação:</b> O professor revisa e aprova o plano.</li>
+                <li><b>Aplicação:</b> O sistema gera o checklist para o Hub de Inclusão e o roteiro gamificado para o aluno.</li>
+            </ol>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 with tab1:
     render_progresso()
@@ -746,10 +831,10 @@ with tab3:
 with tab4:
     render_progresso(); st.markdown("### <i class='ri-radar-line'></i> Mapeamento", unsafe_allow_html=True)
     with st.container(border=True):
-        st.markdown("#### Potencialidades e Hiperfoco"); c1, c2 = st.columns(2); st.session_state.dados['hiperfoco'] = c1.text_input("Hiperfoco", st.session_state.dados['hiperfoco']); p_val = [p for p in st.session_state.dados.get('potencias', []) if p in LISTA_POTENCIAS]; st.session_state.dados['potencias'] = c2.multiselect("Pontos Fortes", LISTA_POTENCIAS, default=p_val)
+        st.markdown("#### Potencialidades e Hiperfoco"); c1, c2 = st.columns(2); st.session_state.dados['hiperfoco'] = c1.text_input("Hiperfoco", st.session_state.dados['hiperfoco'], placeholder="Ex: Dinossauros, Minecraft (Obrigatório se houver)"); p_val = [p for p in st.session_state.dados.get('potencias', []) if p in LISTA_POTENCIAS]; st.session_state.dados['potencias'] = c2.multiselect("Pontos Fortes", LISTA_POTENCIAS, default=p_val)
     st.divider()
     
-    # VOLTA AO ORIGINAL: SÓ BARREIRAS (SEM SELEÇÃO MANUAL DE COMPONENTES)
+    # BARREIRAS COM ÍCONES NAS LISTAS
     with st.container(border=True):
         st.markdown("#### Barreiras e Nível de Suporte (CIF)"); c_bar1, c_bar2, c_bar3 = st.columns(3)
         def render_cat_barreira(coluna, titulo, chave_json):
@@ -757,7 +842,7 @@ with tab4:
                 st.markdown(f"**{titulo}**"); itens = LISTAS_BARREIRAS[chave_json]; b_salvas = [b for b in st.session_state.dados['barreiras_selecionadas'].get(chave_json, []) if b in itens]; sel = st.multiselect("Selecione:", itens, key=f"ms_{chave_json}", default=b_salvas, label_visibility="collapsed"); st.session_state.dados['barreiras_selecionadas'][chave_json] = sel
                 if sel:
                     for x in sel: st.session_state.dados['niveis_suporte'][f"{chave_json}_{x}"] = st.select_slider(x, ["Autônomo", "Monitorado", "Substancial", "Muito Substancial"], value=st.session_state.dados['niveis_suporte'].get(f"{chave_json}_{x}", "Monitorado"), key=f"sl_{chave_json}_{x}")
-        render_cat_barreira(c_bar1, "Funções Cognitivas", "Funções Cognitivas"); render_cat_barreira(c_bar1, "Sensorial e Motor", "Sensorial e Motor"); render_cat_barreira(c_bar2, "Comunicação e Linguagem", "Comunicação e Linguagem"); render_cat_barreira(c_bar2, "Acadêmico", "Acadêmico"); render_cat_barreira(c_bar3, "Socioemocional", "Socioemocional")
+        render_cat_barreira(c_bar1, "🧠 Funções Cognitivas", "Funções Cognitivas"); render_cat_barreira(c_bar1, "🖐️ Sensorial e Motor", "Sensorial e Motor"); render_cat_barreira(c_bar2, "🗣️ Comunicação e Linguagem", "Comunicação e Linguagem"); render_cat_barreira(c_bar2, "📚 Acadêmico", "Acadêmico"); render_cat_barreira(c_bar3, "❤️ Socioemocional", "Socioemocional")
 
 with tab5:
     render_progresso(); st.markdown("### <i class='ri-tools-line'></i> Plano de Ação", unsafe_allow_html=True); c1, c2, c3 = st.columns(3)
@@ -802,7 +887,7 @@ with tab7:
             st.markdown("""
             1. **Análise de Contexto:** Cruzamento entre diagnóstico, idade ({}) e série ({}).
             2. **Filtro Vygotsky:** Identificação da Zona de Desenvolvimento Proximal baseada nas barreiras citadas.
-            3. **Checklist de Inclusão:** Perguntas de adaptação respondidas com base no quadro clínico.
+            3. **Metas SMART:** Criação de objetivos específicos, mensuráveis e temporais.
             """.format(calcular_idade(st.session_state.dados['nasc']), st.session_state.dados['serie']))
             
         with st.expander("🛡️ Calibragem e Segurança"):
@@ -813,6 +898,7 @@ with tab7:
             """)
 
         st.markdown("#### 📝 Revisão do Plano")
+        # Remover tags para visualização limpa
         texto_visual = re.sub(r'\[.*?\]', '', st.session_state.dados['ia_sugestao'])
         st.markdown(texto_visual)
         st.divider()
@@ -894,7 +980,6 @@ with tab8:
 
         with c_r2:
             # CARD AUTOMÁTICO: RADAR DE COMPONENTES (Inferido das Barreiras)
-            # Como retiramos a seleção manual, usamos a lógica "inferir_componentes_impactados" para exibir no Dash
             comps_inferidos = inferir_componentes_impactados(st.session_state.dados)
             n_comps = len(comps_inferidos)
             
@@ -944,7 +1029,6 @@ with tab_mapa:
     render_progresso()
     st.markdown(f"<div style='background: linear-gradient(90deg, #F6E05E 0%, #D69E2E 100%); padding: 25px; border-radius: 20px; color: #2D3748; margin-bottom: 20px;'><h3 style='margin:0;'>🗺️ Jornada: {st.session_state.dados['nome']}</h3></div>", unsafe_allow_html=True)
     
-    # EXPLICAÇÃO DA FERRAMENTA
     st.info("ℹ️ **O que é isso?** Esta ferramenta gera um material **para o estudante**. É uma tradução gamificada do PEI para que a própria criança/jovem entenda seus desafios e potências de forma lúdica. Imprima e cole no caderno!")
 
     if st.session_state.dados['ia_sugestao']:
@@ -987,4 +1071,4 @@ with tab_mapa:
 
     else: st.warning("⚠️ Gere o PEI Técnico na aba 'Consultoria IA' primeiro.")
 
-st.markdown("<div class='footer-signature'>PEI 360º v116.0 Gold Edition - Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
+st.markdown("<div class='footer-signature'>PEI 360º v117.0 Gold Edition - Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
