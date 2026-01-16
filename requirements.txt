@@ -5,13 +5,12 @@ pypdf
 fpdf
 Pillow
 streamlit-cropper
+gspread
+oauth2client
+pandas
 requests
 google-auth
 google-auth-oauthlib
 google-auth-httplib2
 httpx-oauth
-pandas
-gspread
-oauth2client
-pandas
 
