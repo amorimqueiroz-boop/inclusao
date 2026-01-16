@@ -1,9 +1,5 @@
 import streamlit as st
 import os
-import base64
-import re
-import json
-import requests
 from openai import OpenAI
 from datetime import date
 from io import BytesIO
@@ -12,7 +8,12 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Inches
 from pypdf import PdfReader
 from fpdf import FPDF
+import base64
+import re
+import json
+import requests
 from PIL import Image
+from streamlit_cropper import st_cropper
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
@@ -20,7 +21,7 @@ from PIL import Image
 st.set_page_config(page_title="Omnisfera | Hub", page_icon="🚀", layout="wide")
 
 # ==============================================================================
-# 2. BLOCO VISUAL (DESIGN SYSTEM PREMIUM - AZUL SÓBRIO)
+# 2. BLOCO VISUAL (DESIGN SYSTEM PREMIUM - AZUL SÓBRIO) & HEADER
 # ==============================================================================
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -55,29 +56,24 @@ st.markdown(f"""
     html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }}
     .block-container {{ padding-top: 1.5rem !important; padding-bottom: 5rem !important; }}
 
-    /* TABS */
     div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] {{ display: none !important; }}
     .stTabs [data-baseweb="tab-list"] {{ gap: 8px; display: flex; flex-wrap: nowrap; overflow-x: auto; padding: 10px 5px; scrollbar-width: none; }}
     .stTabs [data-baseweb="tab"] {{ height: 38px; border-radius: 20px !important; background-color: #FFFFFF; border: 1px solid #E2E8F0; color: #718096; font-weight: 700; font-size: 0.8rem; padding: 0 20px; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.03); flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.5px; }}
     .stTabs [data-baseweb="tab"]:hover {{ border-color: #CBD5E0; color: #4A5568; background-color: #EDF2F7; }}
     .stTabs [aria-selected="true"] {{ background-color: transparent !important; color: #3182CE !important; border: 1px solid #3182CE !important; font-weight: 800; box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important; }}
 
-    /* HEADER */
     .header-unified {{ background-color: white; padding: 35px 40px; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; display: flex; align-items: center; gap: 20px; justify-content: flex-start; }}
     .header-subtitle {{ font-size: 1.2rem; color: #718096; font-weight: 600; border-left: 2px solid #E2E8F0; padding-left: 20px; line-height: 1.2; }}
 
-    /* INPUTS */
     .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {{ border-radius: 8px !important; border-color: #E2E8F0 !important; }}
     div[data-testid="column"] .stButton button {{ border-radius: 8px !important; font-weight: 800 !important; text-transform: uppercase; height: 50px !important; background-color: var(--brand-blue) !important; color: white !important; border: none !important; letter-spacing: 0.5px; }}
     div[data-testid="column"] .stButton button:hover {{ background-color: var(--brand-hover) !important; }}
 
-    /* OMNISFERA BADGE */
     .omni-badge {{ position: fixed; top: 15px; right: 15px; background: {card_bg}; border: 1px solid {card_border}; backdrop-filter: blur(8px); padding: 4px 30px; min-width: 260px; justify-content: center; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); z-index: 999990; display: flex; align-items: center; gap: 10px; pointer-events: none; }}
     .omni-text {{ font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem; color: #2D3748; letter-spacing: 1px; text-transform: uppercase; }}
     @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
     .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
 
-    /* CUSTOM BOXES */
     .pedagogia-box {{ background-color: #F8FAFC; border-left: 4px solid var(--brand-blue); padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; font-size: 0.95rem; color: #4A5568; }}
     .student-header {{ background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--card-radius); padding: 20px 30px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }}
     .student-label {{ font-size: 0.8rem; color: #718096; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }}
@@ -99,10 +95,20 @@ def verificar_acesso():
 
 verificar_acesso()
 
-# --- BARRA LATERAL ---
+# --- BARRA LATERAL (CORRIGIDO: DEFINIÇÃO DA API KEY) ---
 with st.sidebar:
     try: st.image("ominisfera.png", width=150)
     except: st.write("🌐 OMNISFERA")
+    st.markdown("---")
+    
+    # [CORREÇÃO DO ERRO]: Definição da chave obrigatória aqui
+    if 'OPENAI_API_KEY' in st.secrets:
+        api_key = st.secrets['OPENAI_API_KEY']
+    else:
+        api_key = st.text_input("Chave OpenAI:", type="password")
+    
+    unsplash_key = st.secrets.get("UNSPLASH_KEY") # Opcional
+        
     st.markdown("---")
     if st.button("🏠 Voltar para Home", use_container_width=True): st.switch_page("Home.py")
     st.markdown("---")
@@ -245,6 +251,18 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
             if linha.strip(): doc.add_paragraph(linha.strip())
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
+
+def criar_docx_simples(texto, titulo="Documento"):
+    doc = Document(); doc.add_heading(titulo, 0)
+    for para in texto.split('\n'):
+        if para.strip(): doc.add_paragraph(para.strip())
+    buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
+    return buffer
+
+def criar_pdf_generico(texto):
+    pdf = FPDF(); pdf.add_page(); pdf.set_font("Arial", size=12)
+    texto_safe = texto.encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 10, texto_safe); return pdf.output(dest='S').encode('latin-1')
 
 # ==============================================================================
 # 5. CÉREBRO PEDAGÓGICO (IA) - AGORA COM ESTRATÉGIA PRIORITÁRIA
