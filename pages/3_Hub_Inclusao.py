@@ -18,15 +18,11 @@ from streamlit_cropper import st_cropper
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
 # ==============================================================================
-st.set_page_config(page_title="[TESTE] Omnisfera | Hub", page_icon="🚀", layout="wide")
+st.set_page_config(page_title="Omnisfera | Hub", page_icon="🚀", layout="wide")
 
 # ==============================================================================
 # 2. BLOCO VISUAL (DESIGN SYSTEM PREMIUM - AZUL SÓBRIO) & HEADER
 # ==============================================================================
-import os
-import base64
-import streamlit as st
-
 # 1. Detecção Automática de Ambiente (Via st.secrets)
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -287,7 +283,7 @@ if 'valid_scene' not in st.session_state: st.session_state.valid_scene = False
 if 'res_caa_url' not in st.session_state: st.session_state.res_caa_url = None
 if 'valid_caa' not in st.session_state: st.session_state.valid_caa = False
 
-# --- FUNÇÕES DE UTILIDADE E IA (MANTIDAS IGUAIS) ---
+# --- FUNÇÕES DE UTILIDADE E IA ---
 def extrair_dados_docx(uploaded_file):
     uploaded_file.seek(0); imagens = []; texto = ""
     try:
@@ -373,7 +369,7 @@ def criar_pdf_generico(texto):
     texto_safe = texto.encode('latin-1', 'replace').decode('latin-1')
     pdf.multi_cell(0, 10, texto_safe); return pdf.output(dest='S').encode('latin-1')
 
-# --- IA FUNCTIONS ---
+# --- IA FUNCTIONS (ATUALIZADAS PARA LER O CHECKLIST) ---
 def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anterior="", prioridade="IA"):
     client = OpenAI(api_key=api_key)
     prompt_final = f"{prompt}. Adjustment requested: {feedback_anterior}" if feedback_anterior else prompt
@@ -409,30 +405,54 @@ def adaptar_conteudo_docx(api_key, aluno, texto, materia, tema, tipo_atv, remove
     client = OpenAI(api_key=api_key)
     lista_q = ", ".join([str(n) for n in questoes_mapeadas])
     style = "Seja didático." if modo_profundo else "Seja objetivo."
+    
+    # ATENÇÃO: AUMENTAMOS O CONTEXTO PARA 4000 CARACTERES PARA PEGAR O CHECKLIST NO FINAL
+    pei_contexto = aluno.get('ia_sugestao', '')[:4000]
+    
     prompt = f"""
-    ESPECIALISTA EM DUA. {style}
-    PERFIL: {aluno.get('ia_sugestao', '')[:1000]}
-    REGRA IMAGEM: O professor indicou imagens nas questões: {lista_q}.
-    ESTRUTURA OBRIGATÓRIA: 1. Enunciado -> 2. [[IMG_número]] -> 3. Alternativas.
-    SAÍDA: [ANÁLISE PEDAGÓGICA]...---DIVISOR---[ATIVIDADE]...
-    CONTEXTO: {materia} | {tema}. TEXTO: {texto}
+    ESPECIALISTA EM DUA E ADAPTAÇÃO CURRICULAR. {style}
+    
+    --- DADOS DO ALUNO ---
+    {pei_contexto}
+    ----------------------
+    
+    ⚠️ REGRA DE OURO (CHECKLIST):
+    Você deve localizar o "CHECKLIST DE ADAPTAÇÃO E ACESSIBILIDADE" no texto acima e seguir suas respostas (Sim/Não) RIGOROSAMENTE.
+    - Se diz "Questões desafiadoras: Não", simplifique.
+    - Se diz "Instruções passo a passo: Sim", fragmente os enunciados.
+    - Se diz "Apoio visual: Sim", descreva onde a imagem ajuda.
+    
+    REGRA IMAGEM DO DOC: O professor indicou imagens nas questões originais: {lista_q}. Mantenha a referência [[IMG_número]] no local certo.
+    
+    SAÍDA: [ANÁLISE PEDAGÓGICA (Explique quais itens do checklist você aplicou)]...---DIVISOR---[ATIVIDADE ADAPTADA]...
+    CONTEXTO: {materia} | {tema}. TEXTO ORIGINAL: {texto}
     """
     try:
-        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7 if modo_profundo else 0.4)
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.5)
         full_text = resp.choices[0].message.content
         if "---DIVISOR---" in full_text:
             parts = full_text.split("---DIVISOR---")
-            return parts[0].replace("[ANÁLISE PEDAGÓGICA]", "").strip(), parts[1].replace("[ATIVIDADE]", "").strip()
+            return parts[0].replace("[ANÁLISE PEDAGÓGICA]", "").strip(), parts[1].replace("[ATIVIDADE ADAPTADA]", "").strip()
         return "Análise indisponível.", full_text
     except Exception as e: return str(e), ""
 
 def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_atv, livro_professor, modo_profundo=False):
     client = OpenAI(api_key=api_key)
     b64 = base64.b64encode(imagem_bytes).decode('utf-8')
+    
+    pei_contexto = aluno.get('ia_sugestao', '')[:4000]
+    
     prompt = f"""
-    ATUAR COMO: Especialista em Acessibilidade.
-    1. Transcreva e Adapte para (PEI: {aluno.get('ia_sugestao', '')[:800]}).
-    2. REGRA DE OURO: Insira a tag [[IMG_1]] UMA ÚNICA VEZ, logo após o enunciado.
+    ATUAR COMO: Especialista em Acessibilidade e Leitura de Imagens.
+    
+    CONTEXTO DO ALUNO (PEI):
+    {pei_contexto}
+    
+    MISSÃO:
+    1. Transcreva o conteúdo da imagem.
+    2. Adapte o conteúdo seguindo ESTRITAMENTE o "CHECKLIST DE ADAPTAÇÃO" encontrado no PEI acima. (Ex: Tamanho de fonte, complexidade, suporte visual).
+    3. Insira a tag [[IMG_1]] UMA ÚNICA VEZ, logo após o enunciado, para manter a imagem original.
+    
     SAÍDA: [ANÁLISE PEDAGÓGICA]...---DIVISOR---[ATIVIDADE]...
     """
     msgs = [{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}}]}]
@@ -448,13 +468,29 @@ def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_at
 def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, modo_profundo=False):
     client = OpenAI(api_key=api_key)
     hiperfoco = aluno.get('hiperfoco', 'Geral')
+    pei_contexto = aluno.get('ia_sugestao', '')[:4000]
+    
     instrucao_img = f"Incluir imagens em {qtd_imgs} questões (use [[GEN_IMG: termo]]). POSIÇÃO: Tag APÓS enunciado." if qtd_imgs > 0 else "Sem imagens."
     diretriz_tipo = "FORMATO DISCURSIVO (Sem alternativas)." if tipo_q == "Discursiva" else "FORMATO OBJETIVO (Múltipla escolha)."
     
     prompt = f"""
-    Crie prova de {materia} ({objeto}). QTD: {qtd} ({tipo_q}).
-    DIRETRIZES: 1. Contexto Real. 2. Hiperfoco ({hiperfoco}). 3. {diretriz_tipo}. 4. Imagens: {instrucao_img}.
-    REGRA: COMANDOS NO IMPERATIVO (Ex: Analise, Calcule).
+    Crie uma prova de {materia} ({objeto}). QTD: {qtd} questões ({tipo_q}).
+    
+    --- PERFIL DO ALUNO (PEI) ---
+    {pei_contexto}
+    -----------------------------
+    
+    DIRETRIZES DE ADAPTAÇÃO (CRUCIAL):
+    1. Leia o "CHECKLIST DE ADAPTAÇÃO" no texto acima.
+    2. Se o checklist pede "Questões desafiadoras: Não", simplifique o vocabulário.
+    3. Se pede "Instruções passo a passo", quebre a questão em etapas (a, b, c).
+    4. Se pede "Suporte Visual", garanta que as imagens solicitadas ajudem na compreensão.
+    
+    OUTRAS REGRAS:
+    - Use o Hiperfoco ({hiperfoco}) para contextualizar pelo menos 1 questão.
+    - Comandos no IMPERATIVO (Ex: Analise, Calcule).
+    - Imagens: {instrucao_img}.
+    
     SAÍDA: [ANÁLISE PEDAGÓGICA]...---DIVISOR---[ATIVIDADE]...
     """
     try:
@@ -476,7 +512,7 @@ def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo, feedback_ante
 
 def gerar_roteiro_aula(api_key, aluno, materia, assunto, feedback_anterior=""):
     client = OpenAI(api_key=api_key)
-    prompt = f"Roteiro de aula {assunto} para {aluno['nome']}. PEI: {aluno.get('ia_sugestao','')[:500]}. Estrutura: Objetivo, Estratégia, Prática, Verificação."
+    prompt = f"Roteiro de aula {assunto} para {aluno['nome']}. PEI: {aluno.get('ia_sugestao','')[:4000]}. Estrutura: Objetivo, Estratégia, Prática, Verificação."
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
         return resp.choices[0].message.content
