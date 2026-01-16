@@ -1,87 +1,88 @@
 import streamlit as st
 import pandas as pd
-from services import buscar_logs
-import plotly.express as px # Biblioteca de gráficos bonitos
+# Tenta importar as funções. Se der erro, avisa amigavelmente.
+try:
+    from services import buscar_logs
+except ImportError:
+    st.error("Erro: O arquivo 'services.py' não foi encontrado na raiz do projeto.")
+    st.stop()
 
 st.set_page_config(page_title="Monitoramento", page_icon="📊", layout="wide")
 
-st.title("📊 Avaliação e Correção de Rota")
+st.title("📊 Painel de Avaliação & Anamnese")
+st.markdown("Visualize o progresso dos alunos e identifique onde corrigir a rota.")
 
-# 1. Carregar Dados
-df = buscar_logs()
+# 1. Carregar Dados da Planilha
+with st.spinner("Buscando dados atualizados..."):
+    df = buscar_logs()
 
-if df.empty:
-    st.warning("Ainda não há dados suficientes na planilha para gerar gráficos.")
+# Verifica se a planilha está vazia ou com erro
+if df.empty or "aluno_nome" not in df.columns:
+    st.info("👋 Olá! Ainda não há dados suficientes na planilha.")
+    st.markdown("Vá até o **Diário de Bordo** e faça alguns registros de teste para ver os gráficos aparecerem aqui.")
     st.stop()
 
-# 2. Filtros (Sidebar)
+# 2. Filtros (Barra Lateral)
 with st.sidebar:
-    st.header("Filtros")
-    # Pega lista única de alunos que têm registro
-    lista_alunos = df["aluno_nome"].unique() if "aluno_nome" in df.columns else []
-    
-    if len(lista_alunos) > 0:
-        aluno_selecionado = st.selectbox("Selecione o Aluno:", lista_alunos)
-    else:
-        aluno_selecionado = None
+    st.header("🔍 Filtros")
+    # Pega a lista de alunos única
+    alunos = df["aluno_nome"].unique()
+    aluno_selecionado = st.selectbox("Selecione o Aluno:", alunos)
 
-# 3. Painel Principal
+# 3. Análise do Aluno
 if aluno_selecionado:
-    # Filtra apenas os dados desse aluno
-    df_aluno = df[df["aluno_nome"] == aluno_selecionado]
+    # Filtra só as linhas desse aluno
+    dados_aluno = df[df["aluno_nome"] == aluno_selecionado]
     
-    # Métricas de Topo
-    total_atividades = len(df_aluno)
-    # Conta quantos sucessos (ajuste o texto conforme o que salvamos no checkin)
-    sucessos = len(df_aluno[df_aluno["resultado"].str.contains("Sucesso", na=False)])
-    dificuldades = len(df_aluno[df_aluno["resultado"].str.contains("Dificuldade", na=False)])
-    
+    # --- MÉTRICAS ---
     col1, col2, col3 = st.columns(3)
-    col1.metric("Atividades Realizadas", total_atividades)
-    col2.metric("Sucesso/Autonomia", sucessos)
-    col3.metric("Pontos de Atenção", dificuldades, delta_color="inverse")
-
-    st.divider()
-
-    # --- CORREÇÃO DE ROTA (A Lógica Inteligente) ---
-    st.subheader("🚨 Radar de Correção de Rota")
     
-    # Se tiver muitas dificuldades recentes, avisa
+    total = len(dados_aluno)
+    # Conta quantos sucessos (procura a palavra 'Sucesso' ou 'Fluiu')
+    sucessos = len(dados_aluno[dados_aluno["resultado"].str.contains("Sucesso|Fluiu", case=False, na=False)])
+    # Conta dificuldades
+    dificuldades = len(dados_aluno[dados_aluno["resultado"].str.contains("Dificuldade|Não realizou", case=False, na=False)])
+    
+    col1.metric("Atividades Registradas", total)
+    col2.metric("Autonomia/Sucesso", sucessos)
+    col3.metric("Pontos de Atenção", dificuldades, delta_color="inverse")
+    
+    st.divider()
+    
+    # --- ALERTA DE ROTA (INTELIGÊNCIA) ---
+    st.subheader("🚨 Radar de Intervenção")
+    
+    # Lógica: Se mais de 50% das últimas atividades foram difíceis
     if dificuldades > 0:
-        # Pega os ultimos 3 registros
-        ultimos = df_aluno.tail(3)
-        falhas_recentes = len(ultimos[ultimos["resultado"].str.contains("Dificuldade", na=False)])
+        ultimas_3 = dados_aluno.tail(3)
+        falhas_recentes = len(ultimas_3[ultimas_3["resultado"].str.contains("Dificuldade|Não", case=False, na=False)])
         
         if falhas_recentes >= 2:
-            st.error(f"⚠️ **ALERTA DE ROTA:** O aluno apresentou dificuldade em {falhas_recentes} das últimas 3 atividades.")
-            with st.expander("Ver Sugestão da Ominisfera", expanded=True):
-                st.write("Sugestão: As estratégias atuais podem não estar funcionando. Considere:")
-                st.markdown("- [ ] Reduzir a carga de leitura.")
-                st.markdown("- [ ] Alterar o suporte (de Visual para Auditivo).")
-                st.button("Revisar PEI deste Aluno")
+            st.error(f"⚠️ **ATENÇÃO:** O aluno apresentou dificuldade em {falhas_recentes} das últimas 3 atividades.")
+            with st.expander("💡 Sugestões da Ominisfera (Clique para abrir)", expanded=True):
+                st.write("**O padrão indica barreira na execução. Tente:**")
+                st.markdown("1. Quebrar a atividade em passos menores.")
+                st.markdown("2. Mudar o suporte de entrada (ex: se usou texto, tente vídeo).")
+                st.markdown("3. Verificar se há fatores ambientais (barulho, luz).")
         else:
-            st.success("O aluno está evoluindo dentro do esperado. Mantenha a estratégia.")
+            st.success("✅ O aluno está progredindo bem. Nenhuma intervenção urgente necessária.")
     else:
-        st.success("Nenhuma barreira crítica detectada recentemente.")
+        st.success("✅ O aluno está progredindo bem. Nenhuma intervenção urgente necessária.")
 
-    # --- GRÁFICOS ---
+    # --- GRÁFICOS E TABELA ---
     c1, c2 = st.columns([2, 1])
     
     with c1:
-        st.subheader("Evolução Temporal")
-        # Gráfico simples de linha ou barra
-        if "data_hora" in df_aluno.columns:
-            st.bar_chart(df_aluno, x="data_hora", y="resultado")
-            
+        st.subheader("Histórico Detalhado")
+        # Mostra a tabela limpa
+        st.dataframe(dados_aluno[["data_hora", "disciplina", "resultado", "observacao"]], use_container_width=True)
+        
     with c2:
         st.subheader("Distribuição")
-        # Gráfico de Pizza simples
-        contagem = df_aluno["resultado"].value_counts()
-        st.write(contagem)
-
-    # --- TABELA DETALHADA ---
-    st.subheader("Histórico Completo (Anamnese)")
-    st.dataframe(df_aluno[["data_hora", "disciplina", "atividade_resumo", "resultado", "observacao"]])
+        # Gráfico simples
+        if not dados_aluno.empty:
+            contagem = dados_aluno["resultado"].value_counts()
+            st.bar_chart(contagem)
 
 else:
-    st.info("Selecione um aluno na barra lateral para ver o dossiê.")
+    st.warning("Selecione um aluno para começar.")
