@@ -48,7 +48,7 @@ else:
     footer_visibility = "hidden"
 
 # ==============================================================================
-# 3. CSS GLOBAL BLINDADO (ATUALIZADO COM CARROSSEL)
+# 3. CSS GLOBAL BLINDADO
 # ==============================================================================
 css_estatico = """
 <style>
@@ -169,6 +169,7 @@ css_estatico = """
     .b-teal { border-bottom: 4px solid #38B2AC; }
 
     /* --- BOTÃO FANTASMA (OVERLAY) --- */
+    /* Este CSS faz o botão do streamlit ficar transparente e cobrir o card visual */
     .card-overlay-btn button {
         position: absolute;
         top: -140px; /* Puxa para cima do card */
@@ -184,51 +185,27 @@ css_estatico = """
         border: none !important;
     }
     
-    /* --- CARROSSEL HORIZONTAL (NOVO) --- */
-    .carousel-container {
-        display: flex;
-        overflow-x: auto; /* Permite rolagem horizontal */
-        gap: 15px;
-        padding: 10px 5px 25px 5px; /* Espaço extra embaixo para a sombra não cortar */
-        scroll-snap-type: x mandatory; /* Faz o scroll travar bonitinho no card */
-        scroll-behavior: smooth;
-        -webkit-overflow-scrolling: touch; /* Rolagem suave no celular */
-        scrollbar-width: thin; /* Firefox */
-        mask-image: linear-gradient(to right, black 95%, transparent 100%);
+    /* Efeito Hover no Card Visual quando passa o mouse no botão fantasma */
+    /* Isso simula o hover do card através do botão, requer estrutura específica ou aceitamos hover simples */
+    
+    /* --- BENTO GRID COMPACTO --- */
+    .bento-grid { 
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+        gap: 12px; margin-bottom: 20px; 
     }
-    .carousel-container::-webkit-scrollbar { height: 6px; }
-    .carousel-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.02); border-radius: 10px; }
-    .carousel-container::-webkit-scrollbar-thumb { background-color: #CBD5E0; border-radius: 10px; }
-    .carousel-container::-webkit-scrollbar-thumb:hover { background-color: #A0AEC0; }
-
-    .carousel-card {
-        flex: 0 0 auto; /* Impede o card de encolher */
-        width: 200px;
-        background: white;
-        border-radius: 16px;
-        padding: 20px 15px;
-        border: 1px solid #E2E8F0;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        text-decoration: none;
-        color: inherit;
-        display: flex; flex-direction: column; align-items: center; text-align: center;
-        transition: all 0.3s ease;
-        scroll-snap-align: start;
-        position: relative;
+    .bento-item { 
+        background: white; border-radius: 14px; padding: 15px; border: 1px solid #E2E8F0; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.01); text-decoration: none; color: inherit; 
+        display: flex; flex-direction: column; align-items: center; text-align: center; 
+        position: relative; overflow: hidden; height: 100%; transition: transform 0.2s;
     }
-    .carousel-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-        border-color: #3182CE;
-        z-index: 10;
+    .bento-item:hover { transform: translateY(-2px); border-color: #CBD5E0; }
+    .bento-icon { 
+        width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; 
+        font-size: 1.2rem; margin-bottom: 8px; 
     }
-    .cc-icon {
-        width: 45px; height: 45px; border-radius: 12px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.4rem; margin-bottom: 12px;
-    }
-    .cc-title { font-weight: 700; font-size: 0.9rem; color: #2D3748; margin-bottom: 4px; }
-    .cc-desc { font-size: 0.75rem; color: #718096; line-height: 1.3; }
+    .bento-title { font-weight: 700; font-size: 0.85rem; color: #1A202C; margin-bottom: 2px; }
+    .bento-desc { font-size: 0.75rem; color: #718096; line-height: 1.2; }
 
     /* --- INSIGHT CARD COMPACTO --- */
     .insight-card-end { 
@@ -495,51 +472,31 @@ card_botao(c2, logo_paee, "Sala de Recursos e Tecnologias Assistivas.", "btn_pae
 # Card 3: HUB
 card_botao(c3, logo_hub, "Adaptação de provas e roteiros.", "btn_hub", "pages/3_Hub_Inclusao.py", "b-teal", "ri-rocket-line")
 
-# ==============================================================================
-# CARROSSEL DE CONHECIMENTO (ESTILO NETFLIX/APP STORE)
-# ==============================================================================
-st.markdown("<div class='section-title'><i class='ri-book-mark-fill'></i> Conhecimento & Referências</div>", unsafe_allow_html=True)
+# BENTO GRID (BASE DE CONHECIMENTO)
+st.markdown("<div class='section-title'><i class='ri-book-mark-fill'></i> Conhecimento</div>", unsafe_allow_html=True)
 
-# Container do Carrossel com Cards
 st.markdown("""
-<div class="carousel-container">
-    
-    <a href="#" class="carousel-card">
-        <div class="cc-icon" style="background:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
-        <div class="cc-title">PEI vs PAEE</div>
-        <div class="cc-desc">Entenda as diferenças fundamentais e aplicações.</div>
+<div class="bento-grid">
+    <a href="#" class="bento-item">
+        <div class="bento-icon" style="background:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
+        <div class="bento-title">PEI vs PAEE</div>
+        <div class="bento-desc">Diferenças fundamentais.</div>
     </a>
-
-    <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="carousel-card">
-        <div class="cc-icon" style="background:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
-        <div class="cc-title">Lei Brasileira (LBI)</div>
-        <div class="cc-desc">Acesse a Lei nº 13.146 na íntegra.</div>
+    <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="bento-item">
+        <div class="bento-icon" style="background:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
+        <div class="bento-title">Legislação</div>
+        <div class="bento-desc">LBI e Decretos.</div>
     </a>
-
-    <a href="https://institutoneurosaber.com.br/" target="_blank" class="carousel-card">
-        <div class="cc-icon" style="background:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
-        <div class="cc-title">NeuroSaber</div>
-        <div class="cc-desc">Artigos sobre desenvolvimento atípico.</div>
+    <a href="https://institutoneurosaber.com.br/" target="_blank" class="bento-item">
+        <div class="bento-icon" style="background:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
+        <div class="bento-title">Neurociência</div>
+        <div class="bento-desc">Desenvolvimento atípico.</div>
     </a>
-
-    <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="carousel-card">
-        <div class="cc-icon" style="background:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
-        <div class="cc-title">Base Nacional (BNCC)</div>
-        <div class="cc-desc">Consulte as competências gerais oficiais.</div>
+    <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="bento-item">
+        <div class="bento-icon" style="background:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
+        <div class="bento-title">BNCC</div>
+        <div class="bento-desc">Currículo oficial.</div>
     </a>
-
-    <a href="https://diversa.org.br/" target="_blank" class="carousel-card">
-        <div class="cc-icon" style="background:#FAF5FF; color:#805AD5;"><i class="ri-team-line"></i></div>
-        <div class="cc-title">Portal Diversa</div>
-        <div class="cc-desc">Estudos de caso e práticas inclusivas.</div>
-    </a>
-    
-    <a href="https://www.revistaautismo.com.br/" target="_blank" class="carousel-card">
-        <div class="cc-icon" style="background:#EDF2F7; color:#2B6CB0;"><i class="ri-puzzle-2-line"></i></div>
-        <div class="cc-title">Revista Autismo</div>
-        <div class="cc-desc">Notícias e informações sobre TEA.</div>
-    </a>
-
 </div>
 """, unsafe_allow_html=True)
 
