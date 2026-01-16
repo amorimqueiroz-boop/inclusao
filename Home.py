@@ -364,7 +364,7 @@ def sistema_seguranca():
                 
                 # LÓGICA MODO TESTE: ENTRA DIRETO
                 if IS_TEST_ENV:
-                    st.session_state["autenticado"] = True
+                    st.session_state["autenticado"] = True)
                     st.session_state["usuario_nome"] = "Visitante Teste"
                     st.session_state["usuario_cargo"] = "Desenvolvedor"
                     st.rerun()
@@ -378,7 +378,7 @@ def sistema_seguranca():
                     elif not nome_user or not cargo_user: st.warning("Preencha seus dados.")
                     elif senha != senha_mestra: st.error("Senha incorreta.")
                     else:
-                        st.session_state["autenticado"] = True
+                        st.session_state["autenticado"] = True)
                         st.session_state["usuario_nome"] = nome_user
                         st.session_state["usuario_cargo"] = cargo_user
                         st.rerun()
