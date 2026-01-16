@@ -140,7 +140,6 @@ LISTAS_BARREIRAS = {"Funções Cognitivas": ["Atenção Sustentada/Focada", "Mem
 LISTA_POTENCIAS = ["Memória Visual", "Musicalidade/Ritmo", "Interesse em Tecnologia", "Hiperfoco Construtivo", "Liderança Natural", "Habilidades Cinestésicas (Esportes)", "Expressão Artística (Desenho)", "Cálculo Mental Rápido", "Oralidade/Vocabulário", "Criatividade/Imaginação", "Empatia/Cuidado com o outro", "Resolução de Problemas", "Curiosidade Investigativa"]
 LISTA_PROFISSIONAIS = ["Psicólogo Clínico", "Neuropsicólogo", "Fonoaudiólogo", "Terapeuta Ocupacional", "Neuropediatra", "Psiquiatra Infantil", "Psicopedagogo Clínico", "Professor de Apoio (Mediador)", "Acompanhante Terapêutico (AT)", "Musicoterapeuta", "Equoterapeuta", "Oftalmologista"]
 LISTA_FAMILIA = ["Mãe", "Pai", "Madrasta", "Padrasto", "Avó Materna", "Avó Paterna", "Avô Materno", "Avô Paterno", "Irmãos", "Tios", "Primos", "Tutor Legal", "Abrigo Institucional"]
-LISTA_COMPONENTES = ["Língua Portuguesa", "Matemática", "História", "Geografia", "Ciências", "Arte", "Educação Física", "Inglês", "Ensino Religioso", "Projeto de Vida", "Física", "Química", "Biologia", "Sociologia", "Filosofia"]
 
 # ==============================================================================
 # 4. GERENCIAMENTO DE ESTADO
@@ -153,7 +152,6 @@ default_state = {
     'nivel_alfabetizacao': 'Não se aplica (Educação Infantil)',
     'barreiras_selecionadas': {k: [] for k in LISTAS_BARREIRAS.keys()},
     'niveis_suporte': {}, 
-    'componentes_atencao': [], # NOVO: Para o radar de atenção
     'estrategias_acesso': [], 'estrategias_ensino': [], 'estrategias_avaliacao': [], 
     'ia_sugestao': '', 'ia_mapa_texto': '', 'outros_acesso': '', 'outros_ensino': '', 
     'monitoramento_data': date.today(), 
@@ -244,12 +242,6 @@ def extrair_metas_estruturadas(texto):
         elif "Longo" in l or "Ano" in l: metas["Longo"] = l_clean.split(":")[-1].strip()
     return metas
 
-def extrair_campos_experiencia(texto):
-    bloco = extrair_tag_ia(texto, "CAMPOS_EXPERIENCIA_PRIORITARIOS")
-    if not bloco: return ["O eu, o outro e o nós", "Corpo, gestos e movimentos"]
-    linhas = [l.strip().replace('- ','') for l in bloco.split('\n') if l.strip()]
-    return linhas[:3]
-
 def get_pro_icon(nome_profissional):
     p = nome_profissional.lower()
     if "psic" in p: return "🧠"
@@ -294,6 +286,32 @@ def calcular_progresso():
     if any(d['barreiras_selecionadas'].values()): pontos += 1
     if d['estrategias_ensino']: pontos += 1
     return int((pontos / total) * 90)
+
+# FUNÇÃO NOVA: INFERIR COMPONENTES AUTOMATICAMENTE
+def inferir_componentes_impactados(dados):
+    barreiras = dados.get('barreiras_selecionadas', {})
+    impactados = set()
+    
+    # Lógica de Inferência Baseada em Evidências
+    if barreiras.get('Acadêmico') and any("Leitora" in b for b in barreiras['Acadêmico']):
+        impactados.add("Língua Portuguesa")
+        impactados.add("História/Geografia (Leitura)")
+    
+    if barreiras.get('Acadêmico') and any("Matemático" in b for b in barreiras['Acadêmico']):
+        impactados.add("Matemática")
+        impactados.add("Física/Química")
+
+    if barreiras.get('Funções Cognitivas'):
+        impactados.add("Todos (Atenção/Memória)")
+
+    if barreiras.get('Sensorial e Motor') and any("Fina" in b for b in barreiras['Sensorial e Motor']):
+        impactados.add("Arte")
+        impactados.add("Geometria")
+        
+    if not impactados and dados.get('diagnostico'):
+        return ["Análise Geral (Baseada no Diagnóstico)"]
+        
+    return list(impactados) if impactados else ["Nenhum componente específico detectado automaticamente"]
 
 # ==============================================================================
 # 6. ESTILO VISUAL
@@ -414,8 +432,7 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         familia = ", ".join(dados['composicao_familiar_tags']) if dados['composicao_familiar_tags'] else "Não informado"
         evid = "\n".join([f"- {k.replace('?', '')}" for k, v in dados['checklist_evidencias'].items() if v])
         meds_info = "\n".join([f"- {m['nome']} ({m['posologia']})." for m in dados['lista_medicamentos']]) if dados['lista_medicamentos'] else "Nenhuma medicação informada."
-        componentes_atencao = ", ".join(dados['componentes_atencao']) if dados['componentes_atencao'] else "Não especificado"
-
+        
         serie = dados['serie'] or ""
         nivel_ensino = detectar_nivel_ensino(serie)
         alfabetizacao = dados.get('nivel_alfabetizacao', 'Não Avaliado')
@@ -435,7 +452,7 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         if "Alfabético" not in alfabetizacao and alfabetizacao != "Não se aplica (Educação Infantil)":
              prompt_literacia = f"""[ATENÇÃO CRÍTICA: ALFABETIZAÇÃO] Fase: {alfabetizacao}. Inclua 2 ações de consciência fonológica.[/ATENÇÃO CRÍTICA]"""
 
-        # CHECKLIST HUB DE INCLUSÃO - INTEGRADO AO PEI
+        # CHECKLIST HUB DE INCLUSÃO
         prompt_hub = """
         ### 4. 🧩 CHECKLIST DE ADAPTAÇÃO E ACESSIBILIDADE:
         (Responda objetivamente Sim/Não e justifique brevemente com base no diagnóstico. Não mencione 'Hub' no título).
@@ -450,12 +467,15 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         9. O estudante precisa de adaptação na formatação? (Especifique: espaçamento, fonte OpenDyslexic, etc).
         """
         
-        # SEÇÃO DE COMPONENTES DE ATENÇÃO
-        prompt_componentes = f"""
-        3. ⚠️ COMPONENTES CURRICULARES DE ATENÇÃO:
-        Os seguintes componentes exigem cuidado: {componentes_atencao}.
-        - Para cada um, explique O MOTIVO técnico da dificuldade (Ex: Matemática exige abstração que o diagnóstico X dificulta) e uma estratégia rápida.
-        """
+        # LOGICA PARA COMPONENTES DE ATENÇÃO (Somente se não for EI)
+        prompt_componentes = ""
+        if nivel_ensino != "EI":
+            prompt_componentes = f"""
+            3. ⚠️ COMPONENTES CURRICULARES DE ATENÇÃO (Análise da IA):
+            Com base EXCLUSIVAMENTE no diagnóstico ({dados['diagnostico']}) e nas barreiras citadas, identifique quais Componentes Curriculares (ex: Matemática, História, etc.) exigirão maior flexibilização.
+            - Liste os componentes.
+            - Para cada um, explique O MOTIVO técnico da dificuldade (Ex: "Matemática devido à dificuldade em abstração típica do diagnóstico X").
+            """
 
         # ESTRUTURA MODIFICADA: PLANO DE INTERVENÇÃO E ESTRATÉGIAS + FARMA NO FINAL
         if nivel_ensino == "EI":
@@ -473,8 +493,6 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
             - OBJETIVO 1: ...
             - OBJETIVO 2: ...
             [FIM_OBJETIVOS]
-            
-            {prompt_componentes}
             
             5. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
             [ANALISE_FARMA] Se houver medicação, cite efeitos colaterais (sono, sede, etc) e impactos em sala. [/ANALISE_FARMA]
@@ -731,13 +749,7 @@ with tab4:
         st.markdown("#### Potencialidades e Hiperfoco"); c1, c2 = st.columns(2); st.session_state.dados['hiperfoco'] = c1.text_input("Hiperfoco", st.session_state.dados['hiperfoco']); p_val = [p for p in st.session_state.dados.get('potencias', []) if p in LISTA_POTENCIAS]; st.session_state.dados['potencias'] = c2.multiselect("Pontos Fortes", LISTA_POTENCIAS, default=p_val)
     st.divider()
     
-    # NOVA SEÇÃO PARA COMPONENTES DE ATENÇÃO
-    with st.container(border=True):
-        st.markdown("#### ⚠️ Componentes Curriculares de Atenção")
-        st.info("Selecione quais matérias exigem adaptação prioritária. A IA detalhará o motivo no relatório.")
-        st.session_state.dados['componentes_atencao'] = st.multiselect("Matérias:", LISTA_COMPONENTES, default=st.session_state.dados['componentes_atencao'])
-
-    st.divider()
+    # VOLTA AO ORIGINAL: SÓ BARREIRAS (SEM SELEÇÃO MANUAL DE COMPONENTES)
     with st.container(border=True):
         st.markdown("#### Barreiras e Nível de Suporte (CIF)"); c_bar1, c_bar2, c_bar3 = st.columns(3)
         def render_cat_barreira(coluna, titulo, chave_json):
@@ -862,7 +874,7 @@ with tab8:
 
         st.write(""); c_r1, c_r2 = st.columns(2)
         with c_r1:
-            # CARD DE MEDICAÇÃO MELHORADO
+            # CARD DE MEDICAÇÃO
             lista_meds = st.session_state.dados['lista_medicamentos']
             if len(lista_meds) > 0:
                 nomes_meds = ", ".join([m['nome'] for m in lista_meds])
@@ -881,13 +893,14 @@ with tab8:
             st.markdown(f"""<div class="soft-card sc-yellow"><div class="sc-head"><i class="ri-flag-2-fill" style="color:#D69E2E;"></i> Cronograma de Metas</div><div class="sc-body">{html_metas}</div></div>""", unsafe_allow_html=True)
 
         with c_r2:
-            # CARD SUBSTITUÍDO: RADAR DE COMPONENTES DE ATENÇÃO
-            comps = st.session_state.dados['componentes_atencao']
-            n_comps = len(comps)
+            # CARD AUTOMÁTICO: RADAR DE COMPONENTES (Inferido das Barreiras)
+            # Como retiramos a seleção manual, usamos a lógica "inferir_componentes_impactados" para exibir no Dash
+            comps_inferidos = inferir_componentes_impactados(st.session_state.dados)
+            n_comps = len(comps_inferidos)
             
             if n_comps > 0:
-                html_comps = "".join([f'<span class="rede-chip" style="border-color:#FC8181; color:#C53030;">{c}</span> ' for c in comps])
-                st.markdown(f"""<div class="soft-card sc-orange" style="border-left-color: #FC8181; background-color: #FFF5F5;"><div class="sc-head"><i class="ri-radar-fill" style="color:#C53030;"></i> Radar Curricular de Atenção</div><div class="sc-body" style="margin-bottom:10px;">Componentes que exigem maior flexibilização:</div><div>{html_comps}</div><div class="bg-icon">🎯</div></div>""", unsafe_allow_html=True)
+                html_comps = "".join([f'<span class="rede-chip" style="border-color:#FC8181; color:#C53030;">{c}</span> ' for c in comps_inferidos])
+                st.markdown(f"""<div class="soft-card sc-orange" style="border-left-color: #FC8181; background-color: #FFF5F5;"><div class="sc-head"><i class="ri-radar-fill" style="color:#C53030;"></i> Radar Curricular (Automático)</div><div class="sc-body" style="margin-bottom:10px;">Componentes que exigem maior flexibilização (Baseado nas Barreiras):</div><div>{html_comps}</div><div class="bg-icon">🎯</div></div>""", unsafe_allow_html=True)
             else:
                 st.markdown(f"""<div class="soft-card sc-blue"><div class="sc-head"><i class="ri-radar-line" style="color:#3182CE;"></i> Radar Curricular</div><div class="sc-body">Nenhum componente específico marcado como crítico.</div><div class="bg-icon">🎯</div></div>""", unsafe_allow_html=True)
             
