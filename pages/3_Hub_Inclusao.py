@@ -13,7 +13,6 @@ import re
 import json
 import requests
 from PIL import Image
-from streamlit_cropper import st_cropper
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
@@ -157,7 +156,7 @@ with st.sidebar:
     st.markdown("---")
 
 # ==============================================================================
-# 2. LÓGICA DO HUB (PRESERVADA INTEGRALMENTE)
+# 2. LÓGICA DO HUB (DADOS E FUNÇÕES DE IA RESTAURADAS)
 # ==============================================================================
 
 ARQUIVO_DB = "banco_alunos.json"
@@ -234,31 +233,22 @@ if st.sidebar.button("🧹 Limpar Tudo e Reiniciar"):
         if key not in ['banco_estudantes', 'OPENAI_API_KEY', 'UNSPLASH_ACCESS_KEY', 'autenticado']: del st.session_state[key]
     st.rerun()
 
-# === FUNÇÕES DO HUB (MANTIDAS) ===
-def get_img_tag(file_path, width):
-    if os.path.exists(file_path):
-        with open(file_path, "rb") as f:
-            data = base64.b64encode(f.read()).decode("utf-8")
-        return f'<img src="data:image/png;base64,{data}" width="{width}">'
-    return "🚀"
+# === FUNÇÕES DO HUB (RESTAURADAS COMPLETAS) ===
 
 def extrair_dados_docx(uploaded_file):
-    uploaded_file.seek(0); imagens = []; texto = ""
+    uploaded_file.seek(0)
+    imagens = []
+    texto = ""
     try:
         doc = Document(uploaded_file)
         texto = "\n".join([p.text for p in doc.paragraphs if p.text.strip() != ""])
         for rel in doc.part.rels.values():
             if "image" in rel.target_ref:
                 img_data = rel.target_part.blob
-                if len(img_data) > 1024: imagens.append(img_data)
+                if len(img_data) > 1024: 
+                    imagens.append(img_data)
     except: pass
     return texto, imagens
-
-def sanitizar_imagem(image_bytes):
-    try:
-        img = Image.open(BytesIO(image_bytes)).convert("RGB")
-        out = BytesIO(); img.save(out, format="JPEG", quality=90); return out.getvalue()
-    except: return None
 
 def baixar_imagem_url(url):
     try:
@@ -287,11 +277,16 @@ def garantir_tag_imagem(texto):
     return texto
 
 def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tipo_atv, sem_cabecalho=False):
-    doc = Document(); style = doc.styles['Normal']; style.font.name = 'Arial'; style.font.size = Pt(12)
+    doc = Document()
+    style = doc.styles['Normal']
+    style.font.name = 'Arial'
+    style.font.size = Pt(12)
+    
     if not sem_cabecalho:
         doc.add_heading(f'{tipo_atv.upper()} ADAPTADA - {materia.upper()}', 0).alignment = WD_ALIGN_PARAGRAPH.CENTER
         doc.add_paragraph(f"Estudante: {aluno['nome']}").alignment = WD_ALIGN_PARAGRAPH.CENTER
-        doc.add_paragraph("_"*50); doc.add_heading('Atividades', level=2)
+        doc.add_paragraph("_"*50)
+        doc.add_heading('Atividades', level=2)
 
     linhas = texto_ia.split('\n')
     for linha in linhas:
@@ -303,19 +298,28 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
                 if ("IMG" in parte.upper() or "GEN_IMG" in parte.upper()) and sub_match:
                     num = int(sub_match.group(1))
                     img_bytes = mapa_imgs.get(num)
-                    if not img_bytes and len(mapa_imgs) == 1: img_bytes = list(mapa_imgs.values())[0]
+                    
+                    if not img_bytes and len(mapa_imgs) == 1:
+                        img_bytes = list(mapa_imgs.values())[0]
+                    
                     if img_bytes:
                         try:
-                            p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                            r = p.add_run(); r.add_picture(BytesIO(img_bytes), width=Inches(3.5))
+                            p = doc.add_paragraph()
+                            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                            r = p.add_run()
+                            r.add_picture(BytesIO(img_bytes), width=Inches(3.5))
                         except: pass
-                elif parte.strip(): doc.add_paragraph(parte.strip())
+                elif parte.strip():
+                    doc.add_paragraph(parte.strip())
         else:
             if linha.strip(): doc.add_paragraph(linha.strip())
-    buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
+    
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
     return buffer
 
-# --- IA FUNCTIONS ---
+# --- IA FUNCTIONS (RESTAURADAS) ---
 def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anterior="", prioridade="IA"):
     client = OpenAI(api_key=api_key)
     prompt_final = f"{prompt}. Adjustment requested: {feedback_anterior}" if feedback_anterior else prompt
@@ -450,9 +454,7 @@ def gerar_plano_aula_bncc(api_key, materia, assunto, metodologia, tecnica, qtd_a
 
 # === ESTADOS ===
 if 'res_scene_url' not in st.session_state: st.session_state.res_scene_url = None
-if 'valid_scene' not in st.session_state: st.session_state.valid_scene = False
 if 'res_caa_url' not in st.session_state: st.session_state.res_caa_url = None
-if 'valid_caa' not in st.session_state: st.session_state.valid_caa = False
 
 # === LÓGICA DE ABAS (CONDICIONAL EI vs PADRÃO) ===
 if is_ei:
@@ -497,6 +499,7 @@ if is_ei:
 
 else:
     # === MODO PADRÃO (FUNDAMENTAL / MÉDIO) ===
+    # AQUI ESTÃO AS ABAS QUE FALTARAM
     tabs = st.tabs([
         "📄 Adaptar Prova", 
         "✂️ Adaptar Atividade", 
