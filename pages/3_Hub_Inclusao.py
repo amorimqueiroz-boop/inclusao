@@ -1,5 +1,9 @@
 import streamlit as st
 import os
+import base64
+import re
+import json
+import requests
 from openai import OpenAI
 from datetime import date
 from io import BytesIO
@@ -8,12 +12,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Inches
 from pypdf import PdfReader
 from fpdf import FPDF
-import base64
-import re
-import json
-import requests
 from PIL import Image
-from streamlit_cropper import st_cropper
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
@@ -21,7 +20,7 @@ from streamlit_cropper import st_cropper
 st.set_page_config(page_title="Omnisfera | Hub", page_icon="🚀", layout="wide")
 
 # ==============================================================================
-# 2. BLOCO VISUAL (DESIGN SYSTEM PREMIUM - AZUL SÓBRIO) & HEADER
+# 2. BLOCO VISUAL (DESIGN SYSTEM PREMIUM - AZUL SÓBRIO)
 # ==============================================================================
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -95,19 +94,18 @@ def verificar_acesso():
 
 verificar_acesso()
 
-# --- BARRA LATERAL (CORRIGIDO: DEFINIÇÃO DA API KEY) ---
+# --- BARRA LATERAL (API KEY) ---
 with st.sidebar:
     try: st.image("ominisfera.png", width=150)
     except: st.write("🌐 OMNISFERA")
     st.markdown("---")
     
-    # [CORREÇÃO DO ERRO]: Definição da chave obrigatória aqui
     if 'OPENAI_API_KEY' in st.secrets:
         api_key = st.secrets['OPENAI_API_KEY']
     else:
         api_key = st.text_input("Chave OpenAI:", type="password")
     
-    unsplash_key = st.secrets.get("UNSPLASH_KEY") # Opcional
+    unsplash_key = st.secrets.get("UNSPLASH_KEY") 
         
     st.markdown("---")
     if st.button("🏠 Voltar para Home", use_container_width=True): st.switch_page("Home.py")
@@ -177,7 +175,7 @@ if 'res_caa_url' not in st.session_state: st.session_state.res_caa_url = None
 if 'valid_caa' not in st.session_state: st.session_state.valid_caa = False
 
 # ==============================================================================
-# 4. FUNÇÕES DE UTILIDADE (DOCX, PDF, IMAGENS)
+# 4. FUNÇÕES DE UTILIDADE
 # ==============================================================================
 def extrair_dados_docx(uploaded_file):
     uploaded_file.seek(0); imagens = []; texto = ""
@@ -239,33 +237,22 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
                 sub_match = re.search(r'(\d+)', parte)
                 if ("IMG" in parte.upper() or "GEN_IMG" in parte.upper()) and sub_match:
                     num = int(sub_match.group(1))
-                    img_bytes = mapa_imgs.get(num)
-                    if not img_bytes and len(mapa_imgs) == 1: img_bytes = list(mapa_imgs.values())[0]
-                    if img_bytes:
-                        try:
-                            p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                            r = p.add_run(); r.add_picture(BytesIO(img_bytes), width=Inches(3.5))
-                        except: pass
+                    if mapa_imgs:
+                        img_bytes = mapa_imgs.get(num)
+                        if not img_bytes and len(mapa_imgs) == 1: img_bytes = list(mapa_imgs.values())[0]
+                        if img_bytes:
+                            try:
+                                p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                                r = p.add_run(); r.add_picture(BytesIO(img_bytes), width=Inches(3.5))
+                            except: pass
                 elif parte.strip(): doc.add_paragraph(parte.strip())
         else:
             if linha.strip(): doc.add_paragraph(linha.strip())
     buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
     return buffer
 
-def criar_docx_simples(texto, titulo="Documento"):
-    doc = Document(); doc.add_heading(titulo, 0)
-    for para in texto.split('\n'):
-        if para.strip(): doc.add_paragraph(para.strip())
-    buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
-    return buffer
-
-def criar_pdf_generico(texto):
-    pdf = FPDF(); pdf.add_page(); pdf.set_font("Arial", size=12)
-    texto_safe = texto.encode('latin-1', 'replace').decode('latin-1')
-    pdf.multi_cell(0, 10, texto_safe); return pdf.output(dest='S').encode('latin-1')
-
 # ==============================================================================
-# 5. CÉREBRO PEDAGÓGICO (IA) - AGORA COM ESTRATÉGIA PRIORITÁRIA
+# 5. CÉREBRO PEDAGÓGICO (IA)
 # ==============================================================================
 
 def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anterior="", prioridade="IA"):
@@ -289,13 +276,12 @@ def gerar_pictograma_caa(api_key, conceito, feedback_anterior=""):
         return resp.data[0].url
     except: return None
 
-# --- ATUALIZAÇÃO 1: ADAPTAR CONTEÚDO COM ESTRATÉGIA PRIORITÁRIA ---
+# --- FUNÇÃO 1: ADAPTAR CONTEÚDO (DOCX) ---
 def adaptar_conteudo_docx(api_key, aluno, texto, materia, tema, tipo_atv, remover_resp, questoes_mapeadas, estrategia_media="Automática (Seguir PEI)"):
     client = OpenAI(api_key=api_key)
     lista_q = ", ".join([str(n) for n in questoes_mapeadas])
     pei_contexto = aluno.get('ia_sugestao', '')[:4000] # Contexto expandido
     
-    # INSTRUÇÃO DE PRIORIDADE DE MEDIAÇÃO
     instrucao_estrategia = ""
     if estrategia_media == "Instruções Passo a Passo":
         instrucao_estrategia = "PRIORIDADE ABSOLUTA: Use 'INSTRUÇÕES PASSO A PASSO'. Reescreva cada enunciado adicionando (1. Primeiro faça isso... 2. Depois aquilo...). Ignore outras formas de mediação se conflitarem."
@@ -330,7 +316,46 @@ def adaptar_conteudo_docx(api_key, aluno, texto, materia, tema, tipo_atv, remove
         return "Análise indisponível.", full_text
     except Exception as e: return str(e), ""
 
-# --- ATUALIZAÇÃO 2: CRIAR DO ZERO COM ESTRATÉGIA PRIORITÁRIA ---
+# --- FUNÇÃO 2: ADAPTAR ATIVIDADE (IMAGEM/OCR) ---
+def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_atv, livro_professor, estrategia_media="Automática (Seguir PEI)"):
+    client = OpenAI(api_key=api_key)
+    b64 = base64.b64encode(imagem_bytes).decode('utf-8')
+    pei_contexto = aluno.get('ia_sugestao', '')[:4000]
+    
+    instrucao_estrategia = ""
+    if estrategia_media == "Instruções Passo a Passo":
+        instrucao_estrategia = "USE 'PASSO A PASSO': Numere os comandos (1., 2., 3.) para guiar a execução."
+    elif estrategia_media == "Fragmentação de Tarefas":
+        instrucao_estrategia = "USE 'FRAGMENTAÇÃO': Divida a atividade em partes menores (Letra A, B, C)."
+    elif estrategia_media == "Dicas de Apoio (Scaffolding)":
+        instrucao_estrategia = "USE 'SCAFFOLDING': Insira um box de 'Lembrete' ou 'Dica' antes da questão."
+
+    prompt = f"""
+    ATUAR COMO: Especialista em Acessibilidade e Leitura de Imagens.
+    
+    CONTEXTO DO ALUNO (PEI):
+    {pei_contexto}
+    
+    ESTRATÉGIA PRIORITÁRIA: {instrucao_estrategia}
+    
+    MISSÃO:
+    1. Transcreva o conteúdo da imagem (OCR Inteligente).
+    2. Adapte o conteúdo seguindo a estratégia acima e o PEI.
+    3. Insira a tag [[IMG_1]] UMA ÚNICA VEZ, logo após o enunciado, para manter a imagem original.
+    
+    SAÍDA: [ANÁLISE PEDAGÓGICA]...---DIVISOR---[ATIVIDADE]...
+    """
+    msgs = [{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}}]}]
+    try:
+        resp = client.chat.completions.create(model="gpt-4o-mini", messages=msgs, temperature=0.4)
+        full_text = resp.choices[0].message.content
+        if "---DIVISOR---" in full_text:
+            parts = full_text.split("---DIVISOR---")
+            return parts[0].replace("[ANÁLISE PEDAGÓGICA]", "").strip(), garantir_tag_imagem(parts[1].replace("[ATIVIDADE]", "").strip())
+        return "Análise indisponível.", full_text
+    except Exception as e: return str(e), ""
+
+# --- FUNÇÃO 3: CRIAR DO ZERO ---
 def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, estrategia_media="Automática (Seguir PEI)"):
     client = OpenAI(api_key=api_key)
     hiperfoco = aluno.get('hiperfoco', 'Geral')
@@ -372,22 +397,7 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, e
         return "Análise indisponível.", full_text
     except Exception as e: return str(e), ""
 
-# Outras funções auxiliares (manter originais por brevidade)
-def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_atv, livro_professor, modo_profundo=False):
-    client = OpenAI(api_key=api_key)
-    b64 = base64.b64encode(imagem_bytes).decode('utf-8')
-    pei = aluno.get('ia_sugestao', '')[:4000]
-    prompt = f"ATUAR COMO: Especialista em Acessibilidade. Transcreva e Adapte para (PEI: {pei}). SAÍDA: [ANÁLISE]...---DIVISOR---[ATIVIDADE]..."
-    msgs = [{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}}]}]
-    try:
-        resp = client.chat.completions.create(model="gpt-4o-mini", messages=msgs, temperature=0.4)
-        full_text = resp.choices[0].message.content
-        if "---DIVISOR---" in full_text:
-            parts = full_text.split("---DIVISOR---")
-            return parts[0].strip(), garantir_tag_imagem(parts[1].strip())
-        return "Erro", full_text
-    except: return "Erro", ""
-
+# Outras funções (mantidas simplificadas)
 def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo, feedback=""):
     client = OpenAI(api_key=api_key)
     prompt = f"Crie EXPERIÊNCIA LÚDICA (BNCC) para {aluno['nome']} (EI). Campo: {campo_exp}. Objetivo: {objetivo}. Hiperfoco: {aluno.get('hiperfoco')}. Saída Markdown."
@@ -422,7 +432,7 @@ if is_ei:
     st.info("🧸 **Modo Educação Infantil Ativado:** Foco em Experiências, BNCC e Brincar.")
     tabs = st.tabs(["🧸 Criar Experiência", "🎨 Estúdio Visual & CAA", "📝 Rotina", "🤝 Inclusão"])
     
-    with tabs[0]: # Criar Experiência
+    with tabs[0]: 
         st.markdown("<div class='pedagogia-box'><div class='pedagogia-title'><i class='ri-lightbulb-line'></i> Pedagogia do Brincar</div>Criar vivências intencionais.</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         campo = c1.selectbox("Campo de Experiência", ["O eu, o outro e o nós", "Corpo, gestos e movimentos", "Traços, sons, cores e formas", "Escuta, fala, pensamento e imaginação", "Espaços, tempos, quantidades, relações e transformações"])
@@ -431,7 +441,7 @@ if is_ei:
             with st.spinner("Criando..."): st.session_state.res_ei_exp = gerar_experiencia_ei_bncc(api_key, aluno, campo, obj)
         if st.session_state.get('res_ei_exp'): st.markdown(st.session_state.res_ei_exp)
 
-    with tabs[1]: # Visual EI
+    with tabs[1]: 
         st.markdown("<div class='pedagogia-box'><div class='pedagogia-title'><i class='ri-eye-line'></i> Apoio Visual</div>Cenas e Pictogramas.</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
@@ -448,12 +458,12 @@ if is_ei:
                 with st.spinner("."): st.session_state.res_caa_url = gerar_pictograma_caa(api_key, pal)
             if st.session_state.res_caa_url: st.image(st.session_state.res_caa_url, width=300)
 
-    with tabs[2]: # Rotina EI
+    with tabs[2]: 
         st.markdown("<div class='pedagogia-box'>Rotina & Previsibilidade</div>", unsafe_allow_html=True)
         rot = st.text_area("Rotina:")
         if st.button("📝 ADAPTAR", type="primary"): st.markdown(gerar_roteiro_aula(api_key, aluno, "Geral", "Rotina", feedback_anterior=rot))
 
-    with tabs[3]: # Inclusão
+    with tabs[3]: 
         st.markdown("<div class='pedagogia-box'>Mediação Social</div>", unsafe_allow_html=True)
         tem = st.text_input("Tema:")
         if st.button("🤝 DINÂMICA", type="primary"): st.markdown(gerar_dinamica_inclusiva(api_key, aluno, "EI", tem, "Pequeno grupo", "Crianças"))
@@ -480,7 +490,6 @@ else:
         tip = c3.selectbox("Tipo", ["Prova", "Tarefa"], key="tp1")
         arq = st.file_uploader("Upload DOCX", type=["docx"], key="f1")
         
-        # NOVO CAMPO: SELETOR DE ESTRATÉGIA PRIORITÁRIA
         st.markdown("##### 🛠️ Estratégia de Mediação")
         estrat_med = st.selectbox(
             "Qual técnica priorizar nesta adaptação?",
@@ -508,34 +517,57 @@ else:
         if st.button("🚀 ADAPTAR", type="primary", key="b1"):
             if not st.session_state.get('dt'): st.warning("Arquivo?"); st.stop()
             with st.spinner("Adaptando..."):
-                # Passamos a estratégia escolhida para a função
                 r, t = adaptar_conteudo_docx(api_key, aluno, st.session_state.dt, mat, tem, tip, True, qs_d, estrat_med)
                 st.session_state['rd'] = {'rac': r, 'txt': t}
         
         if 'rd' in st.session_state:
-            st.markdown(f"<div class='analise-box'>{st.session_state['rd']['rac']}</div>", unsafe_allow_html=True)
+            st.markdown("### 🧠 Análise Pedagógica")
+            st.info(st.session_state['rd']['rac'])
+            st.markdown("### 📝 Atividade Adaptada")
+            st.text_area("Preview", value=st.session_state['rd']['txt'], height=300)
+            
+            col_d, col_l = st.columns([3, 1])
             doc = construir_docx_final(st.session_state['rd']['txt'], aluno, mat, {}, None, tip)
-            st.download_button("📥 BAIXAR DOCX", doc, "Adaptada.docx", "primary")
+            col_d.download_button("📥 BAIXAR DOCX", doc, "Adaptada.docx", "primary", use_container_width=True)
+            if col_l.button("🗑️ Limpar", key="cl1", use_container_width=True):
+                del st.session_state['rd']
+                st.rerun()
 
-    # 2. ATIVIDADE (OCR)
+    # 2. ATIVIDADE (OCR) - RESTAURADA E COMPLETA
     with tabs[1]:
         st.markdown("<div class='pedagogia-box'><div class='pedagogia-title'><i class='ri-scissors-cut-line'></i> OCR & Adaptação</div>Foto do livro/caderno.</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         mat = c1.selectbox("Matéria", ["Matemática", "Português", "Ciências", "História"], key="m2")
         arq = st.file_uploader("Upload Imagem", type=["png","jpg"], key="f2")
         
+        # Estratégia também para Atividade
+        st.markdown("##### 🛠️ Estratégia de Mediação")
+        estrat_med_ocr = st.selectbox(
+            "Qual técnica priorizar?",
+            ["Automática (Seguir PEI)", "Instruções Passo a Passo", "Fragmentação de Tarefas", "Dicas de Apoio (Scaffolding)"],
+            key="estrat2"
+        )
+        
         if arq:
             img = Image.open(arq)
-            st.image(img, width=300)
+            st.image(img, width=400)
             if st.button("🚀 ADAPTAR", type="primary", key="b2"):
-                with st.spinner("Lendo..."):
-                    r, t = adaptar_conteudo_imagem(api_key, aluno, arq.getvalue(), mat, "", "Atividade", False)
+                with st.spinner("Lendo e Adaptando..."):
+                    r, t = adaptar_conteudo_imagem(api_key, aluno, arq.getvalue(), mat, "", "Atividade", False, estrat_med_ocr)
                     st.session_state['ri'] = {'rac': r, 'txt': t}
         
         if 'ri' in st.session_state:
-            st.markdown(f"<div class='analise-box'>{st.session_state['ri']['rac']}</div>", unsafe_allow_html=True)
+            st.markdown("### 🧠 Análise Pedagógica")
+            st.info(st.session_state['ri']['rac'])
+            st.markdown("### 📝 Atividade Adaptada")
+            st.text_area("Preview", value=st.session_state['ri']['txt'], height=300)
+            
+            col_d, col_l = st.columns([3, 1])
             doc = construir_docx_final(st.session_state['ri']['txt'], aluno, mat, {}, None, "Atividade")
-            st.download_button("📥 BAIXAR DOCX", doc, "Atividade.docx", "primary")
+            col_d.download_button("📥 BAIXAR DOCX", doc, "Atividade.docx", "primary", use_container_width=True)
+            if col_l.button("🗑️ Limpar", key="cl2", use_container_width=True):
+                del st.session_state['ri']
+                st.rerun()
 
     # 3. CRIAR DO ZERO
     with tabs[2]:
@@ -547,7 +579,6 @@ else:
         qtd = c3.slider("Qtd", 1, 10, 5)
         tip = c4.selectbox("Tipo", ["Objetiva", "Discursiva"])
         
-        # NOVO CAMPO: SELETOR DE ESTRATÉGIA PRIORITÁRIA
         st.markdown("##### 🛠️ Estratégia de Mediação")
         estrat_med_cria = st.selectbox(
             "Qual técnica usar na criação?",
@@ -561,11 +592,9 @@ else:
 
         if st.button("✨ CRIAR", type="primary", key="b3"):
             with st.spinner("Criando..."):
-                # Passamos a estratégia escolhida para a função
                 r, t = criar_profissional(api_key, aluno, mat, obj, qtd, tip, qtd_img if use_img else 0, estrat_med_cria)
                 st.session_state['rc'] = {'rac': r, 'txt': t}
                 
-                # Processa imagens (Banco > IA)
                 tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', t)
                 new_map = {}; cnt = 0
                 for tg in tags:
@@ -581,9 +610,17 @@ else:
                 st.session_state['rc']['map'] = new_map
 
         if 'rc' in st.session_state:
-            st.markdown(f"<div class='analise-box'>{st.session_state['rc']['rac']}</div>", unsafe_allow_html=True)
+            st.markdown("### 🧠 Análise Pedagógica")
+            st.info(st.session_state['rc']['rac'])
+            st.markdown("### 📝 Atividade Criada")
+            st.text_area("Preview", value=st.session_state['rc']['txt'], height=300)
+            
+            col_d, col_l = st.columns([3, 1])
             doc = construir_docx_final(st.session_state['rc']['txt'], aluno, mat, st.session_state['rc']['map'], None, "Criada")
-            st.download_button("📥 BAIXAR DOCX", doc, "Criada.docx", "primary")
+            col_d.download_button("📥 BAIXAR DOCX", doc, "Criada.docx", "primary", use_container_width=True)
+            if col_l.button("🗑️ Limpar", key="cl3", use_container_width=True):
+                del st.session_state['rc']
+                st.rerun()
 
     # 4. ESTUDIO VISUAL
     with tabs[3]:
