@@ -11,7 +11,7 @@ from google.oauth2.service_account import Credentials
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL E AMBIENTE
 # ==============================================================================
-APP_VERSION = "v126.0 (Student Grid)"
+APP_VERSION = "v127.0 (Auto-Fix Connection)"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -29,7 +29,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 1.1. LÓGICA DE BANCO DE DADOS
+# 1.1. LÓGICA DE BANCO DE DADOS (CORRIGIDA E BLINDADA)
 # ==============================================================================
 default_state = {
     'nome': '', 'nasc': date(2015, 1, 1), 'serie': None, 'turma': '', 'diagnostico': '', 
@@ -51,44 +51,79 @@ def conectar_gsheets():
         credentials = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
         client = gspread.authorize(credentials)
         return client
-    except: return None
+    except Exception as e:
+        return None
 
 def carregar_banco_nuvem():
+    """Função robusta para carregar dados mesmo se o nome da aba mudar"""
+    client = conectar_gsheets()
+    if not client:
+        st.error("❌ Erro de Autenticação: Verifique o arquivo secrets.toml")
+        return []
+        
     try:
-        client = conectar_gsheets()
-        if not client: return []
-        sheet = client.open("Omnisfera_Dados").sheet1 
-        records = sheet.get_all_records()
+        # Tenta abrir a planilha pelo nome exato
+        sheet = client.open("Omnisfera_Dados")
+        
+        # Pega a PRIMEIRA aba, independente do nome (Sheet1, Página1, Dados, etc)
+        worksheet = sheet.get_worksheet(0)
+        
+        records = worksheet.get_all_records()
+        
+        # Se a lista vier vazia
+        if not records:
+            return []
+            
         lista_processada = []
         for reg in records:
             try:
+                # Tenta recuperar o JSON completo (Coluna F)
                 if 'Dados_Completos' in reg and reg['Dados_Completos']:
-                    dados_completos = json.loads(reg['Dados_Completos'])
-                    lista_processada.append(dados_completos)
+                    # Verifica se é uma string válida antes de converter
+                    if isinstance(reg['Dados_Completos'], str) and len(reg['Dados_Completos']) > 10:
+                        dados_completos = json.loads(reg['Dados_Completos'])
+                        lista_processada.append(dados_completos)
+                    else:
+                        lista_processada.append(reg)
                 else:
+                    # Fallback: usa os dados das colunas se o JSON não existir
                     lista_processada.append(reg)
-            except: continue
+            except: 
+                # Se falhar o JSON, tenta usar o registro bruto
+                lista_processada.append(reg)
+                continue
+                
         return lista_processada
-    except: return []
+
+    except gspread.SpreadsheetNotFound:
+        st.error("❌ Planilha 'Omnisfera_Dados' não encontrada no Google Drive.")
+        st.info("Dica: Renomeie sua planilha no Google Drive para exatamente: Omnisfera_Dados")
+        return []
+    except Exception as e:
+        st.error(f"⚠️ Erro de Conexão: {str(e)}")
+        return []
 
 def excluir_aluno_nuvem(nome_aluno):
     try:
         client = conectar_gsheets()
-        sheet = client.open("Omnisfera_Dados").sheet1
+        sheet = client.open("Omnisfera_Dados")
+        worksheet = sheet.get_worksheet(0) # Pega a primeira aba
+        
         try:
-            cell = sheet.find(nome_aluno)
+            cell = worksheet.find(nome_aluno)
             if cell:
-                sheet.delete_rows(cell.row)
-                # Atualiza o cache local
-                st.session_state.banco_estudantes = [a for a in st.session_state.banco_estudantes if a['nome'] != nome_aluno]
+                worksheet.delete_rows(cell.row)
+                # Atualiza o cache local imediatamente
+                st.session_state.banco_estudantes = [a for a in st.session_state.banco_estudantes if a.get('nome') != nome_aluno]
                 return True, f"Aluno {nome_aluno} removido."
             else:
-                return False, "Aluno não encontrado."
+                return False, "Aluno não encontrado na linha."
         except gspread.exceptions.CellNotFound:
-             return False, "Aluno não encontrado."
+             return False, "Nome não encontrado na planilha."
     except Exception as e:
         return False, f"Erro ao excluir: {str(e)}"
 
+# Carrega o banco na inicialização
 if 'banco_estudantes' not in st.session_state:
     st.session_state.banco_estudantes = carregar_banco_nuvem()
 
@@ -348,17 +383,22 @@ st.markdown(f"""<div class="insight-card-end hover-spring"><div class="insight-i
 st.markdown("---")
 st.markdown("<div class='section-title'><i class='ri-folder-user-line'></i> Banco de Estudantes (Nuvem)</div>", unsafe_allow_html=True)
 
-# Mostra quem está carregado no momento
+# 1. BOTÃO DE RECARREGAR FORÇADO (PARA QUANDO DÁ ERRO)
+if st.button("🔄 Atualizar Lista do Banco de Dados", type="secondary", use_container_width=True):
+    st.session_state.banco_estudantes = carregar_banco_nuvem()
+    st.rerun()
+
+# 2. STATUS DO ALUNO CARREGADO
 if st.session_state.dados['nome']:
     st.info(f"✅ Aluno carregado atualmente: **{st.session_state.dados['nome']}**")
 else:
     st.warning("⚠️ Nenhum aluno carregado. Selecione abaixo para começar.")
 
+# 3. RENDERIZA A LISTA
 if st.session_state.banco_estudantes:
     for i, aluno in enumerate(st.session_state.banco_estudantes):
         if not aluno.get('nome'): continue
         
-        # Cria um card visual para cada aluno
         with st.container():
             c_info, c_actions = st.columns([3, 1])
             with c_info:
@@ -385,13 +425,12 @@ if st.session_state.banco_estudantes:
                     ok, msg = excluir_aluno_nuvem(aluno['nome'])
                     if ok: 
                         st.toast(msg, icon="🗑️")
-                        # Recarrega a lista do banco
-                        st.session_state.banco_estudantes = carregar_banco_nuvem()
+                        st.session_state.banco_estudantes = carregar_banco_nuvem() # Recarrega a lista
                         st.rerun()
                     else: st.error(msg)
             st.divider()
 else:
-    st.info("O banco de dados está vazio. Vá em 'Acesso Rápido > PEI' para criar o primeiro aluno.")
+    st.info("Nenhum aluno encontrado na nuvem. Verifique a conexão ou crie o primeiro aluno no módulo PEI.")
 
 # ASSINATURA FINAL
 st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.7rem; margin-top: 40px;'>Omnisfera desenvolvida e CRIADA por RODRIGO A. QUEIROZ; assim como PEI360, PAEE360 & HUB de Inclusão</div>", unsafe_allow_html=True)
