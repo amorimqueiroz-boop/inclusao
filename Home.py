@@ -11,7 +11,7 @@ from google.oauth2.service_account import Credentials
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL E AMBIENTE
 # ==============================================================================
-APP_VERSION = "v127.0 (Cloud Fix)"
+APP_VERSION = "v128.0 (API V4 Fix)"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -29,7 +29,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 1.1. LÓGICA DE BANCO DE DADOS (COM DIAGNÓSTICO DE ERRO 200)
+# 1.1. LÓGICA DE BANCO DE DADOS (CORREÇÃO DOS SCOPES)
 # ==============================================================================
 default_state = {
     'nome': '', 'nasc': date(2015, 1, 1), 'serie': None, 'turma': '', 'diagnostico': '', 
@@ -47,7 +47,7 @@ if 'dados' not in st.session_state: st.session_state.dados = default_state.copy(
 @st.cache_resource
 def conectar_gsheets():
     try:
-        # Define o escopo correto para Drive e Sheets
+        # --- MUDANÇA CRÍTICA AQUI: SCOPES ATUALIZADOS ---
         scope = [
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
@@ -56,6 +56,7 @@ def conectar_gsheets():
         client = gspread.authorize(credentials)
         return client
     except Exception as e:
+        st.error(f"Erro de Credenciais: {e}")
         return None
 
 def carregar_banco_nuvem():
@@ -63,14 +64,18 @@ def carregar_banco_nuvem():
     if not client: return []
     
     try:
-        # Tenta abrir a planilha. Se a API do Drive não estiver ativa, falha aqui.
+        # Tenta abrir a planilha. Se falhar, mostra o erro REAL.
         sheet = client.open("Omnisfera_Dados")
-        worksheet = sheet.get_worksheet(0) # Pega a primeira aba
+        
+        # Pega a primeira aba (mais seguro que 'Sheet1')
+        worksheet = sheet.get_worksheet(0)
+        
         records = worksheet.get_all_records()
         
         lista_processada = []
         for reg in records:
             try:
+                # Tenta ler o JSON completo
                 if 'Dados_Completos' in reg and reg['Dados_Completos']:
                     if isinstance(reg['Dados_Completos'], str) and len(reg['Dados_Completos']) > 10:
                         dados_completos = json.loads(reg['Dados_Completos'])
@@ -82,16 +87,16 @@ def carregar_banco_nuvem():
             except: 
                 lista_processada.append(reg)
                 continue
+                
         return lista_processada
 
     except gspread.exceptions.SpreadsheetNotFound:
-        st.error("❌ A planilha 'Omnisfera_Dados' não foi encontrada. Verifique o nome e se você compartilhou com o e-mail do robô.")
+        st.error("❌ A planilha 'Omnisfera_Dados' não foi encontrada!")
+        st.info("👉 Verifique se você compartilhou a planilha com o e-mail do robô (client_email no secrets).")
         return []
     except Exception as e:
-        if "200" in str(e):
-            st.error("🚨 ERRO CRÍTICO: A 'Google Drive API' não está ativada no Google Cloud. Ative-a em 'APIs e Serviços > Biblioteca'.")
-        else:
-            st.error(f"Erro de conexão: {str(e)}")
+        # Mostra o erro detalhado se não for 200
+        st.error(f"⚠️ Erro ao acessar dados: {str(e)}")
         return []
 
 def excluir_aluno_nuvem(nome_aluno):
@@ -240,11 +245,10 @@ if st.session_state.dados['nome']:
 else:
     st.info("👇 Selecione um aluno para começar ou vá ao PEI para criar um novo.")
 
-# Se o banco estiver vazio, tenta recarregar
-if not st.session_state.banco_estudantes:
-    if st.button("🔄 Conectar ao Google Sheets"):
-        st.session_state.banco_estudantes = carregar_banco_nuvem()
-        st.rerun()
+# Botão de Recarregar Manual
+if st.button("🔄 Conectar/Recarregar Google Sheets"):
+    st.session_state.banco_estudantes = carregar_banco_nuvem()
+    st.rerun()
 
 if st.session_state.banco_estudantes:
     for i, aluno in enumerate(st.session_state.banco_estudantes):
@@ -270,7 +274,7 @@ if st.session_state.banco_estudantes:
                     else: st.error(msg)
             st.markdown("<hr style='margin:5px 0;'>", unsafe_allow_html=True)
 else:
-    st.warning("Nenhum aluno encontrado na nuvem ou erro de conexão. (Verifique se a 'Google Drive API' está ativa).")
+    st.warning("Nenhum aluno encontrado. (Se aparecer 'Erro 200', a API Drive ainda não propagou).")
 
 # Footer
 st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.7rem; margin-top: 40px;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>", unsafe_allow_html=True)
