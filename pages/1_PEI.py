@@ -1160,14 +1160,34 @@ with tab8:
                 docx = gerar_docx_final(st.session_state.dados)
                 st.download_button("Baixar Word Editável", docx, f"PEI_{st.session_state.dados['nome']}.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
             with col_data:
-                st.caption("💾 Backup Local")
-                st.download_button("Salvar Arquivo .JSON", json.dumps(st.session_state.dados, default=str), f"PEI_{st.session_state.dados['nome']}.json", "application/json", use_container_width=True, help="Salve este arquivo no seu computador para editar depois.")
-            with col_sys:
-                st.caption("🌐 Sistema")
-                if st.button("Sincronizar (Omnisfera)", type="primary", use_container_width=True):
-                    ok, msg = salvar_aluno_integrado(st.session_state.dados)
-                    if ok: st.toast(msg, icon="✅")
-                    else: st.error(msg)
+                # --- SEÇÃO DE SALVAMENTO NO BANCO DE DADOS ---
+st.markdown("### 💾 Salvar no Banco de Dados")
+
+if st.button("Gravar PEI no Sistema", type="primary"):
+    # Verifica se os dados mínimos existem
+    if not st.session_state.dados['nome']:
+        st.warning("⚠️ Por favor, preencha pelo menos o nome do estudante antes de salvar.")
+    elif not st.session_state.dados['ia_sugestao']:
+        st.warning("⚠️ Gere o conteúdo do PEI com a IA antes de salvar.")
+    else:
+        with st.spinner("Salvando informações na nuvem..."):
+            # Prepara o pacote de dados para o SheetDB
+            # IMPORTANTE: As chaves (lado esquerdo) devem ser IGUAIS aos cabeçalhos da sua planilha
+            pacote_pei = {
+                "id": str(datetime.now().timestamp()),
+                "aluno_nome": st.session_state.dados['nome'],
+                "disciplina": "Geral", # Ou pegue de uma variável se houver (ex: st.session_state.dados['serie'])
+                "meta_descricao": st.session_state.dados['ia_sugestao'], # O texto completo gerado pela IA
+                "status": "Ativo"
+            }
+            
+            # Chama a função do services.py
+            if salvar_pei_db(pacote_pei):
+                st.success(f"✅ PEI de {st.session_state.dados['nome']} salvo com sucesso!")
+                st.balloons()
+            else:
+                st.error("❌ Erro ao salvar. Verifique a conexão.")
+                                
         else:
             st.info("Gere o Plano na aba Consultoria IA para liberar o download.")
 
