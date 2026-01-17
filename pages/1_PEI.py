@@ -33,7 +33,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ### BLOCO VISUAL INTELIGENTE (BADGE OMNISFERA) ###
+# ### BLOCO VISUAL INTELIGENTE ###
 # ==============================================================================
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -41,7 +41,6 @@ except:
     IS_TEST_ENV = False
 
 def get_logo_base64():
-    # Logo da Omnisfera (Badge Giratório)
     caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
     for c in caminhos:
         if os.path.exists(c):
@@ -94,7 +93,19 @@ def verificar_acesso():
 verificar_acesso()
 
 # ==============================================================================
-# 3. LISTAS DE DADOS (COM ÍCONES)
+# 2. LÓGICA DO BANCO DE DADOS (GOOGLE SHEETS)
+# ==============================================================================
+# A lógica de conexão está no services.py, mas precisamos gerenciar o estado local aqui
+if 'banco_estudantes' not in st.session_state:
+    # Tenta carregar do services se existir função, senão lista vazia
+    try:
+        from services import carregar_banco as carregar_db
+        st.session_state.banco_estudantes = carregar_db()
+    except:
+        st.session_state.banco_estudantes = []
+
+# ==============================================================================
+# 3. LISTAS DE DADOS
 # ==============================================================================
 LISTA_SERIES = [
     "Educação Infantil (Creche)", "Educação Infantil (Pré-Escola)", 
@@ -159,7 +170,7 @@ def calcular_idade(data_nasc):
 def get_hiperfoco_emoji(texto):
     if not texto: return "🚀"
     t = texto.lower()
-    if "jogo" in t or "game" in t or "minecraft" in t: return "🎮"
+    if "jogo" in t: return "🎮"
     if "dino" in t: return "🦖"
     return "🚀"
 
@@ -167,26 +178,22 @@ def detecting_nivel_ensino_interno(serie_str):
     if not serie_str: return "INDEFINIDO"
     s = serie_str.lower()
     if "infantil" in s: return "EI"
-    if "1º ano" in s or "2º ano" in s or "3º ano" in s or "4º ano" in s or "5º ano" in s: return "FI"
-    if "6º ano" in s or "7º ano" in s or "8º ano" in s or "9º ano" in s: return "FII"
+    if "1º" in s or "2º" in s or "3º" in s or "4º" in s or "5º" in s: return "FI"
+    if "6º" in s or "7º" in s or "8º" in s or "9º" in s: return "FII"
     if "série" in s or "médio" in s or "eja" in s: return "EM"
     return "INDEFINIDO"
 
 def get_segmento_info_visual(serie):
     nivel = detecting_nivel_ensino_interno(serie)
     if nivel == "EI": return "Educação Infantil", "#4299e1", "Foco: Campos de Experiência (BNCC)."
-    elif nivel == "FI": return "Anos Iniciais (Fund. I)", "#48bb78", "Foco: Alfabetização e BNCC."
-    elif nivel == "FII": return "Anos Finais (Fund. II)", "#ed8936", "Foco: Autonomia e Identidade."
-    elif nivel == "EM": return "Ensino Médio / EJA", "#9f7aea", "Foco: Projeto de Vida."
-    else: return "Selecione a Série", "grey", "Aguardando seleção..."
+    elif nivel == "FI": return "Anos Iniciais", "#48bb78", "Foco: Alfabetização e BNCC."
+    elif nivel == "FII": return "Anos Finais", "#ed8936", "Foco: Autonomia e Identidade."
+    elif nivel == "EM": return "Ensino Médio", "#9f7aea", "Foco: Projeto de Vida."
+    return "Selecione a Série", "grey", "..."
 
 def calcular_complexidade_pei(dados):
     n_bar = sum(len(v) for v in dados['barreiras_selecionadas'].values())
-    n_suporte_alto = sum(1 for v in dados['niveis_suporte'].values() if v in ["Substancial", "Muito Substancial"])
-    recursos = 0
-    if dados['rede_apoio']: recursos += 3
-    if dados['lista_medicamentos']: recursos += 2
-    saldo = (n_bar + n_suporte_alto) - recursos
+    saldo = n_bar - (3 if dados['rede_apoio'] else 0)
     if saldo <= 2: return "FLUIDA", "#F0FFF4", "#276749"
     if saldo <= 7: return "ATENÇÃO", "#FFFFF0", "#D69E2E"
     return "CRÍTICA", "#FFF5F5", "#C53030"
@@ -196,27 +203,22 @@ def extrair_tag_ia(texto, tag):
     return match.group(1).strip() if match else ""
 
 def extrair_metas_estruturadas(texto):
-    bloco = extrair_tag_ia(texto, "METAS_SMART")
-    metas = {"Curto": "Definir...", "Medio": "Definir...", "Longo": "Definir..."}
-    if bloco:
-        linhas = bloco.split('\n')
-        for l in linhas:
-            l_clean = re.sub(r'^[\-\*]+', '', l).strip()
-            if not l_clean: continue
-            if "Curto" in l or "2 meses" in l: metas["Curto"] = l_clean.split(":")[-1].strip()
-            elif "Médio" in l or "Semestre" in l: metas["Medio"] = l_clean.split(":")[-1].strip()
-            elif "Longo" in l or "Ano" in l: metas["Longo"] = l_clean.split(":")[-1].strip()
+    raw = extrair_tag_ia(texto, "METAS_SMART")
+    if not raw: return None
+    metas = {"Curto": "...", "Medio": "...", "Longo": "..."}
+    for l in raw.split('\n'):
+        if "Curto" in l: metas["Curto"] = l.split(":")[-1].strip()
+        elif "Médio" in l: metas["Medio"] = l.split(":")[-1].strip()
+        elif "Longo" in l: metas["Longo"] = l.split(":")[-1].strip()
     return metas
 
 def get_pro_icon(nome_profissional):
     p = nome_profissional.lower()
     if "psic" in p: return "🧠"
     if "fono" in p: return "🗣️"
-    if "terapeuta" in p: return "🧩"
-    if "neuro" in p or "medico" in p: return "🩺"
     return "👨‍⚕️"
 
-# CORREÇÃO: Prioridade para a logo 360.png (PEI)
+# PRIORIDADE LOGO PEI
 def finding_logo():
     caminhos = ["360.png", "360.jpg", "omni_icone.png", "logo.png"]
     for c in caminhos:
@@ -228,11 +230,11 @@ def get_base64_image(image_path):
         with open(image_path, "rb") as f: return base64.b64encode(f.read()).decode()
     return ""
 
-def ler_pdf(arquivo):
+def ler_pdf(uploaded):
     try:
-        reader = PdfReader(arquivo); texto = ""
-        for i, page in enumerate(reader.pages[:6]): texto += page.extract_text() + "\n"
-        return texto
+        reader = PdfReader(uploaded); text = ""
+        for p in reader.pages[:5]: text += p.extract_text() + "\n"
+        return text
     except: return ""
 
 def limpar_texto_pdf(texto):
@@ -249,9 +251,12 @@ def inferir_componentes_impactados(dados):
         impactados.add("Língua Portuguesa")
         if nivel == "EM": impactados.add("Humanas")
         else: impactados.add("História/Geografia")
+    if barreiras.get('Acadêmico') and any("Matemático" in b for b in barreiras['Acadêmico']):
+        impactados.add("Matemática")
+        if nivel == "EM": impactados.add("Exatas")
+        elif nivel == "FII": impactados.add("Ciências")
     return list(impactados) if impactados else ["Análise Geral"]
 
-# CORREÇÃO: Funções da Barra de Progresso Restauradas
 def calcular_progresso():
     if st.session_state.dados['ia_sugestao']: return 100
     pontos = 0; total = 7
@@ -273,7 +278,7 @@ def render_progresso():
     st.markdown(f"""<div class="prog-container"><div class="prog-track"><div class="prog-fill" style="width: {p}%; background: {bar_color};"></div></div><div class="prog-icon" style="left: {p}%;">{icon_html}</div></div>""", unsafe_allow_html=True)
 
 # ==============================================================================
-# 6. ESTILO VISUAL
+# 6. ESTILO VISUAL (GRÁFICOS RESTAURADOS)
 # ==============================================================================
 def aplicar_estilo_visual():
     estilo = """
@@ -291,7 +296,19 @@ def aplicar_estilo_visual():
         div[data-testid="column"] .stButton button { border-radius: 8px !important; font-weight: 700 !important; height: 45px !important; background-color: #0F52BA !important; color: white !important; border: none !important; }
         div[data-testid="column"] .stButton button:hover { background-color: #0A3D8F !important; }
         .segmento-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.75rem; color: white; margin-top: 5px; }
+        
+        /* GRÁFICOS E CARDS RESTAURADOS */
         .metric-card { background: white; border-radius: 16px; padding: 15px; border: 1px solid #E2E8F0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 140px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .css-donut { --p: 0; --fill: #e5e7eb; width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(var(--fill) var(--p), #F3F4F6 0); position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+        .css-donut:after { content: ""; position: absolute; width: 60px; height: 60px; border-radius: 50%; background: white; }
+        .d-val { position: relative; z-index: 10; font-weight: 800; font-size: 1.2rem; color: #2D3748; }
+        .d-lbl { font-size: 0.75rem; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; }
+        .comp-icon-box { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+        .dna-bar-container { margin-bottom: 15px; }
+        .dna-bar-flex { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px; font-weight: 600; color: #4A5568; }
+        .dna-bar-bg { width: 100%; height: 8px; background-color: #E2E8F0; border-radius: 4px; overflow: hidden; }
+        .dna-bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+        
         .soft-card { border-radius: 12px; padding: 20px; min-height: 220px; height: 100%; display: flex; flex-direction: column; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); border-left: 5px solid; position: relative; overflow: hidden; }
         .sc-orange { background-color: #FFF5F5; border-left-color: #DD6B20; }
         .sc-blue { background-color: #EBF8FF; border-left-color: #3182CE; }
@@ -302,9 +319,13 @@ def aplicar_estilo_visual():
         .dash-hero { background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); border-radius: 16px; padding: 25px; color: white; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(15, 82, 186, 0.15); }
         .apple-avatar { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4); color: white; font-weight: 800; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; }
         .footer-signature { margin-top: 50px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center; font-size: 0.8rem; color: #A0AEC0; }
-        .rich-box { background-color: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin-bottom: 20px; height: 100%; min-height: 280px; display: flex; flex-direction: column; }
-        .rb-title { font-size: 1.1rem; font-weight: 800; color: #2C5282; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-        .rb-text { font-size: 0.95rem; color: #4A5568; line-height: 1.6; text-align: justify; flex-grow: 1; }
+        .meta-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 5px; }
+        .sc-head { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.95rem; margin-bottom: 15px; color: #2D3748; }
+        .sc-body { font-size: 0.85rem; color: #4A5568; line-height: 1.5; flex-grow: 1; }
+        .bg-icon { position: absolute; bottom: -10px; right: -10px; font-size: 5rem; opacity: 0.08; pointer-events: none; }
+        .pulse-alert { animation: pulse 2s infinite; color: #E53E3E; font-weight: bold; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
         .prog-container { width: 100%; position: relative; margin: 0 0 30px 0; }
         .prog-track { width: 100%; height: 3px; background-color: #E2E8F0; border-radius: 1.5px; }
         .prog-fill { height: 100%; border-radius: 1.5px; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1), background 1.5s ease; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
@@ -369,7 +390,7 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         6. O estudante precisa de dicas de apoio para resolver questões?
         7. O estudante compreende figuras de linguagem e faz inferências?
         8. O estudante necessita de descrição de imagens?
-        9. O estudante precisa de adaptação na formatação de textos? (Se sim, qual? Ex: Fonte ampliada, Espaçamento duplo).
+        9. O estudante precisa de adaptação na formatação de textos? (Se sim, qual? Ex: Fonte ampliada, Espaçamento).
         """
         
         prompt_componentes = ""
@@ -564,8 +585,38 @@ with st.sidebar:
     
     st.info("⚠️ **Aviso de IA:** O conteúdo é gerado por inteligência artificial. Revise todas as informações antes de aplicar.")
     
-    st.markdown("### 📂 Carregar Backup")
-    uploaded_json = st.file_uploader("Arquivo .json", type="json")
+    # --- GERENCIAMENTO DE ALUNOS (SIDEBAR) ---
+    st.markdown("### 📂 Gestão de Alunos")
+    
+    # 1. Carregar Aluno Existente
+    lista_alunos = [a['nome'] for a in st.session_state.banco_estudantes]
+    selecao_aluno = st.selectbox("Carregar Aluno:", ["(Novo Aluno)"] + lista_alunos)
+    
+    if selecao_aluno != "(Novo Aluno)":
+        # Busca os dados do aluno selecionado
+        dados_aluno = next((a for a in st.session_state.banco_estudantes if a['nome'] == selecao_aluno), None)
+        if dados_aluno:
+             # Atualiza o estado atual com os dados do banco
+             # IMPORTANTE: Mesclamos para garantir que campos novos não quebrem
+             st.session_state.dados.update(dados_aluno)
+             if st.button("Carregar Dados"):
+                 st.rerun()
+    else:
+        if st.button("Limpar / Novo Aluno"):
+            st.session_state.dados = default_state.copy()
+            st.rerun()
+
+    # 2. Excluir Aluno (Simulação Visual - Requer backend para exclusão real no Sheets)
+    if selecao_aluno != "(Novo Aluno)":
+        if st.button("🗑️ Excluir deste Navegador"):
+            st.session_state.banco_estudantes = [a for a in st.session_state.banco_estudantes if a['nome'] != selecao_aluno]
+            st.session_state.dados = default_state.copy()
+            st.success("Removido da lista local.")
+            st.rerun()
+
+    st.markdown("---")
+    
+    uploaded_json = st.file_uploader("Upload JSON (Backup)", type="json")
     if uploaded_json:
         try:
             d = json.load(uploaded_json)
@@ -574,8 +625,8 @@ with st.sidebar:
             st.session_state.dados.update(d); st.success("Carregado!")
         except: st.error("Erro no arquivo.")
     st.markdown("---")
-    st.markdown("### 💾 Salvar & Integrar")
-    if st.button("🌐 INTEGRAR NA OMNISFERA", use_container_width=True, type="primary"):
+    
+    if st.button("🌐 Sincronizar Tudo", use_container_width=True, type="primary"):
         ok, msg = salvar_aluno_integrado(st.session_state.dados)
         if ok: st.success(msg); st.balloons()
         else: st.error(msg)
