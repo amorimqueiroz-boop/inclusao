@@ -6,39 +6,31 @@ import pandas as pd
 import time
 
 # ==============================================================================
-# 1. CONFIGURAÇÃO DA PÁGINA
+# 1. CONFIGURAÇÃO
 # ==============================================================================
 st.set_page_config(page_title="Diário de Bordo | Omnisfera", page_icon="📝", layout="wide")
 
 # ==============================================================================
-# 2. CONEXÃO E LEITURA (O CORAÇÃO DO SISTEMA)
+# 2. CONEXÃO E LEITURA (O PEI É A FONTE)
 # ==============================================================================
 @st.cache_resource
 def conectar_banco():
-    """Conecta ao Google Sheets usando os segredos do Streamlit"""
+    """Conecta ao Google Sheets"""
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     credentials = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
     client = gspread.authorize(credentials)
     return client.open("Omnisfera_Dados")
 
 def carregar_peis_ativos(sh):
-    """
-    Busca APENAS os alunos que já possuem PEI salvo na aba 'Metas_PEI'.
-    Essa é a nossa Fonte da Verdade.
-    """
+    """Busca alunos com PEI criado na aba 'Metas_PEI'"""
     try:
         ws = sh.worksheet("Metas_PEI")
-        # Pega todos os registros como lista de dicionários
         dados = ws.get_all_records()
         df = pd.DataFrame(dados)
-        
-        # Garante que as colunas essenciais existem (normaliza nomes)
-        # Se na planilha estiver 'Aluno' ou 'Nome', padronizamos para facilitar
+        # Normaliza colunas para minúsculo para evitar erros
         df.columns = [c.lower() for c in df.columns]
-        
         return df
     except Exception as e:
-        # Se a aba não existir ou der erro, retorna vazio
         st.error(f"Erro ao ler PEIs: {e}")
         return pd.DataFrame()
 
@@ -47,164 +39,151 @@ def preparar_aba_diario(sh):
     try:
         return sh.worksheet("Diario_Bordo")
     except:
-        # Cria a aba se não existir
         ws = sh.add_worksheet("Diario_Bordo", rows=1000, cols=10)
-        ws.append_row(["Timestamp", "Data", "Professor", "Aluno", "Turma", "Meta_PEI", "Estrategia_PEI", "Atividade_Do_Dia", "Avaliacao", "Obs"])
+        ws.append_row(["Timestamp", "Data", "Professor", "Aluno", "Turma", "Meta_PEI", "Estrategia_Hub", "Atividade_Realizada", "Avaliacao", "Obs"])
         return ws
 
 # ==============================================================================
-# 3. INTERFACE DO PROFESSOR
+# 3. INTERFACE
 # ==============================================================================
 
-# --- BARRA LATERAL (IDENTIFICAÇÃO) ---
+# --- SIDEBAR ---
 with st.sidebar:
-    st.header("🔐 Acesso do Educador")
+    st.header("🔐 Identificação")
     if "prof_nome" not in st.session_state: st.session_state["prof_nome"] = ""
-    st.session_state["prof_nome"] = st.text_input("Seu Nome:", value=st.session_state["prof_nome"])
+    st.session_state["prof_nome"] = st.text_input("Nome do Educador:", value=st.session_state["prof_nome"])
 
-st.title("📝 Diário de Bordo & Registro")
-st.markdown("Registro da aplicação prática das metas definidas no PEI.")
+st.title("📝 Diário de Bordo")
+st.markdown("Avaliação das estratégias do Hub de Inclusão aplicadas em sala.")
 
-# --- CARREGAMENTO DE DADOS ---
+# --- CARREGAMENTO ---
 try:
     sh = conectar_banco()
     df_peis = carregar_peis_ativos(sh)
     ws_diario = preparar_aba_diario(sh)
-except Exception as e:
-    st.error("Erro de conexão com o Banco de Dados. Verifique os Segredos.")
+except:
     st.stop()
 
-# Verifica se tem PEIs cadastrados
 if df_peis.empty:
-    st.warning("⚠️ Nenhum PEI encontrado no sistema.")
-    st.info("O aluno só aparecerá aqui depois que você criar o PEI dele no módulo 'Plano Educacional'.")
+    st.warning("⚠️ Nenhum PEI encontrado. Crie um PEI primeiro.")
     st.stop()
 
-# --- SELEÇÃO DO ALUNO (Baseado nos PEIs existentes) ---
-# Cria uma coluna de "Rótulo" para facilitar a seleção (Nome - Turma)
-# Tenta achar as colunas certas, usando 'aluno_nome' (padrão que definimos antes) ou similar
+# --- SELEÇÃO DO ALUNO ---
+# Tenta identificar as colunas automaticamente
 col_nome = next((c for c in df_peis.columns if 'nome' in c or 'aluno' in c), None)
-col_turma = next((c for c in df_peis.columns if 'turma' in c or 'série' in c or 'serie' in c), None)
+col_turma = next((c for c in df_peis.columns if 'turma' in c or 'serie' in c), None)
 
 if col_nome:
-    # Cria lista para o Selectbox
+    # Cria rótulo para o selectbox
+    label_col = df_peis[col_nome].astype(str)
     if col_turma:
-        df_peis['label_select'] = df_peis[col_nome].astype(str) + " (" + df_peis[col_turma].astype(str) + ")"
-    else:
-        df_peis['label_select'] = df_peis[col_nome].astype(str)
-        
-    aluno_selecao = st.selectbox("📂 Selecione o Estudante (PEI Ativo):", df_peis['label_select'].unique())
+        label_col = label_col + " - " + df_peis[col_turma].astype(str)
     
-    # Recupera os dados daquele aluno específico
-    dados_aluno = df_peis[df_peis['label_select'] == aluno_selecao].iloc[0]
+    df_peis['select_label'] = label_col
+    aluno_selecao = st.selectbox("📂 Selecione o Estudante:", df_peis['select_label'].unique())
+
+    # Pega os dados do aluno selecionado
+    dados_aluno = df_peis[df_peis['select_label'] == aluno_selecao].iloc[0]
     
-    # Extrai informações para salvar depois
+    # Extrai dados vitais
     nome_real = dados_aluno[col_nome]
-    turma_real = dados_aluno[col_turma] if col_turma else "Não inf."
+    turma_real = dados_aluno[col_turma] if col_turma else ""
     
-    # Tenta pegar Objetivos e Estratégias (procura colunas com esses nomes)
+    # --- BUSCA INFORMAÇÕES DO HUB (Estratégias salvas no PEI) ---
     col_obj = next((c for c in df_peis.columns if 'objetivo' in c or 'meta' in c), None)
-    col_est = next((c for c in df_peis.columns if 'estrat' in c or 'recurso' in c), None)
+    col_est = next((c for c in df_peis.columns if 'estrat' in c or 'recurso' in c or 'hub' in c), None)
     
-    meta_atual = dados_aluno[col_obj] if col_obj else "Meta não localizada no PEI"
-    estrategia_atual = dados_aluno[col_est] if col_est else "Estratégia não localizada"
+    meta_pei = dados_aluno[col_obj] if col_obj else "Meta não definida"
+    # AQUI ESTÁ A INFORMAÇÃO DO HUB QUE VAMOS AVALIAR
+    estrategia_hub = dados_aluno[col_est] if col_est else "Estratégia não definida"
 
 else:
-    st.error("A planilha de PEI não tem uma coluna de 'Nome' identificável.")
+    st.error("Erro na leitura da planilha PEI.")
     st.stop()
 
 st.divider()
 
-# --- ÁREA PRINCIPAL: VISUALIZAÇÃO E REGISTRO ---
-col_pei, col_registro = st.columns([1, 1.5])
-
-with col_pei:
-    st.subheader("🎯 O que foi planejado (PEI)")
-    st.info(f"**Meta Principal:**\n{meta_atual}")
-    st.markdown(f"**Estratégia/Recurso Sugerido:**\n{estrategia_atual}")
+# --- ÁREA RETRÁTIL DO PEI (NOVIDADE) ---
+# Usamos st.expander para deixar fechado ou aberto
+with st.expander(f"ℹ️ Ver Detalhes do PEI e Estratégias do Hub para {nome_real}", expanded=False):
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("**🎯 Objetivo de Aprendizagem (PEI):**")
+        st.info(meta_pei)
+    with c2:
+        st.markdown("**💡 Sugestão do Hub de Inclusão:**")
+        st.success(estrategia_hub)
     st.caption(f"Turma: {turma_real}")
 
-with col_registro:
-    st.subheader("📍 O que foi feito hoje?")
-    
-    with st.form("diario_form"):
-        # Descrição da aula
-        atividade = st.text_input("Atividade Realizada:", placeholder="Ex: Adaptação da atividade de Frações usando LEGO...")
-        
-        st.write("---")
-        st.markdown("**Avaliação da Execução:**")
-        
-        # Slider de Avaliação (Mais visual)
-        avaliacao = st.select_slider(
-            "Nível de Suporte Necessário:",
-            options=["🔴 Não Realizou", "🟠 Ajuda Total (Física)", "🟡 Ajuda Parcial (Verbal)", "🟢 Independente"],
-            value="🟡 Ajuda Parcial (Verbal)"
-        )
-        
-        obs = st.text_area("Observações (Opcional):", placeholder="Como o aluno reagiu? O que precisa ajustar?", height=80)
-        
-        enviar = st.form_submit_button("💾 Salvar Registro", type="primary", use_container_width=True)
-        
-        if enviar:
-            if not st.session_state["prof_nome"]:
-                st.error("⚠️ Por favor, identifique-se na barra lateral.")
-            elif not atividade:
-                st.error("⚠️ Descreva a atividade realizada.")
-            else:
-                with st.spinner("Salvando no histórico..."):
-                    # Prepara a linha para salvar
-                    nova_linha = [
-                        str(datetime.now().timestamp()),          # ID
-                        datetime.now().strftime("%d/%m/%Y"),      # Data
-                        st.session_state["prof_nome"],            # Prof
-                        nome_real,                                # Aluno
-                        str(turma_real),                          # Turma
-                        str(meta_atual),                          # Contexto (Meta)
-                        str(estrategia_atual),                    # Contexto (Estratégia)
-                        atividade,                                # O que foi feito
-                        avaliacao,                                # Resultado
-                        obs                                       # Obs
-                    ]
-                    
-                    # Envia para o Google Sheets
-                    ws_diario.append_row(nova_linha)
-                    
-                    st.success("✅ Registro salvo com sucesso!")
-                    time.sleep(1)
-                    st.rerun()
+# --- FORMULÁRIO DE AVALIAÇÃO ---
+st.subheader("📍 Avaliação da Estratégia")
 
-# --- HISTÓRICO RECENTE ---
-st.divider()
-st.subheader(f"📅 Histórico de {nome_real}")
+with st.form("form_avaliacao"):
+    # Mostramos a estratégia do Hub novamente aqui para contexto imediato
+    st.markdown(f"**Estratégia Avaliada:** _{estrategia_hub}_")
+    
+    atividade = st.text_input("Como essa estratégia foi aplicada hoje?", placeholder="Ex: Fizemos o jogo sugerido, mas em grupo...")
+    
+    st.markdown("---")
+    st.markdown("**A estratégia do Hub funcionou para este aluno?**")
+    
+    # Avaliação focada na eficácia do recurso
+    avaliacao = st.select_slider(
+        "Nível de Resposta do Aluno:",
+        options=["🔴 Não Funcionou/Recusou", "🟠 Funcionou com muito suporte", "🟡 Funcionou com pouco suporte", "🟢 Funcionou Perfeitamente"],
+        value="🟡 Funcionou com pouco suporte"
+    )
+    
+    obs = st.text_area("Observações / Ajustes necessários:", height=80, placeholder="O aluno engajou? O material precisa ser maior? Menor?")
+    
+    enviar = st.form_submit_button("💾 Salvar Avaliação", type="primary", use_container_width=True)
+
+    if enviar:
+        if not st.session_state["prof_nome"]:
+            st.error("Identifique-se na barra lateral.")
+        elif not atividade:
+            st.error("Descreva como aplicou a estratégia.")
+        else:
+            with st.spinner("Registrando avaliação..."):
+                nova_linha = [
+                    str(datetime.now().timestamp()),
+                    datetime.now().strftime("%d/%m/%Y"),
+                    st.session_state["prof_nome"],
+                    nome_real,
+                    str(turma_real),
+                    str(meta_pei),
+                    str(estrategia_hub), # Salvamos o que foi avaliado
+                    atividade,
+                    avaliacao,
+                    obs
+                ]
+                ws_diario.append_row(nova_linha)
+                st.success("✅ Avaliação salva com sucesso!")
+                time.sleep(1)
+                st.rerun()
+
+# --- HISTÓRICO VISUAL ---
+st.markdown("---")
+st.subheader("📅 Últimas Avaliações")
 
 try:
-    # Lê a aba de diário para mostrar o histórico
-    dados_hist = ws_diario.get_all_records()
-    df_hist = pd.DataFrame(dados_hist)
-    
+    df_hist = pd.DataFrame(ws_diario.get_all_records())
     if not df_hist.empty and "Aluno" in df_hist.columns:
-        # Filtra pelo aluno atual e pega os 3 últimos
-        historico_aluno = df_hist[df_hist["Aluno"] == nome_real].tail(3).iloc[::-1]
+        hist_aluno = df_hist[df_hist["Aluno"] == nome_real].tail(3).iloc[::-1]
         
-        if historico_aluno.empty:
-            st.caption("Nenhum registro anterior encontrado.")
+        if hist_aluno.empty:
+            st.info("Nenhuma avaliação registrada ainda.")
         
-        for i, row in historico_aluno.iterrows():
-            # Define corzinha do card
+        for i, row in hist_aluno.iterrows():
             status = row.get('Avaliacao', '')
-            cor = "#dcfce7" if "Independente" in status else "#fee2e2" if "Não" in status else "#fef9c3"
+            cor = "#dcfce7" if "Perfeitamente" in status else "#fee2e2" if "Não" in status else "#fef9c3"
             
             st.markdown(f"""
-            <div style="background-color: {cor}; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ddd;">
-                <small><b>{row.get('Data', '')}</b> | Prof. {row.get('Professor', '')}</small><br>
-                <div style="font-weight:bold; margin-top:5px;">{row.get('Atividade_Do_Dia', 'Atividade')}</div>
-                <div>{status}</div>
-                <small style="color:#555">"{row.get('Obs', '')}"</small>
+            <div style="background-color: {cor}; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #ddd;">
+                <div style="font-weight:bold; font-size:0.9rem;">{row.get('Data', '')} - {row.get('Atividade_Realizada', '')}</div>
+                <div style="font-size:0.85rem; margin-top:4px;"><i>Estratégia: {row.get('Estrategia_Hub', '')}</i></div>
+                <div style="margin-top:5px; font-weight:bold;">{status}</div>
             </div>
             """, unsafe_allow_html=True)
-            
-    else:
-        st.caption("Ainda não há registros no sistema.")
-
-except Exception as e:
-    st.write("Histórico indisponível no momento.")
+except:
+    pass
