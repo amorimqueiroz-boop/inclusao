@@ -227,17 +227,36 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ----------------------------------------------------------------------
-# LÓGICA DE INTEGRAÇÃO DE DADOS (A Mágica Acontece Aqui)
+# LÓGICA DE LISTA SUSPENSA DE ALUNOS (Restaurada!)
 # ----------------------------------------------------------------------
-# Verifica se existe um aluno carregado na "Mochila" (Session State)
-if 'dados' not in st.session_state or not st.session_state.dados.get('nome'):
-    st.warning("⚠️ Nenhum aluno carregado. Por favor, vá para a Página Inicial e selecione um aluno no Banco de Dados.")
-    if st.button("Ir para Home agora"):
-        st.switch_page("Home.py")
+
+# Verifica se o Banco de Estudantes foi carregado na memória (via Home)
+if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
+    st.warning("⚠️ Banco de dados vazio. Volte para a Home e carregue os alunos.")
     st.stop()
 
-# Se chegou aqui, carrega o aluno direto da memória
-aluno = st.session_state.dados
+# 1. Pega apenas os nomes dos alunos disponíveis na memória
+lista_nomes_alunos = [a['nome'] for a in st.session_state.banco_estudantes if a.get('nome')]
+
+# 2. Define o índice padrão (mantém o que estava selecionado na Home, se possível)
+idx_padrao = 0
+if st.session_state.dados.get('nome') in lista_nomes_alunos:
+    idx_padrao = lista_nomes_alunos.index(st.session_state.dados['nome'])
+
+# 3. Cria a Lista Suspensa (Selectbox) para troca rápida
+nome_selecionado = st.selectbox("📂 Selecione o Estudante para Planejar:", lista_nomes_alunos, index=idx_padrao)
+
+# 4. Atualiza o objeto 'aluno' com base na seleção
+aluno = next((a for a in st.session_state.banco_estudantes if a['nome'] == nome_selecionado), None)
+
+# 5. IMPORTANTE: Atualiza o estado global para manter a sincronia se mudar de aba
+if aluno:
+    st.session_state.dados = aluno
+else:
+    st.error("Erro ao carregar dados do aluno selecionado.")
+    st.stop()
+
+# ----------------------------------------------------------------------
 
 # --- DETECTOR DE EDUCAÇÃO INFANTIL ---
 serie_aluno = aluno.get('serie', '').lower()
