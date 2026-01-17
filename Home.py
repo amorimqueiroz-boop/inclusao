@@ -11,7 +11,7 @@ from google.oauth2.service_account import Credentials
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL E AMBIENTE
 # ==============================================================================
-APP_VERSION = "v128.0 (API V4 Fix)"
+APP_VERSION = "v128.0 (Leitura Blindada)"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -29,7 +29,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 1.1. LÓGICA DE BANCO DE DADOS (CORREÇÃO DOS SCOPES)
+# 1.1. LÓGICA DE BANCO DE DADOS (CORRIGIDA - LEITURA POR POSIÇÃO)
 # ==============================================================================
 default_state = {
     'nome': '', 'nasc': date(2015, 1, 1), 'serie': None, 'turma': '', 'diagnostico': '', 
@@ -47,7 +47,7 @@ if 'dados' not in st.session_state: st.session_state.dados = default_state.copy(
 @st.cache_resource
 def conectar_gsheets():
     try:
-        # --- MUDANÇA CRÍTICA AQUI: SCOPES ATUALIZADOS ---
+        # ATUALIZAÇÃO CRÍTICA DOS SCOPES
         scope = [
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
@@ -56,47 +56,60 @@ def conectar_gsheets():
         client = gspread.authorize(credentials)
         return client
     except Exception as e:
-        st.error(f"Erro de Credenciais: {e}")
         return None
 
 def carregar_banco_nuvem():
     client = conectar_gsheets()
-    if not client: return []
+    if not client: 
+        st.error("❌ Erro de conexão com o Google.")
+        return []
     
     try:
-        # Tenta abrir a planilha. Se falhar, mostra o erro REAL.
         sheet = client.open("Omnisfera_Dados")
+        worksheet = sheet.get_worksheet(0) # Pega a primeira aba
         
-        # Pega a primeira aba (mais seguro que 'Sheet1')
-        worksheet = sheet.get_worksheet(0)
+        # USA get_all_values() PARA IGNORAR CABEÇALHOS ERRADOS
+        all_rows = worksheet.get_all_values()
         
-        records = worksheet.get_all_records()
-        
+        if len(all_rows) < 2: # Se só tiver cabeçalho ou vazio
+            return []
+            
         lista_processada = []
-        for reg in records:
+        # Pula a linha 1 (cabeçalhos) e processa o resto
+        for row in all_rows[1:]:
             try:
-                # Tenta ler o JSON completo
-                if 'Dados_Completos' in reg and reg['Dados_Completos']:
-                    if isinstance(reg['Dados_Completos'], str) and len(reg['Dados_Completos']) > 10:
-                        dados_completos = json.loads(reg['Dados_Completos'])
+                # Verifica se a linha tem dados suficientes (pelo menos o nome na coluna 0)
+                if not row or not row[0]: continue
+                
+                # Tenta pegar o JSON da Coluna F (índice 5)
+                # Estrutura esperada: [0]Nome, [1]Serie, [2]Diag, [3]Data, [4]Resp, [5]JSON
+                json_str = row[5] if len(row) > 5 else ""
+                
+                if json_str and len(json_str) > 10:
+                    try:
+                        dados_completos = json.loads(json_str)
                         lista_processada.append(dados_completos)
-                    else:
-                        lista_processada.append(reg)
+                    except:
+                        # Se o JSON falhar, cria um objeto básico com o que tem nas colunas
+                        basic_data = default_state.copy()
+                        basic_data['nome'] = row[0]
+                        basic_data['serie'] = row[1] if len(row) > 1 else ""
+                        basic_data['diagnostico'] = row[2] if len(row) > 2 else ""
+                        lista_processada.append(basic_data)
                 else:
-                    lista_processada.append(reg)
-            except: 
-                lista_processada.append(reg)
+                    # Se não tiver JSON, usa dados das colunas
+                    basic_data = default_state.copy()
+                    basic_data['nome'] = row[0]
+                    basic_data['serie'] = row[1] if len(row) > 1 else ""
+                    basic_data['diagnostico'] = row[2] if len(row) > 2 else ""
+                    lista_processada.append(basic_data)
+            except Exception as e:
                 continue
                 
         return lista_processada
 
-    except gspread.exceptions.SpreadsheetNotFound:
-        st.error("❌ A planilha 'Omnisfera_Dados' não foi encontrada!")
-        st.info("👉 Verifique se você compartilhou a planilha com o e-mail do robô (client_email no secrets).")
-        return []
     except Exception as e:
-        # Mostra o erro detalhado se não for 200
-        st.error(f"⚠️ Erro ao acessar dados: {str(e)}")
+        st.error(f"⚠️ Erro ao ler planilha: {str(e)}")
         return []
 
 def excluir_aluno_nuvem(nome_aluno):
@@ -114,7 +127,7 @@ def excluir_aluno_nuvem(nome_aluno):
         except: return False, "Aluno não encontrado."
     except Exception as e: return False, str(e)
 
-# Tenta carregar na inicialização
+# Carrega na inicialização
 if 'banco_estudantes' not in st.session_state:
     st.session_state.banco_estudantes = carregar_banco_nuvem()
 
@@ -245,10 +258,11 @@ if st.session_state.dados['nome']:
 else:
     st.info("👇 Selecione um aluno para começar ou vá ao PEI para criar um novo.")
 
-# Botão de Recarregar Manual
-if st.button("🔄 Conectar/Recarregar Google Sheets"):
-    st.session_state.banco_estudantes = carregar_banco_nuvem()
-    st.rerun()
+# Se o banco estiver vazio, tenta recarregar
+if not st.session_state.banco_estudantes:
+    if st.button("🔄 Conectar/Recarregar Google Sheets"):
+        st.session_state.banco_estudantes = carregar_banco_nuvem()
+        st.rerun()
 
 if st.session_state.banco_estudantes:
     for i, aluno in enumerate(st.session_state.banco_estudantes):
@@ -274,7 +288,7 @@ if st.session_state.banco_estudantes:
                     else: st.error(msg)
             st.markdown("<hr style='margin:5px 0;'>", unsafe_allow_html=True)
 else:
-    st.warning("Nenhum aluno encontrado. (Se aparecer 'Erro 200', a API Drive ainda não propagou).")
+    st.warning("Nenhum aluno encontrado ou erro de conexão. (Verifique se a 'Google Drive API' está ativa).")
 
 # Footer
 st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.7rem; margin-top: 40px;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>", unsafe_allow_html=True)
