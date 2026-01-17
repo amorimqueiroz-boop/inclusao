@@ -5,27 +5,32 @@ from datetime import datetime
 import pandas as pd
 
 # ==============================================================================
-# 1. CONFIGURAÇÃO E DADOS CURRICULARES
+# 1. CONFIGURAÇÃO E INTELIGÊNCIA CURRICULAR
 # ==============================================================================
-st.set_page_config(page_title="Omnisfera | Diário de Bordo", page_icon="📝", layout="wide")
+st.set_page_config(page_title="Diário de Bordo | Omnisfera", page_icon="📝", layout="wide")
 
-# Estrutura dos Componentes Curriculares
-CURRICULO = {
-    "Anos Iniciais (1º ao 5º)": [
-        "Polivalente (Regência de Classe)", "Arte", "Educação Física", "Língua Inglesa"
-    ],
-    "Anos Finais (6º ao 9º)": [
-        "Língua Portuguesa", "Matemática", "Ciências", "História", "Geografia", 
-        "Arte", "Educação Física", "Língua Inglesa"
-    ],
-    "Ensino Médio": [
-        "Linguagens e suas Tecnologias", "Matemática e suas Tecnologias", 
-        "Ciências da Natureza", "Ciências Humanas e Sociais Aplicadas", "Projeto de Vida"
-    ]
+# Mapeamento: Palavras-chave na Turma -> Lista de Matérias
+# O sistema vai procurar "6º" na turma do aluno e saberá que é Anos Finais
+REGRAS_CURRICULO = {
+    "iniciais": {
+        "keywords": ["1º", "2º", "3º", "4º", "5º", "iniciais", "fund 1"],
+        "label": "Anos Iniciais (Polivalente)",
+        "materias": ["Regência de Classe (Polivalente)", "Educação Física", "Arte", "Inglês", "Projeto de Vida/Socioemocional"]
+    },
+    "finais": {
+        "keywords": ["6º", "7º", "8º", "9º", "finais", "fund 2"],
+        "label": "Anos Finais (Especialistas)",
+        "materias": ["Língua Portuguesa", "Matemática", "Ciências", "Geografia", "História", "Inglês", "Ed. Física", "Arte"]
+    },
+    "medio": {
+        "keywords": ["1ª", "2ª", "3ª", "médio", "medio", "em"],
+        "label": "Ensino Médio (Áreas)",
+        "materias": ["Linguagens e Tecnologias", "Matemática e Tecnologias", "Ciências da Natureza", "Ciências Humanas", "Projeto de Vida", "Itinerário Formativo"]
+    }
 }
 
 # ==============================================================================
-# 2. CONEXÃO COM GOOGLE SHEETS
+# 2. CONEXÃO E LEITURA DE DADOS (BACKEND)
 # ==============================================================================
 @st.cache_resource
 def conectar_banco():
@@ -34,224 +39,183 @@ def conectar_banco():
     client = gspread.authorize(credentials)
     return client.open("Omnisfera_Dados")
 
-def inicializar_abas(sh):
-    """Garante que a aba do Diário tenha as colunas novas de Disciplina/Etapa"""
+def carregar_dados_alunos(sh):
+    """
+    Lê a planilha de cadastro inteira para pegar Nome e Turma.
+    Retorna um DataFrame para podermos filtrar fácil.
+    """
+    try:
+        # Tenta achar a aba de Cadastro
+        try:
+            ws = sh.worksheet("Cadastro_Alunos")
+        except:
+            ws = sh.get_worksheet(0) # Pega a primeira se não achar pelo nome
+            
+        dados = ws.get_all_records()
+        df = pd.DataFrame(dados)
+        
+        # Normaliza nomes das colunas para evitar erros (tudo minúsculo)
+        df.columns = [c.lower() for c in df.columns]
+        
+        # Garante que temos as colunas essenciais
+        if 'nome' in df.columns and 'turma' in df.columns:
+            return df
+        elif 'aluno' in df.columns and 'ano' in df.columns: # Caso os nomes sejam diferentes
+            df = df.rename(columns={'aluno': 'nome', 'ano': 'turma'})
+            return df
+        else:
+            st.error("A planilha precisa ter colunas chamadas 'Nome' e 'Turma'")
+            return pd.DataFrame()
+            
+    except Exception as e:
+        st.error(f"Erro ao ler alunos: {e}")
+        return pd.DataFrame()
+
+def preparar_aba_diario(sh):
     try:
         return sh.worksheet("Diario_Bordo")
     except:
-        ws = sh.add_worksheet(title="Diario_Bordo", rows=1000, cols=9)
-        # Cabeçalho atualizado com Etapa e Disciplina
-        ws.append_row(["Timestamp", "Data_Hora", "Professor", "Aluno", "Etapa", "Disciplina", "Atividade_Resumo", "Resultado", "Observacao"])
+        ws = sh.add_worksheet(title="Diario_Bordo", rows=1000, cols=8)
+        ws.append_row(["Timestamp", "Data", "Professor", "Aluno", "Turma_Ref", "Disciplina", "Atividade", "Status", "Obs"])
         return ws
 
-def buscar_alunos_cadastrados(sh):
-    """Tenta buscar alunos na aba 'Cadastro' ou na primeira aba disponível"""
-    try:
-        # Tenta achar uma aba específica de cadastro, senão pega a primeira (índice 0)
-        try:
-            ws = sh.worksheet("Cadastro_Alunos") 
-        except:
-            ws = sh.get_worksheet(0)
-            
-        # Pega todos os valores da Coluna A (assumindo que Nome é a coluna A)
-        nomes = ws.col_values(1)
-        
-        # Remove o cabeçalho se ele for "Nome" ou "Aluno"
-        if nomes and nomes[0].lower() in ["nome", "aluno", "estudante"]:
-            return nomes[1:]
-        return nomes
-    except Exception as e:
-        st.error(f"Erro ao buscar lista de alunos: {e}")
-        return []
-
-def buscar_historico_aluno(sh, nome_aluno):
-    ws = inicializar_abas(sh)
-    dados = ws.get_all_records()
-    if not dados: return pd.DataFrame()
-    
-    df = pd.DataFrame(dados)
-    # Filtra pelo aluno
-    if "Aluno" in df.columns:
-        df_aluno = df[df["Aluno"] == nome_aluno]
-        # Ordena por Timestamp se existir, senão devolve como está
-        if "Timestamp" in df_aluno.columns:
-            return df_aluno.sort_values(by="Timestamp", ascending=False).head(5)
-        return df_aluno.head(5)
-    return pd.DataFrame()
-
 # ==============================================================================
-# 3. INTERFACE DE USUÁRIO
+# 3. INTERFACE INTELIGENTE
 # ==============================================================================
 
-# --- SIDEBAR (Login) ---
+# --- SIDEBAR ---
 with st.sidebar:
-    st.header("🔐 Identificação")
-    if "usuario_nome" not in st.session_state: st.session_state["usuario_nome"] = ""
-    
-    nome_input = st.text_input("Nome do Professor:", value=st.session_state["usuario_nome"])
-    if nome_input:
-        st.session_state["usuario_nome"] = nome_input
-        st.success(f"Olá, {nome_input}")
-    else:
-        st.warning("Necessário para salvar registros.")
+    st.header("Identificação")
+    if "prof_nome" not in st.session_state: st.session_state["prof_nome"] = ""
+    st.session_state["prof_nome"] = st.text_input("Professor(a):", value=st.session_state["prof_nome"])
 
 st.title("📝 Diário de Bordo")
-st.markdown("Registro de aplicação das atividades adaptadas e evolução do estudante.")
 
-# --- CONEXÃO ---
+# Conecta e Puxa Dados
 try:
     sh = conectar_banco()
-    lista_alunos = buscar_alunos_cadastrados(sh)
-    ws_diario = inicializar_abas(sh)
-except Exception as e:
-    st.error("Erro de conexão com o banco de dados.")
+    df_alunos = carregar_dados_alunos(sh)
+    ws_diario = preparar_aba_diario(sh)
+except:
     st.stop()
 
-# --- SELEÇÃO DE ALUNO (GLOBAL - NO TOPO) ---
-if not lista_alunos:
-    st.warning("⚠️ Nenhum aluno encontrado no banco de dados. Cadastre os alunos no módulo PEI/Cadastro.")
+if df_alunos.empty:
+    st.warning("Nenhum aluno cadastrado com Nome/Turma.")
     st.stop()
 
-col_aluno, col_vazia = st.columns([1, 1])
-with col_aluno:
-    aluno_selecionado = st.selectbox("📂 Selecione o Estudante:", lista_alunos)
+# --- 1. SELEÇÃO DO ALUNO ---
+# Cria uma lista de nomes para o selectbox
+lista_nomes = df_alunos['nome'].tolist()
+aluno_selecionado = st.selectbox("Selecione o Estudante:", lista_nomes)
+
+# --- 2. CÉREBRO DA OPERAÇÃO: DETECTAR CURRÍCULO ---
+# Pega a linha desse aluno no DataFrame
+dados_aluno = df_alunos[df_alunos['nome'] == aluno_selecionado].iloc[0]
+turma_aluno = str(dados_aluno.get('turma', '')).lower() # Ex: "5º Ano B"
+
+# Lógica de detecção automática
+materias_exibir = []
+etapa_detectada = "Geral"
+
+# Verifica se a turma contém palavras chave (ex: "5º" está em iniciais)
+found = False
+for chave, regra in REGRAS_CURRICULO.items():
+    for keyword in regra['keywords']:
+        if keyword in turma_aluno:
+            materias_exibir = regra['materias']
+            etapa_detectada = regra['label']
+            found = True
+            break
+    if found: break
+
+# Fallback: Se não achar (ex: turma chama "Azul"), mostra lista genérica
+if not materias_exibir:
+    etapa_detectada = "Etapa não identificada automaticamente"
+    materias_exibir = ["Atividade Geral", "Atividade de Vida Diária", "Outros"]
+
+# Mostra o contexto para o professor (Feedback visual)
+st.info(f"📍 **Aluno matriculado no:** {turma_aluno.upper()} → **Currículo:** {etapa_detectada}")
 
 st.divider()
 
-# --- ÁREA DE REGISTRO (ABAS POR ETAPA) ---
-col_form, col_hist = st.columns([1.5, 1])
+# --- 3. REGISTRO (VISUAL ABERTO) ---
+col_esq, col_dir = st.columns([1.5, 1])
 
-with col_form:
-    st.subheader("📍 Registrar Atividade")
+with col_esq:
+    st.subheader("O que foi trabalhado?")
     
-    # Abas para separar os componentes curriculares
-    tab1, tab2, tab3 = st.tabs(["Anos Iniciais", "Anos Finais", "Ensino Médio"])
+    # AQUI ESTÁ A MUDANÇA: RADIO (Lista aberta) ao invés de Selectbox
+    # O index=None faz com que nada venha selecionado por padrão
+    disciplina = st.radio(
+        "Selecione o Componente Curricular:",
+        options=materias_exibir,
+        index=None, 
+        horizontal=False # Vertical para facilitar leitura na lista lógica
+    )
+
+    st.markdown("---")
     
-    etapa_selecionada = None
-    disciplina_selecionada = None
+    # Campo de Atividade
+    atividade = st.text_input("Qual atividade foi realizada?", placeholder="Ex: Atividade adaptada sobre Sistema Solar (Hub)")
 
-    # Lógica das Abas
-    with tab1:
-        disc_iniciais = st.selectbox("Disciplina (Iniciais):", CURRICULO["Anos Iniciais (1º ao 5º)"], key="sel_iniciais")
-        if st.session_state.get("active_tab") == "Iniciais" or disc_iniciais: 
-            etapa_selecionada = "Anos Iniciais"
-            disciplina_selecionada = disc_iniciais
+    # Avaliação (Usando botões visuais se possível ou radio horizontal)
+    st.markdown("**Como o aluno respondeu?**")
+    status = st.select_slider(
+        "Nível de Autonomia:",
+        options=["🔴 Não Realizou", "🟠 Ajuda Total", "🟡 Ajuda Parcial", "🟢 Independente"],
+        value="🟡 Ajuda Parcial"
+    )
 
-    with tab2:
-        disc_finais = st.selectbox("Disciplina (Finais):", CURRICULO["Anos Finais (6º ao 9º)"], key="sel_finais")
-        if disc_finais: # Simplificação da lógica de seleção
-            # Nota: Num app real, usaríamos callbacks para limpar os outros selects, 
-            # aqui vamos assumir que o usuário seleciona na aba ativa.
-            pass 
+    obs = st.text_area("Observações (Opcional):", height=100)
 
-    with tab3:
-        disc_medio = st.selectbox("Área/Disciplina (Médio):", CURRICULO["Ensino Médio"], key="sel_medio")
+    # Botão de Salvar
+    if st.button("💾 Registrar no Diário", type="primary", use_container_width=True):
+        if not st.session_state["prof_nome"]:
+            st.error("Preencha seu nome na barra lateral.")
+        elif not disciplina:
+            st.error("Selecione a disciplina na lista acima.")
+        elif not atividade:
+            st.error("Descreva a atividade.")
+        else:
+            with st.spinner("Enviando..."):
+                nova_linha = [
+                    str(datetime.now().timestamp()),
+                    datetime.now().strftime("%d/%m/%Y"),
+                    st.session_state["prof_nome"],
+                    aluno_selecionado,
+                    turma_aluno, # Salva a turma também para histórico
+                    disciplina,
+                    atividade,
+                    status,
+                    obs
+                ]
+                ws_diario.append_row(nova_linha)
+                st.success("✅ Registro salvo!")
+                # st.rerun() # Descomente para limpar a tela após salvar
 
-    # Determina qual aba está "valendo" baseado em qual tem foco visual (Streamlit não retorna aba ativa nativamente fácil, então usamos a lógica do form abaixo)
+# --- 4. HISTÓRICO RÁPIDO ---
+with col_dir:
+    st.subheader(f"Histórico: {aluno_selecionado.split()[0]}")
     
-    st.info("👆 Selecione a etapa e a disciplina nas abas acima.")
-
-    # Formulário Unificado
-    with st.form("form_diario"):
-        # Descrição da Atividade (Conexão com o Hub)
-        st.markdown("**Sobre a Atividade Adaptada**")
-        atividade_resumo = st.text_input("Resumo da Atividade (O que foi aplicado?):", 
-                                         placeholder="Ex: Jogo da memória sobre relevo (Adaptado no Hub)")
+    # Busca dados na planilha (Lógica simplificada para visualização)
+    try:
+        dados_todos = ws_diario.get_all_records()
+        df_hist = pd.DataFrame(dados_todos)
         
-        # Correção da seleção de disciplina para o envio
-        # (Truque: O usuário vai preencher, vamos identificar qual aba ele usou visualmente ou assumir a última selecionada se houver conflito, 
-        # mas idealmente ele seleciona a aba e preenche o form).
-        
-        st.markdown("**Avaliação da Execução**")
-        status = st.radio("Nível de Autonomia na tarefa:", 
-                          ["🟢 Independente", "🟡 Com Ajuda Parcial", "🟠 Com Ajuda Total", "🔴 Não Realizou"],
-                          horizontal=True)
-        
-        obs = st.text_area("Observações Pedagógicas:", placeholder="O aluno engajou? O recurso visual funcionou?")
-        
-        enviar = st.form_submit_button("💾 Salvar Registro no Diário")
-
-        if enviar:
-            # Lógica simples para pegar a disciplina correta baseada na aba visual não é possível diretamente no backend,
-            # Então vamos verificar qual selectbox não está vazio ou usar um radio hidden se preferir. 
-            # Vamos simplificar: O usuário deve selecionar a disciplina na aba que ele quer.
+        if not df_hist.empty and "Aluno" in df_hist.columns:
+            # Filtra pelo aluno
+            df_aluno = df_hist[df_hist["Aluno"] == aluno_selecionado].tail(5).iloc[::-1] # Últimos 5 invertidos
             
-            # Recupera valores dos widgets fora do form
-            d_ini = st.session_state.sel_iniciais
-            d_fin = st.session_state.sel_finais
-            d_med = st.session_state.sel_medio
-            
-            # Lógica de prioridade (pode ser melhorada com callbacks depois)
-            # Por padrão, assume Anos Iniciais se nada for mudado, ou tentamos inferir.
-            # Para evitar erro, vou pedir para o usuário confirmar a etapa num radio dentro do form se for crítico,
-            # mas vamos tentar salvar o que estiver na aba 1 se ele não mexeu nas outras.
-            
-            # Solução mais robusta: Vamos pegar a disciplina selecionada pelo contexto
-            # Como st.tabs não guarda estado, vamos salvar com base no que ele preencheu.
-            
-            # *Importante*: Num cenário real, o ideal é ter UM select de "Etapa" e depois UM select de "Disciplina" atualizado dinamicamente.
-            # Mas mantendo as abas como pedido:
-            
-            # Vamos salvar a disciplina de Anos Iniciais como padrão, a menos que ele mude.
-            etapa_final = "Anos Iniciais"
-            disciplina_final = d_ini
-            
-            # Se ele abriu a aba 2 e mudou o select lá (streamlt guarda o ultimo valor)
-            # Essa lógica de abas no Streamlit para input é tricky. 
-            # Sugestão: Salvar TODAS as seleções? Não.
-            # Vamos simplificar para o MVP: Vamos colocar um radio de etapa antes das abas ou dentro do form?
-            # Vou colocar a Etapa automaticamente baseada na lista onde a disciplina está.
-            
-            # Procura a disciplina nas listas
-            if d_fin in CURRICULO["Anos Finais (6º ao 9º)"] and d_fin != CURRICULO["Anos Finais (6º ao 9º)"][0]:
-                 etapa_final = "Anos Finais"
-                 disciplina_final = d_fin
-            elif d_med in CURRICULO["Ensino Médio"] and d_med != CURRICULO["Ensino Médio"][0]:
-                 etapa_final = "Ensino Médio"
-                 disciplina_final = d_med
-            
-            # Validação
-            if not st.session_state["usuario_nome"]:
-                st.error("Preencha seu nome na barra lateral.")
-            elif not atividade_resumo:
-                st.error("Descreva a atividade realizada.")
-            else:
-                with st.spinner("Salvando..."):
-                    nova_linha = [
-                        str(datetime.now().timestamp()),
-                        datetime.now().strftime("%d/%m/%Y %H:%M"),
-                        st.session_state["usuario_nome"],
-                        aluno_selecionado,
-                        etapa_final,        # Nova Coluna
-                        disciplina_final,   # Nova Coluna
-                        atividade_resumo,
-                        status,
-                        obs
-                    ]
-                    ws_diario.append_row(nova_linha)
-                    st.success(f"Registro salvo! ({disciplina_final})")
-                    st.balloons()
-                    st.rerun()
-
-# --- HISTÓRICO LATERAL ---
-with col_hist:
-    st.subheader("📅 Histórico Recente")
-    if aluno_selecionado:
-        try:
-            df_hist = buscar_historico_aluno(sh, aluno_selecionado)
-            if not df_hist.empty:
-                for index, row in df_hist.iterrows():
-                    # Ícone baseado no status
-                    icone = "✅" if "Independente" in row['Resultado'] else "⚠️" if "Ajuda" in row['Resultado'] else "❌"
-                    
-                    st.markdown(f"""
-                    <div style="background-color: white; padding: 10px; border-radius: 5px; border: 1px solid #e2e8f0; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                        <div style="font-size: 0.75rem; color: #a0aec0;">{row['Data_Hora']} | {row.get('Disciplina', 'Geral')}</div>
-                        <div style="font-weight: bold; color: #2d3748;">{row.get('Atividade_Resumo', row.get('Atividade', ''))}</div>
-                        <div style="margin-top: 5px; font-size: 0.9rem;">{icone} {row['Resultado']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.caption("Nenhum registro recente.")
-        except Exception as e:
-            st.warning("Aguardando primeiros registros...")
+            for i, row in df_aluno.iterrows():
+                cor = "#dcfce7" if "Independente" in row['Status'] else "#fee2e2" if "Não" in row['Status'] else "#fef9c3"
+                st.markdown(f"""
+                <div style="background-color: {cor}; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #ddd;">
+                    <small><b>{row['Data']}</b> - {row['Disciplina']}</small><br>
+                    {row['Atividade']}<br>
+                    <small><i>{row['Status']}</i></small>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.write("Nenhum registro anterior.")
+    except:
+        st.write("Histórico indisponível.")
