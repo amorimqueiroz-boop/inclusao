@@ -5,8 +5,8 @@ import pandas as pd
 from datetime import date
 
 # --- CONFIGURAÇÃO ---
-# ⚠️ SUBSTITUA PELO SEU LINK REAL DO SHEETDB
-SHEET_DB_URL = "https://sheetdb.io/api/v1/SEU_CODIGO_AQUI"
+# ⚠️ SUBSTITUA O LINK ABAIXO PELO SEU LINK DO SHEETDB
+SHEET_DB_URL = "https://sheetdb.io/api/v1/d8098eian87x9"
 
 # ==============================================================================
 # 1. FUNÇÕES DO PEI (CADASTRO E METAS)
