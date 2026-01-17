@@ -5,6 +5,8 @@ import json
 import pandas as pd
 from datetime import date
 import base64
+import gspread
+from google.oauth2.service_account import Credentials
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
@@ -17,12 +19,58 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 2. BLOCO VISUAL (DESIGN SYSTEM PREMIUM - AZUL SÓBRIO)
+# 2. LÓGICA DE BANCO DE DADOS (ADICIONADA PARA INDEPENDÊNCIA)
 # ==============================================================================
-import os
-import base64
-import streamlit as st
+# Esta função garante que o PAEE consiga buscar alunos mesmo se o usuário der F5
+@st.cache_resource
+def conectar_gsheets():
+    try:
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        credentials = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+        client = gspread.authorize(credentials)
+        return client
+    except: return None
 
+def carregar_banco_nuvem():
+    try:
+        client = conectar_gsheets()
+        if not client: return []
+        sheet = client.open("Omnisfera_Dados").sheet1 
+        records = sheet.get_all_records()
+        lista_processada = []
+        for reg in records:
+            try:
+                # Recupera o JSON completo salvo na nuvem
+                if 'Dados_Completos' in reg and reg['Dados_Completos']:
+                    dados_completos = json.loads(reg['Dados_Completos'])
+                    lista_processada.append(dados_completos)
+                else:
+                    lista_processada.append(reg)
+            except: continue
+        return lista_processada
+    except: return []
+
+# Se a lista de alunos estiver vazia (ex: deu refresh), carrega da nuvem
+if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
+    with st.spinner("Conectando ao banco de dados..."):
+        st.session_state.banco_estudantes = carregar_banco_nuvem()
+
+# Define estado padrão se não existir
+default_state = {
+    'nome': '', 'nasc': date(2015, 1, 1), 'serie': None, 'turma': '', 'diagnostico': '', 
+    'lista_medicamentos': [], 'composicao_familiar_tags': [], 'historico': '', 'familia': '', 
+    'hiperfoco': '', 'potencias': [], 'rede_apoio': [], 'orientacoes_especialistas': '',
+    'checklist_evidencias': {}, 
+    'nivel_alfabetizacao': 'Não se aplica (Educação Infantil)',
+    'barreiras_selecionadas': {}, 'niveis_suporte': {}, 
+    'estrategias_acesso': [], 'estrategias_ensino': [], 'estrategias_avaliacao': [], 
+    'ia_sugestao': '', 'checklist_hub': {}
+}
+if 'dados' not in st.session_state: st.session_state.dados = default_state.copy()
+
+# ==============================================================================
+# 3. BLOCO VISUAL (DESIGN SYSTEM PREMIUM - AZUL SÓBRIO)
+# ==============================================================================
 # 1. Detecção de Ambiente
 try: IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
 except: IS_TEST_ENV = False
@@ -227,12 +275,12 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ----------------------------------------------------------------------
-# LÓGICA DE LISTA SUSPENSA DE ALUNOS (Restaurada!)
+# LÓGICA DE LISTA SUSPENSA DE ALUNOS (Restaurada e Integrada à Nuvem)
 # ----------------------------------------------------------------------
 
-# Verifica se o Banco de Estudantes foi carregado na memória (via Home)
-if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
-    st.warning("⚠️ Banco de dados vazio. Volte para a Home e carregue os alunos.")
+# Verifica se o banco existe (agora com fallback da nuvem)
+if not st.session_state.banco_estudantes:
+    st.warning("⚠️ Banco de dados vazio. Cadastre alunos no módulo PEI primeiro.")
     st.stop()
 
 # 1. Pega apenas os nomes dos alunos disponíveis na memória
