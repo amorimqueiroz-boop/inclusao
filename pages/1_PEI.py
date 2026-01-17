@@ -13,7 +13,7 @@ import requests
 from datetime import datetime
 
 # ==============================================================================
-# 0. CONFIGURAÇÃO E SEGURANÇA
+# 0. CONFIGURAÇÃO DE PÁGINA
 # ==============================================================================
 st.set_page_config(
     page_title="Omnisfera | PEI 360",
@@ -32,48 +32,36 @@ except ImportError:
     def carregar_aluno_completo(n): return None
 
 # ==============================================================================
-# ### BLOCO VISUAL (CSS CORRIGIDO) ###
+# ### BLOCO VISUAL (LOGO E ESTILO) ###
 # ==============================================================================
-def get_logo_base64():
-    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
+def finding_logo():
+    # Prioriza a logo do PEI (360) sobre a da Omnisfera
+    caminhos = ["360.png", "360.jpg", "omni_icone.png", "logo.png"]
     for c in caminhos:
-        if os.path.exists(c):
-            with open(c, "rb") as f:
-                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+        if os.path.exists(c): return c
+    return None
+
+def get_logo_base64():
+    caminho = finding_logo()
+    if caminho:
+        with open(caminho, "rb") as f:
+            return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
     return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
 
 src_logo_giratoria = get_logo_base64()
 
-try:
-    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
-except:
-    IS_TEST_ENV = False
+try: IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
+except: IS_TEST_ENV = False
 
-if IS_TEST_ENV:
-    card_bg, card_border = "rgba(255, 220, 50, 0.95)", "rgba(200, 160, 0, 0.5)"
-else:
-    card_bg, card_border = "rgba(255, 255, 255, 0.85)", "rgba(255, 255, 255, 0.6)"
+card_bg = "rgba(255, 220, 50, 0.95)" if IS_TEST_ENV else "rgba(255, 255, 255, 0.85)"
+card_border = "rgba(200, 160, 0, 0.5)" if IS_TEST_ENV else "rgba(255, 255, 255, 0.6)"
 
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
     html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }}
+    .block-container {{ padding-top: 1.5rem !important; padding-bottom: 5rem !important; }}
     
-    /* Correção do Card da Aba Início */
-    .rich-box {{
-        background-color: white; 
-        border-radius: 12px; 
-        padding: 20px; 
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-        border: 1px solid #E2E8F0; 
-        margin-bottom: 15px; 
-        min-height: 200px; /* Altura mínima fixa para alinhar */
-        display: flex; 
-        flex-direction: column;
-    }}
-    .rb-title {{ font-size: 1.1rem; font-weight: 800; color: #2C5282; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }}
-    .rb-text {{ font-size: 0.9rem; color: #4A5568; line-height: 1.5; text-align: left; }}
-
     /* Badge Flutuante */
     .omni-badge {{
         position: fixed; top: 15px; right: 15px;
@@ -88,54 +76,51 @@ st.markdown(f"""
     .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
     @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
 
-    /* Abas */
+    /* Cards e Abas */
     div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] {{ display: none !important; }}
     .stTabs [data-baseweb="tab-list"] {{ gap: 8px; display: flex; flex-wrap: wrap !important; }}
-    .stTabs [data-baseweb="tab"] {{ height: 38px; border-radius: 20px !important; background-color: #FFFFFF; border: 1px solid #E2E8F0; color: #718096; font-weight: 700; font-size: 0.8rem; padding: 0 20px; text-transform: uppercase; margin-bottom: 5px; }}
+    .stTabs [data-baseweb="tab"] {{ height: 38px; border-radius: 20px !important; background-color: #FFFFFF; border: 1px solid #E2E8F0; color: #718096; font-weight: 700; font-size: 0.8rem; padding: 0 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); text-transform: uppercase; margin-bottom: 5px; }}
     .stTabs [aria-selected="true"] {{ background-color: transparent !important; color: #3182CE !important; border: 1px solid #3182CE !important; font-weight: 800; }}
-
-    /* Header e Elementos */
+    
+    .rich-box {{ background-color: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin-bottom: 15px; min-height: 180px; display: flex; flex-direction: column; }}
+    .rb-title {{ font-size: 1.1rem; font-weight: 800; color: #2C5282; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }}
+    .rb-text {{ font-size: 0.9rem; color: #4A5568; line-height: 1.5; }}
+    
     .header-unified {{ background-color: white; padding: 20px 40px; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }}
     .header-subtitle {{ font-size: 1.2rem; color: #718096; font-weight: 600; border-left: 2px solid #E2E8F0; padding-left: 20px; line-height: 1.2; }}
     
-    /* Progresso e Cards */
+    /* Progresso */
     .prog-container {{ width: 100%; position: relative; margin: 0 0 30px 0; }}
     .prog-track {{ width: 100%; height: 3px; background-color: #E2E8F0; border-radius: 1.5px; }}
     .prog-fill {{ height: 100%; border-radius: 1.5px; transition: width 1.5s ease; }}
     .prog-icon {{ position: absolute; top: -14px; width: 30px; height: 30px; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; justify-content: center; }}
     
-    /* Gráficos e Métricas */
+    /* Gráficos */
     .metric-card {{ background: white; border-radius: 16px; padding: 15px; border: 1px solid #E2E8F0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 140px; }}
     .css-donut {{ --p: 0; --fill: #e5e7eb; width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(var(--fill) var(--p), #F3F4F6 0); position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }}
     .css-donut:after {{ content: ""; position: absolute; width: 60px; height: 60px; border-radius: 50%; background: white; }}
     .d-val {{ position: relative; z-index: 10; font-weight: 800; font-size: 1.2rem; color: #2D3748; }}
     .d-lbl {{ font-size: 0.75rem; font-weight: 700; color: #718096; text-transform: uppercase; }}
     .comp-icon-box {{ width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }}
-    .dash-hero {{ background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); border-radius: 16px; padding: 25px; color: white; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }}
-    .apple-avatar {{ width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4); color: white; font-weight: 800; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; }}
-    .soft-card {{ border-radius: 12px; padding: 20px; min-height: 220px; height: 100%; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); border-left: 5px solid; position: relative; overflow: hidden; }}
     
+    /* Cards Coloridos */
+    .soft-card {{ border-radius: 12px; padding: 20px; min-height: 220px; height: 100%; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); border-left: 5px solid; position: relative; overflow: hidden; }}
     .sc-orange {{ background-color: #FFF5F5; border-left-color: #DD6B20; }}
     .sc-blue {{ background-color: #EBF8FF; border-left-color: #3182CE; }}
     .sc-yellow {{ background-color: #FFFFF0; border-left-color: #D69E2E; }}
     .sc-cyan {{ background-color: #E6FFFA; border-left-color: #0BC5EA; }}
     .sc-green {{ background-color: #F0FFF4; border-left-color: #38A169; }}
-    
     .sc-head {{ display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.95rem; margin-bottom: 15px; color: #2D3748; }}
     .sc-body {{ font-size: 0.85rem; color: #4A5568; line-height: 1.5; flex-grow: 1; }}
     .bg-icon {{ position: absolute; bottom: -10px; right: -10px; font-size: 5rem; opacity: 0.08; pointer-events: none; }}
+    .rede-chip {{ display: inline-flex; align-items: center; gap: 5px; background: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #2D3748; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin: 0 5px 5px 0; }}
+    .meta-row {{ display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 5px; }}
     
     .dna-bar-container {{ margin-bottom: 15px; }}
     .dna-bar-flex {{ display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px; font-weight: 600; color: #4A5568; }}
     .dna-bar-bg {{ width: 100%; height: 8px; background-color: #E2E8F0; border-radius: 4px; overflow: hidden; }}
     .dna-bar-fill {{ height: 100%; border-radius: 4px; transition: width 1s ease; }}
-    .rede-chip {{ display: inline-flex; align-items: center; gap: 5px; background: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #2D3748; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin: 0 5px 5px 0; }}
-    .meta-row {{ display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 5px; }}
-    
-    .pulse-alert {{ animation: pulse 2s infinite; color: #E53E3E; font-weight: bold; }}
-    @keyframes pulse {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} 100% {{ opacity: 1; }} }}
     .segmento-badge {{ display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.75rem; color: white; margin-top: 5px; }}
-    .footer-signature {{ margin-top: 50px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center; font-size: 0.8rem; color: #A0AEC0; }}
 </style>
 <div class="omni-badge">
     <img src="{src_logo_giratoria}" class="omni-logo-spin">
@@ -143,9 +128,6 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ==============================================================================
-# 1. VERIFICAÇÃO DE SEGURANÇA
-# ==============================================================================
 def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
@@ -153,45 +135,31 @@ def verificar_acesso():
 verificar_acesso()
 
 # ==============================================================================
-# 2. CONSTANTES E LISTAS
+# 2. LISTAS E ESTADO
 # ==============================================================================
-LISTA_SERIES = [
-    "Educação Infantil (Creche)", "Educação Infantil (Pré-Escola)", 
-    "1º Ano (Fund. I)", "2º Ano (Fund. I)", "3º Ano (Fund. I)", "4º Ano (Fund. I)", "5º Ano (Fund. I)", 
-    "6º Ano (Fund. II)", "7º Ano (Fund. II)", "8º Ano (Fund. II)", "9º Ano (Fund. II)", 
-    "1ª Série (EM)", "2ª Série (EM)", "3ª Série (EM)", "EJA (Educação de Jovens e Adultos)"
-]
-LISTA_ALFABETIZACAO = ["Não se aplica (Educação Infantil)", "Pré-Silábico (Garatuja/Desenho sem letras)", "Pré-Silábico (Letras aleatórias sem valor sonoro)", "Silábico (Sem valor sonoro convencional)", "Silábico (Com valor sonoro vogais/consoantes)", "Silábico-Alfabético (Transição)", "Alfabético (Escrita fonética, com erros ortográficos)", "Ortográfico (Escrita convencional consolidada)"]
+LISTA_SERIES = ["Educação Infantil (Creche)", "Educação Infantil (Pré-Escola)", "1º Ano (Fund. I)", "2º Ano (Fund. I)", "3º Ano (Fund. I)", "4º Ano (Fund. I)", "5º Ano (Fund. I)", "6º Ano (Fund. II)", "7º Ano (Fund. II)", "8º Ano (Fund. II)", "9º Ano (Fund. II)", "1ª Série (EM)", "2ª Série (EM)", "3ª Série (EM)", "EJA"]
+LISTA_ALFABETIZACAO = ["Não se aplica (EI)", "Pré-Silábico", "Silábico (Sem valor)", "Silábico (Com valor)", "Silábico-Alfabético", "Alfabético", "Ortográfico"]
 LISTAS_BARREIRAS = {
-    "Funções Cognitivas": ["🎯 Atenção Sustentada/Focada", "🧠 Memória de Trabalho (Operacional)", "🔄 Flexibilidade Mental", "📅 Planejamento e Organização", "⚡ Velocidade de Processamento", "🧩 Abstração e Generalização"],
-    "Comunicação e Linguagem": ["🗣️ Linguagem Expressiva (Fala)", "👂 Linguagem Receptiva (Compreensão)", "💬 Pragmática (Uso social)", "🎧 Processamento Auditivo", "🙋 Intenção Comunicativa"],
-    "Socioemocional": ["😡 Regulação Emocional", "⛔ Tolerância à Frustração", "🤝 Interação Social com Pares", "🪞 Autoestima e Autoimagem", "😢 Reconhecimento de Emoções"],
-    "Sensorial e Motor": ["🏃 Praxias Globais (Grossa)", "✍️ Praxias Finas", "🔊 Hipersensibilidade Sensorial", "🔍 Hipossensibilidade (Busca)", "🧱 Planejamento Motor"],
-    "Acadêmico": ["📖 Decodificação Leitora", "📜 Compreensão Textual", "➗ Raciocínio Lógico-Matemático", "📝 Grafomotricidade (Escrita)", "🖊️ Produção Textual"]
+    "Funções Cognitivas": ["🎯 Atenção", "🧠 Memória", "🔄 Flexibilidade", "📅 Organização", "⚡ Velocidade", "🧩 Abstração"],
+    "Comunicação": ["🗣️ Fala", "👂 Compreensão", "💬 Uso Social", "🎧 Proc. Auditivo", "🙋 Intenção"],
+    "Socioemocional": ["😡 Regulação", "⛔ Frustração", "🤝 Interação", "🪞 Autoestima", "😢 Emoções"],
+    "Sensorial/Motor": ["🏃 Coord. Grossa", "✍️ Coord. Fina", "🔊 Hipersensibilidade", "🔍 Hipossensibilidade", "🧱 Planejamento"],
+    "Acadêmico": ["📖 Leitura", "📜 Interpretação", "➗ Raciocínio Lógico", "📝 Escrita", "🖊️ Produção Textual"]
 }
-LISTA_POTENCIAS = ["📸 Memória Visual", "🎵 Musicalidade/Ritmo", "💻 Interesse em Tecnologia", "🧱 Hiperfoco Construtivo", "👑 Liderança Natural", "⚽ Habilidades Cinestésicas (Esportes)", "🎨 Expressão Artística (Desenho)", "🔢 Cálculo Mental Rápido", "🗣️ Oralidade/Vocabulário", "🚀 Criatividade/Imaginação", "❤️ Empatia/Cuidado", "🧩 Resolução de Problemas", "🕵️ Curiosidade Investigativa"]
-LISTA_PROFISSIONAIS = ["Psicólogo Clínico", "Neuropsicólogo", "Fonoaudiólogo", "Terapeuta Ocupacional", "Neuropediatra", "Psiquiatra Infantil", "Psicopedagogo Clínico", "Professor de Apoio (Mediador)", "Acompanhante Terapêutico (AT)", "Musicoterapeuta", "Equoterapeuta", "Oftalmologista"]
-LISTA_FAMILIA = ["Mãe", "Pai", "Madrasta", "Padrasto", "Avó Materna", "Avó Paterna", "Avô Materno", "Avô Paterno", "Irmãos", "Tios", "Primos", "Tutor Legal", "Abrigo Institucional"]
+LISTA_POTENCIAS = ["📸 Memória Visual", "🎵 Musicalidade", "💻 Tecnologia", "🧱 Hiperfoco", "👑 Liderança", "⚽ Esportes", "🎨 Arte", "🔢 Cálculo", "🗣️ Oralidade", "🚀 Criatividade", "❤️ Empatia", "🧩 Lógica"]
+LISTA_PROFISSIONAIS = ["Psicólogo", "Fonoaudiólogo", "Terapeuta Ocupacional", "Neuropediatra", "Psicopedagogo", "Mediador", "Acompanhante", "Musicoterapeuta"]
+LISTA_FAMILIA = ["Mãe", "Pai", "Avós", "Irmãos", "Tios", "Tutor"]
 
-# ==============================================================================
-# 3. GERENCIAMENTO DE ESTADO (SESSION STATE)
-# ==============================================================================
 default_state = {
     'nome': '', 'nasc': date(2015, 1, 1), 'serie': None, 'turma': '', 'diagnostico': '', 
     'lista_medicamentos': [], 'composicao_familiar_tags': [], 'historico': '', 'familia': '', 
     'hiperfoco': '', 'potencias': [], 'rede_apoio': [], 'orientacoes_especialistas': '',
-    'checklist_evidencias': {}, 
-    'nivel_alfabetizacao': 'Não se aplica (Educação Infantil)',
-    'barreiras_selecionadas': {k: [] for k in LISTAS_BARREIRAS.keys()},
-    'niveis_suporte': {}, 
+    'checklist_evidencias': {}, 'nivel_alfabetizacao': 'Não se aplica (EI)',
+    'barreiras_selecionadas': {k: [] for k in LISTAS_BARREIRAS.keys()}, 'niveis_suporte': {}, 
     'estrategias_acesso': [], 'estrategias_ensino': [], 'estrategias_avaliacao': [], 
     'ia_sugestao': '', 'ia_mapa_texto': '', 'outros_acesso': '', 'outros_ensino': '', 
-    'monitoramento_data': date.today(), 
-    'status_meta': 'Não Iniciado', 'parecer_geral': 'Manter Estratégias', 'proximos_passos_select': [],
-    'status_validacao_pei': 'rascunho', 
-    'feedback_ajuste': '',
-    'status_validacao_game': 'rascunho',
-    'feedback_ajuste_game': ''
+    'monitoramento_data': date.today(), 'status_meta': 'Não Iniciado', 'parecer_geral': 'Manter Estratégias', 'proximos_passos_select': [],
+    'status_validacao_pei': 'rascunho', 'status_validacao_game': 'rascunho'
 }
 
 if 'dados' not in st.session_state: st.session_state.dados = default_state
@@ -203,11 +171,8 @@ if 'pdf_text' not in st.session_state: st.session_state.pdf_text = ""
 if 'lista_nuvem' not in st.session_state: st.session_state.lista_nuvem = []
 
 # ==============================================================================
-# 4. LÓGICA E UTILITÁRIOS
+# 5. UTILITÁRIOS (FUNÇÕES RESTAURADAS)
 # ==============================================================================
-PASTA_BANCO = "banco_alunos"
-if not os.path.exists(PASTA_BANCO): os.makedirs(PASTA_BANCO)
-
 def calcular_idade(data_nasc):
     if not data_nasc: return ""
     hoje = date.today()
@@ -217,7 +182,7 @@ def calcular_idade(data_nasc):
 def get_hiperfoco_emoji(texto):
     if not texto: return "🚀"
     t = texto.lower()
-    if "jogo" in t or "game" in t or "minecraft" in t: return "🎮"
+    if "jogo" in t: return "🎮"
     if "dino" in t: return "🦖"
     return "🚀"
 
@@ -265,12 +230,6 @@ def get_pro_icon(nome_profissional):
     if "fono" in p: return "🗣️"
     return "👨‍⚕️"
 
-def finding_logo():
-    caminhos = ["360.png", "360.jpg", "omni_icone.png", "logo.png"]
-    for c in caminhos:
-        if os.path.exists(c): return c
-    return None
-
 def get_base64_image(image_path):
     if image_path and os.path.exists(image_path):
         with open(image_path, "rb") as f: return base64.b64encode(f.read()).decode()
@@ -295,12 +254,8 @@ def inferir_componentes_impactados(dados):
     impactados = set()
     if barreiras.get('Acadêmico') and any("Leitora" in b for b in barreiras['Acadêmico']):
         impactados.add("Língua Portuguesa")
-        if nivel == "EM": impactados.add("Humanas")
-        else: impactados.add("História/Geografia")
     if barreiras.get('Acadêmico') and any("Matemático" in b for b in barreiras['Acadêmico']):
         impactados.add("Matemática")
-        if nivel == "EM": impactados.add("Exatas")
-        elif nivel == "FII": impactados.add("Ciências")
     return list(impactados) if impactados else ["Análise Geral"]
 
 def calcular_progresso():
@@ -309,7 +264,7 @@ def calcular_progresso():
     d = st.session_state.dados
     if d['nome']: pontos += 1
     if d['serie']: pontos += 1
-    if d['nivel_alfabetizacao'] and d['nivel_alfabetizacao'] != 'Não se aplica (Educação Infantil)': pontos += 1
+    if d['nivel_alfabetizacao'] and d['nivel_alfabetizacao'] != 'Não se aplica (EI)': pontos += 1
     if any(d['checklist_evidencias'].values()): pontos += 1
     if d['hiperfoco']: pontos += 1
     if any(d['barreiras_selecionadas'].values()): pontos += 1
@@ -324,7 +279,7 @@ def render_progresso():
     st.markdown(f"""<div class="prog-container"><div class="prog-track"><div class="prog-fill" style="width: {p}%; background: {bar_color};"></div></div><div class="prog-icon" style="left: {p}%;">{icon_html}</div></div>""", unsafe_allow_html=True)
 
 # ==============================================================================
-# 5. INTELIGÊNCIA ARTIFICIAL
+# 6. INTELIGÊNCIA ARTIFICIAL
 # ==============================================================================
 def extrair_dados_pdf_ia(api_key, texto_pdf):
     if not api_key: return None, "Configure a Chave API."
@@ -423,11 +378,9 @@ def gerar_pdf_final(dados, tem_anexo):
         pdf.add_page(); pdf.section_title("Planejamento Pedagógico Detalhado")
         texto_limpo = limpar_texto_pdf(dados['ia_sugestao'])
         texto_limpo = re.sub(r'\[.*?\]', '', texto_limpo) 
-        
         for linha in texto_limpo.split('\n'):
             l = linha.strip()
             if not l: continue
-            
             if l.startswith('###') or l.startswith('##'):
                 pdf.ln(5); pdf.set_font('Arial', 'B', 12); pdf.set_text_color(0, 51, 102)
                 pdf.cell(0, 8, l.replace('#', '').strip(), 0, 1, 'L')
@@ -501,20 +454,6 @@ with st.sidebar:
             if d.get('monitoramento_data'): d['monitoramento_data'] = date.fromisoformat(d['monitoramento_data'])
             st.session_state.dados.update(d); st.success("Carregado!")
         except: st.error("Erro no arquivo.")
-    st.markdown("---")
-    
-    if st.button("🌐 Sincronizar (Omnisfera)", use_container_width=True, type="primary"):
-        if not st.session_state.dados['nome']:
-            st.warning("Preencha o nome do aluno.")
-        else:
-            with st.spinner("Sincronizando..."):
-                ok, msg = salvar_aluno_integrado(st.session_state.dados)
-                if ok: 
-                    st.success(msg)
-                    st.session_state.lista_nuvem = [a['nome'] for a in buscar_alunos_banco()] # Atualiza lista local
-                    st.balloons()
-                else: 
-                    st.error(msg)
 
 logo_path = finding_logo(); b64_logo = get_base64_image(logo_path); mime = "image/png"
 img_html = f'<img src="data:{mime};base64,{b64_logo}" style="height: 110px;">' if logo_path else ""
@@ -545,7 +484,6 @@ with tab0:
             </div>
         </div>
         """, unsafe_allow_html=True)
-    
     st.markdown("""
     <div class="rich-box" style="background-color: #EBF8FF; border-color: #3182CE;">
         <div class="rb-title" style="color: #2B6CB0;"><i class="ri-compass-3-line"></i> Como usar este Sistema?</div>
@@ -801,37 +739,37 @@ with tab8:
                 docx = gerar_docx_final(st.session_state.dados)
                 st.download_button("Baixar Word Editável", docx, f"PEI_{st.session_state.dados['nome']}.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
             with col_data:
-                st.markdown("#### 💾 Banco de Dados")
-                if st.button("Gravar PEI no Sistema", type="primary", use_container_width=True):
+                st.markdown("#### ☁️ Nuvem & Histórico")
+                # BOTÃO UNIFICADO DE SALVAMENTO (NUVEM)
+                if st.button("💾 Salvar & Sincronizar Tudo", type="primary", use_container_width=True):
                     if not st.session_state.dados['nome']:
                         st.warning("⚠️ Preencha pelo menos o nome do estudante.")
-                    elif not st.session_state.dados['ia_sugestao']:
-                        st.warning("⚠️ Gere o conteúdo do PEI com a IA antes de salvar.")
                     else:
-                        with st.spinner("Salvando informações na nuvem..."):
+                        with st.spinner("Sincronizando com a Omnisfera..."):
+                            # 1. Salva o Aluno (Perfil Completo)
+                            ok_aluno, msg_aluno = salvar_aluno_integrado(st.session_state.dados)
+                            
+                            # 2. Salva o PEI (Texto Gerado)
                             pacote_pei = {
                                 "id": str(datetime.now().timestamp()),
                                 "aluno_nome": st.session_state.dados['nome'],
                                 "disciplina": "Geral",
                                 "meta_descricao": st.session_state.dados['ia_sugestao'],
-                                "status": "Ativo"
+                                "status": "Vigente",
+                                "data_registro": str(date.today())
                             }
-                            if salvar_pei_db(pacote_pei):
-                                st.success(f"✅ PEI de {st.session_state.dados['nome']} salvo com sucesso!")
+                            ok_pei = salvar_pei_db(pacote_pei)
+                            
+                            if ok_aluno and ok_pei:
+                                st.success("✅ Tudo Salvo! Aluno e PEI sincronizados.")
                                 st.balloons()
+                                # Força atualização da lista local
+                                st.session_state.lista_nuvem = [a['nome'] for a in buscar_alunos_banco()]
                             else:
-                                st.error("❌ Erro ao salvar. Verifique se as colunas da planilha (Metas_PEI) estão corretas.")
+                                st.error(f"Erro no salvamento: {msg_aluno}")
+            
             with col_sys:
-                st.markdown("#### 🌐 Sistema")
-                st.caption("Backup geral")
-                if st.button("Sincronizar (Omnisfera)", type="secondary", use_container_width=True):
-                    if not st.session_state.dados['nome']:
-                         st.warning("Nome obrigatório para sincronizar.")
-                    else:
-                        with st.spinner("Sincronizando perfil do aluno..."):
-                            ok, msg = salvar_aluno_integrado(st.session_state.dados)
-                            if ok: st.toast(msg, icon="✅")
-                            else: st.error(msg)
+                st.markdown("#### 💻 Backup Offline")
                 st.download_button("Salvar Arquivo .JSON", json.dumps(st.session_state.dados, default=str), f"PEI_{st.session_state.dados['nome']}.json", "application/json", use_container_width=True)
         else:
             st.info("Gere o Plano na aba Consultoria IA para liberar o download.")
