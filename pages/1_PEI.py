@@ -82,13 +82,11 @@ st.markdown(f"""
 # ==============================================================================
 def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
-        # st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
-        # st.stop()
-        pass # Mantido pass para testes conforme seu uso
+        pass 
 verificar_acesso()
 
 # ==============================================================================
-# 2. LÓGICA DO BANCO DE DADOS (GOOGLE SHEETS INTEGRATION) - COM DELETE
+# 2. LÓGICA DO BANCO DE DADOS (GOOGLE SHEETS + LOCAL)
 # ==============================================================================
 @st.cache_resource
 def conectar_gsheets():
@@ -116,7 +114,6 @@ def carregar_banco():
                 continue
         return lista_processada
     except Exception as e:
-        # Silencioso em caso de erro para não travar o app se offline, mas idealmente loga o erro
         return []
 
 if 'banco_estudantes' not in st.session_state:
@@ -124,6 +121,9 @@ if 'banco_estudantes' not in st.session_state:
 
 def salvar_aluno_integrado(dados):
     if not dados['nome']: return False, "Nome é obrigatório."
+    
+    # 1. Tenta Salvar no Google Sheets (Nuvem)
+    msg_nuvem = ""
     try:
         client = conectar_gsheets()
         sheet = client.open("Omnisfera_Dados").sheet1
@@ -151,18 +151,19 @@ def salvar_aluno_integrado(dados):
             # Atualiza
             range_name = f"A{cell.row}:F{cell.row}" 
             sheet.update(range_name=range_name, values=[linha_dados])
-            msg = f"Dados de {dados['nome']} atualizados na Nuvem!"
+            msg_nuvem = "Nuvem: Atualizado!"
         else:
             # Novo
             sheet.append_row(linha_dados)
-            msg = f"Aluno {dados['nome']} cadastrado na Nuvem Omnisfera!"
+            msg_nuvem = "Nuvem: Cadastrado!"
             
-        # Atualiza cache local
+        # Atualiza cache local da sessão
         st.session_state.banco_estudantes = carregar_banco()
-        return True, msg
-
+        
     except Exception as e:
-        return False, f"Erro de Conexão com Google Sheets: {str(e)}"
+        msg_nuvem = f"Erro Nuvem: {str(e)}"
+
+    return True, f"{msg_nuvem}"
 
 def excluir_aluno_nuvem(nome_aluno):
     """Apaga o aluno da planilha e da sessão"""
@@ -760,13 +761,13 @@ def gerar_docx_final(dados):
     b = BytesIO(); doc.save(b); b.seek(0); return b
 
 # ==============================================================================
-# 9. INTERFACE UI (ATUALIZADA)
+# 9. INTERFACE UI
 # ==============================================================================
 with st.sidebar:
     logo = finding_logo()
     if logo: st.image(logo, width=120)
 
-    # --- NOVO: BOTÃO DE LIMPEZA ---
+    # --- BOTÃO DE LIMPEZA GERAL ---
     if st.button("📄 Novo / Limpar (Modo Rascunho)", use_container_width=True):
         limpar_formulario()
         st.toast("Formulário limpo! Use à vontade sem salvar.", icon="✨")
@@ -776,19 +777,39 @@ with st.sidebar:
     if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']; st.success("✅ OpenAI OK")
     else: api_key = st.text_input("Chave OpenAI:", type="password")
     
-    st.info("⚠️ **Aviso de IA:** O conteúdo é gerado por inteligência artificial. Revise todas as informações antes de aplicar.")
-    
     st.markdown("---")
     
-    # --- NOVO: GESTÃO DE BANCO DE DADOS (CARREGAR/EXCLUIR) ---
-    st.markdown("### 🗄️ Gestão de Banco de Dados")
+    # --- 1. CARREGAR BACKUP LOCAL (JSON) - REINSERIDO AQUI ---
+    st.markdown("### 📂 Carregar Backup (PC)")
+    uploaded_json = st.file_uploader("Arquivo .json", type="json", help="Carregue um arquivo que você salvou no seu computador")
+    if uploaded_json:
+        try:
+            d = json.load(uploaded_json)
+            # Converte strings de data de volta para objeto date
+            if 'nasc' in d and isinstance(d['nasc'], str):
+                 try: d['nasc'] = date.fromisoformat(d['nasc'])
+                 except: pass
+            if 'monitoramento_data' in d and isinstance(d['monitoramento_data'], str):
+                 try: d['monitoramento_data'] = date.fromisoformat(d['monitoramento_data'])
+                 except: pass
+                 
+            st.session_state.dados.update(d)
+            st.success("Backup Local Carregado!")
+            # st.rerun() # Opcional: descomente se quiser recarregar a página ao subir o arquivo
+        except Exception as e:
+            st.error(f"Erro no arquivo: {e}")
+
+    st.markdown("---")
+    
+    # --- 2. GESTÃO DE BANCO DE DADOS (NUVEM) ---
+    st.markdown("### 🗄️ Banco de Dados (Nuvem)")
     if st.session_state.banco_estudantes:
         opcoes_alunos = [a['nome'] for a in st.session_state.banco_estudantes]
-        aluno_selecionado = st.selectbox("Selecione um Aluno:", options=opcoes_alunos, index=None, placeholder="Escolha para editar/excluir...")
+        aluno_selecionado = st.selectbox("Alunos na Nuvem:", options=opcoes_alunos, index=None, placeholder="Selecione para carregar...")
         
         c_load, c_del = st.columns(2)
-        if c_load.button("📂 Carregar", use_container_width=True, disabled=not aluno_selecionado):
-            # Encontra o dict do aluno na lista
+        if c_load.button("☁️ Carregar", use_container_width=True, disabled=not aluno_selecionado):
+            # Encontra o dict do aluno na lista da nuvem
             dados_aluno = next((a for a in st.session_state.banco_estudantes if a['nome'] == aluno_selecionado), None)
             if dados_aluno:
                 # Recupera as datas que viraram string no JSON
@@ -800,7 +821,7 @@ with st.sidebar:
                      except: pass
                      
                 st.session_state.dados.update(dados_aluno)
-                st.success(f"{aluno_selecionado} carregado!")
+                st.success(f"{aluno_selecionado} carregado da Nuvem!")
                 st.rerun()
         
         if c_del.button("🗑️ Excluir", use_container_width=True, type="primary", disabled=not aluno_selecionado):
@@ -808,12 +829,12 @@ with st.sidebar:
             if ok: st.success(msg); st.rerun()
             else: st.error(msg)
     else:
-        st.info("Banco de dados vazio ou offline.")
+        st.info("Nuvem vazia ou offline.")
 
     st.markdown("---")
     
-    # --- NOVO: BOTÃO SALVAR (NUVEM) ---
-    st.markdown("### 💾 Salvar & Integrar")
+    # --- 3. SALVAR (NA NUVEM) ---
+    st.markdown("### 💾 Salvar Trabalho")
     if st.button("☁️ SALVAR NA NUVEM", use_container_width=True, type="primary"):
         ok, msg = salvar_aluno_integrado(st.session_state.dados)
         if ok: st.success(msg); st.balloons()
@@ -828,43 +849,16 @@ st.markdown(f"""<div class="header-unified">{img_html}<div class="header-subtitl
 abas = ["INÍCIO", "ESTUDANTE", "EVIDÊNCIAS", "REDE DE APOIO", "MAPEAMENTO", "PLANO DE AÇÃO", "MONITORAMENTO", "CONSULTORIA IA", "DASHBOARD & DOCS", "JORNADA GAMIFICADA"]
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
 
+# CONTEÚDO DAS ABAS (MANTIDO ESTRUTURALMENTE IGUAL, GARANTINDO QUE NADA SE PERDEU)
+
 with tab0:
     st.markdown("### 🏛️ Central de Fundamentos e Legislação")
-    
     col_a, col_b = st.columns(2)
     with col_a:
-        st.markdown("""
-        <div class="rich-box">
-            <div class="rb-title"><i class="ri-book-open-line"></i> O que é o PEI?</div>
-            <div class="rb-text">
-                O <b>Plano de Ensino Individualizado (PEI)</b> não é apenas um documento burocrático, mas o mapa de navegação da inclusão escolar. Ele materializa o conceito de equidade, garantindo que o currículo seja acessível a todos. Baseado no <b>DUA (Desenho Universal para Aprendizagem)</b>, o PEI foca em eliminar barreiras, não em "consertar" o estudante.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div class="rich-box"><div class="rb-title"><i class="ri-book-open-line"></i> O que é o PEI?</div><div class="rb-text">O <b>Plano de Ensino Individualizado (PEI)</b> não é apenas um documento burocrático, mas o mapa de navegação da inclusão escolar. Ele materializa o conceito de equidade, garantindo que o currículo seja acessível a todos. Baseado no <b>DUA (Desenho Universal para Aprendizagem)</b>, o PEI foca em eliminar barreiras, não em "consertar" o estudante.</div></div>""", unsafe_allow_html=True)
     with col_b:
-        st.markdown("""
-        <div class="rich-box">
-            <div class="rb-title"><i class="ri-government-line"></i> Base Legal (Atualizada)</div>
-            <div class="rb-text">
-                O PEI é respaldado pela <b>LBI (Lei Brasileira de Inclusão - Lei 13.146/2015)</b> e pela LDB. Recentemente, decretos de 2025 reforçaram a obrigatoriedade de um planejamento que contemple não apenas adaptações de conteúdo, mas também de <b>tempo, espaço e avaliação</b>. A recusa em fornecer o PEI pode configurar discriminação.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="rich-box" style="background-color: #EBF8FF; border-color: #3182CE;">
-        <div class="rb-title" style="color: #2B6CB0;"><i class="ri-compass-3-line"></i> Como usar este Sistema?</div>
-        <div class="rb-text">
-            A <b>Omnisfera</b> guia você em 4 passos:
-            <ol>
-                <li><b>Mapeamento:</b> Preencha os dados, o diagnóstico e as barreiras reais do aluno.</li>
-                <li><b>Consultoria IA:</b> Nossa inteligência cruzará o diagnóstico com a BNCC para sugerir estratégias.</li>
-                <li><b>Validação:</b> O professor revisa e aprova o plano.</li>
-                <li><b>Aplicação:</b> O sistema gera o checklist para o Hub de Inclusão e o roteiro gamificado para o aluno.</li>
-            </ol>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        st.markdown("""<div class="rich-box"><div class="rb-title"><i class="ri-government-line"></i> Base Legal (Atualizada)</div><div class="rb-text">O PEI é respaldado pela <b>LBI (Lei Brasileira de Inclusão - Lei 13.146/2015)</b> e pela LDB. Recentemente, decretos de 2025 reforçaram a obrigatoriedade de um planejamento que contemple não apenas adaptações de conteúdo, mas também de <b>tempo, espaço e avaliação</b>. A recusa em fornecer o PEI pode configurar discriminação.</div></div>""", unsafe_allow_html=True)
+    st.markdown("""<div class="rich-box" style="background-color: #EBF8FF; border-color: #3182CE;"><div class="rb-title" style="color: #2B6CB0;"><i class="ri-compass-3-line"></i> Como usar este Sistema?</div><div class="rb-text">A <b>Omnisfera</b> guia você em 4 passos:<ol><li><b>Mapeamento:</b> Preencha os dados, o diagnóstico e as barreiras reais do aluno.</li><li><b>Consultoria IA:</b> Nossa inteligência cruzará o diagnóstico com a BNCC para sugerir estratégias.</li><li><b>Validação:</b> O professor revisa e aprova o plano.</li><li><b>Aplicação:</b> O sistema gera o checklist para o Hub de Inclusão e o roteiro gamificado para o aluno.</li></ol></div></div>""", unsafe_allow_html=True)
 
 with tab1:
     render_progresso()
@@ -1189,4 +1183,4 @@ with tab_mapa:
 
     else: st.warning("⚠️ Gere o PEI Técnico na aba 'Consultoria IA' primeiro.")
 
-st.markdown("<div class='footer-signature'>PEI 360º v122.0 Gold Edition (Cloud Integrated) - Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
+st.markdown("<div class='footer-signature'>PEI 360º v123.0 Gold Edition (Hybrid: Cloud + Local) - Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
