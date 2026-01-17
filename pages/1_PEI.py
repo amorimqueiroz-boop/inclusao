@@ -2,7 +2,6 @@ import streamlit as st
 from datetime import date
 from io import BytesIO
 from docx import Document
-from docx.shared import Pt
 from openai import OpenAI
 from pypdf import PdfReader
 from fpdf import FPDF
@@ -10,13 +9,11 @@ import base64
 import json
 import os
 import re
-import glob
-import random
 import requests
 from datetime import datetime
 
 # ==============================================================================
-# 0. CONFIGURAÇÃO DE PÁGINA
+# 0. CONFIGURAÇÃO E SEGURANÇA
 # ==============================================================================
 st.set_page_config(
     page_title="Omnisfera | PEI 360",
@@ -25,24 +22,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Tenta importar as funções do banco de dados (services.py)
+# Tenta importar serviços. Se falhar, usa funções de backup para não travar a tela.
 try:
     from services import salvar_aluno_integrado, salvar_pei_db, buscar_alunos_banco, carregar_aluno_completo
 except ImportError:
-    # Fallback caso services.py não esteja completo ou acessível
-    def salvar_aluno_integrado(d): return False, "Erro: services.py incompleto."
+    def salvar_aluno_integrado(d): return False, "Erro: services.py não encontrado."
     def salvar_pei_db(d): return False
     def buscar_alunos_banco(): return []
     def carregar_aluno_completo(n): return None
 
 # ==============================================================================
-# ### BLOCO VISUAL INTELIGENTE ###
+# ### BLOCO VISUAL (CSS CORRIGIDO) ###
 # ==============================================================================
-try:
-    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
-except:
-    IS_TEST_ENV = False
-
 def get_logo_base64():
     caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
     for c in caminhos:
@@ -53,108 +44,108 @@ def get_logo_base64():
 
 src_logo_giratoria = get_logo_base64()
 
+try:
+    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
+except:
+    IS_TEST_ENV = False
+
 if IS_TEST_ENV:
-    card_bg = "rgba(255, 220, 50, 0.95)" 
-    card_border = "rgba(200, 160, 0, 0.5)"
+    card_bg, card_border = "rgba(255, 220, 50, 0.95)", "rgba(200, 160, 0, 0.5)"
 else:
-    card_bg = "rgba(255, 255, 255, 0.85)"
-    card_border = "rgba(255, 255, 255, 0.6)"
+    card_bg, card_border = "rgba(255, 255, 255, 0.85)", "rgba(255, 255, 255, 0.6)"
 
-# ==============================================================================
-# 1. ESTILO VISUAL (CORRIGIDO PARA DASHBOARD E ABA INÍCIO)
-# ==============================================================================
-def aplicar_estilo_visual():
-    st.markdown(f"""
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-        html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }}
-        .block-container {{ padding-top: 1.5rem !important; padding-bottom: 5rem !important; }}
-        
-        /* Badge Flutuante */
-        .omni-badge {{
-            position: fixed; top: 15px; right: 15px;
-            background: {card_bg}; border: 1px solid {card_border};
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            padding: 4px 30px; min-width: 260px; justify-content: center;
-            border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            z-index: 999990; display: flex; align-items: center; gap: 10px;
-            pointer-events: none;
-        }}
-        .omni-text {{
-            font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem;
-            color: #2D3748; letter-spacing: 1px; text-transform: uppercase;
-        }}
-        @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
-        .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
-
-        /* Abas e Header */
-        div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] {{ display: none !important; }}
-        .stTabs [data-baseweb="tab-list"] {{ gap: 8px; display: flex; flex-wrap: wrap !important; }}
-        .stTabs [data-baseweb="tab"] {{ height: 38px; border-radius: 20px !important; background-color: #FFFFFF; border: 1px solid #E2E8F0; color: #718096; font-weight: 700; font-size: 0.8rem; padding: 0 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }}
-        .stTabs [aria-selected="true"] {{ background-color: transparent !important; color: #3182CE !important; border: 1px solid #3182CE !important; font-weight: 800; box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important; }}
-        
-        .header-unified {{ background-color: white; padding: 20px 40px; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }}
-        .header-subtitle {{ font-size: 1.2rem; color: #718096; font-weight: 600; border-left: 2px solid #E2E8F0; padding-left: 20px; line-height: 1.2; }}
-        
-        /* Inputs e Botões */
-        .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {{ border-radius: 8px !important; border-color: #E2E8F0 !important; }}
-        div[data-testid="column"] .stButton button {{ border-radius: 8px !important; font-weight: 700 !important; height: 45px !important; background-color: #0F52BA !important; color: white !important; border: none !important; }}
-        div[data-testid="column"] .stButton button:hover {{ background-color: #0A3D8F !important; }}
-        
-        /* Cards Informativos (Aba Início) - Ajuste de Altura */
-        .rich-box {{ background-color: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin-bottom: 20px; display: flex; flex-direction: column; }}
-        .rb-title {{ font-size: 1.1rem; font-weight: 800; color: #2C5282; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }}
-        .rb-text {{ font-size: 0.95rem; color: #4A5568; line-height: 1.6; text-align: justify; flex-grow: 1; }}
-
-        /* GRÁFICOS E KPI (Aba Dashboard) - RESTAURADOS */
-        .metric-card {{ background: white; border-radius: 16px; padding: 15px; border: 1px solid #E2E8F0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 140px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }}
-        .css-donut {{ --p: 0; --fill: #e5e7eb; width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(var(--fill) var(--p), #F3F4F6 0); position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }}
-        .css-donut:after {{ content: ""; position: absolute; width: 60px; height: 60px; border-radius: 50%; background: white; }}
-        .d-val {{ position: relative; z-index: 10; font-weight: 800; font-size: 1.2rem; color: #2D3748; }}
-        .d-lbl {{ font-size: 0.75rem; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; }}
-        .comp-icon-box {{ width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }}
-        
-        .dash-hero {{ background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); border-radius: 16px; padding: 25px; color: white; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(15, 82, 186, 0.15); }}
-        .apple-avatar {{ width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4); color: white; font-weight: 800; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; }}
-        
-        /* Cards Coloridos e Barras */
-        .soft-card {{ border-radius: 12px; padding: 20px; min-height: 220px; height: 100%; display: flex; flex-direction: column; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); border-left: 5px solid; position: relative; overflow: hidden; }}
-        .sc-orange {{ background-color: #FFF5F5; border-left-color: #DD6B20; }}
-        .sc-blue {{ background-color: #EBF8FF; border-left-color: #3182CE; }}
-        .sc-yellow {{ background-color: #FFFFF0; border-left-color: #D69E2E; }}
-        .sc-cyan {{ background-color: #E6FFFA; border-left-color: #0BC5EA; }}
-        .sc-green {{ background-color: #F0FFF4; border-left-color: #38A169; }}
-        
-        .sc-head {{ display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.95rem; margin-bottom: 15px; color: #2D3748; }}
-        .sc-body {{ font-size: 0.85rem; color: #4A5568; line-height: 1.5; flex-grow: 1; }}
-        .bg-icon {{ position: absolute; bottom: -10px; right: -10px; font-size: 5rem; opacity: 0.08; pointer-events: none; }}
-        
-        .dna-bar-container {{ margin-bottom: 15px; }}
-        .dna-bar-flex {{ display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px; font-weight: 600; color: #4A5568; }}
-        .dna-bar-bg {{ width: 100%; height: 8px; background-color: #E2E8F0; border-radius: 4px; overflow: hidden; }}
-        .dna-bar-fill {{ height: 100%; border-radius: 4px; transition: width 1s ease; }}
-        .rede-chip {{ display: inline-flex; align-items: center; gap: 5px; background: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #2D3748; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin: 0 5px 5px 0; }}
-        .meta-row {{ display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 5px; }}
-        
-        .pulse-alert {{ animation: pulse 2s infinite; color: #E53E3E; font-weight: bold; }}
-        @keyframes pulse {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} 100% {{ opacity: 1; }} }}
-        
-        .prog-container {{ width: 100%; position: relative; margin: 0 0 30px 0; }}
-        .prog-track {{ width: 100%; height: 3px; background-color: #E2E8F0; border-radius: 1.5px; }}
-        .prog-fill {{ height: 100%; border-radius: 1.5px; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1), background 1.5s ease; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }}
-        .prog-icon {{ position: absolute; top: -14px; width: 30px; height: 30px; transition: left 1.5s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-50%); z-index: 10; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15)); display: flex; align-items: center; justify-content: center; }}
-        .segmento-badge {{ display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.75rem; color: white; margin-top: 5px; }}
-    </style>
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+st.markdown(f"""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+    html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }}
     
-    <div class="omni-badge">
-        <img src="{src_logo_giratoria}" class="omni-logo-spin">
-        <span class="omni-text">OMNISFERA</span>
-    </div>
-    """, unsafe_allow_html=True)
+    /* Correção do Card da Aba Início */
+    .rich-box {{
+        background-color: white; 
+        border-radius: 12px; 
+        padding: 20px; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+        border: 1px solid #E2E8F0; 
+        margin-bottom: 15px; 
+        min-height: 200px; /* Altura mínima fixa para alinhar */
+        display: flex; 
+        flex-direction: column;
+    }}
+    .rb-title {{ font-size: 1.1rem; font-weight: 800; color: #2C5282; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }}
+    .rb-text {{ font-size: 0.9rem; color: #4A5568; line-height: 1.5; text-align: left; }}
 
-aplicar_estilo_visual()
+    /* Badge Flutuante */
+    .omni-badge {{
+        position: fixed; top: 15px; right: 15px;
+        background: {card_bg}; border: 1px solid {card_border};
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        padding: 4px 30px; min-width: 260px; justify-content: center;
+        border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        z-index: 999990; display: flex; align-items: center; gap: 10px;
+        pointer-events: none;
+    }}
+    .omni-text {{ font-family: 'Nunito'; font-weight: 800; font-size: 0.9rem; color: #2D3748; letter-spacing: 1px; text-transform: uppercase; }}
+    .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
+    @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
 
+    /* Abas */
+    div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] {{ display: none !important; }}
+    .stTabs [data-baseweb="tab-list"] {{ gap: 8px; display: flex; flex-wrap: wrap !important; }}
+    .stTabs [data-baseweb="tab"] {{ height: 38px; border-radius: 20px !important; background-color: #FFFFFF; border: 1px solid #E2E8F0; color: #718096; font-weight: 700; font-size: 0.8rem; padding: 0 20px; text-transform: uppercase; margin-bottom: 5px; }}
+    .stTabs [aria-selected="true"] {{ background-color: transparent !important; color: #3182CE !important; border: 1px solid #3182CE !important; font-weight: 800; }}
+
+    /* Header e Elementos */
+    .header-unified {{ background-color: white; padding: 20px 40px; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }}
+    .header-subtitle {{ font-size: 1.2rem; color: #718096; font-weight: 600; border-left: 2px solid #E2E8F0; padding-left: 20px; line-height: 1.2; }}
+    
+    /* Progresso e Cards */
+    .prog-container {{ width: 100%; position: relative; margin: 0 0 30px 0; }}
+    .prog-track {{ width: 100%; height: 3px; background-color: #E2E8F0; border-radius: 1.5px; }}
+    .prog-fill {{ height: 100%; border-radius: 1.5px; transition: width 1.5s ease; }}
+    .prog-icon {{ position: absolute; top: -14px; width: 30px; height: 30px; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; justify-content: center; }}
+    
+    /* Gráficos e Métricas */
+    .metric-card {{ background: white; border-radius: 16px; padding: 15px; border: 1px solid #E2E8F0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 140px; }}
+    .css-donut {{ --p: 0; --fill: #e5e7eb; width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(var(--fill) var(--p), #F3F4F6 0); position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }}
+    .css-donut:after {{ content: ""; position: absolute; width: 60px; height: 60px; border-radius: 50%; background: white; }}
+    .d-val {{ position: relative; z-index: 10; font-weight: 800; font-size: 1.2rem; color: #2D3748; }}
+    .d-lbl {{ font-size: 0.75rem; font-weight: 700; color: #718096; text-transform: uppercase; }}
+    .comp-icon-box {{ width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }}
+    .dash-hero {{ background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); border-radius: 16px; padding: 25px; color: white; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }}
+    .apple-avatar {{ width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4); color: white; font-weight: 800; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; }}
+    .soft-card {{ border-radius: 12px; padding: 20px; min-height: 220px; height: 100%; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); border-left: 5px solid; position: relative; overflow: hidden; }}
+    
+    .sc-orange {{ background-color: #FFF5F5; border-left-color: #DD6B20; }}
+    .sc-blue {{ background-color: #EBF8FF; border-left-color: #3182CE; }}
+    .sc-yellow {{ background-color: #FFFFF0; border-left-color: #D69E2E; }}
+    .sc-cyan {{ background-color: #E6FFFA; border-left-color: #0BC5EA; }}
+    .sc-green {{ background-color: #F0FFF4; border-left-color: #38A169; }}
+    
+    .sc-head {{ display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.95rem; margin-bottom: 15px; color: #2D3748; }}
+    .sc-body {{ font-size: 0.85rem; color: #4A5568; line-height: 1.5; flex-grow: 1; }}
+    .bg-icon {{ position: absolute; bottom: -10px; right: -10px; font-size: 5rem; opacity: 0.08; pointer-events: none; }}
+    
+    .dna-bar-container {{ margin-bottom: 15px; }}
+    .dna-bar-flex {{ display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px; font-weight: 600; color: #4A5568; }}
+    .dna-bar-bg {{ width: 100%; height: 8px; background-color: #E2E8F0; border-radius: 4px; overflow: hidden; }}
+    .dna-bar-fill {{ height: 100%; border-radius: 4px; transition: width 1s ease; }}
+    .rede-chip {{ display: inline-flex; align-items: center; gap: 5px; background: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #2D3748; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin: 0 5px 5px 0; }}
+    .meta-row {{ display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 5px; }}
+    
+    .pulse-alert {{ animation: pulse 2s infinite; color: #E53E3E; font-weight: bold; }}
+    @keyframes pulse {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} 100% {{ opacity: 1; }} }}
+    .segmento-badge {{ display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.75rem; color: white; margin-top: 5px; }}
+    .footer-signature {{ margin-top: 50px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center; font-size: 0.8rem; color: #A0AEC0; }}
+</style>
+<div class="omni-badge">
+    <img src="{src_logo_giratoria}" class="omni-logo-spin">
+    <span class="omni-text">OMNISFERA</span>
+</div>
+""", unsafe_allow_html=True)
+
+# ==============================================================================
+# 1. VERIFICAÇÃO DE SEGURANÇA
+# ==============================================================================
 def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
@@ -162,17 +153,7 @@ def verificar_acesso():
 verificar_acesso()
 
 # ==============================================================================
-# 2. LÓGICA DO BANCO DE DADOS (LOCAL E REMOTO)
-# ==============================================================================
-PASTA_BANCO = "banco_alunos"
-if not os.path.exists(PASTA_BANCO): os.makedirs(PASTA_BANCO)
-
-# Inicializa o estado local se necessário
-if 'banco_estudantes' not in st.session_state:
-    st.session_state.banco_estudantes = []
-
-# ==============================================================================
-# 3. LISTAS DE DADOS
+# 2. CONSTANTES E LISTAS
 # ==============================================================================
 LISTA_SERIES = [
     "Educação Infantil (Creche)", "Educação Infantil (Pré-Escola)", 
@@ -181,7 +162,6 @@ LISTA_SERIES = [
     "1ª Série (EM)", "2ª Série (EM)", "3ª Série (EM)", "EJA (Educação de Jovens e Adultos)"
 ]
 LISTA_ALFABETIZACAO = ["Não se aplica (Educação Infantil)", "Pré-Silábico (Garatuja/Desenho sem letras)", "Pré-Silábico (Letras aleatórias sem valor sonoro)", "Silábico (Sem valor sonoro convencional)", "Silábico (Com valor sonoro vogais/consoantes)", "Silábico-Alfabético (Transição)", "Alfabético (Escrita fonética, com erros ortográficos)", "Ortográfico (Escrita convencional consolidada)"]
-
 LISTAS_BARREIRAS = {
     "Funções Cognitivas": ["🎯 Atenção Sustentada/Focada", "🧠 Memória de Trabalho (Operacional)", "🔄 Flexibilidade Mental", "📅 Planejamento e Organização", "⚡ Velocidade de Processamento", "🧩 Abstração e Generalização"],
     "Comunicação e Linguagem": ["🗣️ Linguagem Expressiva (Fala)", "👂 Linguagem Receptiva (Compreensão)", "💬 Pragmática (Uso social)", "🎧 Processamento Auditivo", "🙋 Intenção Comunicativa"],
@@ -190,12 +170,11 @@ LISTAS_BARREIRAS = {
     "Acadêmico": ["📖 Decodificação Leitora", "📜 Compreensão Textual", "➗ Raciocínio Lógico-Matemático", "📝 Grafomotricidade (Escrita)", "🖊️ Produção Textual"]
 }
 LISTA_POTENCIAS = ["📸 Memória Visual", "🎵 Musicalidade/Ritmo", "💻 Interesse em Tecnologia", "🧱 Hiperfoco Construtivo", "👑 Liderança Natural", "⚽ Habilidades Cinestésicas (Esportes)", "🎨 Expressão Artística (Desenho)", "🔢 Cálculo Mental Rápido", "🗣️ Oralidade/Vocabulário", "🚀 Criatividade/Imaginação", "❤️ Empatia/Cuidado", "🧩 Resolução de Problemas", "🕵️ Curiosidade Investigativa"]
-
 LISTA_PROFISSIONAIS = ["Psicólogo Clínico", "Neuropsicólogo", "Fonoaudiólogo", "Terapeuta Ocupacional", "Neuropediatra", "Psiquiatra Infantil", "Psicopedagogo Clínico", "Professor de Apoio (Mediador)", "Acompanhante Terapêutico (AT)", "Musicoterapeuta", "Equoterapeuta", "Oftalmologista"]
 LISTA_FAMILIA = ["Mãe", "Pai", "Madrasta", "Padrasto", "Avó Materna", "Avó Paterna", "Avô Materno", "Avô Paterno", "Irmãos", "Tios", "Primos", "Tutor Legal", "Abrigo Institucional"]
 
 # ==============================================================================
-# 4. GERENCIAMENTO DE ESTADO
+# 3. GERENCIAMENTO DE ESTADO (SESSION STATE)
 # ==============================================================================
 default_state = {
     'nome': '', 'nasc': date(2015, 1, 1), 'serie': None, 'turma': '', 'diagnostico': '', 
@@ -221,10 +200,14 @@ else:
         if key not in st.session_state.dados: st.session_state.dados[key] = val
 
 if 'pdf_text' not in st.session_state: st.session_state.pdf_text = ""
+if 'lista_nuvem' not in st.session_state: st.session_state.lista_nuvem = []
 
 # ==============================================================================
-# 5. LÓGICA E UTILITÁRIOS
+# 4. LÓGICA E UTILITÁRIOS
 # ==============================================================================
+PASTA_BANCO = "banco_alunos"
+if not os.path.exists(PASTA_BANCO): os.makedirs(PASTA_BANCO)
+
 def calcular_idade(data_nasc):
     if not data_nasc: return ""
     hoje = date.today()
@@ -282,7 +265,6 @@ def get_pro_icon(nome_profissional):
     if "fono" in p: return "🗣️"
     return "👨‍⚕️"
 
-# PRIORIDADE LOGO PEI (Correção: Busca 360.png primeiro)
 def finding_logo():
     caminhos = ["360.png", "360.jpg", "omni_icone.png", "logo.png"]
     for c in caminhos:
@@ -342,7 +324,7 @@ def render_progresso():
     st.markdown(f"""<div class="prog-container"><div class="prog-track"><div class="prog-fill" style="width: {p}%; background: {bar_color};"></div></div><div class="prog-icon" style="left: {p}%;">{icon_html}</div></div>""", unsafe_allow_html=True)
 
 # ==============================================================================
-# 7. INTELIGÊNCIA ARTIFICIAL (CORREÇÃO DE METAS E FORMATO)
+# 5. INTELIGÊNCIA ARTIFICIAL
 # ==============================================================================
 def extrair_dados_pdf_ia(api_key, texto_pdf):
     if not api_key: return None, "Configure a Chave API."
@@ -360,104 +342,25 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         familia = ", ".join(dados['composicao_familiar_tags']) if dados['composicao_familiar_tags'] else "Não informado"
         evid = "\n".join([f"- {k.replace('?', '')}" for k, v in dados['checklist_evidencias'].items() if v])
         meds_info = "\n".join([f"- {m['nome']} ({m['posologia']})." for m in dados['lista_medicamentos']]) if dados['lista_medicamentos'] else "Nenhuma medicação informada."
-        
         hiperfoco_txt = f"HIPERFOCO DO ALUNO: {dados['hiperfoco']}" if dados['hiperfoco'] else "Hiperfoco: Não identificado."
         serie = dados['serie'] or ""
         nivel_ensino = detecting_nivel_ensino_interno(serie)
         alfabetizacao = dados.get('nivel_alfabetizacao', 'Não Avaliado')
         
-        prompt_identidade = f"""
-        [PERFIL_NARRATIVO] 
-        Inicie com "👤 QUEM É O ESTUDANTE?". Crie um parágrafo humanizado. {hiperfoco_txt}. Use o hiperfoco para conectar com a aprendizagem. 
-        [/PERFIL_NARRATIVO]
-        """
-        prompt_diagnostico = f"""
-        ### 1. 🏥 DIAGNÓSTICO PSICOSSOCIAL E IMPACTO:
-        - Analise o diagnóstico: {dados['diagnostico']}.
-        - Diferencie o nível de suporte (ex: Autismo Nível 1 vs 3, TDAH desatento vs combinado).
-        - Explique o impacto funcional na sala de aula (Ex: Sensibilidade sensorial, tempo de atenção).
-        """
-        prompt_literacia = ""
-        if "Alfabético" not in alfabetizacao and alfabetizacao != "Não se aplica (Educação Infantil)":
-             prompt_literacia = f"""[ATENÇÃO CRÍTICA: ALFABETIZAÇÃO] Fase: {alfabetizacao}. Inclua 2 ações de consciência fonológica.[/ATENÇÃO CRÍTICA]"""
-
-        prompt_hub = """
-        ### 6. 🧩 PROTOCOLO DE ADAPTAÇÃO CURRICULAR (Responda SIM/NÃO/QUAL):
-        1. O estudante necessita de questões mais desafiadoras?
-        2. O estudante compreende instruções complexas?
-        3. O estudante necessita de instruções passo a passo?
-        4. Dividir a questão em etapas menores melhora o desempenho?
-        5. Textos com parágrafos curtos melhoram a compreensão?
-        6. O estudante precisa de dicas de apoio para resolver questões?
-        7. O estudante compreende figuras de linguagem e faz inferências?
-        8. O estudante necessita de descrição de imagens?
-        9. O estudante precisa de adaptação na formatação de textos? (Se sim, qual? Ex: Fonte ampliada, Espaçamento duplo).
-        """
-        prompt_componentes = ""
-        if nivel_ensino != "EI":
-            prompt_componentes = f"""
-            ### 4. ⚠️ COMPONENTES CURRICULARES DE ATENÇÃO:
-            Com base no diagnóstico ({dados['diagnostico']}) e barreiras, identifique quais disciplinas exigirão maior flexibilização.
-            """
-        prompt_metas = """
-        [METAS_SMART]
-        (Siga ESTRITAMENTE este formato):
-        - Meta de Curto Prazo (2 meses): [Descreva a meta]
-        - Meta de Médio Prazo (1 semestre): [Descreva a meta]
-        - Meta de Longo Prazo (1 ano): [Descreva a meta]
-        [/METAS_SMART]
-        """
-
-        if nivel_ensino == "EI":
-            perfil_ia = "Especialista em EDUCAÇÃO INFANTIL e BNCC."
-            estrutura_req = f"""
-            ESTRUTURA OBRIGATÓRIA (EI) - USE MARKDOWN LIMPO:
-            {prompt_identidade}
-            {prompt_diagnostico}
-            ### 2. 🌟 AVALIAÇÃO DE REPERTÓRIO:
-            [CAMPOS_EXPERIENCIA_PRIORITARIOS] Destaque 2 ou 3 Campos BNCC. [/CAMPOS_EXPERIENCIA_PRIORITARIOS]
-            - **Habilidades Basais:** O que precisa ser resgatado.
-            [OBJETIVOS_DESENVOLVIMENTO]
-            - OBJETIVO 1: ...
-            - OBJETIVO 2: ...
-            [FIM_OBJETIVOS]
-            ### 3. 🚀 ESTRATÉGIAS DE INTERVENÇÃO:
-            (Estratégias de acolhimento, rotina e adaptação sensorial).
-            {prompt_metas}
-            ### 5. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
-            [ANALISE_FARMA] Se houver medicação, cite efeitos colaterais. [/ANALISE_FARMA]
-            {prompt_hub}
-            """
-        else:
-            perfil_ia = "Especialista em Inclusão Escolar e BNCC."
-            instrucao_bncc = """[MAPEAMENTO_BNCC] Separe por Componente Curricular. CÓDIGO ALFANUMÉRICO OBRIGATÓRIO (ex: EF01LP02). [/MAPEAMENTO_BNCC]"""
-            instrucao_bloom = """[TAXONOMIA_BLOOM] Explique a categoria cognitiva escolhida. [/TAXONOMIA_BLOOM]"""
-            estrutura_req = f"""
-            ESTRUTURA OBRIGATÓRIA (Padrão) - USE MARKDOWN LIMPO:
-            {prompt_identidade}
-            {prompt_diagnostico}
-            ### 2. 🌟 AVALIAÇÃO DE REPERTÓRIO:
-            - **Defasagens:** O que o aluno ainda não consolidou.
-            {instrucao_bncc}
-            {instrucao_bloom}
-            ### 3. 🚀 ESTRATÉGIAS DE INTERVENÇÃO:
-            (Adaptações curriculares e de acesso).
-            {prompt_literacia}
-            {prompt_componentes}
-            {prompt_metas}
-            ### 5. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
-            [ANALISE_FARMA] Se houver medicação, cite efeitos colaterais. [/ANALISE_FARMA]
-            {prompt_hub}
-            """
-
-        prompt_feedback = f"AJUSTE SOLICITADO: {feedback_usuario}" if feedback_usuario else ""
-        prompt_sys = f"""{perfil_ia} MISSÃO: Criar PEI Técnico Oficial. {estrutura_req} {prompt_feedback}"""
-        if modo_pratico:
-            prompt_sys = f"""{perfil_ia} GUIA PRÁTICO PARA SALA DE AULA. {prompt_feedback} # GUIA PRÁTICO {serie} ... {prompt_hub}"""
+        prompt_identidade = f"""[PERFIL] Inicie com "👤 QUEM É O ESTUDANTE?". Crie um parágrafo humanizado. {hiperfoco_txt}."""
+        prompt_diagnostico = f"""### 1. 🏥 DIAGNÓSTICO PSICOSSOCIAL E IMPACTO: Analise o diagnóstico: {dados['diagnostico']}. Diferencie o nível de suporte e explique o impacto funcional na sala de aula."""
+        prompt_literacia = f"""[ALFABETIZAÇÃO] Fase: {alfabetizacao}. Inclua 2 ações de consciência fonológica.""" if "Alfabético" not in alfabetizacao else ""
+        prompt_hub = """### 6. 🧩 PROTOCOLO DE ADAPTAÇÃO CURRICULAR (Responda SIM/NÃO/QUAL): 1. O estudante necessita de questões mais desafiadoras? 2. O estudante compreende instruções complexas? 3. O estudante necessita de instruções passo a passo? 4. Dividir a questão em etapas menores melhora o desempenho? 5. Textos com parágrafos curtos melhoram a compreensão? 6. O estudante precisa de dicas de apoio para resolver questões? 7. O estudante compreende figuras de linguagem e faz inferências? 8. O estudante necessita de descrição de imagens? 9. O estudante precisa de adaptação na formatação de textos?"""
+        prompt_componentes = f"""### 4. ⚠️ COMPONENTES CURRICULARES DE ATENÇÃO: Identifique quais disciplinas exigirão maior flexibilização.""" if nivel_ensino != "EI" else ""
+        prompt_metas = """[METAS_SMART] (Siga ESTRITAMENTE este formato): - Meta de Curto Prazo (2 meses): ... - Meta de Médio Prazo (1 semestre): ... - Meta de Longo Prazo (1 ano): ... [/METAS_SMART]"""
         
-        prompt_user = f"ALUNO: {dados['nome']} | SÉRIE: {serie} | HISTÓRICO: {dados['historico']} | DIAGNÓSTICO: {dados['diagnostico']} | MEDS: {meds_info} | EVIDÊNCIAS: {evid} | LAUDO: {contexto_pdf[:3000]}"
-        modelo_escolhido = st.session_state.get('nome_modelo', 'gpt-4o-mini')
-        res = client.chat.completions.create(model=modelo_escolhido, messages=[{"role": "system", "content": prompt_sys}, {"role": "user", "content": prompt_user}])
+        prompt_sys = f"""Especialista em Inclusão Escolar. MISSÃO: Criar PEI Técnico Oficial. {prompt_identidade} {prompt_diagnostico} {prompt_literacia} {prompt_componentes} {prompt_metas} {prompt_hub}"""
+        if modo_pratico: prompt_sys = f"""GUIA PRÁTICO PARA SALA DE AULA. {prompt_hub}"""
+        
+        prompt_user = f"ALUNO: {dados['nome']} | SÉRIE: {serie} | DIAGNÓSTICO: {dados['diagnostico']} | MEDS: {meds_info} | EVIDÊNCIAS: {evid}"
+        
+        modelo = st.session_state.get('nome_modelo', 'gpt-4o-mini')
+        res = client.chat.completions.create(model=modelo, messages=[{"role": "system", "content": prompt_sys}, {"role": "user", "content": prompt_user}])
         return res.choices[0].message.content, None
     except Exception as e: return None, str(e)
 
@@ -466,15 +369,9 @@ def gerar_roteiro_gamificado(api_key, dados, pei_tecnico, feedback_game=""):
     try:
         client = OpenAI(api_key=api_key)
         serie = dados['serie'] or ""
-        nivel_ensino = detecting_nivel_ensino_interno(serie) 
-        hiperfoco = dados['hiperfoco'] or "brincadeiras"
-        contexto_seguro = f"ALUNO: {dados['nome'].split()[0]} | HIPERFOCO: {hiperfoco} | PONTOS FORTES: {', '.join(dados['potencias'])}"
-        prompt_feedback = f"AJUSTE: {feedback_game}" if feedback_game else ""
-        if nivel_ensino == "EI": prompt_sys = "História Visual (4-5 anos) com emojis. # ☀️ AVENTURA ... Chegada, Atividades..."
-        elif nivel_ensino == "FI": prompt_sys = "Quadro de Missões (6-10 anos) RPG. # 🗺️ MAPA ... Equipamento, Super Poder..."
-        else: prompt_sys = "Ficha de Personagem RPG (Adolescente). # ⚔️ FICHA ... Quest, Skills, Buffs..."
-        full_sys = f"{prompt_sys} {prompt_feedback}"
-        res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "system", "content": full_sys}, {"role": "user", "content": contexto_seguro}])
+        nivel_ensino = detecting_nivel_ensino_interno(serie)
+        prompt_sys = "História Visual (4-5 anos)" if nivel_ensino == "EI" else "Ficha de Personagem RPG"
+        res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "system", "content": prompt_sys}, {"role": "user", "content": f"ALUNO: {dados['nome']}"}])
         return res.choices[0].message.content, None
     except Exception as e: return None, str(e)
 
@@ -577,16 +474,17 @@ with st.sidebar:
     
     if selecao_aluno != "(Selecionar)":
         if st.button("📥 Baixar da Nuvem"):
-            dados_recuperados = carregar_aluno_completo(selecao_aluno)
-            if dados_recuperados:
-                if 'nasc' in dados_recuperados and isinstance(dados_recuperados['nasc'], str):
-                     try: dados_recuperados['nasc'] = datetime.strptime(dados_recuperados['nasc'], '%Y-%m-%d').date()
-                     except: pass
-                st.session_state.dados.update(dados_recuperados)
-                st.success("Dados carregados!")
-                st.rerun()
-            else:
-                st.error("Erro ao carregar.")
+            with st.spinner("Buscando dados..."):
+                dados_recuperados = carregar_aluno_completo(selecao_aluno)
+                if dados_recuperados:
+                    if 'nasc' in dados_recuperados and isinstance(dados_recuperados['nasc'], str):
+                         try: dados_recuperados['nasc'] = datetime.strptime(dados_recuperados['nasc'], '%Y-%m-%d').date()
+                         except: pass
+                    st.session_state.dados.update(dados_recuperados)
+                    st.success("Dados carregados!")
+                    st.rerun()
+                else:
+                    st.error("Erro ao carregar dados do aluno.")
     
     st.markdown("---")
     
@@ -609,9 +507,14 @@ with st.sidebar:
         if not st.session_state.dados['nome']:
             st.warning("Preencha o nome do aluno.")
         else:
-            ok, msg = salvar_aluno_integrado(st.session_state.dados)
-            if ok: st.success(msg); st.balloons()
-            else: st.error(msg)
+            with st.spinner("Sincronizando..."):
+                ok, msg = salvar_aluno_integrado(st.session_state.dados)
+                if ok: 
+                    st.success(msg)
+                    st.session_state.lista_nuvem = [a['nome'] for a in buscar_alunos_banco()] # Atualiza lista local
+                    st.balloons()
+                else: 
+                    st.error(msg)
 
 logo_path = finding_logo(); b64_logo = get_base64_image(logo_path); mime = "image/png"
 img_html = f'<img src="data:{mime};base64,{b64_logo}" style="height: 110px;">' if logo_path else ""
@@ -917,14 +820,18 @@ with tab8:
                                 st.success(f"✅ PEI de {st.session_state.dados['nome']} salvo com sucesso!")
                                 st.balloons()
                             else:
-                                st.error("❌ Erro ao salvar. Verifique a conexão.")
+                                st.error("❌ Erro ao salvar. Verifique se as colunas da planilha (Metas_PEI) estão corretas.")
             with col_sys:
                 st.markdown("#### 🌐 Sistema")
                 st.caption("Backup geral")
                 if st.button("Sincronizar (Omnisfera)", type="secondary", use_container_width=True):
-                    ok, msg = salvar_aluno_integrado(st.session_state.dados)
-                    if ok: st.toast(msg, icon="✅")
-                    else: st.error(msg)
+                    if not st.session_state.dados['nome']:
+                         st.warning("Nome obrigatório para sincronizar.")
+                    else:
+                        with st.spinner("Sincronizando perfil do aluno..."):
+                            ok, msg = salvar_aluno_integrado(st.session_state.dados)
+                            if ok: st.toast(msg, icon="✅")
+                            else: st.error(msg)
                 st.download_button("Salvar Arquivo .JSON", json.dumps(st.session_state.dados, default=str), f"PEI_{st.session_state.dados['nome']}.json", "application/json", use_container_width=True)
         else:
             st.info("Gere o Plano na aba Consultoria IA para liberar o download.")
