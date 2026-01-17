@@ -2,7 +2,6 @@ import streamlit as st
 from datetime import date
 from io import BytesIO
 from docx import Document
-from docx.shared import Pt
 from openai import OpenAI
 from pypdf import PdfReader
 from fpdf import FPDF
@@ -10,8 +9,6 @@ import base64
 import json
 import os
 import re
-import glob
-import random
 import requests
 from datetime import datetime
 
@@ -25,7 +22,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Tenta importar serviços. Se falhar, usa funções de backup para não travar a tela.
+# Tenta importar serviços. Se falhar, usa funções de backup.
 try:
     from services import salvar_aluno_integrado, salvar_pei_db, buscar_alunos_banco, carregar_aluno_completo
 except ImportError:
@@ -35,7 +32,7 @@ except ImportError:
     def carregar_aluno_completo(n): return None
 
 # ==============================================================================
-# ### BLOCO VISUAL (CSS E LOGOS) ###
+# ### BLOCO VISUAL (LOGOS CORRIGIDAS) ###
 # ==============================================================================
 try: IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
 except: IS_TEST_ENV = False
@@ -49,21 +46,21 @@ def get_base64_image(image_path):
             return base64.b64encode(f.read()).decode()
     return ""
 
-def finding_logo_omni():
-    # Prioriza a logo da Omnisfera para o badge
-    caminhos = ["omni_icone.png", "logo.png"]
+def get_logo_giratoria():
+    # SOLICITAÇÃO ATENDIDA: Prioriza a logo da OMNISFERA para o badge giratório
+    caminhos = ["omni_icone.png", "logo.png"] 
     for c in caminhos:
-        if os.path.exists(c): return c
-    return None
+        if os.path.exists(c): return get_base64_image(c)
+    return ""
 
-def finding_logo_pei():
-    # Prioriza a logo do PEI para o cabeçalho
+def get_logo_cabecalho():
+    # SOLICITAÇÃO ATENDIDA: Prioriza a logo do PEI 360 para o cabeçalho estático
     caminhos = ["360.png", "360.jpg", "logo.png"]
     for c in caminhos:
-        if os.path.exists(c): return c
-    return None
+        if os.path.exists(c): return get_base64_image(c)
+    return ""
 
-src_logo_giratoria = f"data:image/png;base64,{get_base64_image(finding_logo_omni())}"
+src_logo_giratoria = f"data:image/png;base64,{get_logo_giratoria()}"
 
 st.markdown(f"""
 <style>
@@ -91,15 +88,14 @@ st.markdown(f"""
     .stTabs [data-baseweb="tab"] {{ height: 38px; border-radius: 20px !important; background-color: #FFFFFF; border: 1px solid #E2E8F0; color: #718096; font-weight: 700; font-size: 0.8rem; padding: 0 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); text-transform: uppercase; margin-bottom: 5px; }}
     .stTabs [aria-selected="true"] {{ background-color: transparent !important; color: #3182CE !important; border: 1px solid #3182CE !important; font-weight: 800; }}
     
-    /* CORREÇÃO DO CARD INÍCIO */
-    .rich-box {{ background-color: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin-bottom: 20px; display: flex; flex-direction: column; min-height: 200px; }}
-    .rb-title {{ font-size: 1.1rem; font-weight: 800; color: #2C5282; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }}
-    .rb-text {{ font-size: 0.95rem; color: #4A5568; line-height: 1.6; text-align: justify; flex-grow: 1; }}
-
+    .rich-box {{ background-color: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin-bottom: 15px; min-height: 180px; display: flex; flex-direction: column; }}
+    .rb-title {{ font-size: 1.1rem; font-weight: 800; color: #2C5282; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }}
+    .rb-text {{ font-size: 0.9rem; color: #4A5568; line-height: 1.5; }}
+    
     .header-unified {{ background-color: white; padding: 20px 40px; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }}
     .header-subtitle {{ font-size: 1.2rem; color: #718096; font-weight: 600; border-left: 2px solid #E2E8F0; padding-left: 20px; line-height: 1.2; }}
     
-    /* Progresso */
+    /* Progresso e Cards */
     .prog-container {{ width: 100%; position: relative; margin: 0 0 30px 0; }}
     .prog-track {{ width: 100%; height: 3px; background-color: #E2E8F0; border-radius: 1.5px; }}
     .prog-fill {{ height: 100%; border-radius: 1.5px; transition: width 1.5s ease; }}
@@ -116,7 +112,7 @@ st.markdown(f"""
     .dash-hero {{ background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); border-radius: 16px; padding: 25px; color: white; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }}
     .apple-avatar {{ width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4); color: white; font-weight: 800; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; }}
     
-    /* DNA e Cards */
+    /* Cards Coloridos */
     .soft-card {{ border-radius: 12px; padding: 20px; min-height: 220px; height: 100%; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); border-left: 5px solid; position: relative; overflow: hidden; }}
     .sc-orange {{ background-color: #FFF5F5; border-left-color: #DD6B20; }}
     .sc-blue {{ background-color: #EBF8FF; border-left-color: #3182CE; }}
@@ -125,13 +121,17 @@ st.markdown(f"""
     .sc-green {{ background-color: #F0FFF4; border-left-color: #38A169; }}
     .sc-head {{ display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.95rem; margin-bottom: 15px; color: #2D3748; }}
     .sc-body {{ font-size: 0.85rem; color: #4A5568; line-height: 1.5; flex-grow: 1; }}
+    .bg-icon {{ position: absolute; bottom: -10px; right: -10px; font-size: 5rem; opacity: 0.08; pointer-events: none; }}
+    .rede-chip {{ display: inline-flex; align-items: center; gap: 5px; background: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #2D3748; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin: 0 5px 5px 0; }}
+    .meta-row {{ display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 5px; }}
     
     .dna-bar-container {{ margin-bottom: 15px; }}
     .dna-bar-flex {{ display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px; font-weight: 600; color: #4A5568; }}
     .dna-bar-bg {{ width: 100%; height: 8px; background-color: #E2E8F0; border-radius: 4px; overflow: hidden; }}
     .dna-bar-fill {{ height: 100%; border-radius: 4px; transition: width 1s ease; }}
     
-    .rede-chip {{ display: inline-flex; align-items: center; gap: 5px; background: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #2D3748; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin: 0 5px 5px 0; }}
+    .pulse-alert {{ animation: pulse 2s infinite; color: #E53E3E; font-weight: bold; }}
+    @keyframes pulse {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} 100% {{ opacity: 1; }} }}
     .segmento-badge {{ display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.75rem; color: white; margin-top: 5px; }}
     .footer-signature {{ margin-top: 50px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center; font-size: 0.8rem; color: #A0AEC0; }}
 </style>
@@ -184,8 +184,11 @@ if 'pdf_text' not in st.session_state: st.session_state.pdf_text = ""
 if 'lista_nuvem' not in st.session_state: st.session_state.lista_nuvem = []
 
 # ==============================================================================
-# 4. LÓGICA E UTILITÁRIOS (PROGRESSO MOVIDO PARA CÁ)
+# 4. LÓGICA E UTILITÁRIOS
 # ==============================================================================
+PASTA_BANCO = "banco_alunos"
+if not os.path.exists(PASTA_BANCO): os.makedirs(PASTA_BANCO)
+
 def calcular_idade(data_nasc):
     if not data_nasc: return ""
     hoje = date.today()
@@ -265,7 +268,6 @@ def inferir_componentes_impactados(dados):
         impactados.add("Matemática")
     return list(impactados) if impactados else ["Análise Geral"]
 
-# --- FUNÇÕES DE PROGRESSO (MOVIDAS PARA CIMA) ---
 def calcular_progresso():
     if st.session_state.dados['ia_sugestao']: return 100
     pontos = 0; total = 7
@@ -344,9 +346,9 @@ def gerar_roteiro_gamificado(api_key, dados, pei_tecnico, feedback_game=""):
 class PDF_Classic(FPDF):
     def header(self):
         self.set_fill_color(248, 248, 248); self.rect(0, 0, 210, 40, 'F')
-        img = finding_logo_pei() # Logo PEI no topo
+        img = get_logo_cabecalho()
         if img: 
-             with open("temp_header_logo.png", "wb") as f: f.write(base64.b64decode(get_base64_image(img)))
+             with open("temp_header_logo.png", "wb") as f: f.write(base64.b64decode(img))
              self.image("temp_header_logo.png", 10, 8, 25)
         self.set_xy(40, 12); self.set_font('Arial', 'B', 14); self.set_text_color(50, 50, 50)
         self.cell(0, 8, 'PEI - PLANO DE ENSINO INDIVIDUALIZADO', 0, 1, 'L')
@@ -420,8 +422,8 @@ def gerar_docx_final(dados):
 # 9. INTERFACE UI
 # ==============================================================================
 with st.sidebar:
-    img_html = f'<img src="data:image/png;base64,{get_base64_image(finding_logo_omni())}" style="width: 120px;">'
-    if finding_logo_omni(): st.markdown(img_html, unsafe_allow_html=True)
+    img_html = f'<img src="data:image/png;base64,{get_logo_cabecalho()}" style="width: 120px;">'
+    if get_logo_cabecalho(): st.markdown(img_html, unsafe_allow_html=True)
 
     if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']; st.success("✅ OpenAI OK")
     else: api_key = st.text_input("Chave OpenAI:", type="password")
@@ -466,7 +468,7 @@ with st.sidebar:
             st.session_state.dados.update(d); st.success("Carregado!")
         except: st.error("Erro no arquivo.")
 
-img_html = f'<img src="data:image/png;base64,{get_base64_image(finding_logo_pei())}" style="height: 110px;">'
+img_html = f'<img src="data:image/png;base64,{get_logo_cabecalho()}" style="height: 110px;">'
 st.markdown(f"""<div class="header-unified">{img_html}<div class="header-subtitle">Planejamento Educacional Inclusivo Inteligente</div></div>""", unsafe_allow_html=True)
 
 abas = ["INÍCIO", "ESTUDANTE", "EVIDÊNCIAS", "REDE DE APOIO", "MAPEAMENTO", "PLANO DE AÇÃO", "MONITORAMENTO", "CONSULTORIA IA", "DASHBOARD & DOCS", "JORNADA GAMIFICADA"]
@@ -590,12 +592,16 @@ with tab4:
         def render_cat_barreira(coluna, titulo, chave_json):
             with coluna:
                 st.markdown(f"**{titulo}**"); 
-                # PROTEÇÃO CONTRA KEYERROR
+                # CORREÇÃO BLINDADA: Inicializa a chave se não existir
                 if chave_json not in st.session_state.dados['barreiras_selecionadas']:
-                    st.session_state.dados['barreiras_selecionadas'][chave_json] = []
+                     st.session_state.dados['barreiras_selecionadas'][chave_json] = []
                 
                 itens = LISTAS_BARREIRAS[chave_json]; 
-                b_salvas = [b for b in st.session_state.dados['barreiras_selecionadas'].get(chave_json, []) if b in itens]; 
+                # Garante que é uma lista
+                val_atual = st.session_state.dados['barreiras_selecionadas'].get(chave_json, [])
+                if not isinstance(val_atual, list): val_atual = []
+                
+                b_salvas = [b for b in val_atual if b in itens]; 
                 sel = st.multiselect("Selecione:", itens, key=f"ms_{chave_json}", default=b_salvas, label_visibility="collapsed"); 
                 st.session_state.dados['barreiras_selecionadas'][chave_json] = sel
                 
@@ -605,4 +611,26 @@ with tab4:
         render_cat_barreira(c_bar1, "🧠 Funções Cognitivas", "Funções Cognitivas"); render_cat_barreira(c_bar1, "🖐️ Sensorial e Motor", "Sensorial e Motor"); render_cat_barreira(c_bar2, "🗣️ Comunicação e Linguagem", "Comunicação e Linguagem"); render_cat_barreira(c_bar2, "📚 Acadêmico", "Acadêmico"); render_cat_barreira(c_bar3, "❤️ Socioemocional", "Socioemocional")
 
 with tab5:
-    render_progresso(); st.markdown("### <i class='ri-tools-line'></i> Plano de Ação", unsafe_allow_html=True); c1, c2, c3 =
+    render_progresso(); st.markdown("### <i class='ri-tools-line'></i> Plano de Ação", unsafe_allow_html=True); c1, c2, c3 = st.columns(3)
+    with c1: st.markdown("#### 1. Acesso"); st.session_state.dados['estrategias_acesso'] = st.multiselect("Recursos", ["Tempo Estendido", "Apoio Leitura/Escrita", "Material Ampliado", "Tecnologia Assistiva", "Sala Silenciosa", "Mobiliário Adaptado"], default=st.session_state.dados['estrategias_acesso']); st.session_state.dados['outros_acesso'] = st.text_input("Personalizado (Acesso)", st.session_state.dados['outros_acesso'])
+    with c2: st.markdown("#### 2. Ensino"); st.session_state.dados['estrategias_ensino'] = st.multiselect("Metodologia", ["Fragmentação de Tarefas", "Pistas Visuais", "Mapas Mentais", "Modelagem", "Ensino Híbrido", "Instrução Explícita"], default=st.session_state.dados['estrategias_ensino']); st.session_state.dados['outros_ensino'] = st.text_input("Personalizado (Ensino)", st.session_state.dados['outros_ensino'])
+    with c3: st.markdown("#### 3. Avaliação"); st.session_state.dados['estrategias_avaliacao'] = st.multiselect("Formato", ["Prova Adaptada", "Prova Oral", "Consulta Permitida", "Portfólio", "Autoavaliação", "Parecer Descritivo"], default=st.session_state.dados['estrategias_avaliacao'])
+
+with tab6:
+    render_progresso(); st.markdown("### <i class='ri-loop-right-line'></i> Monitoramento", unsafe_allow_html=True); st.session_state.dados['monitoramento_data'] = st.date_input("Data da Próxima Revisão", value=st.session_state.dados.get('monitoramento_data', None)); st.divider(); st.warning("⚠️ **ATENÇÃO:** Preencher somente na revisão do PEI.")
+    with st.container(border=True):
+        c2, c3 = st.columns(2)
+        with c2: st.session_state.dados['status_meta'] = st.selectbox("Status da Meta", ["Não Iniciado", "Em Andamento", "Parcialmente Atingido", "Atingido", "Superado"], index=0)
+        with c3: st.session_state.dados['parecer_geral'] = st.selectbox("Parecer Geral", ["Manter Estratégias", "Aumentar Suporte", "Reduzir Suporte (Autonomia)", "Alterar Metodologia", "Encaminhar para Especialista"], index=0)
+        st.session_state.dados['proximos_passos_select'] = st.multiselect("Ações Futuras", ["Reunião com Família", "Encaminhamento Clínico", "Adaptação de Material", "Mudança de Lugar em Sala", "Novo PEI", "Observação em Sala"])
+
+with tab7: 
+    render_progresso()
+    st.markdown("### <i class='ri-robot-2-line'></i> Consultoria Pedagógica", unsafe_allow_html=True)
+    if st.session_state.dados['serie']:
+        seg_nome, seg_cor, seg_desc = get_segmento_info_visual(st.session_state.dados['serie'])
+        st.markdown(f"<div style='background-color: #F7FAFC; border-left: 5px solid {seg_cor}; padding: 15px; border-radius: 5px; margin-bottom: 20px;'><strong style='color: {seg_cor};'>ℹ️ Modo Especialista: {seg_nome}</strong><br><span style='color: #4A5568;'>{seg_desc}</span></div>", unsafe_allow_html=True)
+    else: st.warning("⚠️ Selecione a Série/Ano na aba 'Estudante'.")
+    
+    if not st.session_state.dados['ia_sugestao'] or st.session_state.dados.get('status_validacao_pei') == 'rascunho':
+        col_
