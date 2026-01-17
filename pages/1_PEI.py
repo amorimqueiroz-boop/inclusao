@@ -15,14 +15,6 @@ import random
 import requests
 from datetime import datetime
 
-# Tenta importar as funções do banco de dados (services.py)
-# Se der erro (arquivo não existe), cria funções falsas para não quebrar a tela
-try:
-    from services import salvar_aluno_integrado, salvar_pei_db
-except ImportError:
-    def salvar_aluno_integrado(d): return False, "Erro: services.py não encontrado."
-    def salvar_pei_db(d): return False
-
 # ==============================================================================
 # 0. CONFIGURAÇÃO DE PÁGINA
 # ==============================================================================
@@ -92,6 +84,17 @@ def verificar_acesso():
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
         st.stop()
 verificar_acesso()
+
+# ==============================================================================
+# 2. LÓGICA DO BANCO DE DADOS (GOOGLE SHEETS)
+# ==============================================================================
+# Importando serviços com tratamento de erro
+try:
+    from services import salvar_aluno_integrado, salvar_pei_db
+except ImportError:
+    # Fallback se services.py não estiver disponível ou com erro
+    def salvar_aluno_integrado(d): return False, "Serviço indisponível"
+    def salvar_pei_db(d): return False
 
 # ==============================================================================
 # 3. LISTAS DE DADOS (COM ÍCONES)
