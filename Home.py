@@ -4,11 +4,14 @@ from openai import OpenAI
 import base64
 import os
 import time
+import json
+import gspread
+from google.oauth2.service_account import Credentials
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL E AMBIENTE
 # ==============================================================================
-APP_VERSION = "v116.0"
+APP_VERSION = "v125.0 (Cloud Connected)"
 
 # Detecção de Ambiente (Secrets)
 try:
@@ -27,7 +30,54 @@ st.set_page_config(
     initial_sidebar_state="expanded" 
 )
 
+# ==============================================================================
+# 1.1. LÓGICA DE BANCO DE DADOS (ADICIONADA AQUI)
+# ==============================================================================
+# Definindo o estado padrão para garantir que o PAEE não quebre se entrar vazio
+default_state = {
+    'nome': '', 'nasc': date(2015, 1, 1), 'serie': None, 'turma': '', 'diagnostico': '', 
+    'lista_medicamentos': [], 'composicao_familiar_tags': [], 'historico': '', 'familia': '', 
+    'hiperfoco': '', 'potencias': [], 'rede_apoio': [], 'orientacoes_especialistas': '',
+    'checklist_evidencias': {}, 
+    'nivel_alfabetizacao': 'Não se aplica (Educação Infantil)',
+    'barreiras_selecionadas': {}, 'niveis_suporte': {}, 
+    'estrategias_acesso': [], 'estrategias_ensino': [], 'estrategias_avaliacao': [], 
+    'ia_sugestao': '', 'checklist_hub': {}
+}
 
+if 'dados' not in st.session_state: st.session_state.dados = default_state.copy()
+
+@st.cache_resource
+def conectar_gsheets():
+    try:
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        credentials = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+        client = gspread.authorize(credentials)
+        return client
+    except: return None
+
+def carregar_banco_nuvem():
+    try:
+        client = conectar_gsheets()
+        if not client: return []
+        sheet = client.open("Omnisfera_Dados").sheet1 
+        records = sheet.get_all_records()
+        lista_processada = []
+        for reg in records:
+            try:
+                # Recupera o JSON completo salvo na nuvem
+                if 'Dados_Completos' in reg and reg['Dados_Completos']:
+                    dados_completos = json.loads(reg['Dados_Completos'])
+                    lista_processada.append(dados_completos)
+                else:
+                    lista_processada.append(reg)
+            except: continue
+        return lista_processada
+    except: return []
+
+# Carrega a lista de alunos na memória assim que a Home abre
+if 'banco_estudantes' not in st.session_state:
+    st.session_state.banco_estudantes = carregar_banco_nuvem()
 
 # ==============================================================================
 # 2. UTILITÁRIOS E CORES
@@ -424,12 +474,29 @@ if 'OPENAI_API_KEY' in st.secrets:
         mensagem_banner = st.session_state['banner_msg']
     except: pass
 
-# --- SIDEBAR ---
+# --- SIDEBAR (AGORA COM GESTÃO DE DADOS!) ---
 with st.sidebar:
     if "usuario_nome" in st.session_state:
         st.markdown(f"**👤 {st.session_state['usuario_nome']}**")
         st.caption(f"{st.session_state['usuario_cargo']}")
         st.markdown("---")
+
+    # --- BLOCO CRUCIAL: CARREGAR ALUNO DA NUVEM PARA AS OUTRAS PÁGINAS ---
+    st.markdown("### 🗄️ Selecionar Aluno")
+    if st.session_state.banco_estudantes:
+        nomes_alunos = [a['nome'] for a in st.session_state.banco_estudantes if 'nome' in a]
+        aluno_escolhido = st.selectbox("Quem vamos trabalhar?", nomes_alunos, index=None, placeholder="Selecione aqui...")
+        
+        if aluno_escolhido:
+            # Encontra o aluno na lista e carrega para o session_state.dados
+            dados_aluno = next((a for a in st.session_state.banco_estudantes if a['nome'] == aluno_escolhido), None)
+            if dados_aluno:
+                st.session_state.dados.update(dados_aluno)
+                st.success(f"Dados de {aluno_escolhido} carregados!")
+    else:
+        st.caption("Conectando ao banco de dados...")
+    
+    st.markdown("---")
 
     st.markdown("### 📢 Central de Feedback")
     tipo = st.selectbox("Tipo:", ["Sugestão", "Erro", "Elogio"])
@@ -473,7 +540,12 @@ def card_botao(coluna, img_b64, desc, chave_btn, page_path, cor_borda_class, fal
         # 2. Renderiza o Botão Transparente (Overlay)
         st.markdown('<div class="card-overlay-btn">', unsafe_allow_html=True)
         if st.button("Acessar", key=chave_btn, use_container_width=True):
-            st.switch_page(page_path)
+            # ANTES DE MUDAR DE PÁGINA, GARANTIMOS QUE O DADO ESTÁ CARREGADO
+            if st.session_state.dados['nome']:
+                st.switch_page(page_path)
+            else:
+                st.toast("⚠️ Selecione um aluno na barra lateral primeiro!", icon="👆")
+                time.sleep(2) # Dá tempo de ler antes de (talvez) ir, mas melhor travar.
         st.markdown('</div>', unsafe_allow_html=True)
 
 # Card 1: PEI
