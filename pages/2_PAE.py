@@ -187,7 +187,8 @@ st.markdown(f"""
 
 def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
-        pass 
+        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
+        st.stop()
     st.markdown("""<style>footer {visibility: hidden !important;} [data-testid="stHeader"] {visibility: visible !important; background-color: transparent !important;} .block-container {padding-top: 2rem !important;}</style>""", unsafe_allow_html=True)
 
 verificar_acesso()
@@ -197,13 +198,27 @@ with st.sidebar:
     try: st.image("ominisfera.png", width=150)
     except: st.write("🌐 OMNISFERA")
     st.markdown("---")
-    # Botão para voltar e escolher outro aluno se necessário
     if st.button("🏠 Voltar para Home", use_container_width=True): st.switch_page("Home.py")
     st.markdown("---")
 
 # ==============================================================================
-# 2. SISTEMA PAEE (INTEGRAÇÃO OMNISFERA)
+# 2. SISTEMA PAEE (Plano de Atendimento Educacional Especializado)
 # ==============================================================================
+
+ARQUIVO_DB = "banco_alunos.json"
+
+def carregar_banco():
+    usuario_atual = st.session_state.get("usuario_nome", "")
+    if os.path.exists(ARQUIVO_DB):
+        try:
+            with open(ARQUIVO_DB, "r", encoding="utf-8") as f:
+                todos_alunos = json.load(f)
+                return [aluno for aluno in todos_alunos if aluno.get('responsavel') == usuario_atual]
+        except: return []
+    return []
+
+if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
+    st.session_state.banco_estudantes = carregar_banco()
 
 # --- HEADER UNIFICADO (CLEAN COM DIVISOR - AZUL) ---
 def get_img_tag_custom(file_path, width):
@@ -213,7 +228,7 @@ def get_img_tag_custom(file_path, width):
         return f'<img src="data:image/png;base64,{data}" width="{width}" style="object-fit: contain;">'
     return ""
 
-img_pae = get_img_tag_custom("pae.png", "220") 
+img_pae = get_img_tag_custom("pae.png", "220") # <--- AUMENTADO PARA 220px
 
 st.markdown(f"""
 <div class="header-unified">
@@ -226,18 +241,17 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ----------------------------------------------------------------------
-# LÓGICA DE INTEGRAÇÃO DE DADOS (A Mágica Acontece Aqui)
-# ----------------------------------------------------------------------
-# Verifica se existe um aluno carregado na "Mochila" (Session State)
-if 'dados' not in st.session_state or not st.session_state.dados.get('nome'):
-    st.warning("⚠️ Nenhum aluno carregado. Por favor, vá para a Página Inicial e selecione um aluno no Banco de Dados.")
-    if st.button("Ir para Home agora"):
-        st.switch_page("Home.py")
+if not st.session_state.banco_estudantes:
+    st.warning("⚠️ Nenhum aluno encontrado para o seu usuário. Cadastre no módulo PEI primeiro.")
     st.stop()
 
-# Se chegou aqui, carrega o aluno direto da memória
-aluno = st.session_state.dados
+# --- SELEÇÃO DE ALUNO ---
+lista_alunos = [a['nome'] for a in st.session_state.banco_estudantes]
+col_sel, col_info = st.columns([1, 2])
+with col_sel:
+    nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista_alunos)
+
+aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
 
 # --- DETECTOR DE EDUCAÇÃO INFANTIL ---
 serie_aluno = aluno.get('serie', '').lower()
@@ -256,7 +270,7 @@ if is_ei:
     st.info("🧸 **Modo Educação Infantil Ativado:** Foco em Campos de Experiência (BNCC) e Brincar Heurístico.")
 
 with st.expander("📄 Ver Resumo do PEI (Base para o PAEE)", expanded=False):
-    st.info(aluno.get('ia_sugestao', 'Nenhum dado de PEI processado ainda. Gere na Home.'))
+    st.info(aluno.get('ia_sugestao', 'Nenhum dado de PEI processado ainda.'))
 
 # --- GESTÃO DE CHAVES ---
 if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']
