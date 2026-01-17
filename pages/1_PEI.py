@@ -13,6 +13,8 @@ import re
 import glob
 import random
 import requests
+from services import salvar_pei_db
+from datetime import datetime
 
 # ==============================================================================
 # 0. CONFIGURAÇÃO DE PÁGINA
