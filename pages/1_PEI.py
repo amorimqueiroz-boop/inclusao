@@ -121,7 +121,6 @@ st.markdown(f"""
     .sc-green {{ background-color: #F0FFF4; border-left-color: #38A169; }}
     .sc-head {{ display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.95rem; margin-bottom: 15px; color: #2D3748; }}
     .sc-body {{ font-size: 0.85rem; color: #4A5568; line-height: 1.5; flex-grow: 1; }}
-    .bg-icon {{ position: absolute; bottom: -10px; right: -10px; font-size: 5rem; opacity: 0.08; pointer-events: none; }}
     
     .dna-bar-container {{ margin-bottom: 15px; }}
     .dna-bar-flex {{ display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px; font-weight: 600; color: #4A5568; }}
@@ -185,7 +184,7 @@ if 'pdf_text' not in st.session_state: st.session_state.pdf_text = ""
 if 'lista_nuvem' not in st.session_state: st.session_state.lista_nuvem = []
 
 # ==============================================================================
-# 4. LÓGICA E UTILITÁRIOS (PROGRESSO MOVIDO PARA CÁ - CORREÇÃO DE NAME ERROR)
+# 4. LÓGICA E UTILITÁRIOS (PROGRESSO MOVIDO PARA CÁ)
 # ==============================================================================
 def calcular_idade(data_nasc):
     if not data_nasc: return ""
@@ -266,7 +265,6 @@ def inferir_componentes_impactados(dados):
         impactados.add("Matemática")
     return list(impactados) if impactados else ["Análise Geral"]
 
-# --- FUNÇÕES DE PROGRESSO (MOVIDAS PARA CIMA) ---
 def calcular_progresso():
     if st.session_state.dados['ia_sugestao']: return 100
     pontos = 0; total = 7
@@ -778,7 +776,7 @@ with tab8:
                 docx = gerar_docx_final(st.session_state.dados)
                 st.download_button("Baixar Word Editável", docx, f"PEI_{st.session_state.dados['nome']}.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
             with col_data:
-                st.markdown("#### ☁️ Nuvem & Histórico")
+                st.markdown("#### 💾 Nuvem & Histórico")
                 # BOTÃO UNIFICADO DE SALVAMENTO (NUVEM)
                 if st.button("💾 Salvar & Sincronizar Tudo", type="primary", use_container_width=True):
                     if not st.session_state.dados['nome']:
