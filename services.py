@@ -115,3 +115,18 @@ def buscar_logs():
         return pd.DataFrame()
     except:
         return pd.DataFrame()
+
+
+def carregar_peis_do_banco():
+    """Busca todos os PEIs salvos na aba Metas_PEI"""
+    url = f"{SHEET_DB_URL}?sheet=Metas_PEI"
+    try:
+        response = requests.get(url)
+        data = response.json()
+        # Se vier vazio ou der erro, retorna lista vazia
+        if isinstance(data, list):
+            return data
+        return []
+    except Exception as e:
+        st.error(f"Erro ao buscar PEIs: {e}")
+        return []
