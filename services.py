@@ -31,3 +31,19 @@ def buscar_logs():
         return pd.DataFrame()
     except:
         return pd.DataFrame()
+
+def salvar_pei_db(dados):
+    """Salva os dados do PEI na aba 'Metas_PEI' do Google Sheets"""
+    # Garante que está apontando para a aba correta
+    url = f"{SHEET_DB_URL}?sheet=Metas_PEI"
+    headers = {"Content-Type": "application/json"}
+    
+    # Empacota os dados no formato esperado pela API
+    payload = {"data": [dados]}
+    
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        return response.status_code == 201
+    except Exception as e:
+        st.error(f"Erro ao conectar com o banco de dados: {e}")
+        return False
