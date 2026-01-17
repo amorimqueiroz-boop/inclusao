@@ -15,6 +15,13 @@ import random
 import requests
 from datetime import datetime
 
+# Tenta importar as funções do banco de dados (services.py)
+try:
+    from services import salvar_aluno_integrado, salvar_pei_db
+except ImportError:
+    def salvar_aluno_integrado(d): return False, "Erro: services.py não encontrado."
+    def salvar_pei_db(d): return False
+
 # ==============================================================================
 # 0. CONFIGURAÇÃO DE PÁGINA
 # ==============================================================================
@@ -26,7 +33,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ### BLOCO VISUAL INTELIGENTE ###
+# ### BLOCO VISUAL INTELIGENTE (BADGE OMNISFERA) ###
 # ==============================================================================
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -34,6 +41,7 @@ except:
     IS_TEST_ENV = False
 
 def get_logo_base64():
+    # Logo da Omnisfera (Badge Giratório)
     caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
     for c in caminhos:
         if os.path.exists(c):
@@ -84,17 +92,6 @@ def verificar_acesso():
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
         st.stop()
 verificar_acesso()
-
-# ==============================================================================
-# 2. LÓGICA DO BANCO DE DADOS (GOOGLE SHEETS)
-# ==============================================================================
-# Importando serviços com tratamento de erro
-try:
-    from services import salvar_aluno_integrado, salvar_pei_db
-except ImportError:
-    # Fallback se services.py não estiver disponível ou com erro
-    def salvar_aluno_integrado(d): return False, "Serviço indisponível"
-    def salvar_pei_db(d): return False
 
 # ==============================================================================
 # 3. LISTAS DE DADOS (COM ÍCONES)
@@ -162,14 +159,8 @@ def calcular_idade(data_nasc):
 def get_hiperfoco_emoji(texto):
     if not texto: return "🚀"
     t = texto.lower()
-    if "jogo" in t or "game" in t or "minecraft" in t or "roblox" in t: return "🎮"
+    if "jogo" in t or "game" in t or "minecraft" in t: return "🎮"
     if "dino" in t: return "🦖"
-    if "fute" in t or "bola" in t: return "⚽"
-    if "desenho" in t or "arte" in t: return "🎨"
-    if "músic" in t: return "🎵"
-    if "anim" in t or "gato" in t or "cachorro" in t: return "🐾"
-    if "carro" in t: return "🏎️"
-    if "espaço" in t: return "🪐"
     return "🚀"
 
 def detecting_nivel_ensino_interno(serie_str):
@@ -225,8 +216,9 @@ def get_pro_icon(nome_profissional):
     if "neuro" in p or "medico" in p: return "🩺"
     return "👨‍⚕️"
 
+# CORREÇÃO: Prioridade para a logo 360.png (PEI)
 def finding_logo():
-    caminhos = ["omni_icone.png", "logo.png"]
+    caminhos = ["360.png", "360.jpg", "omni_icone.png", "logo.png"]
     for c in caminhos:
         if os.path.exists(c): return c
     return None
@@ -257,11 +249,28 @@ def inferir_componentes_impactados(dados):
         impactados.add("Língua Portuguesa")
         if nivel == "EM": impactados.add("Humanas")
         else: impactados.add("História/Geografia")
-    if barreiras.get('Acadêmico') and any("Matemático" in b for b in barreiras['Acadêmico']):
-        impactados.add("Matemática")
-        if nivel == "EM": impactados.add("Exatas")
-        elif nivel == "FII": impactados.add("Ciências")
     return list(impactados) if impactados else ["Análise Geral"]
+
+# CORREÇÃO: Funções da Barra de Progresso Restauradas
+def calcular_progresso():
+    if st.session_state.dados['ia_sugestao']: return 100
+    pontos = 0; total = 7
+    d = st.session_state.dados
+    if d['nome']: pontos += 1
+    if d['serie']: pontos += 1
+    if d['nivel_alfabetizacao'] and d['nivel_alfabetizacao'] != 'Não se aplica (Educação Infantil)': pontos += 1
+    if any(d['checklist_evidencias'].values()): pontos += 1
+    if d['hiperfoco']: pontos += 1
+    if any(d['barreiras_selecionadas'].values()): pontos += 1
+    if d['estrategias_ensino']: pontos += 1
+    return int((pontos / total) * 90)
+
+def render_progresso():
+    p = calcular_progresso()
+    icon_html = f'<img src="{src_logo_giratoria}" class="omni-logo-spin" style="width: 25px; height: 25px;">'
+    bar_color = "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)"
+    if p >= 100: bar_color = "linear-gradient(90deg, #00C6FF 0%, #0072FF 100%)" 
+    st.markdown(f"""<div class="prog-container"><div class="prog-track"><div class="prog-fill" style="width: {p}%; background: {bar_color};"></div></div><div class="prog-icon" style="left: {p}%;">{icon_html}</div></div>""", unsafe_allow_html=True)
 
 # ==============================================================================
 # 6. ESTILO VISUAL
@@ -296,6 +305,10 @@ def aplicar_estilo_visual():
         .rich-box { background-color: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin-bottom: 20px; height: 100%; min-height: 280px; display: flex; flex-direction: column; }
         .rb-title { font-size: 1.1rem; font-weight: 800; color: #2C5282; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
         .rb-text { font-size: 0.95rem; color: #4A5568; line-height: 1.6; text-align: justify; flex-grow: 1; }
+        .prog-container { width: 100%; position: relative; margin: 0 0 30px 0; }
+        .prog-track { width: 100%; height: 3px; background-color: #E2E8F0; border-radius: 1.5px; }
+        .prog-fill { height: 100%; border-radius: 1.5px; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1), background 1.5s ease; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .prog-icon { position: absolute; top: -14px; width: 30px; height: 30px; transition: left 1.5s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-50%); z-index: 10; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15)); display: flex; align-items: center; justify-content: center; }
     </style>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     """
@@ -335,7 +348,6 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         [/PERFIL_NARRATIVO]
         """
         
-        # --- SOLICITAÇÃO ATENDIDA: DIAGNÓSTICO PSICOSSOCIAL E IMPACTO ---
         prompt_diagnostico = f"""
         ### 1. 🏥 DIAGNÓSTICO PSICOSSOCIAL E IMPACTO:
         - Analise o diagnóstico: {dados['diagnostico']}.
@@ -347,7 +359,6 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         if "Alfabético" not in alfabetizacao and alfabetizacao != "Não se aplica (Educação Infantil)":
              prompt_literacia = f"""[ATENÇÃO CRÍTICA: ALFABETIZAÇÃO] Fase: {alfabetizacao}. Inclua 2 ações de consciência fonológica.[/ATENÇÃO CRÍTICA]"""
 
-        # --- SOLICITAÇÃO ATENDIDA: PROTOCOLO DE 9 PERGUNTAS (HUB) ---
         prompt_hub = """
         ### 6. 🧩 PROTOCOLO DE ADAPTAÇÃO CURRICULAR (Responda SIM/NÃO/QUAL):
         1. O estudante necessita de questões mais desafiadoras?
@@ -358,7 +369,7 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         6. O estudante precisa de dicas de apoio para resolver questões?
         7. O estudante compreende figuras de linguagem e faz inferências?
         8. O estudante necessita de descrição de imagens?
-        9. O estudante precisa de adaptação na formatação de textos? (Se sim, qual? Ex: Fonte ampliada, Espaçamento).
+        9. O estudante precisa de adaptação na formatação de textos? (Se sim, qual? Ex: Fonte ampliada, Espaçamento duplo).
         """
         
         prompt_componentes = ""
@@ -439,9 +450,7 @@ def consultar_gpt_pedagogico(api_key, dados, contexto_pdf="", modo_pratico=False
         
         prompt_user = f"ALUNO: {dados['nome']} | SÉRIE: {serie} | HISTÓRICO: {dados['historico']} | DIAGNÓSTICO: {dados['diagnostico']} | MEDS: {meds_info} | EVIDÊNCIAS: {evid} | LAUDO: {contexto_pdf[:3000]}"
         
-        # --- CHAMADA API COM O MODELO SELECIONADO NA HOME ---
         modelo_escolhido = st.session_state.get('nome_modelo', 'gpt-4o-mini')
-        
         res = client.chat.completions.create(model=modelo_escolhido, messages=[{"role": "system", "content": prompt_sys}, {"role": "user", "content": prompt_user}])
         return res.choices[0].message.content, None
     except Exception as e: return None, str(e)
@@ -467,7 +476,7 @@ def gerar_roteiro_gamificado(api_key, dados, pei_tecnico, feedback_game=""):
     except Exception as e: return None, str(e)
 
 # ==============================================================================
-# 8. GERADOR PDF (REFINADO E LIMPO)
+# 8. GERADOR PDF
 # ==============================================================================
 class PDF_Classic(FPDF):
     def header(self):
