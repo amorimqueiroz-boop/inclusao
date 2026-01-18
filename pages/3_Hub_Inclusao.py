@@ -114,8 +114,39 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 # ==============================================================================
-# ### FIM BLOCO VISUAL INTELIGENTE ###
+# ### FUNÇÃO DE RASTRO ###
 # ==============================================================================
+
+def registrar_validacao(aluno_nome, tipo_atividade, materia_ou_campo, tema_ou_objetivo):
+    """Salva o rastro da atividade validada no Google Sheets"""
+    try:
+        # 1. Conecta
+        client = conectar_gsheets() # Usa sua função de conexão existente
+        if not client: return
+        
+        # 2. Abre a Planilha e a Aba (Cria se não existir)
+        sh = client.open("Omnisfera_Dados")
+        try:
+            ws = sh.worksheet("Historico_Validacoes")
+        except:
+            ws = sh.add_worksheet(title="Historico_Validacoes", rows=1000, cols=6)
+            ws.append_row(["Data/Hora", "Professor", "Aluno", "Tipo Atividade", "Componente/Campo", "Tema/Objetivo"])
+        
+        # 3. Prepara os dados
+        data_hora = datetime.now().strftime("%d/%m/%Y %H:%M")
+        prof = st.session_state.get("usuario_nome", "Educador")
+        
+        # 4. Salva a linha
+        ws.append_row([data_hora, prof, aluno_nome, tipo_atividade, materia_ou_campo, tema_ou_objetivo])
+        st.toast("✅ Atividade registrada no histórico!", icon="💾")
+        
+    except Exception as e:
+        st.error(f"Erro ao salvar rastro: {e}")
+
+
+
+
+
 
 def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
@@ -752,6 +783,7 @@ if is_ei:
                 c_val, c_ref = st.columns([1, 3])
                 if c_val.button("✅ Validar Experiência"): 
                     st.session_state.valid_ei_exp = True
+                    registrar_validacao(aluno['nome'], "Experiência EI", campo_exp, obj_aprendizagem)
                     st.rerun()
                 with c_ref.expander("🔄 Não gostou? Ensinar a IA"):
                     feedback_ei = st.text_input("O que precisa melhorar?", placeholder="Ex: Ficou muito complexo, use materiais mais simples...")
@@ -791,7 +823,9 @@ if is_ei:
                     st.success("Imagem validada!")
                 else:
                     c_vs1, c_vs2 = st.columns([1, 2])
-                    if c_vs1.button("✅ Validar", key="val_sc_ei"): st.session_state.valid_scene = True; st.rerun()
+                    if c_vs1.button("✅ Validar", key="val_sc_ei"): st.session_state.valid_scene = True;
+                    registrar_validacao(aluno['nome'], "Experiência EI", campo_exp, obj_aprendizagem) 
+                    st.rerun()
                     with c_vs2.expander("🔄 Refazer Cena"):
                         fb_scene = st.text_input("Ajuste:", key="fb_sc_ei")
                         if st.button("Refazer", key="ref_sc_ei"):
@@ -817,7 +851,9 @@ if is_ei:
                     st.success("Pictograma validado!")
                 else:
                     c_vc1, c_vc2 = st.columns([1, 2])
-                    if c_vc1.button("✅ Validar", key="val_caa_ei"): st.session_state.valid_caa = True; st.rerun()
+                    if c_vc1.button("✅ Validar", key="val_caa_ei"): st.session_state.valid_caa = True; 
+                    registrar_validacao(aluno['nome'], "Experiência EI", campo_exp, obj_aprendizagem)
+                    st.rerun()
                     with c_vc2.expander("🔄 Refazer Picto"):
                         fb_caa = st.text_input("Ajuste:", key="fb_caa_ei")
                         if st.button("Refazer", key="ref_caa_ei"):
@@ -855,7 +891,9 @@ if is_ei:
                 st.markdown(st.session_state.res_ei_rotina)
                 st.write("---")
                 c_val, c_ref = st.columns([1, 3])
-                if c_val.button("✅ Validar Rotina"): st.session_state.valid_ei_rotina = True; st.rerun()
+                if c_val.button("✅ Validar Rotina"): st.session_state.valid_ei_rotina = True; 
+                registrar_validacao(aluno['nome'], "Experiência EI", campo_exp, obj_aprendizagem)
+                st.rerun()
                 with c_ref.expander("🔄 Refazer adaptação"):
                     fb_rotina = st.text_input("O que ajustar na rotina?", key="fb_rotina_input")
                     if st.button("Refazer Rotina"):
@@ -892,7 +930,9 @@ if is_ei:
                 st.markdown(st.session_state.res_ei_dina)
                 st.write("---")
                 c_val, c_ref = st.columns([1, 3])
-                if c_val.button("✅ Validar Dinâmica"): st.session_state.valid_ei_dina = True; st.rerun()
+                if c_val.button("✅ Validar Dinâmica"): st.session_state.valid_ei_dina = True; 
+                registrar_validacao(aluno['nome'], "Experiência EI", campo_exp, obj_aprendizagem)
+                st.rerun()
                 with c_ref.expander("🔄 Refazer dinâmica"):
                     fb_dina = st.text_input("O que ajustar?", key="fb_dina_input")
                     if st.button("Refazer Dinâmica"):
@@ -953,7 +993,9 @@ else:
                 st.markdown("<div class='validado-box'>✅ VALIDADO!</div>", unsafe_allow_html=True)
             else:
                 col_v, col_r = st.columns([1, 1])
-                if col_v.button("✅ Validar", key="val_d"): st.session_state['res_docx']['valid'] = True; st.rerun()
+                if col_v.button("✅ Validar", key="val_d"): st.session_state['res_docx']['valid'] = True; 
+                registrar_validacao(aluno['nome'], "Adaptação Prova", materia_d, tema_d)
+                st.rerun()
                 if col_r.button("🧠 Refazer (+Profundo)", key="redo_d"):
                     with st.spinner("Refazendo..."):
                         rac, txt = adaptar_conteudo_docx(api_key, aluno, st.session_state.docx_txt, materia_d, tema_d, tipo_d, True, qs_d, modo_profundo=True)
@@ -1024,7 +1066,9 @@ else:
                 st.markdown("<div class='validado-box'>✅ VALIDADO!</div>", unsafe_allow_html=True)
             else:
                 col_v, col_r = st.columns([1, 1])
-                if col_v.button("✅ Validar", key="val_i"): st.session_state['res_img']['valid'] = True; st.rerun()
+                if col_v.button("✅ Validar", key="val_i"): st.session_state['res_img']['valid'] = True; 
+                registrar_validacao(aluno['nome'], "Adaptação Prova", materia_d, tema_d)
+                st.rerun()
                 if col_r.button("🧠 Refazer (+Profundo)", key="redo_i"):
                     with st.spinner("Refazendo..."):
                         img_bytes = res['map'][1]
@@ -1138,7 +1182,9 @@ else:
                 st.markdown("<div class='validado-box'>✅ VALIDADO!</div>", unsafe_allow_html=True)
             else:
                 col_v, col_r = st.columns([1, 1])
-                if col_v.button("✅ Validar", key="val_c"): st.session_state['res_create']['valid'] = True; st.rerun()
+                if col_v.button("✅ Validar", key="val_c"): st.session_state['res_create']['valid'] = True; 
+                registrar_validacao(aluno['nome'], "Adaptação Prova", materia_d, tema_d)
+                st.rerun()
                 if col_r.button("🧠 Refazer (+Profundo)", key="redo_c"):
                     with st.spinner("Refazendo..."):
                         qtd_final = qtd_img_sel if usar_img else 0
@@ -1200,7 +1246,9 @@ else:
                     st.success("Imagem validada!")
                 else:
                     c_vs1, c_vs2 = st.columns([1, 2])
-                    if c_vs1.button("✅ Validar", key="val_sc_pd"): st.session_state.valid_scene = True; st.rerun()
+                    if c_vs1.button("✅ Validar", key="val_sc_pd"): st.session_state.valid_scene = 
+                    registrar_validacao(aluno['nome'], "Adaptação Prova", materia_d, tema_d)
+                    True; st.rerun()
                     with c_vs2.expander("🔄 Refazer Cena"):
                         fb_scene = st.text_input("Ajuste:", key="fb_sc_pd")
                         if st.button("Refazer", key="ref_sc_pd"):
@@ -1224,7 +1272,9 @@ else:
                     st.success("Pictograma validado!")
                 else:
                     c_vc1, c_vc2 = st.columns([1, 2])
-                    if c_vc1.button("✅ Validar", key="val_caa_pd"): st.session_state.valid_caa = True; st.rerun()
+                    if c_vc1.button("✅ Validar", key="val_caa_pd"): st.session_state.valid_caa = True; 
+                    registrar_validacao(aluno['nome'], "Adaptação Prova", materia_d, tema_d)
+                    st.rerun()
                     with c_vc2.expander("🔄 Refazer Picto"):
                         fb_caa = st.text_input("Ajuste:", key="fb_caa_pd")
                         if st.button("Refazer", key="ref_caa_pd"):
