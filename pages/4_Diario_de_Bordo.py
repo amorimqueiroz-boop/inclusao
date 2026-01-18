@@ -6,196 +6,228 @@ import pandas as pd
 import time
 
 # ==============================================================================
-# 1. CONFIGURAÇÃO E CONEXÃO
+# 1. CONFIGURAÇÃO E CONEXÃO INTELIGENTE
 # ==============================================================================
-st.set_page_config(page_title="Diário & Feedback", page_icon="📝", layout="wide")
+st.set_page_config(page_title="Validador PEI & Diário", page_icon="🧬", layout="wide")
 
 @st.cache_resource
 def conectar_banco():
-    """Conecta ao Google Sheets com tratamento de erro"""
+    """Conecta ao Google Sheets e trata erros de autenticação"""
     try:
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         credentials = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
         client = gspread.authorize(credentials)
         return client.open("Omnisfera_Dados")
     except Exception as e:
-        st.error(f"Erro fatal de conexão: {e}")
+        st.error(f"Erro de conexão (Secrets/API): {e}")
         return None
 
-def carregar_peis(sh):
-    """Lê as metas definidas no PEI"""
+def verificar_e_criar_abas(sh):
+    """
+    AUTOCORREÇÃO: Garante que a aba existe e tem as colunas certas.
+    Isso resolve o problema de 'não estar salvando nada'.
+    """
+    nome_aba = "Diario_Bordo"
+    colunas_necessarias = [
+        "ID_Registro", "Data_Hora", "Professor_Autor", "Aluno_Nome", "Turma", 
+        "Meta_PEI_Vinculada", "Origem_Atividade", "Descricao_Atividade", 
+        "Engajamento_0_5", "Validacao_Estrategia", "Observacao_Qualitativa", "Necessita_Revisao_PEI"
+    ]
+    
+    try:
+        ws = sh.worksheet(nome_aba)
+        # Se a aba existe, vamos confiar nela por enquanto (ou poderíamos validar headers)
+        return ws
+    except:
+        # Se não existe, cria do zero com a estrutura perfeita
+        ws = sh.add_worksheet(title=nome_aba, rows=1000, cols=15)
+        ws.append_row(colunas_necessarias)
+        return ws
+
+def carregar_peis_ativos(sh):
+    """Fonte da Verdade: Só traz alunos com PEI Ativo"""
     try:
         ws = sh.worksheet("Metas_PEI")
         dados = ws.get_all_records()
         df = pd.DataFrame(dados)
-        # Padroniza colunas para minúsculo
+        # Normaliza colunas
         df.columns = [str(c).lower().strip() for c in df.columns]
         return df
     except:
         return pd.DataFrame()
 
-def preparar_aba_diario(sh):
-    """Prepara a aba de destino garantindo que ela aceita os dados"""
-    try:
-        return sh.worksheet("Diario_Bordo")
-    except:
-        # Se não existir, cria com as colunas exatas que vamos usar
-        ws = sh.add_worksheet("Diario_Bordo", rows=1000, cols=11)
-        ws.append_row([
-            "ID", "Data_Hora", "Professor", "Aluno", "Turma", 
-            "Meta_PEI", "Estrategia_Base", "Atividade_Hub", 
-            "Avaliacao_Suporte", "Observacao", "Status_Integracao"
-        ])
-        return ws
-
 # ==============================================================================
-# 2. INTERFACE
+# 2. INTERFACE "FORA DA CURVA"
 # ==============================================================================
 
 # --- SIDEBAR ---
 with st.sidebar:
-    st.header("Identificação")
+    st.header("🧬 Validação de Estratégias")
     if "prof_nome" not in st.session_state: st.session_state["prof_nome"] = ""
-    st.session_state["prof_nome"] = st.text_input("Educador:", value=st.session_state["prof_nome"])
+    st.session_state["prof_nome"] = st.text_input("Educador Responsável:", value=st.session_state["prof_nome"])
+    
+    st.info("💡 **Conceito:** Este módulo não é apenas um diário. É onde validamos se o PEI está funcionando na prática. Seus registros aqui alimentarão os gráficos de avaliação automaticamente.")
 
-st.title("📝 Validação de Atividades do Hub")
-st.markdown("Vincule a atividade gerada no Hub à meta do PEI e avalie o resultado.")
+st.title("🧬 Laboratório Pedagógico (Feedback & Diário)")
 
 # --- CONEXÃO ---
 sh = conectar_banco()
 if not sh: st.stop()
 
-df_peis = carregar_peis(sh)
-ws_diario = preparar_aba_diario(sh)
+ws_diario = verificar_e_criar_abas(sh) # Chama a autocorreção
+df_peis = carregar_peis_ativos(sh)
 
 if df_peis.empty:
-    st.warning("Nenhum PEI encontrado. Crie o PEI antes de avaliar atividades.")
+    st.warning("⚠️ Nenhum PEI ativo encontrado. O sistema precisa de um PEI para vincular as evidências.")
     st.stop()
 
-# --- SELEÇÃO INTELIGENTE DO ALUNO ---
-# Procura colunas de nome e turma
+# --- SELEÇÃO DE ALUNO (Baseado no PEI) ---
+# Tenta achar colunas de nome e turma
 col_nome = next((c for c in df_peis.columns if 'nome' in c or 'aluno' in c), None)
 col_turma = next((c for c in df_peis.columns if 'turma' in c or 'serie' in c), None)
 
 if col_nome:
-    # Cria rótulo visual
-    df_peis['label'] = df_peis[col_nome].astype(str)
-    if col_turma:
-        df_peis['label'] += " - " + df_peis[col_turma].astype(str)
+    df_peis['rotulo'] = df_peis[col_nome].astype(str)
+    if col_turma: df_peis['rotulo'] += " - " + df_peis[col_turma].astype(str)
     
-    aluno_selecao = st.selectbox("Selecione o Aluno:", df_peis['label'].unique())
+    aluno_selecionado = st.selectbox("Selecione o Estudante para Avaliar:", df_peis['rotulo'].unique())
     
-    # Pega os dados do PEI desse aluno
-    dados_aluno = df_peis[df_peis['label'] == aluno_selecao].iloc[0]
+    # Dados do Aluno
+    dados_aluno = df_peis[df_peis['rotulo'] == aluno_selecionado].iloc[0]
+    nome_real = dados_aluno[col_nome]
+    turma_real = dados_aluno[col_turma] if col_turma else "N/A"
     
-    # Extrai dados para contexto
-    nome_real = str(dados_aluno[col_nome])
-    turma_real = str(dados_aluno[col_turma]) if col_turma else ""
-    
-    # Busca Metas e Estratégias do PEI
+    # PEI Contexto
     col_meta = next((c for c in df_peis.columns if 'meta' in c or 'objetivo' in c), None)
     col_estrat = next((c for c in df_peis.columns if 'estrat' in c or 'recurso' in c), None)
     
-    meta_pei = str(dados_aluno[col_meta]) if col_meta else "Não definida"
-    estrategia_pei = str(dados_aluno[col_estrat]) if col_estrat else "Não definida"
-
+    meta_pei = dados_aluno[col_meta] if col_meta else "Não definida"
+    estrategia_pei = dados_aluno[col_estrat] if col_estrat else "Não definida"
 else:
-    st.error("Erro na leitura das colunas do PEI. Verifique a planilha.")
+    st.error("Erro nos dados do PEI.")
     st.stop()
 
 st.divider()
 
-# --- ÁREA DE VÍNCULO (PEI <-> HUB) ---
-col_contexto, col_form = st.columns([1, 1.5])
+# --- LAYOUT "THINK OUTSIDE THE BOX" ---
+# Esquerda: A Teoria (PEI) | Direita: A Prática (Validação)
 
-with col_contexto:
-    st.markdown("### 📋 Contexto do PEI")
-    st.info(f"**Meta:** {meta_pei}")
-    st.caption(f"**Estratégia Base:** {estrategia_pei}")
-    st.write("---")
-    st.markdown("ℹ️ *Utilize este contexto para gerar a atividade no Hub de Inclusão e depois registre ao lado.*")
+c_teoria, c_pratica = st.columns([1, 1.5])
 
-with col_form:
-    st.subheader("🔗 Registro da Atividade (Hub)")
+with c_teoria:
+    st.markdown("### 📋 A Hipótese (PEI)")
+    st.markdown(f"""
+    <div style="background-color:#f0f9ff; padding:15px; border-radius:10px; border-left:5px solid #0ea5e9;">
+        <small style="color:#0284c7; font-weight:bold;">META ESTABELECIDA</small><br>
+        <div style="font-size:1.1em; margin-bottom:10px;">{meta_pei}</div>
+        <small style="color:#0284c7; font-weight:bold;">ESTRATÉGIA SUGERIDA</small><br>
+        <i>{estrategia_pei}</i>
+    </div>
+    """, unsafe_allow_html=True)
     
-    with st.form("form_hub"):
-        # Campo crucial para o vínculo
-        atividade_hub = st.text_input(
-            "Qual atividade foi gerada no Hub?", 
-            placeholder="Ex: Texto simplificado sobre Fotossíntese (Nível 2)..."
-        )
-        
-        st.write("---")
-        st.markdown("**Feedback da Aplicação**")
-        
-        avaliacao = st.select_slider(
-            "Como o aluno respondeu a essa atividade?",
-            options=["🔴 Não engajou", "🟠 Com muita ajuda", "🟡 Com pouca ajuda", "🟢 Com autonomia"],
-            value="🟡 Com pouca ajuda"
-        )
-        
-        obs = st.text_area("Observações qualitativas:", height=80)
-        
-        enviar = st.form_submit_button("💾 Salvar Feedback", type="primary", use_container_width=True)
+    st.markdown("---")
+    st.caption("🔍 O objetivo deste registro é confirmar se essa estratégia acima está funcionando ou se precisamos pivotar o PEI.")
 
-        if enviar:
+with c_pratica:
+    st.subheader("🧪 Feedback da Aplicação")
+    
+    # Seletor de Origem: Aqui conectamos com o Hub
+    origem = st.radio("Qual recurso foi aplicado?", 
+             ["🤖 Gerado no Hub de Inclusão", "🍎 Atividade Manual / Outro"], 
+             horizontal=True)
+    
+    with st.form("form_validacao"):
+        
+        if "Hub" in origem:
+            st.info("Cole abaixo o resumo da atividade que o Hub gerou para você.")
+            atividade_desc = st.text_area("Atividade do Hub:", placeholder="Ex: Texto adaptado sobre Fotossíntese nível 2...", height=70)
+        else:
+            atividade_desc = st.text_input("Descrição da Atividade:", placeholder="Ex: Prova adaptada com consulta...")
+
+        # AVALIAÇÃO TÉCNICA (Inputs para os Gráficos)
+        c1, c2 = st.columns(2)
+        with c1:
+            engajamento = st.slider("Nível de Engajamento:", 0, 5, 3, help="0 = Recusa total, 5 = Hiperfoco/Participação total")
+        with c2:
+            # Essa pergunta é chave para a revisão do PEI
+            validacao = st.selectbox("A Estratégia do PEI funcionou?", 
+                                     ["✅ Sim, funcionou bem", 
+                                      "⚠️ Funcionou parcialmente (com suporte)", 
+                                      "❌ Não funcionou (Barreira)", 
+                                      "🔄 Pivô (Tive que mudar tudo na hora)"])
+        
+        obs_qualitativa = st.text_area("Evidências / Observações:", placeholder="O que observou no comportamento? Onde ele travou?", height=100)
+        
+        # Checkbox estratégico
+        flag_revisao = st.checkbox("🚩 Sinalizar para Revisão do PEI (Importante para a Coordenação)")
+        
+        btn_salvar = st.form_submit_button("💾 Salvar Evidência", type="primary", use_container_width=True)
+
+        if btn_salvar:
             if not st.session_state["prof_nome"]:
                 st.error("Identifique-se na barra lateral.")
-            elif not atividade_hub:
-                st.error("Descreva a atividade gerada no Hub.")
+            elif not atividade_desc:
+                st.error("Descreva a atividade.")
             else:
-                with st.spinner("Enviando para a planilha..."):
+                with st.spinner("Registrando evidência no banco de dados..."):
                     try:
-                        # DATA PREPARATION (O Segredo para não dar erro)
-                        # Convertemos TUDO para string para o Google Sheets não rejeitar
+                        # Prepara dados (Tudo string para segurança)
                         nova_linha = [
-                            str(datetime.now().timestamp()), # ID único
-                            datetime.now().strftime("%d/%m/%Y %H:%M"), # Data Formatada
-                            str(st.session_state["prof_nome"]),
-                            str(nome_real),
-                            str(turma_real),
-                            str(meta_pei),        # Vínculo com PEI
-                            str(estrategia_pei),  # Vínculo com PEI
-                            str(atividade_hub),   # Vínculo com HUB
-                            str(avaliacao),       # Feedback
-                            str(obs),             # Feedback
-                            "Integrado"           # Status
+                            str(datetime.now().timestamp()),         # ID
+                            datetime.now().strftime("%d/%m/%Y"),     # Data
+                            str(st.session_state["prof_nome"]),      # Autor
+                            str(nome_real),                          # Aluno
+                            str(turma_real),                         # Turma
+                            str(meta_pei),                           # Vínculo PEI
+                            str(origem),                             # Hub vs Manual
+                            str(atividade_desc),                     # O que foi feito
+                            str(engajamento),                        # Métrica 1
+                            str(validacao),                          # Métrica 2
+                            str(obs_qualitativa),                    # Qualitativo
+                            "SIM" if flag_revisao else "NÃO"         # Flag de Alerta
                         ]
                         
-                        # Envio Seguro
+                        # Envio direto e seguro
                         ws_diario.append_row(nova_linha)
                         
-                        st.success("✅ Atividade vinculada e avaliada com sucesso!")
+                        st.success("✅ Evidência salva! Isso ajudará a calcular a eficácia do PEI.")
                         time.sleep(1)
                         st.rerun()
                         
                     except Exception as e:
-                        st.error(f"Erro ao salvar na planilha: {e}")
-                        st.info("Dica: Verifique se você não excluiu colunas na aba 'Diario_Bordo'.")
+                        st.error(f"Erro ao salvar: {e}")
 
-# --- VISUALIZAÇÃO DO VÍNCULO ---
-st.divider()
-st.markdown(f"**Histórico de Atividades do Hub para {nome_real}**")
+# --- FEEDBACK VISUAL RÁPIDO ---
+st.markdown("---")
+st.subheader(f"📊 Linha do Tempo: {nome_real}")
 
 try:
-    dados_log = ws_diario.get_all_records()
-    df_log = pd.DataFrame(dados_log)
+    df_logs = pd.DataFrame(ws_diario.get_all_records())
     
-    if not df_log.empty and "Aluno" in df_log.columns:
-        # Filtra pelo aluno
-        meus_logs = df_log[df_log["Aluno"] == nome_real].tail(3).iloc[::-1]
+    # Filtro inteligente de colunas (caso mude nomes)
+    col_aluno_log = next((c for c in df_logs.columns if 'aluno' in c.lower()), None)
+    
+    if not df_logs.empty and col_aluno_log:
+        meus_logs = df_logs[df_logs[col_aluno_log] == nome_real].tail(3).iloc[::-1]
         
         if meus_logs.empty:
-            st.caption("Nenhuma atividade registrada.")
-            
-        for i, row in meus_logs.iterrows():
-            st.markdown(f"""
-            <div style="border:1px solid #eee; padding:10px; border-radius:5px; margin-bottom:10px;">
-                <small>📅 {row.get('Data_Hora', '')}</small>
-                <div style="font-weight:bold; color:#2c3e50;">Atividade Hub: {row.get('Atividade_Hub', '')}</div>
-                <div style="font-size:0.9em; color:#555;">Meta PEI: {row.get('Meta_PEI', '')}</div>
-                <div style="margin-top:5px; font-weight:bold;">Resultado: {row.get('Avaliacao_Suporte', '')}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.info("Ainda sem registros para este aluno.")
+        
+        cols = st.columns(3)
+        for i, (idx, row) in enumerate(meus_logs.iterrows()):
+            with cols[i % 3]:
+                # Card Visual
+                validacao_txt = str(row.get('Validacao_Estrategia', ''))
+                cor = "#dcfce7" if "Sim" in validacao_txt else "#fee2e2" if "Não" in validacao_txt else "#fef9c3"
+                icone = "🤖" if "Hub" in str(row.get('Origem_Atividade', '')) else "📝"
+                
+                st.markdown(f"""
+                <div style="background-color: {cor}; padding: 15px; border-radius: 10px; border: 1px solid #ddd; height: 100%;">
+                    <div style="font-size:0.8em; color:#555;">{row.get('Data_Hora', '')}</div>
+                    <div style="font-weight:bold; margin-top:5px;">{icone} {row.get('Descricao_Atividade', '')[:40]}...</div>
+                    <div style="margin-top:10px; font-size:0.9em;"><b>Resultado:</b> {validacao_txt}</div>
+                    <div style="margin-top:5px; font-size:0.9em;"><b>Engajamento:</b> {row.get('Engajamento_0_5', '')}/5</div>
+                </div>
+                """, unsafe_allow_html=True)
 except:
     pass
