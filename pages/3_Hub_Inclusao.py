@@ -18,66 +18,15 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # ==============================================================================
-# 1. CONFIGURAÇÃO E SEGURANÇA
+# 1. CONFIGURAÇÃO
 # ==============================================================================
 st.set_page_config(page_title="Hub de Inclusão | Omnisfera", page_icon="🚀", layout="wide")
 
-# ==============================================================================
-# 2. BLOCO VISUAL INTELIGENTE
-# ==============================================================================
-try:
-    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
-except:
-    IS_TEST_ENV = False
-
-def get_logo_base64():
-    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
-    for c in caminhos:
-        if os.path.exists(c):
-            with open(c, "rb") as f:
-                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
-    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
-
-src_logo_giratoria = get_logo_base64()
-
-if IS_TEST_ENV:
-    card_bg, card_border = "rgba(255, 220, 50, 0.95)", "rgba(200, 160, 0, 0.5)"
-else:
-    card_bg, card_border = "rgba(255, 255, 255, 0.85)", "rgba(255, 255, 255, 0.6)"
-
-st.markdown(f"""
-<style>
-    .omni-badge {{
-        position: fixed; top: 15px; right: 15px;
-        background: {card_bg}; border: 1px solid {card_border};
-        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        padding: 4px 30px; min-width: 260px; justify-content: center;
-        border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        z-index: 999990; display: flex; align-items: center; gap: 10px;
-        pointer-events: none;
-    }}
-    .omni-text {{
-        font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem;
-        color: #2D3748; letter-spacing: 1px; text-transform: uppercase;
-    }}
-    @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
-    .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
-</style>
-<div class="omni-badge">
-    <img src="{src_logo_giratoria}" class="omni-logo-spin">
-    <span class="omni-text">OMNISFERA</span>
-</div>
-""", unsafe_allow_html=True)
-
-def verificar_acesso():
-    if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
-        pass 
-    st.markdown("""<style>footer {visibility: hidden !important;} [data-testid="stHeader"] {visibility: visible !important; background-color: transparent !important;} .block-container {padding-top: 2rem !important;}</style>""", unsafe_allow_html=True)
-
-verificar_acesso()
+try: IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
+except: IS_TEST_ENV = False
 
 # ==============================================================================
-# 3. LÓGICA DE BANCO DE DADOS E RASTRO (FUNÇÃO NOVA AQUI!)
+# 2. FUNÇÕES DE BANCO DE DADOS E RASTRO (PLANILHA)
 # ==============================================================================
 @st.cache_resource
 def conectar_gsheets():
@@ -89,35 +38,31 @@ def conectar_gsheets():
     except: return None
 
 def registrar_validacao(aluno_nome, tipo_atividade, materia_ou_campo, tema_ou_objetivo):
-    """
-    Salva o rastro da atividade validada na planilha Google Sheets.
-    Cria a aba 'Historico_Validacoes' se não existir.
-    """
+    """Salva o rastro da atividade validada na planilha."""
     try:
-        # 1. Conecta
         client = conectar_gsheets()
         if not client: return
         
-        # 2. Abre a Planilha e a Aba
-        sh = client.open("Omnisfera_Dados")
-        try:
-            ws = sh.worksheet("Historico_Validacoes")
+        # Tenta abrir a planilha
+        try: sh = client.open("Omnisfera_Dados")
+        except: return 
+        
+        # Tenta abrir a aba ou criar
+        try: ws = sh.worksheet("Historico_Validacoes")
         except:
             ws = sh.add_worksheet(title="Historico_Validacoes", rows=1000, cols=6)
-            ws.append_row(["Data/Hora", "Professor", "Aluno", "Tipo Atividade", "Componente/Campo", "Tema/Objetivo"])
+            ws.append_row(["Data_Hora", "Professor", "Aluno", "Tipo Atividade", "Componente/Campo", "Tema/Objetivo"])
         
-        # 3. Prepara os dados
         data_hora = datetime.now().strftime("%d/%m/%Y %H:%M")
         prof = st.session_state.get("usuario_nome", "Educador")
         
-        # 4. Salva a linha
         ws.append_row([data_hora, prof, aluno_nome, tipo_atividade, materia_ou_campo, tema_ou_objetivo])
-        st.toast("✅ Atividade registrada no histórico!", icon="💾")
+        st.toast(f"✅ Validado e salvo no histórico: {tipo_atividade}", icon="💾")
         
     except Exception as e:
-        st.error(f"Erro ao salvar rastro: {e}")
+        st.error(f"Erro ao salvar histórico: {e}")
 
-# Recuperação de alunos (Session State da Home ou Fallback Local)
+# Recupera alunos da memória ou arquivo local
 if 'banco_estudantes' not in st.session_state:
     if os.path.exists("banco_alunos.json"):
         try:
@@ -128,32 +73,48 @@ if 'banco_estudantes' not in st.session_state:
         st.session_state.banco_estudantes = []
 
 # ==============================================================================
-# 4. ESTILO E FUNÇÕES UTILS
+# 3. VISUAL E UTILS
 # ==============================================================================
-st.markdown("""
-    <style>
-    html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
-    .header-hub { background: white; padding: 20px 30px; border-radius: 12px; border-left: 6px solid #3182CE; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; gap: 25px; }
-    .student-header { background-color: #EBF8FF; border: 1px solid #BEE3F8; border-radius: 12px; padding: 15px 25px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
-    .student-label { font-size: 0.85rem; color: #718096; font-weight: 700; text-transform: uppercase; }
-    .student-value { font-size: 1.1rem; color: #2C5282; font-weight: 800; }
-    .analise-box { background-color: #F0FFF4; border: 1px solid #C6F6D5; border-radius: 8px; padding: 20px; margin-bottom: 20px; color: #22543D; }
-    .validado-box { background-color: #C6F6D5; color: #22543D; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; border: 1px solid #276749; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .pedagogia-box { background-color: #F7FAFC; border-left: 4px solid #3182CE; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px; font-size: 0.9rem; color: #4A5568; }
-    .pedagogia-title { color: #2C5282; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-    .stTabs [data-baseweb="tab-list"] { gap: 8px; flex-wrap: wrap; }
-    .stTabs [data-baseweb="tab"] { border-radius: 6px; padding: 8px 16px; background-color: white; border: 1px solid #E2E8F0; font-size: 0.9rem; transition: all 0.2s; }
-    .stTabs [aria-selected="true"] { background-color: #3182CE !important; color: white !important; border-color: #3182CE !important; }
-    div[data-testid="column"] .stButton button[kind="primary"] { border-radius: 10px !important; height: 50px; width: 100%; background-color: #3182CE !important; color: white !important; font-weight: 800 !important; border: none; transition: 0.3s; }
-    div[data-testid="column"] .stButton button[kind="primary"]:hover { background-color: #2B6CB0 !important; }
-    div[data-testid="column"] .stButton button[kind="secondary"] { border-radius: 10px !important; height: 50px; width: 100%; border: 2px solid #CBD5E0 !important; color: #4A5568 !important; font-weight: bold; }
-    </style>
+def get_logo_base64():
+    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
+    for c in caminhos:
+        if os.path.exists(c):
+            with open(c, "rb") as f: return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
+
+src_logo_giratoria = get_logo_base64()
+card_bg = "rgba(255, 220, 50, 0.95)" if IS_TEST_ENV else "rgba(255, 255, 255, 0.85)"
+card_border = "rgba(200, 160, 0, 0.5)" if IS_TEST_ENV else "rgba(255, 255, 255, 0.6)"
+
+st.markdown(f"""
+<style>
+    .omni-badge {{ position: fixed; top: 15px; right: 15px; background: {card_bg}; border: 1px solid {card_border}; backdrop-filter: blur(8px); padding: 4px 30px; min-width: 260px; justify-content: center; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); z-index: 999990; display: flex; align-items: center; gap: 10px; pointer-events: none; }}
+    .omni-text {{ font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem; color: #2D3748; letter-spacing: 1px; text-transform: uppercase; }}
+    .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
+    @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
+    
+    html, body, [class*="css"] {{ font-family: 'Nunito', sans-serif; color: #2D3748; }}
+    .header-hub {{ background: white; padding: 20px 30px; border-radius: 12px; border-left: 6px solid #3182CE; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; gap: 25px; }}
+    .student-header {{ background-color: #EBF8FF; border: 1px solid #BEE3F8; border-radius: 12px; padding: 15px 25px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }}
+    .student-label {{ font-size: 0.85rem; color: #718096; font-weight: 700; text-transform: uppercase; }}
+    .student-value {{ font-size: 1.1rem; color: #2C5282; font-weight: 800; }}
+    .analise-box {{ background-color: #F0FFF4; border: 1px solid #C6F6D5; border-radius: 8px; padding: 20px; margin-bottom: 20px; color: #22543D; }}
+    .validado-box {{ background-color: #C6F6D5; color: #22543D; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; border: 1px solid #276749; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }}
+    .pedagogia-box {{ background-color: #F7FAFC; border-left: 4px solid #3182CE; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px; font-size: 0.9rem; color: #4A5568; }}
+    .pedagogia-title {{ color: #2C5282; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }}
+    .stTabs [data-baseweb="tab-list"] {{ gap: 8px; flex-wrap: wrap; }}
+    .stTabs [data-baseweb="tab"] {{ border-radius: 6px; padding: 8px 16px; background-color: white; border: 1px solid #E2E8F0; font-size: 0.9rem; transition: all 0.2s; }}
+    .stTabs [aria-selected="true"] {{ background-color: #3182CE !important; color: white !important; border-color: #3182CE !important; }}
+    div[data-testid="column"] .stButton button[kind="primary"] {{ border-radius: 10px !important; height: 50px; width: 100%; background-color: #3182CE !important; color: white !important; font-weight: 800 !important; border: none; transition: 0.3s; }}
+    div[data-testid="column"] .stButton button[kind="primary"]:hover {{ background-color: #2B6CB0 !important; }}
+    div[data-testid="column"] .stButton button[kind="secondary"] {{ border-radius: 10px !important; height: 50px; width: 100%; border: 2px solid #CBD5E0 !important; color: #4A5568 !important; font-weight: bold; }}
+</style>
+<div class="omni-badge"><img src="{src_logo_giratoria}" class="omni-logo-spin"><span class="omni-text">OMNISFERA</span></div>
 """, unsafe_allow_html=True)
 
 def get_img_tag(file_path, width):
     if os.path.exists(file_path):
-        with open(file_path, "rb") as f:
-            data = base64.b64encode(f.read()).decode("utf-8")
+        with open(file_path, "rb") as f: data = base64.b64encode(f.read()).decode("utf-8")
         return f'<img src="data:image/png;base64,{data}" width="{width}">'
     return "🚀"
 
@@ -172,9 +133,7 @@ def extrair_dados_docx(uploaded_file):
 def sanitizar_imagem(image_bytes):
     try:
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
-        out = BytesIO()
-        img.save(out, format="JPEG", quality=90)
-        return out.getvalue()
+        out = BytesIO(); img.save(out, format="JPEG", quality=90); return out.getvalue()
     except: return None
 
 def baixar_imagem_url(url):
@@ -190,8 +149,7 @@ def buscar_imagem_unsplash(query, access_key):
     try:
         resp = requests.get(url, timeout=5)
         data = resp.json()
-        if data.get('results'):
-            return data['results'][0]['urls']['regular']
+        if data.get('results'): return data['results'][0]['urls']['regular']
     except: pass
     return None
 
@@ -224,24 +182,19 @@ def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, img_dalle_url, tip
                     if not img_bytes and len(mapa_imgs) == 1: img_bytes = list(mapa_imgs.values())[0]
                     if img_bytes:
                         try:
-                            p = doc.add_paragraph()
-                            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                            r = p.add_run()
-                            r.add_picture(BytesIO(img_bytes), width=Inches(4.5))
+                            p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                            r = p.add_run(); r.add_picture(BytesIO(img_bytes), width=Inches(4.5))
                         except: pass
                 elif parte.strip(): doc.add_paragraph(parte.strip())
         else:
             if linha.strip(): doc.add_paragraph(linha.strip())
-    buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
-    return buffer
+    buffer = BytesIO(); doc.save(buffer); buffer.seek(0); return buffer
 
 def criar_docx_simples(texto, titulo="Documento"):
-    doc = Document()
-    doc.add_heading(titulo, 0)
+    doc = Document(); doc.add_heading(titulo, 0)
     for para in texto.split('\n'):
         if para.strip(): doc.add_paragraph(para.strip())
-    buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
-    return buffer
+    buffer = BytesIO(); doc.save(buffer); buffer.seek(0); return buffer
 
 def criar_pdf_generico(texto):
     pdf = FPDF(); pdf.add_page(); pdf.set_font("Arial", size=12)
@@ -249,7 +202,9 @@ def criar_pdf_generico(texto):
     pdf.multi_cell(0, 10, texto_safe)
     return pdf.output(dest='S').encode('latin-1')
 
-# --- IA FUNCTIONS ---
+# ==============================================================================
+# 5. FUNÇÕES DE IA (PEDAGOGIA)
+# ==============================================================================
 def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anterior="", prioridade="IA"):
     client = OpenAI(api_key=api_key)
     prompt_final = f"{prompt}. Adjustment requested: {feedback_anterior}" if feedback_anterior else prompt
@@ -274,8 +229,7 @@ def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo, feedback_ante
     client = OpenAI(api_key=api_key)
     hiperfoco = aluno.get('hiperfoco', 'Brincar')
     ajuste_prompt = f"AJUSTE: {feedback_anterior}." if feedback_anterior else ""
-    prompt = f"""
-    ATUAR COMO: Especialista EI BNCC. ALUNO: {aluno['nome']}. HIPERFOCO: {aluno.get('hiperfoco')}. PEI: {aluno.get('ia_sugestao', '')[:600]}. CRIAR EXPERIÊNCIA LÚDICA Campo: "{campo_exp}". Objetivo: {objetivo}. {ajuste_prompt} SAÍDA MARKDOWN."""
+    prompt = f"""ATUAR COMO: Especialista EI BNCC. ALUNO: {aluno['nome']}. HIPERFOCO: {hiperfoco}. PEI: {aluno.get('ia_sugestao', '')[:600]}. CRIAR EXPERIÊNCIA LÚDICA Campo: "{campo_exp}". Objetivo: {objetivo}. {ajuste_prompt} SAÍDA MARKDOWN."""
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
         return resp.choices[0].message.content
@@ -355,9 +309,16 @@ def gerar_plano_aula_bncc(api_key, materia, assunto, metodologia, tecnica, qtd_a
         return resp.choices[0].message.content
     except Exception as e: return str(e)
 
-    # ==============================================================================
-# INTERFACE
 # ==============================================================================
+# 6. INTERFACE PRINCIPAL
+# ==============================================================================
+def verificar_acesso():
+    if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
+        pass 
+    st.markdown("""<style>footer {visibility: hidden !important;} [data-testid="stHeader"] {visibility: visible !important; background-color: transparent !important;} .block-container {padding-top: 2rem !important;}</style>""", unsafe_allow_html=True)
+
+verificar_acesso()
+
 with st.sidebar:
     if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']; st.success("✅ OpenAI OK")
     else: api_key = st.text_input("Chave OpenAI:", type="password")
