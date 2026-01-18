@@ -1,8 +1,8 @@
 import streamlit as st
 import os
-import pandas as pd  # Adicionado para manipular a planilha
+import pandas as pd
 from openai import OpenAI
-from datetime import date, datetime # Adicionado datetime para hora exata
+from datetime import date, datetime
 from io import BytesIO
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -15,6 +15,8 @@ import json
 import requests
 from PIL import Image
 from streamlit_cropper import st_cropper
+import gspread
+from google.oauth2.service_account import Credentials
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
@@ -105,7 +107,61 @@ with st.sidebar:
     st.markdown("---")
 
 # ==============================================================================
-# 2. O CÓDIGO DO HUB DE INCLUSÃO
+# 2. LÓGICA DO BANCO DE DADOS (GOOGLE SHEETS + LOCAL)
+# ==============================================================================
+@st.cache_resource
+def conectar_gsheets():
+    """Conecta ao Google Sheets usando as credenciais do st.secrets"""
+    try:
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        credentials = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+        client = gspread.authorize(credentials)
+        return client
+    except Exception as e:
+        st.error(f"Erro ao conectar ao Google Sheets: {e}")
+        return None
+
+def carregar_banco():
+    """Busca os alunos na planilha 'Omnisfera_Dados' apenas do usuário atual"""
+    usuario_atual = st.session_state.get("usuario_nome", "")
+    try:
+        client = conectar_gsheets()
+        if not client:
+            return []
+            
+        sheet = client.open("Omnisfera_Dados").sheet1 
+        records = sheet.get_all_records()
+        lista_processada = []
+        
+        for reg in records:
+            try:
+                # Verifica se o responsável é o usuário atual
+                if 'Responsável' in reg and reg['Responsável'] == usuario_atual:
+                    # Se salvamos o objeto completo na coluna 'Dados_Completos', recuperamos aqui
+                    if 'Dados_Completos' in reg and reg['Dados_Completos']:
+                        try:
+                            dados_completos = json.loads(reg['Dados_Completos'])
+                            lista_processada.append(dados_completos)
+                        except:
+                            lista_processada.append(reg)
+                    else:
+                        lista_processada.append(reg)
+            except Exception as e:
+                continue
+        return lista_processada
+    except Exception as e:
+        st.warning(f"Não foi possível carregar dados do Google Sheets: {e}")
+        return []
+
+if 'banco_estudantes' not in st.session_state:
+    st.session_state.banco_estudantes = carregar_banco()
+
+def salvar_aluno_integrado(dados):
+    """Função mantida para compatibilidade, mas não usada no Hub"""
+    return True, "OK"
+
+# ==============================================================================
+# 3. FUNÇÕES DO HUB DE INCLUSÃO
 # ==============================================================================
 
 # --- DADOS BLOOM ---
@@ -118,85 +174,90 @@ TAXONOMIA_BLOOM = {
     "6. Criar": ["Compor", "Construir", "Criar", "Desenhar", "Desenvolver", "Formular", "Investigar", "Planejar", "Produzir", "Propor"]
 }
 
-# --- BANCO DE DADOS ---
-ARQUIVO_DB = "banco_alunos.json"
-
-def carregar_banco():
-    usuario_atual = st.session_state.get("usuario_nome", "")
-    if os.path.exists(ARQUIVO_DB):
-        try:
-            with open(ARQUIVO_DB, "r", encoding="utf-8") as f:
-                todos_alunos = json.load(f)
-                meus_alunos = [aluno for aluno in todos_alunos if aluno.get('responsavel') == usuario_atual]
-                return meus_alunos
-        except: return []
-    return []
-
-if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
-    st.session_state.banco_estudantes = carregar_banco()
-
-# --- ESTILO VISUAL (CSS) ---
-st.markdown("""
-    <style>
-    html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
-    .header-hub { 
-        background: white; padding: 20px 30px; border-radius: 12px; 
-        border-left: 6px solid #3182CE; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-        margin-bottom: 20px; display: flex; align-items: center; gap: 25px; 
-    }
-    .student-header { background-color: #EBF8FF; border: 1px solid #BEE3F8; border-radius: 12px; padding: 15px 25px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
-    .student-label { font-size: 0.85rem; color: #718096; font-weight: 700; text-transform: uppercase; }
-    .student-value { font-size: 1.1rem; color: #2C5282; font-weight: 800; }
-    .analise-box { background-color: #F0FFF4; border: 1px solid #C6F6D5; border-radius: 8px; padding: 20px; margin-bottom: 20px; color: #22543D; }
-    .analise-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-    .validado-box { background-color: #C6F6D5; color: #22543D; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; border: 1px solid #276749; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .pedagogia-box { background-color: #F7FAFC; border-left: 4px solid #3182CE; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px; font-size: 0.9rem; color: #4A5568; }
-    .pedagogia-title { color: #2C5282; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-    .stTabs [data-baseweb="tab-list"] { gap: 8px; flex-wrap: wrap; }
-    .stTabs [data-baseweb="tab"] { border-radius: 6px; padding: 8px 16px; background-color: white; border: 1px solid #E2E8F0; font-size: 0.9rem; transition: all 0.2s; }
-    .stTabs [aria-selected="true"] { background-color: #3182CE !important; color: white !important; border-color: #3182CE !important; }
-    div[data-testid="column"] .stButton button[kind="primary"] { border-radius: 10px !important; height: 50px; width: 100%; background-color: #3182CE !important; color: white !important; font-weight: 800 !important; border: none; transition: 0.3s; }
-    div[data-testid="column"] .stButton button[kind="primary"]:hover { background-color: #2B6CB0 !important; }
-    div[data-testid="column"] .stButton button[kind="secondary"] { border-radius: 10px !important; height: 50px; width: 100%; border: 2px solid #CBD5E0 !important; color: #4A5568 !important; font-weight: bold; }
-    </style>
-""", unsafe_allow_html=True)
-
-# --- FUNÇÕES DE UTILIDADE ---
-
-# >>> NOVA FUNÇÃO DE REGISTRO/RASTRO <<<
+# --- FUNÇÃO DE REGISTRO/RASTRO NO GOOGLE SHEETS ---
 def salvar_rastro(nome_aluno, tipo_atividade, componente, tema):
     """
-    Salva um log da validação na planilha.
+    Salva um log da validação na planilha 'Omnisfera_Historico' do Google Sheets.
     Para Educação Infantil, o 'componente' pode vir vazio ou com nome do Campo.
     """
-    arquivo_log = "historico_atividades.xlsx"
-    data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    
-    # Tratamento para Educação Infantil (Componente opcional)
-    comp_salvar = componente if componente else "Educação Infantil (Geral)"
-    
-    novo_registro = {
-        "Data/Hora": [data_hora],
-        "Aluno": [nome_aluno],
-        "Tipo Atividade": [tipo_atividade],
-        "Componente/Campo": [comp_salvar],
-        "Tema": [tema]
-    }
-    
-    df_novo = pd.DataFrame(novo_registro)
-    
     try:
-        if os.path.exists(arquivo_log):
-            df_existente = pd.read_excel(arquivo_log)
-            df_final = pd.concat([df_existente, df_novo], ignore_index=True)
-        else:
-            df_final = df_novo
+        # Conectar ao Google Sheets
+        client = conectar_gsheets()
+        if not client:
+            st.error("Não foi possível conectar ao Google Sheets")
+            return False
         
-        df_final.to_excel(arquivo_log, index=False)
+        # Tentar abrir a planilha de histórico
+        try:
+            planilha = client.open("Omnisfera_Historico")
+            sheet = planilha.sheet1
+        except gspread.exceptions.SpreadsheetNotFound:
+            # Se não existir, criar nova planilha
+            planilha = client.create("Omnisfera_Historico")
+            sheet = planilha.sheet1
+            # Adicionar cabeçalhos
+            sheet.append_row(["Data/Hora", "Aluno", "Tipo Atividade", "Componente/Campo", "Tema", "Responsável"])
+        
+        data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        usuario_atual = st.session_state.get("usuario_nome", "Desconhecido")
+        
+        # Tratamento para Educação Infantil (Componente opcional)
+        comp_salvar = componente if componente else "Educação Infantil (Geral)"
+        
+        # Preparar linha para inserção
+        nova_linha = [data_hora, nome_aluno, tipo_atividade, comp_salvar, tema, usuario_atual]
+        
+        # Adicionar à planilha
+        sheet.append_row(nova_linha)
+        
+        # Atualizar cache local (opcional)
+        if 'historico_atividades' not in st.session_state:
+            st.session_state.historico_atividades = []
+        
+        st.session_state.historico_atividades.append({
+            "Data/Hora": data_hora,
+            "Aluno": nome_aluno,
+            "Tipo Atividade": tipo_atividade,
+            "Componente/Campo": comp_salvar,
+            "Tema": tema,
+            "Responsável": usuario_atual
+        })
+        
         return True
+        
     except Exception as e:
-        st.error(f"Erro ao salvar rastro: {e}")
-        return False
+        st.error(f"Erro ao salvar rastro no Google Sheets: {e}")
+        
+        # Fallback: salvar localmente em arquivo CSV
+        try:
+            arquivo_log = "historico_atividades_fallback.csv"
+            data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            comp_salvar = componente if componente else "Educação Infantil (Geral)"
+            usuario_atual = st.session_state.get("usuario_nome", "Desconhecido")
+            
+            novo_registro = {
+                "Data/Hora": data_hora,
+                "Aluno": nome_aluno,
+                "Tipo Atividade": tipo_atividade,
+                "Componente/Campo": comp_salvar,
+                "Tema": tema,
+                "Responsável": usuario_atual
+            }
+            
+            df_novo = pd.DataFrame([novo_registro])
+            
+            if os.path.exists(arquivo_log):
+                df_existente = pd.read_csv(arquivo_log)
+                df_final = pd.concat([df_existente, df_novo], ignore_index=True)
+            else:
+                df_final = df_novo
+            
+            df_final.to_csv(arquivo_log, index=False, encoding='utf-8')
+            st.info("Registro salvo localmente (fallback)")
+            return True
+        except Exception as e2:
+            st.error(f"Erro ao salvar localmente: {e2}")
+            return False
 
 def get_img_tag(file_path, width):
     if os.path.exists(file_path):
@@ -471,7 +532,7 @@ def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, v
         return "Análise indisponível.", full_text
     except Exception as e: return str(e), ""
 
-    # --- NOVA FUNÇÃO: GERADOR DE EXPERIÊNCIA LÚDICA (EI - BNCC) ---
+# --- NOVA FUNÇÃO: GERADOR DE EXPERIÊNCIA LÚDICA (EI - BNCC) ---
 def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo, feedback_anterior=""):
     client = OpenAI(api_key=api_key)
     hiperfoco = aluno.get('hiperfoco', 'Brincar')
@@ -595,24 +656,70 @@ def sugerir_imagem_pei(api_key, aluno):
         return resp.choices[0].message.content
     except: return "Educational illustration"
 
+# --- ESTILO VISUAL (CSS) ---
+st.markdown("""
+    <style>
+    html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
+    .header-hub { 
+        background: white; padding: 20px 30px; border-radius: 12px; 
+        border-left: 6px solid #3182CE; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+        margin-bottom: 20px; display: flex; align-items: center; gap: 25px; 
+    }
+    .student-header { background-color: #EBF8FF; border: 1px solid #BEE3F8; border-radius: 12px; padding: 15px 25px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+    .student-label { font-size: 0.85rem; color: #718096; font-weight: 700; text-transform: uppercase; }
+    .student-value { font-size: 1.1rem; color: #2C5282; font-weight: 800; }
+    .analise-box { background-color: #F0FFF4; border: 1px solid #C6F6D5; border-radius: 8px; padding: 20px; margin-bottom: 20px; color: #22543D; }
+    .analise-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .validado-box { background-color: #C6F6D5; color: #22543D; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; border: 1px solid #276749; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .pedagogia-box { background-color: #F7FAFC; border-left: 4px solid #3182CE; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px; font-size: 0.9rem; color: #4A5568; }
+    .pedagogia-title { color: #2C5282; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+    .stTabs [data-baseweb="tab-list"] { gap: 8px; flex-wrap: wrap; }
+    .stTabs [data-baseweb="tab"] { border-radius: 6px; padding: 8px 16px; background-color: white; border: 1px solid #E2E8F0; font-size: 0.9rem; transition: all 0.2s; }
+    .stTabs [aria-selected="true"] { background-color: #3182CE !important; color: white !important; border-color: #3182CE !important; }
+    div[data-testid="column"] .stButton button[kind="primary"] { border-radius: 10px !important; height: 50px; width: 100%; background-color: #3182CE !important; color: white !important; font-weight: 800 !important; border: none; transition: 0.3s; }
+    div[data-testid="column"] .stButton button[kind="primary"]:hover { background-color: #2B6CB0 !important; }
+    div[data-testid="column"] .stButton button[kind="secondary"] { border-radius: 10px !important; height: 50px; width: 100%; border: 2px solid #CBD5E0 !important; color: #4A5568 !important; font-weight: bold; }
+    </style>
+""", unsafe_allow_html=True)
+
 # --- INTERFACE ---
 with st.sidebar:
-    if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']; st.success("✅ OpenAI OK")
-    else: api_key = st.text_input("Chave OpenAI:", type="password")
+    if 'OPENAI_API_KEY' in st.secrets: 
+        api_key = st.secrets['OPENAI_API_KEY']
+        st.success("✅ OpenAI OK")
+    else: 
+        api_key = st.text_input("Chave OpenAI:", type="password")
     
     st.markdown("---")
-    if 'UNSPLASH_ACCESS_KEY' in st.secrets: unsplash_key = st.secrets['UNSPLASH_ACCESS_KEY']; st.success("✅ Unsplash OK")
-    else: unsplash_key = st.text_input("Chave Unsplash (Opcional):", type="password")
+    if 'UNSPLASH_ACCESS_KEY' in st.secrets: 
+        unsplash_key = st.secrets['UNSPLASH_ACCESS_KEY']
+        st.success("✅ Unsplash OK")
+    else: 
+        unsplash_key = st.text_input("Chave Unsplash (Opcional):", type="password")
+    
+    # Verificar conexão com Google Sheets
+    try:
+        client = conectar_gsheets()
+        if client:
+            st.success("✅ Google Sheets OK")
+        else:
+            st.warning("⚠️ Google Sheets não conectado")
+    except:
+        st.warning("⚠️ Google Sheets não configurado")
     
     st.markdown("---")
+    if st.button("🔄 Atualizar Banco de Dados", type="secondary"):
+        st.session_state.banco_estudantes = carregar_banco()
+        st.rerun()
+    
     if st.button("🧹 Limpar Tudo e Reiniciar", type="secondary"):
         for key in list(st.session_state.keys()):
-            if key not in ['banco_estudantes', 'OPENAI_API_KEY', 'UNSPLASH_ACCESS_KEY', 'autenticado']: del st.session_state[key]
+            if key not in ['banco_estudantes', 'OPENAI_API_KEY', 'UNSPLASH_ACCESS_KEY', 'autenticado', 'usuario_nome']:
+                del st.session_state[key]
         st.rerun()
 
 # --- HEADER COM LOGO HUB E APENAS SUBTÍTULO ---
-
-img_hub_html = get_img_tag("hub.png", "220") 
+img_hub_html = get_img_tag("hub.png", "220") if os.path.exists("hub.png") else "🚀"
 
 st.markdown(f"""
     <div class="header-hub">
@@ -627,18 +734,22 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-
+# Verificar se há alunos cadastrados
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Nenhum aluno encontrado para o seu usuário. Cadastre no módulo PEI primeiro.")
     st.stop()
 
 lista = [a['nome'] for a in st.session_state.banco_estudantes]
 nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista)
-aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
+aluno = next((a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno), None)
+
+if not aluno:
+    st.error("Aluno não encontrado")
+    st.stop()
 
 # --- DETECTOR DE EDUCAÇÃO INFANTIL ---
 serie_aluno = aluno.get('serie', '').lower()
-is_ei = "infantil" in serie_aluno or "creche" in serie_aluno or "pré" in serie_aluno
+is_ei = "infantil" in serie_aluno or "creche" in serie_aluno or "pré" in serie_aluno or "pré-escola" in serie_aluno
 
 st.markdown(f"""
     <div class="student-header">
@@ -698,7 +809,8 @@ if is_ei:
                 c_val, c_ref = st.columns([1, 3])
                 # VALIDAÇÃO EI: Passa o Campo de Experiência como Componente
                 if c_val.button("✅ Validar Experiência"): 
-                    salvar_rastro(aluno['nome'], "Experiência BNCC", campo_exp, obj_aprendizagem)
+                    if salvar_rastro(aluno['nome'], "Experiência BNCC", campo_exp, obj_aprendizagem):
+                        st.success("✅ Experiência registrada com sucesso!")
                     st.session_state.valid_ei_exp = True
                     st.rerun()
                 with c_ref.expander("🔄 Não gostou? Ensinar a IA"):
@@ -741,8 +853,10 @@ if is_ei:
                     c_vs1, c_vs2 = st.columns([1, 2])
                     # VALIDAÇÃO EI CENA
                     if c_vs1.button("✅ Validar", key="val_sc_ei"): 
-                        salvar_rastro(aluno['nome'], "Recurso Visual - Cena", "Educação Infantil", desc_m)
-                        st.session_state.valid_scene = True; st.rerun()
+                        if salvar_rastro(aluno['nome'], "Recurso Visual - Cena", "Educação Infantil", desc_m):
+                            st.success("✅ Cena registrada com sucesso!")
+                        st.session_state.valid_scene = True
+                        st.rerun()
                     with c_vs2.expander("🔄 Refazer Cena"):
                         fb_scene = st.text_input("Ajuste:", key="fb_sc_ei")
                         if st.button("Refazer", key="ref_sc_ei"):
@@ -770,8 +884,10 @@ if is_ei:
                     c_vc1, c_vc2 = st.columns([1, 2])
                     # VALIDAÇÃO EI CAA
                     if c_vc1.button("✅ Validar", key="val_caa_ei"): 
-                        salvar_rastro(aluno['nome'], "Recurso Visual - Pictograma", "Educação Infantil", palavra_chave)
-                        st.session_state.valid_caa = True; st.rerun()
+                        if salvar_rastro(aluno['nome'], "Recurso Visual - Pictograma", "Educação Infantil", palavra_chave):
+                            st.success("✅ Pictograma registrado com sucesso!")
+                        st.session_state.valid_caa = True
+                        st.rerun()
                     with c_vc2.expander("🔄 Refazer Picto"):
                         fb_caa = st.text_input("Ajuste:", key="fb_caa_ei")
                         if st.button("Refazer", key="ref_caa_ei"):
@@ -811,8 +927,10 @@ if is_ei:
                 c_val, c_ref = st.columns([1, 3])
                 # VALIDAÇÃO EI ROTINA
                 if c_val.button("✅ Validar Rotina"): 
-                    salvar_rastro(aluno['nome'], "Adaptação de Rotina", "Educação Infantil", "Rotina Diária")
-                    st.session_state.valid_ei_rotina = True; st.rerun()
+                    if salvar_rastro(aluno['nome'], "Adaptação de Rotina", "Educação Infantil", "Rotina Diária"):
+                        st.success("✅ Rotina registrada com sucesso!")
+                    st.session_state.valid_ei_rotina = True
+                    st.rerun()
                 with c_ref.expander("🔄 Refazer adaptação"):
                     fb_rotina = st.text_input("O que ajustar na rotina?", key="fb_rotina_input")
                     if st.button("Refazer Rotina"):
@@ -851,8 +969,10 @@ if is_ei:
                 c_val, c_ref = st.columns([1, 3])
                 # VALIDAÇÃO EI DINÂMICA
                 if c_val.button("✅ Validar Dinâmica"): 
-                    salvar_rastro(aluno['nome'], "Dinâmica Social", "Educação Infantil", tema_d)
-                    st.session_state.valid_ei_dina = True; st.rerun()
+                    if salvar_rastro(aluno['nome'], "Dinâmica Social", "Educação Infantil", tema_d):
+                        st.success("✅ Dinâmica registrada com sucesso!")
+                    st.session_state.valid_ei_dina = True
+                    st.rerun()
                 with c_ref.expander("🔄 Refazer dinâmica"):
                     fb_dina = st.text_input("O que ajustar?", key="fb_dina_input")
                     if st.button("Refazer Dinâmica"):
@@ -862,7 +982,6 @@ if is_ei:
 
 else:
     # === MODO PADRÃO (FUNDAMENTAL / MÉDIO) ===
-    # AQUI ESTÃO AS NOVAS ABAS SOLICITADAS: Roteiro Individual, Papo de Mestre, Dinâmica, Plano de Aula
     tabs = st.tabs(["📄 Adaptar Prova", "✂️ Adaptar Atividade", "✨ Criar do Zero", "🎨 Estúdio Visual & CAA", "📝 Roteiro Individual", "🗣️ Papo de Mestre", "🤝 Dinâmica Inclusiva", "📅 Plano de Aula DUA"])
 
     # 1. ADAPTAR PROVA
@@ -915,8 +1034,10 @@ else:
                 col_v, col_r = st.columns([1, 1])
                 # VALIDAÇÃO PROVA PADRÃO
                 if col_v.button("✅ Validar", key="val_d"): 
-                    salvar_rastro(aluno['nome'], "Adaptação de Arquivo (DOCX)", materia_d, tema_d)
-                    st.session_state['res_docx']['valid'] = True; st.rerun()
+                    if salvar_rastro(aluno['nome'], "Adaptação de Arquivo (DOCX)", materia_d, tema_d):
+                        st.success("✅ Adaptação registrada com sucesso!")
+                    st.session_state['res_docx']['valid'] = True
+                    st.rerun()
                 if col_r.button("🧠 Refazer (+Profundo)", key="redo_d"):
                     with st.spinner("Refazendo..."):
                         rac, txt = adaptar_conteudo_docx(api_key, aluno, st.session_state.docx_txt, materia_d, tema_d, tipo_d, True, qs_d, modo_profundo=True)
@@ -989,8 +1110,10 @@ else:
                 col_v, col_r = st.columns([1, 1])
                 # VALIDAÇÃO ATIVIDADE PADRÃO
                 if col_v.button("✅ Validar", key="val_i"): 
-                    salvar_rastro(aluno['nome'], "Adaptação de Imagem (OCR)", materia_i, tema_i)
-                    st.session_state['res_img']['valid'] = True; st.rerun()
+                    if salvar_rastro(aluno['nome'], "Adaptação de Imagem (OCR)", materia_i, tema_i):
+                        st.success("✅ Adaptação registrada com sucesso!")
+                    st.session_state['res_img']['valid'] = True
+                    st.rerun()
                 if col_r.button("🧠 Refazer (+Profundo)", key="redo_i"):
                     with st.spinner("Refazendo..."):
                         img_bytes = res['map'][1]
@@ -1106,8 +1229,10 @@ else:
                 col_v, col_r = st.columns([1, 1])
                 # VALIDAÇÃO CRIAÇÃO PADRÃO
                 if col_v.button("✅ Validar", key="val_c"): 
-                    salvar_rastro(aluno['nome'], "Criação de Atividade", mat_c, obj_c)
-                    st.session_state['res_create']['valid'] = True; st.rerun()
+                    if salvar_rastro(aluno['nome'], "Criação de Atividade", mat_c, obj_c):
+                        st.success("✅ Atividade registrada com sucesso!")
+                    st.session_state['res_create']['valid'] = True
+                    st.rerun()
                 if col_r.button("🧠 Refazer (+Profundo)", key="redo_c"):
                     with st.spinner("Refazendo..."):
                         qtd_final = qtd_img_sel if usar_img else 0
@@ -1171,8 +1296,10 @@ else:
                     c_vs1, c_vs2 = st.columns([1, 2])
                     # VALIDAÇÃO VISUAL PADRÃO
                     if c_vs1.button("✅ Validar", key="val_sc_pd"): 
-                        salvar_rastro(aluno['nome'], "Recurso Visual", "Multidisciplinar", desc_m)
-                        st.session_state.valid_scene = True; st.rerun()
+                        if salvar_rastro(aluno['nome'], "Recurso Visual", "Multidisciplinar", desc_m):
+                            st.success("✅ Recurso visual registrado com sucesso!")
+                        st.session_state.valid_scene = True
+                        st.rerun()
                     with c_vs2.expander("🔄 Refazer Cena"):
                         fb_scene = st.text_input("Ajuste:", key="fb_sc_pd")
                         if st.button("Refazer", key="ref_sc_pd"):
@@ -1198,8 +1325,10 @@ else:
                     c_vc1, c_vc2 = st.columns([1, 2])
                     # VALIDAÇÃO CAA PADRÃO
                     if c_vc1.button("✅ Validar", key="val_caa_pd"): 
-                        salvar_rastro(aluno['nome'], "Recurso Visual - Pictograma", "Multidisciplinar", palavra_chave)
-                        st.session_state.valid_caa = True; st.rerun()
+                        if salvar_rastro(aluno['nome'], "Recurso Visual - Pictograma", "Multidisciplinar", palavra_chave):
+                            st.success("✅ Pictograma registrado com sucesso!")
+                        st.session_state.valid_caa = True
+                        st.rerun()
                     with c_vc2.expander("🔄 Refazer Picto"):
                         fb_caa = st.text_input("Ajuste:", key="fb_caa_pd")
                         if st.button("Refazer", key="ref_caa_pd"):
