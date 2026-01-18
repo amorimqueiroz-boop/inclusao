@@ -15,6 +15,7 @@ import random
 import requests
 import gspread
 from google.oauth2.service_account import Credentials
+from db_google_sheets import carregar_banco, salvar_aluno, excluir_aluno
 
 # ==============================================================================
 # 0. CONFIGURAÇÃO DE PÁGINA
