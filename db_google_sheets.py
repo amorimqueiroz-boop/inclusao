@@ -127,3 +127,15 @@ def enviar_checkin(dados):
     except Exception as e:
         st.error(f"Erro ao enviar check-in: {e}")
         return False
+
+
+def carregar_peis():
+    """Carrega os PEIs da aba 'Metas_PEI'"""
+    try:
+        client = conectar_gsheets()
+        sheet = client.open("Omnisfera_Dados").worksheet("Metas_PEI")
+        records = sheet.get_all_records()
+        return pd.DataFrame(records)
+    except Exception as e:
+        st.error(f"Erro ao carregar PEIs: {e}")
+        return pd.DataFrame()
