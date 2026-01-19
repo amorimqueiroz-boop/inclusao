@@ -1283,26 +1283,305 @@ with tab4:
 
 
 # ==============================================================================
-# 16. ABA PLANO DE AÇÃO
+# 16. ABA PLANO DE AÇÃO (COMPLETA)
 # ==============================================================================
 with tab5:
     render_progresso()
     st.markdown("### <i class='ri-tools-line'></i> Plano de Ação", unsafe_allow_html=True)
 
+    c1, c2, c3 = st.columns(3)
+
+    with c1:
+        st.markdown("#### 1) Acesso (DUA)")
+        st.session_state.dados["estrategias_acesso"] = st.multiselect(
+            "Recursos de acesso",
+            [
+                "Tempo Estendido",
+                "Apoio Leitura/Escrita",
+                "Material Ampliado",
+                "Tecnologia Assistiva",
+                "Sala Silenciosa",
+                "Mobiliário Adaptado",
+                "Pistas Visuais",
+                "Rotina Estruturada",
+            ],
+            default=st.session_state.dados.get("estrategias_acesso", []),
+        )
+        st.session_state.dados["outros_acesso"] = st.text_input(
+            "Personalizado (Acesso)",
+            st.session_state.dados.get("outros_acesso", ""),
+            placeholder="Ex: Prova em local separado, fonte 18, papel pautado ampliado…",
+        )
+
+    with c2:
+        st.markdown("#### 2) Ensino (Metodologias)")
+        st.session_state.dados["estrategias_ensino"] = st.multiselect(
+            "Estratégias de ensino",
+            [
+                "Fragmentação de Tarefas",
+                "Instrução Explícita",
+                "Modelagem",
+                "Mapas Mentais",
+                "Andaimagem (Scaffolding)",
+                "Ensino Híbrido",
+                "Organizadores Gráficos",
+                "Prática Guiada",
+            ],
+            default=st.session_state.dados.get("estrategias_ensino", []),
+        )
+        st.session_state.dados["outros_ensino"] = st.text_input(
+            "Personalizado (Ensino)",
+            st.session_state.dados.get("outros_ensino", ""),
+            placeholder="Ex: Sequência didática com apoio de imagens + exemplo resolvido…",
+        )
+
+    with c3:
+        st.markdown("#### 3) Avaliação (Formato)")
+        st.session_state.dados["estrategias_avaliacao"] = st.multiselect(
+            "Estratégias de avaliação",
+            [
+                "Prova Adaptada",
+                "Prova Oral",
+                "Consulta Permitida",
+                "Portfólio",
+                "Autoavaliação",
+                "Parecer Descritivo",
+                "Questões Menores por Bloco",
+                "Avaliação Prática (Demonstração)",
+            ],
+            default=st.session_state.dados.get("estrategias_avaliacao", []),
+        )
+        st.caption("Dica: combine formato + acesso (tempo/ambiente) para reduzir barreiras.")
+
+    st.divider()
+    st.info("✅ O plano de ação alimenta a Consultoria IA com contexto prático (o que você já pretende fazer).")
+
+
 # ==============================================================================
-# 17. ABA MONITORAMENTO
+# 17. ABA MONITORAMENTO (COMPLETA)
 # ==============================================================================
 with tab6:
     render_progresso()
     st.markdown("### <i class='ri-loop-right-line'></i> Monitoramento", unsafe_allow_html=True)
 
+    st.session_state.dados["monitoramento_data"] = st.date_input(
+        "Data da Próxima Revisão",
+        value=st.session_state.dados.get("monitoramento_data", date.today()),
+    )
+
+    st.divider()
+    st.warning("⚠️ Preencher esta aba principalmente na REVISÃO do PEI (ciclo de acompanhamento).")
+
+    with st.container(border=True):
+        c2, c3 = st.columns(2)
+        with c2:
+            atual = st.session_state.dados.get("status_meta", "Não Iniciado")
+            st.session_state.dados["status_meta"] = st.selectbox(
+                "Status da Meta",
+                ["Não Iniciado", "Em Andamento", "Parcialmente Atingido", "Atingido", "Superado"],
+                index=(["Não Iniciado", "Em Andamento", "Parcialmente Atingido", "Atingido", "Superado"].index(atual) if atual in ["Não Iniciado", "Em Andamento", "Parcialmente Atingido", "Atingido", "Superado"] else 0),
+            )
+        with c3:
+            atualp = st.session_state.dados.get("parecer_geral", "Manter Estratégias")
+            st.session_state.dados["parecer_geral"] = st.selectbox(
+                "Parecer Geral",
+                [
+                    "Manter Estratégias",
+                    "Aumentar Suporte",
+                    "Reduzir Suporte (Autonomia)",
+                    "Alterar Metodologia",
+                    "Encaminhar para Especialista",
+                ],
+                index=(
+                    [
+                        "Manter Estratégias",
+                        "Aumentar Suporte",
+                        "Reduzir Suporte (Autonomia)",
+                        "Alterar Metodologia",
+                        "Encaminhar para Especialista",
+                    ].index(atualp)
+                    if atualp in [
+                        "Manter Estratégias",
+                        "Aumentar Suporte",
+                        "Reduzir Suporte (Autonomia)",
+                        "Alterar Metodologia",
+                        "Encaminhar para Especialista",
+                    ]
+                    else 0
+                ),
+            )
+
+        st.session_state.dados["proximos_passos_select"] = st.multiselect(
+            "Ações Futuras",
+            [
+                "Reunião com Família",
+                "Encaminhamento Clínico",
+                "Adaptação de Material",
+                "Mudança de Lugar em Sala",
+                "Novo PEI",
+                "Observação em Sala",
+            ],
+            default=st.session_state.dados.get("proximos_passos_select", []),
+        )
+
+
 # ==============================================================================
-# 18. ABA CONSULTORIA IA (mantida mínima)
+# 18. ABA CONSULTORIA IA (COMPLETA: gerar + revisar + aprovar + ajustar)
 # ==============================================================================
 with tab7:
     render_progresso()
     st.markdown("### <i class='ri-robot-2-line'></i> Consultoria Pedagógica", unsafe_allow_html=True)
-    st.info("Nesta versão compacta, a geração de IA será reativada no próximo ajuste (ponto 2).")
+
+    if not st.session_state.dados.get("serie"):
+        st.warning("⚠️ Selecione a Série/Ano na aba **Estudante** para ativar o modo especialista.")
+        st.stop()
+
+    # estado default
+    st.session_state.dados.setdefault("status_validacao_pei", "rascunho")
+    st.session_state.dados.setdefault("feedback_ajuste", "")
+
+    seg_nome, seg_cor, seg_desc = get_segmento_info_visual(st.session_state.dados.get("serie"))
+    st.markdown(
+        f"<div style='background-color:#F7FAFC; border-left:5px solid {seg_cor}; padding:14px; border-radius:8px; margin-bottom:16px;'>"
+        f"<b style='color:{seg_cor};'>ℹ️ Modo Especialista: {seg_nome}</b><br>"
+        f"<span style='color:#4A5568;'>{seg_desc}</span></div>",
+        unsafe_allow_html=True,
+    )
+
+    if not api_key:
+        st.error("⚠️ Configure a chave OpenAI na sidebar para gerar o PEI por IA.")
+        st.stop()
+
+    # 1) Se ainda não tem texto, ou voltou para rascunho: botões de geração
+    if (not st.session_state.dados.get("ia_sugestao")) or (st.session_state.dados.get("status_validacao_pei") == "rascunho"):
+        col_btn, col_info = st.columns([1, 2])
+
+        with col_btn:
+            if st.button("✨ Gerar Estratégia Técnica", type="primary", use_container_width=True):
+                res, err = consultar_gpt_pedagogico(
+                    api_key,
+                    st.session_state.dados,
+                    st.session_state.get("pdf_text", ""),
+                    modo_pratico=False,
+                )
+                if res:
+                    st.session_state.dados["ia_sugestao"] = res
+                    st.session_state.dados["status_validacao_pei"] = "revisao"
+                    st.rerun()
+                else:
+                    st.error(err or "Erro ao gerar.")
+
+            st.write("")
+            if st.button("🧰 Gerar Guia Prático (Sala de Aula)", use_container_width=True):
+                res, err = consultar_gpt_pedagogico(
+                    api_key,
+                    st.session_state.dados,
+                    st.session_state.get("pdf_text", ""),
+                    modo_pratico=True,
+                )
+                if res:
+                    st.session_state.dados["ia_sugestao"] = res
+                    st.session_state.dados["status_validacao_pei"] = "revisao"
+                    st.rerun()
+                else:
+                    st.error(err or "Erro ao gerar.")
+
+        with col_info:
+            n_bar = sum(len(v) for v in (st.session_state.dados.get("barreiras_selecionadas") or {}).values())
+            st.info(
+                "Quanto mais completo o **Mapeamento** (barreiras + nível de suporte + hiperfoco) "
+                "e o **Plano de Ação**, melhor a precisão.\n\n"
+                f"📌 Barreiras mapeadas agora: **{n_bar}**"
+            )
+
+    # 2) Revisão / Aprovado: mostrar e permitir aprovar/ajustar
+    elif st.session_state.dados.get("status_validacao_pei") in ["revisao", "aprovado"]:
+        n_barreiras = sum(len(v) for v in (st.session_state.dados.get("barreiras_selecionadas") or {}).values())
+        diag_show = st.session_state.dados.get("diagnostico") or "em observação"
+
+        with st.expander("🧠 Como a IA construiu este relatório (transparência)"):
+            exemplo_barreira = "geral"
+            try:
+                for area, lst in (st.session_state.dados.get("barreiras_selecionadas") or {}).items():
+                    if lst:
+                        exemplo_barreira = lst[0]
+                        break
+            except Exception:
+                pass
+
+            st.markdown(
+                f"**1. Input do estudante:** Série **{st.session_state.dados.get('serie','-')}**, diagnóstico **{diag_show}**.\n\n"
+                f"**2. Barreiras ativas:** detectei **{n_barreiras}** barreiras e cruzei isso com BNCC + DUA.\n\n"
+                f"**3. Ponto crítico exemplo:** priorizei adaptações para reduzir impacto de **{exemplo_barreira}**."
+            )
+
+        with st.expander("🛡️ Calibragem e segurança pedagógica"):
+            st.markdown(
+                "- **Farmacologia:** não sugere dose/medicação; apenas sinaliza pontos de atenção.\n"
+                "- **Dados sensíveis:** evite inserir PII desnecessária.\n"
+                "- **Normativa:** sugestões buscam aderência à LBI/DUA e adaptações razoáveis."
+            )
+
+        st.markdown("#### 📝 Revisão do Plano")
+        texto_visual = re.sub(r"\[.*?\]", "", st.session_state.dados.get("ia_sugestao", ""))
+        st.markdown(texto_visual)
+
+        st.divider()
+        st.markdown("**⚠️ Responsabilidade do Educador:** a IA pode errar. Valide e ajuste antes de aplicar.")
+
+        if st.session_state.dados.get("status_validacao_pei") == "revisao":
+            c_ok, c_ajuste = st.columns(2)
+            if c_ok.button("✅ Aprovar Plano", type="primary", use_container_width=True):
+                st.session_state.dados["status_validacao_pei"] = "aprovado"
+                st.success("Plano aprovado ✅")
+                st.rerun()
+            if c_ajuste.button("❌ Solicitar Ajuste", use_container_width=True):
+                st.session_state.dados["status_validacao_pei"] = "ajustando"
+                st.rerun()
+
+        elif st.session_state.dados.get("status_validacao_pei") == "aprovado":
+            st.success("Plano Validado ✅")
+            novo_texto = st.text_area(
+                "Edição Final Manual (opcional)",
+                value=st.session_state.dados.get("ia_sugestao", ""),
+                height=320,
+            )
+            st.session_state.dados["ia_sugestao"] = novo_texto
+
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("🔁 Regerar do Zero", use_container_width=True):
+                    st.session_state.dados["ia_sugestao"] = ""
+                    st.session_state.dados["status_validacao_pei"] = "rascunho"
+                    st.rerun()
+            with c2:
+                if st.button("🧹 Voltar para Revisão", use_container_width=True):
+                    st.session_state.dados["status_validacao_pei"] = "revisao"
+                    st.rerun()
+
+    # 3) Ajustando: caixa de feedback + regerar
+    elif st.session_state.dados.get("status_validacao_pei") == "ajustando":
+        st.warning("Descreva o ajuste desejado:")
+        feedback = st.text_area("Seu feedback:", placeholder="Ex: Foque mais na alfabetização…")
+        if st.button("Regerar com Ajustes", type="primary", use_container_width=True):
+            res, err = consultar_gpt_pedagogico(
+                api_key,
+                st.session_state.dados,
+                st.session_state.get("pdf_text", ""),
+                modo_pratico=False,
+                feedback_usuario=feedback,
+            )
+            if res:
+                st.session_state.dados["ia_sugestao"] = res
+                st.session_state.dados["status_validacao_pei"] = "revisao"
+                st.rerun()
+            else:
+                st.error(err or "Erro ao regerar.")
+
+        if st.button("Cancelar", use_container_width=True):
+            st.session_state.dados["status_validacao_pei"] = "revisao"
+            st.rerun()
+
 
 # ==============================================================================
 # 19. ABA DASHBOARD & DOCS (mantida mínima)
