@@ -1088,87 +1088,113 @@ with tab0:
         """,
         unsafe_allow_html=True
     )
-# ==============================================================================
-# 12. ABA ESTUDANTE (REFEITA com recursos do legado)
-# ==============================================================================
 with tab1:
     render_progresso()
     st.markdown("### <i class='ri-user-smile-line'></i> Dossiê do Estudante", unsafe_allow_html=True)
 
-    # Garantias de estado (evita KeyError em versões antigas)
+    # Garantias (caso algo não tenha entrado no default_state)
     st.session_state.dados.setdefault("matricula", "")
     st.session_state.dados.setdefault("meds_extraidas_tmp", [])
     st.session_state.dados.setdefault("status_meds_extraidas", "idle")
 
-    # --- DADOS BÁSICOS ---
-    c1, c2, c3, c4, c5 = st.columns([3, 1.5, 2, 1, 1.5])
+    # =========================
+    # Funções de apoio da aba
+    # =========================
+    def detectar_segmento(serie_str: str) -> str:
+        """Retorna: EI | EFI | EFII | EM"""
+        if not serie_str:
+            return "INDEFINIDO"
+        s = serie_str.lower()
+        if "infantil" in s:
+            return "EI"
+        if "1º ano" in s or "2º ano" in s or "3º ano" in s or "4º ano" in s or "5º ano" in s:
+            return "EFI"
+        if "6º ano" in s or "7º ano" in s or "8º ano" in s or "9º ano" in s:
+            return "EFII"
+        if "série" in s or "médio" in s or "eja" in s:
+            return "EM"
+        return "INDEFINIDO"
 
-    st.session_state.dados["nome"] = c1.text_input(
-        "Nome Completo",
-        st.session_state.dados.get("nome", ""),
-        key="pei_nome"
-    )
+    def get_segmento_info_visual_v2(serie: str):
+        seg = detectar_segmento(serie)
+        if seg == "EI":
+            return "Educação Infantil", "#4299e1", "Foco: Campos de Experiência (BNCC) e rotina estruturante."
+        if seg == "EFI":
+            return "Ensino Fundamental — Anos Iniciais", "#48bb78", "Foco: alfabetização, numeracia e consolidação de habilidades basais."
+        if seg == "EFII":
+            return "Ensino Fundamental — Anos Finais", "#ed8936", "Foco: autonomia, funções executivas, organização e aprofundamento conceitual."
+        if seg == "EM":
+            return "Ensino Médio / EJA", "#9f7aea", "Foco: projeto de vida, áreas do conhecimento e estratégias de estudo."
+        return "Selecione a Série/Ano", "#718096", "Aguardando seleção..."
 
-    # NOVO: Matrícula / RA
-    st.session_state.dados["matricula"] = c2.text_input(
-        "Matrícula / RA",
-        st.session_state.dados.get("matricula", ""),
-        help="Use para diferenciar alunos com o mesmo nome.",
-        key="pei_matricula"
-    )
+    def _normalizar_med(m: dict):
+        return {
+            "nome": (m.get("nome") or "").strip(),
+            "posologia": (m.get("posologia") or "").strip(),
+            "escola": bool(m.get("escola", False)),
+        }
 
-    st.session_state.dados["nasc"] = c3.date_input(
-        "Nascimento",
-        value=st.session_state.dados.get("nasc", date(2015, 1, 1)),
-        key="pei_nasc"
-    )
+    def _ja_existe_med(lista, nome):
+        nome_norm = (nome or "").strip().lower()
+        if not nome_norm:
+            return True
+        return any((x.get("nome") or "").strip().lower() == nome_norm for x in (lista or []))
 
+    # =========================
+    # Identificação
+    # =========================
+    c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 1, 2])
+
+    st.session_state.dados["nome"] = c1.text_input("Nome Completo", st.session_state.dados.get("nome", ""))
+    st.session_state.dados["nasc"] = c2.date_input("Nascimento", value=st.session_state.dados.get("nasc", date(2015, 1, 1)))
+
+    # Série/Ano
     try:
         serie_idx = LISTA_SERIES.index(st.session_state.dados.get("serie")) if st.session_state.dados.get("serie") in LISTA_SERIES else 0
     except:
         serie_idx = 0
 
-    st.session_state.dados["serie"] = c4.selectbox(
-        "Série/Ano",
-        LISTA_SERIES,
-        index=serie_idx,
-        placeholder="Selecione...",
-        key="pei_serie"
-    )
+    st.session_state.dados["serie"] = c3.selectbox("Série/Ano", LISTA_SERIES, index=serie_idx, placeholder="Selecione...")
 
-    st.session_state.dados["turma"] = c5.text_input(
-        "Turma",
-        st.session_state.dados.get("turma", ""),
-        key="pei_turma"
-    )
+    # Segmento guiado (badge + descrição)
+    if st.session_state.dados.get("serie"):
+        seg_nome, seg_cor, seg_desc = get_segmento_info_visual_v2(st.session_state.dados["serie"])
+        c3.markdown(
+            f"<div class='segmento-badge' style='background-color:{seg_cor}'>{seg_nome}</div>",
+            unsafe_allow_html=True
+        )
+        st.caption(seg_desc)
 
+    st.session_state.dados["turma"] = c4.text_input("Turma", st.session_state.dados.get("turma", ""))
+
+    # Matrícula / RA
+    st.session_state.dados["matricula"] = c5.text_input("Matrícula / RA", st.session_state.dados.get("matricula", ""), placeholder="Ex: 2026-001234")
+
+    st.divider()
+
+    # =========================
+    # Histórico & Família
+    # =========================
     st.markdown("##### Histórico & Contexto Familiar")
     c_hist, c_fam = st.columns(2)
-
-    st.session_state.dados["historico"] = c_hist.text_area(
-        "Histórico Escolar",
-        st.session_state.dados.get("historico", ""),
-        key="pei_historico"
-    )
-
-    st.session_state.dados["familia"] = c_fam.text_area(
-        "Dinâmica Familiar",
-        st.session_state.dados.get("familia", ""),
-        key="pei_dinamica_familiar"
-    )
+    st.session_state.dados["historico"] = c_hist.text_area("Histórico Escolar", st.session_state.dados.get("historico", ""))
+    st.session_state.dados["familia"] = c_fam.text_area("Dinâmica Familiar", st.session_state.dados.get("familia", ""))
 
     default_familia_valido = [x for x in st.session_state.dados.get("composicao_familiar_tags", []) if x in LISTA_FAMILIA]
     st.session_state.dados["composicao_familiar_tags"] = st.multiselect(
         "Quem convive com o aluno?",
         LISTA_FAMILIA,
         default=default_familia_valido,
-        key="pei_familia_tags"
+        help="Incluímos Mãe 1 / Mãe 2 e Pai 1 / Pai 2 para famílias diversas."
     )
 
     st.divider()
 
-    # --- LAUDO + EXTRAÇÃO (layout centralizado) ---
+    # =========================
+    # Laudo PDF + Extração IA
+    # =========================
     st.markdown("##### 📎 Laudo (PDF) + Extração Inteligente")
+
     col_pdf, col_action = st.columns([2, 1], vertical_alignment="center")
 
     with col_pdf:
@@ -1176,26 +1202,25 @@ with tab1:
             "Arraste o arquivo aqui",
             type="pdf",
             label_visibility="collapsed",
-            key="pei_laudo_pdf_uploader"  # evita DuplicateElementId
+            key="pei_laudo_pdf_uploader_tab1",
         )
         if up:
             st.session_state.pdf_text = ler_pdf(up)
             if st.session_state.pdf_text:
-                st.success("PDF lido ✅ (até 6 páginas)")
+                st.success("PDF lido ✅ (usando até 6 páginas)")
             else:
-                st.warning("Não consegui extrair texto do PDF (pode estar escaneado).")
+                st.warning("Não consegui extrair texto do PDF (pode estar escaneado/imagem).")
 
     with col_action:
         st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
         cbtn1, cbtn2, cbtn3 = st.columns([1, 2, 1])
-
         with cbtn2:
             extrair = st.button(
                 "✨ Extrair Dados do Laudo",
                 type="primary",
                 use_container_width=True,
                 disabled=(not st.session_state.get("pdf_text")),
-                key="btn_extrair_laudo"
+                key="btn_extrair_laudo_tab1",
             )
 
         if extrair:
@@ -1203,27 +1228,28 @@ with tab1:
                 dados_extraidos, erro = extrair_dados_pdf_ia(api_key, st.session_state.pdf_text)
 
             if dados_extraidos:
-                if dados_extraidos.get("diagnostico"):
-                    st.session_state.dados["diagnostico"] = dados_extraidos["diagnostico"]
+                # 1) Diagnóstico: preencher o campo existente
+                diag = (dados_extraidos.get("diagnostico") or "").strip()
+                if diag:
+                    st.session_state.dados["diagnostico"] = diag
 
+                # 2) Medicações: preparar revisão (não inserir direto)
                 meds = dados_extraidos.get("medicamentos") or []
                 meds_norm = []
                 for med in meds:
-                    meds_norm.append({
-                        "nome": (med.get("nome") or "").strip(),
-                        "posologia": (med.get("posologia") or "").strip(),
-                        "escola": False,  # usuário decide na revisão
-                    })
+                    m = _normalizar_med(med)
+                    if m["nome"]:
+                        meds_norm.append(m)
 
                 st.session_state.dados["meds_extraidas_tmp"] = meds_norm
                 st.session_state.dados["status_meds_extraidas"] = "review" if meds_norm else "idle"
 
-                st.success("Diagnóstico extraído ✅ (medicações: revisar abaixo)")
+                st.success("Dados extraídos ✅ (revise as medicações abaixo)")
                 st.rerun()
             else:
                 st.error(f"Erro: {erro}")
 
-    # --- REVISÃO DAS MEDS EXTRAÍDAS ---
+    # Revisão das meds extraídas (antes de inserir na lista oficial)
     if st.session_state.dados.get("status_meds_extraidas") == "review":
         meds_tmp = st.session_state.dados.get("meds_extraidas_tmp", [])
 
@@ -1243,13 +1269,14 @@ with tab1:
                 a1, a2, a3 = st.columns([2, 2, 2])
 
                 if a1.button("✅ Adicionar ao PEI", type="primary", use_container_width=True, key="btn_add_meds_tmp"):
+                    # inserir no campo existente: lista_medicamentos (sem duplicar por nome)
+                    lista_atual = st.session_state.dados.get("lista_medicamentos", [])
                     for m in meds_tmp:
-                        if (m.get("nome") or "").strip():
-                            st.session_state.dados["lista_medicamentos"].append({
-                                "nome": (m.get("nome") or "").strip(),
-                                "posologia": (m.get("posologia") or "").strip(),
-                                "escola": bool(m.get("escola", False)),
-                            })
+                        m = _normalizar_med(m)
+                        if m["nome"] and not _ja_existe_med(lista_atual, m["nome"]):
+                            lista_atual.append(m)
+
+                    st.session_state.dados["lista_medicamentos"] = lista_atual
                     st.session_state.dados["meds_extraidas_tmp"] = []
                     st.session_state.dados["status_meds_extraidas"] = "idle"
                     st.success("Medicações adicionadas ✅")
@@ -1266,37 +1293,33 @@ with tab1:
 
     st.divider()
 
-    # --- CONTEXTO CLÍNICO ---
+    # =========================
+    # Contexto Clínico + Medicação (campo EXISTENTE)
+    # =========================
     st.markdown("##### Contexto Clínico")
-    st.session_state.dados["diagnostico"] = st.text_input(
-        "Diagnóstico",
-        st.session_state.dados.get("diagnostico", ""),
-        key="pei_diagnostico"
-    )
+    st.session_state.dados["diagnostico"] = st.text_input("Diagnóstico", st.session_state.dados.get("diagnostico", ""))
 
     with st.container(border=True):
         usa_med = st.toggle(
             "💊 O aluno faz uso contínuo de medicação?",
             value=len(st.session_state.dados.get("lista_medicamentos", [])) > 0,
-            key="pei_toggle_meds"
+            key="toggle_usa_med_tab1"
         )
 
         if usa_med:
-            m1, m2, m3, m4 = st.columns([3, 2, 1.3, 1.2])
-            nm = m1.text_input("Nome", key="nm_med_manual")
-            pos = m2.text_input("Posologia", key="pos_med_manual")
-            admin_escola = m3.checkbox("Na escola?", key="adm_esc_manual")
+            cmed1, cmed2, cmed3 = st.columns([3, 2, 2])
+            nm = cmed1.text_input("Nome", key="nm_med_manual")
+            pos = cmed2.text_input("Posologia", key="pos_med_manual")
+            admin_escola = cmed3.checkbox("Na escola?", key="adm_esc_manual")
 
-            if m4.button("Adicionar", use_container_width=True, key="btn_add_med_manual"):
-                if (nm or "").strip():
-                    st.session_state.dados["lista_medicamentos"].append({
-                        "nome": nm.strip(),
-                        "posologia": (pos or "").strip(),
-                        "escola": bool(admin_escola),
-                    })
+            if st.button("Adicionar", key="btn_add_med_manual"):
+                if nm.strip():
+                    # não duplicar por nome
+                    if not _ja_existe_med(st.session_state.dados.get("lista_medicamentos", []), nm):
+                        st.session_state.dados["lista_medicamentos"].append(
+                            {"nome": nm.strip(), "posologia": pos.strip(), "escola": admin_escola}
+                        )
                     st.rerun()
-                else:
-                    st.warning("Informe o nome do medicamento.")
 
         if st.session_state.dados.get("lista_medicamentos"):
             st.write("---")
