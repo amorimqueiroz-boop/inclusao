@@ -5,7 +5,7 @@ import base64
 import os
 import time
 
-from _client import supabase_login
+from _client import supabase_login  # <- agora existe no _client.py
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL E AMBIENTE
@@ -28,7 +28,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 2. UTILITÁRIOS E CORES
+# 2. UTILITÁRIOS
 # ==============================================================================
 def get_base64_image(image_path):
     if not os.path.exists(image_path):
@@ -36,7 +36,7 @@ def get_base64_image(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
-
+# Definição de Cores
 if IS_TEST_ENV:
     card_bg = "rgba(255, 220, 50, 0.95)"
     card_border = "rgba(200, 160, 0, 0.5)"
@@ -49,12 +49,11 @@ else:
     footer_visibility = "hidden"
 
 # ==============================================================================
-# 3. CSS GLOBAL BLINDADO
+# 3. CSS GLOBAL
 # ==============================================================================
 css_estatico = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
-
     html { scroll-behavior: smooth; }
     html, body, [class*="css"] {
         font-family: 'Nunito', sans-serif;
@@ -100,22 +99,17 @@ css_estatico = """
         background-color: white; padding: 30px;
         border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.06);
         text-align: center; border: 1px solid #E2E8F0;
-        max-width: 480px; margin: 0 auto; margin-top: 40px;
+        max-width: 720px; margin: 0 auto; margin-top: 40px;
         animation: fadeInUp 0.8s ease-out;
     }
+
     .login-logo-spin { height: 80px; width: auto; animation: spin 45s linear infinite; margin-bottom: 5px; }
     .login-logo-static { height: 50px; width: auto; margin-left: 8px; }
-    .logo-wrapper { display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
+    .logo-wrapper { display: flex; justify-content: center; align-items: center; margin-bottom: 15px; }
 
     .manifesto-login {
-        font-family: 'Nunito', sans-serif;
-        font-size: 0.9rem;
-        color: #64748B;
-        font-style: italic;
-        line-height: 1.6;
-        margin-bottom: 30px;
-        text-align: center;
-        padding: 0 10px;
+        font-size: 0.9rem; color: #64748B; font-style: italic; line-height: 1.6;
+        margin-bottom: 18px; text-align: center; padding: 0 10px;
     }
 
     .termo-box {
@@ -125,92 +119,6 @@ css_estatico = """
         text-align: justify; color: #4A5568; line-height: 1.3;
     }
 
-    .stTextInput input { border-radius: 10px !important; border: 1px solid #E2E8F0 !important; padding: 10px !important; background-color: #F8FAFC !important; font-size: 0.9rem !important;}
-
-    .dash-hero {
-        background: radial-gradient(circle at top right, #0F52BA, #062B61);
-        border-radius: 16px; margin-bottom: 20px; margin-top: 10px;
-        box-shadow: 0 10px 25px -5px rgba(15, 82, 186, 0.3);
-        color: white; position: relative; overflow: hidden;
-        padding: 25px 35px;
-        display: flex; align-items: center; justify-content: flex-start;
-        border: 1px solid rgba(255,255,255,0.1);
-        min-height: 100px;
-    }
-    .hero-title {
-        font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1.5rem;
-        margin: 0; line-height: 1.1; margin-bottom: 5px;
-    }
-    .hero-subtitle {
-        font-family: 'Inter', sans-serif; font-size: 0.9rem; opacity: 0.9; font-weight: 400;
-    }
-    .hero-bg-icon { position: absolute; right: 20px; font-size: 6rem; opacity: 0.05; top: 5px; transform: rotate(-10deg); }
-
-    .nav-btn-card {
-        background-color: white; border-radius: 16px; padding: 15px;
-        border: 1px solid #E2E8F0; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-        text-align: center; transition: all 0.2s ease;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        height: 130px; position: relative; overflow: hidden;
-        pointer-events: none;
-    }
-    .nav-icon { height: 45px; width: auto; object-fit: contain; margin-bottom: 10px; }
-    .nav-desc { font-size: 0.75rem; color: #718096; line-height: 1.3; font-weight: 500; }
-
-    .b-blue { border-bottom: 4px solid #3182CE; }
-    .b-purple { border-bottom: 4px solid #805AD5; }
-    .b-teal { border-bottom: 4px solid #38B2AC; }
-
-    .card-overlay-btn button {
-        position: absolute;
-        top: -140px;
-        left: 0;
-        width: 100%;
-        height: 140px;
-        opacity: 0.01;
-        z-index: 10;
-        cursor: pointer;
-    }
-    .card-overlay-btn button:hover {
-        background-color: transparent !important;
-        border: none !important;
-    }
-
-    .bento-grid {
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 12px; margin-bottom: 20px;
-    }
-    .bento-item {
-        background: white; border-radius: 14px; padding: 15px; border: 1px solid #E2E8F0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.01); text-decoration: none; color: inherit;
-        display: flex; flex-direction: column; align-items: center; text-align: center;
-        position: relative; overflow: hidden; height: 100%; transition: transform 0.2s;
-    }
-    .bento-item:hover { transform: translateY(-2px); border-color: #CBD5E0; }
-    .bento-icon {
-        width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
-        font-size: 1.2rem; margin-bottom: 8px;
-    }
-    .bento-title { font-weight: 700; font-size: 0.85rem; color: #1A202C; margin-bottom: 2px; }
-    .bento-desc { font-size: 0.75rem; color: #718096; line-height: 1.2; }
-
-    .insight-card-end {
-        background: linear-gradient(135deg, #FFFBEB 0%, #FFFFFF 100%);
-        border-radius: 14px; padding: 15px 20px;
-        color: #2D3748; display: flex; align-items: center; gap: 15px;
-        box-shadow: 0 5px 15px rgba(214, 158, 46, 0.08);
-        border: 1px solid rgba(214, 158, 46, 0.2); margin-bottom: 15px;
-    }
-    .insight-icon-end {
-        font-size: 1.5rem; color: #D69E2E; background: rgba(214, 158, 46, 0.1);
-        width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    }
-
-    .section-title {
-        font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1.1rem;
-        color: #1A202C; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; margin-top: 25px;
-    }
-
     [data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
     [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
 </style>
@@ -218,6 +126,7 @@ css_estatico = """
 """
 st.markdown(css_estatico, unsafe_allow_html=True)
 
+# CSS DINÂMICO
 st.markdown(f"""
 <style>
     .omni-badge {{
@@ -234,220 +143,185 @@ st.markdown(f"""
         color: #2D3748; letter-spacing: 1.5px; text-transform: uppercase;
     }}
     footer {{ visibility: {footer_visibility} !important; }}
-
-    .login-btn-area button {{
-        width: 100%; border-radius: 10px !important; border: none !important;
-        font-family: 'Inter', sans-serif; font-weight: 700 !important; font-size: 0.9rem !important;
-        padding: 8px 0; transition: all 0.3s ease; height: 40px !important;
-        background-color: #0F52BA !important; color: white !important;
-        display: block !important;
-    }}
-    .login-btn-area button:hover {{
-        box-shadow: 0 4px 12px rgba(15, 82, 186, 0.3); transform: translateY(-1px);
-    }}
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. SISTEMA DE SEGURANÇA E LOGIN (OMNISFERA)
+# 4. LOGIN OMNISFERA + LOGIN SUPABASE (NA HOME)
 # ==============================================================================
-def sistema_seguranca():
-    if "autenticado" not in st.session_state:
-        st.session_state["autenticado"] = False
+def _ensure_session_defaults():
+    st.session_state.setdefault("autenticado", False)
+    st.session_state.setdefault("usuario_nome", "")
+    st.session_state.setdefault("usuario_cargo", "")
 
-    if not st.session_state["autenticado"]:
+    # Supabase auth state
+    st.session_state.setdefault("supabase_jwt", "")
+    st.session_state.setdefault("supabase_user_id", "")
 
-        st.markdown("""
-        <style>
-            section[data-testid="stSidebar"] { display: none !important; }
-            [data-testid="stSidebarCollapsedControl"] { display: none !important; }
-            .stButton button { display: block !important; }
-        </style>
+_ensure_session_defaults()
+
+def _render_header_fixed():
+    icone_b64 = get_base64_image("omni_icone.png")
+    texto_b64 = get_base64_image("omni_texto.png")
+
+    if icone_b64 and texto_b64:
+        st.markdown(f"""
+        <div class="logo-container">
+            <img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">
+            <img src="data:image/png;base64,{texto_b64}" class="logo-text-static">
+            <div class="header-subtitle-text">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
+        </div>
         """, unsafe_allow_html=True)
+    else:
+        st.markdown("<div class='logo-container'><h1 style='color: #0F52BA; margin:0;'>🌐 OMNISFERA</h1><div class='header-subtitle-text'>Ecossistema de Inteligência Pedagógica e Inclusiva</div></div>", unsafe_allow_html=True)
 
-        btn_text = "🚀 ENTRAR (TESTE)" if IS_TEST_ENV else "ACESSAR OMNISFERA"
+_render_header_fixed()
 
-        c1, c_login, c2 = st.columns([1, 2, 1])
-
-        with c_login:
-            st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-
-            icone_b64_login = get_base64_image("omni_icone.png")
-            texto_b64_login = get_base64_image("omni_texto.png")
-
-            if icone_b64_login and texto_b64_login:
-                st.markdown(f"""
-                <div class="logo-wrapper">
-                    <img src="data:image/png;base64,{icone_b64_login}" class="login-logo-spin">
-                    <img src="data:image/png;base64,{texto_b64_login}" class="login-logo-static">
-                </div>""", unsafe_allow_html=True)
-            else:
-                st.markdown(f"<h2 style='color:#0F52BA; margin:0; margin-bottom:10px;'>OMNISFERA</h2>", unsafe_allow_html=True)
-
-            st.markdown("""<div class="manifesto-login">"A Omnisfera foi desenvolvida com muito cuidado e carinho com o objetivo de auxiliar as escolas na tarefa de incluir. Ela tem o potencial para revolucionar o cenário da inclusão no Brasil."</div>""", unsafe_allow_html=True)
-
-            if IS_TEST_ENV:
-                with st.expander("📝 Dados (Opcional)"):
-                    nome_user = st.text_input("nome_fake", placeholder="Nome", label_visibility="collapsed")
-                    cargo_user = st.text_input("cargo_fake", placeholder="Cargo", label_visibility="collapsed")
-                login_click = st.button(btn_text, key="btn_login_teste")
-
-                if login_click:
-                    st.session_state["autenticado"] = True
-                    st.session_state["usuario_nome"] = nome_user if nome_user else "Visitante Teste"
-                    st.session_state["usuario_cargo"] = cargo_user if cargo_user else "Dev"
-                    st.rerun()
-            else:
-                st.markdown("<div style='text-align:left; font-weight:700; color:#475569; font-size:0.85rem; margin-bottom:5px;'>Identificação</div>", unsafe_allow_html=True)
-                nome_user = st.text_input("nome_real", placeholder="Seu Nome", label_visibility="collapsed")
-                st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-                cargo_user = st.text_input("cargo_real", placeholder="Seu Cargo", label_visibility="collapsed")
-                st.markdown("---")
-
-                st.markdown("<div style='text-align:left; font-weight:700; color:#475569; font-size:0.8rem; margin-bottom:5px;'>Termos de Uso</div>", unsafe_allow_html=True)
-                st.markdown("""
-                <div class="termo-box">
-                    <strong>ACORDO DE CONFIDENCIALIDADE E USO DE DADOS (Versão Beta)</strong><br><br>
-                    1. <strong>Natureza do Software:</strong> O usuário reconhece que o sistema "Omnisfera" encontra-se em fase de testes (BETA) e pode conter instabilidades.<br>
-                    2. <strong>Proteção de Dados (LGPD):</strong> É estritamente proibida a inserção de dados reais sensíveis de estudantes (nomes completos, endereços, documentos) que permitam a identificação direta, salvo em ambientes controlados e autorizados pela instituição de ensino.<br>
-                    3. <strong>Propriedade Intelectual:</strong> Todo o código, design e inteligência gerada são de propriedade exclusiva dos desenvolvedores. É vedada a cópia, reprodução ou comercialização sem autorização.<br>
-                    4. <strong>Responsabilidade:</strong> O uso das sugestões pedagógicas geradas pela IA é de responsabilidade do educador, devendo sempre passar por crivo humano antes da aplicação.<br>
-                    Ao prosseguir, você declara estar ciente e de acordo com estes termos.
-                </div>
-                """, unsafe_allow_html=True)
-
-                concordo = st.checkbox("Li, compreendi e concordo com os termos.")
-
-                st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-
-                st.markdown("""
-                <style>
-                    .login-btn-fix button { margin-top: 28px !important; }
-                </style>
-                """, unsafe_allow_html=True)
-
-                c_senha, c_btn = st.columns([2, 1])
-
-                with c_senha:
-                    senha = st.text_input("senha_real", type="password", placeholder="Senha de Acesso")
-
-                with c_btn:
-                    st.markdown('<div class="login-btn-area login-btn-fix">', unsafe_allow_html=True)
-                    login_click = st.button(btn_text, key="btn_login")
-                    st.markdown('</div>', unsafe_allow_html=True)
-
-                if login_click:
-                    hoje = date.today()
-                    senha_mestra = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
-                    if not concordo:
-                        st.warning("Aceite os termos.")
-                    elif not nome_user or not cargo_user:
-                        st.warning("Preencha seus dados.")
-                    elif senha != senha_mestra:
-                        st.error("Senha incorreta.")
-                    else:
-                        st.session_state["autenticado"] = True
-                        st.session_state["usuario_nome"] = nome_user
-                        st.session_state["usuario_cargo"] = cargo_user
-                        st.rerun()
-
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        return False
-
-    return True
-
-
-if not sistema_seguranca():
-    st.stop()
-
-# ==============================================================================
-# 4.1 LOGIN SUPABASE (NORMAL + DEMO)
-# ==============================================================================
-def ensure_supabase_login():
-    # Se já temos sessão Supabase, ok
-    if st.session_state.get("supabase_jwt") and st.session_state.get("supabase_user_id"):
-        return True
-
-    st.markdown("### 🔐 Login Supabase")
-    st.caption("Obrigatório para salvar/carregar dados no banco (PEI, Alunos etc).")
-
-    demo_email = st.secrets.get("SUPABASE_DEMO_EMAIL")
-    demo_password = st.secrets.get("SUPABASE_DEMO_PASSWORD")
-    has_demo = bool(demo_email and demo_password)
-
-    with st.container(border=True):
-        colA, colB = st.columns([2, 1])
-
-        with colA:
-            email = st.text_input("Email (Supabase)", placeholder="email@dominio.com", key="sb_email")
-            password = st.text_input("Senha (Supabase)", type="password", key="sb_pass")
-
-            c1, c2 = st.columns(2)
-            with c1:
-                if st.button("🔓 Entrar (Supabase)", use_container_width=True):
-                    try:
-                        with st.spinner("Conectando ao Supabase..."):
-                            out = supabase_login(email.strip(), password)
-                        st.session_state["supabase_jwt"] = out["access_token"]
-                        st.session_state["supabase_user_id"] = out["user_id"]
-                        st.session_state["supabase_email"] = out.get("email", "")
-                        st.success("Supabase conectado ✅")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Falha no login Supabase: {e}")
-
-            with c2:
-                if has_demo:
-                    if st.button("🚀 Entrar em modo demonstração", use_container_width=True):
-                        try:
-                            with st.spinner("Entrando no modo demo..."):
-                                out = supabase_login(demo_email, demo_password)
-                            st.session_state["supabase_jwt"] = out["access_token"]
-                            st.session_state["supabase_user_id"] = out["user_id"]
-                            st.session_state["supabase_email"] = out.get("email", "")
-                            st.session_state["usuario_nome"] = st.session_state.get("usuario_nome") or "Visitante"
-                            st.session_state["usuario_cargo"] = st.session_state.get("usuario_cargo") or "Demo"
-                            st.success("Modo demonstração ativado ✅")
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Falha ao entrar no modo demo: {e}")
-                else:
-                    st.info("Modo demo indisponível (secrets SUPABASE_DEMO_* não configurados).")
-
-        with colB:
-            if st.button("ℹ️ Por que isso é necessário?", use_container_width=True):
-                st.info(
-                    "O Omnisfera usa o Supabase para salvar e carregar os dados do PEI/Alunos. "
-                    "Sem login, você até pode navegar, mas não terá persistência."
-                )
-
-    return False
-
-
-if not ensure_supabase_login():
-    st.stop()
-
-# ==============================================================================
-# 5. CONTEÚDO DA HOME (SÓ CARREGA APÓS LOGIN)
-# ==============================================================================
+# Badge canto direito
 st.markdown(f"""<div class="omni-badge hover-spring"><span class="omni-text">{display_text}</span></div>""", unsafe_allow_html=True)
 
-icone_b64 = get_base64_image("omni_icone.png")
-texto_b64 = get_base64_image("omni_texto.png")
+def sistema_seguranca_e_supabase():
+    """
+    1) Login do App (nome/cargo/termos/senha)
+    2) Login do Supabase (email/senha) -> salva JWT + user_id
+    """
+    if st.session_state["autenticado"] and st.session_state["supabase_jwt"] and st.session_state["supabase_user_id"]:
+        return True  # tudo OK
 
-if icone_b64 and texto_b64:
-    st.markdown(f"""
-    <div class="logo-container">
-        <img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">
-        <img src="data:image/png;base64,{texto_b64}" class="logo-text-static">
-        <div class="header-subtitle-text">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
-    </div>
+    # esconde sidebar durante login
+    st.markdown("""
+    <style>
+        section[data-testid="stSidebar"] { display: none !important; }
+        [data-testid="stSidebarCollapsedControl"] { display: none !important; }
+    </style>
     """, unsafe_allow_html=True)
-else:
-    st.markdown("<div class='logo-container'><h1 style='color: #0F52BA; margin:0;'>🌐 OMNISFERA</h1><div class='header-subtitle-text'>Ecossistema de Inteligência Pedagógica e Inclusiva</div></div>", unsafe_allow_html=True)
 
-nome_display = st.session_state.get("usuario_nome", "Educador").split()[0]
+    c1, c_login, c2 = st.columns([1, 2, 1])
+    with c_login:
+        st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+
+        # logos
+        icone_b64_login = get_base64_image("omni_icone.png")
+        texto_b64_login = get_base64_image("omni_texto.png")
+        if icone_b64_login and texto_b64_login:
+            st.markdown(f"""
+            <div class="logo-wrapper">
+                <img src="data:image/png;base64,{icone_b64_login}" class="login-logo-spin">
+                <img src="data:image/png;base64,{texto_b64_login}" class="login-logo-static">
+            </div>""", unsafe_allow_html=True)
+
+        st.markdown("""<div class="manifesto-login">"A Omnisfera foi desenvolvida com muito cuidado e carinho com o objetivo de auxiliar as escolas na tarefa de incluir."</div>""", unsafe_allow_html=True)
+
+        # -----------------------
+        # LOGIN DO APP
+        # -----------------------
+        st.subheader("🔐 Acesso Omnisfera")
+        nome_user = st.text_input("Seu Nome", value=st.session_state.get("usuario_nome",""), placeholder="Seu Nome")
+        cargo_user = st.text_input("Seu Cargo", value=st.session_state.get("usuario_cargo",""), placeholder="Seu Cargo")
+
+        st.markdown("""
+        <div class="termo-box">
+            <strong>ACORDO DE CONFIDENCIALIDADE E USO DE DADOS (Versão Beta)</strong><br><br>
+            1. Natureza do Software: sistema em fase beta.<br>
+            2. LGPD: proibido inserir dados reais sensíveis de estudantes em ambiente não autorizado.<br>
+            3. Propriedade Intelectual: vedada reprodução/comercialização sem autorização.<br>
+            4. Responsabilidade: IA deve ser revisada por humano antes de aplicar.<br>
+            Ao prosseguir, você declara estar ciente e de acordo.
+        </div>
+        """, unsafe_allow_html=True)
+        concordo = st.checkbox("Li, compreendi e concordo com os termos.")
+
+        senha = st.text_input("Senha de Acesso", type="password")
+
+        colA, colB = st.columns(2)
+        with colA:
+            if st.button("ACESSAR OMNISFERA", use_container_width=True, type="primary"):
+                hoje = date.today()
+                senha_mestra = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
+
+                if not concordo:
+                    st.warning("Aceite os termos.")
+                    st.stop()
+                if not nome_user.strip() or not cargo_user.strip():
+                    st.warning("Preencha nome e cargo.")
+                    st.stop()
+                if senha != senha_mestra:
+                    st.error("Senha incorreta.")
+                    st.stop()
+
+                st.session_state["autenticado"] = True
+                st.session_state["usuario_nome"] = nome_user.strip()
+                st.session_state["usuario_cargo"] = cargo_user.strip()
+                st.success("Login Omnisfera OK ✅")
+                st.rerun()
+
+        with colB:
+            if st.button("Sair / Reset", use_container_width=True):
+                for k in ["autenticado","usuario_nome","usuario_cargo","supabase_jwt","supabase_user_id","selected_student_id","selected_student_name"]:
+                    if k in st.session_state:
+                        st.session_state[k] = "" if "jwt" in k or "user_id" in k else False
+                st.rerun()
+
+        st.divider()
+
+        # -----------------------
+        # LOGIN DO SUPABASE (só aparece depois do login Omnisfera)
+        # -----------------------
+        st.subheader("🔒 Login Supabase (obrigatório para salvar/carregar)")
+        if not st.session_state["autenticado"]:
+            st.info("Faça o login Omnisfera acima para liberar o login Supabase.")
+            st.markdown("</div>", unsafe_allow_html=True)
+            return False
+
+        # pré-preenche com demo se quiser
+        demo_email = st.secrets.get("DEMO_EMAIL", "")
+        demo_pass = st.secrets.get("DEMO_PASSWORD", "")
+
+        email_sb = st.text_input("Email (Supabase)", value=demo_email, placeholder="email@dominio.com")
+        senha_sb = st.text_input("Senha (Supabase)", type="password", value=demo_pass)
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("🔐 Entrar (Supabase)", use_container_width=True):
+                jwt, user_id, err = supabase_login(email_sb.strip(), senha_sb)
+                if err:
+                    st.error(f"Falha no login Supabase: {err}")
+                else:
+                    st.session_state["supabase_jwt"] = jwt
+                    st.session_state["supabase_user_id"] = user_id
+                    st.success("Supabase OK ✅")
+                    st.rerun()
+
+        with col2:
+            if st.button("🚀 Entrar em modo demonstração", use_container_width=True):
+                # modo demo: só funciona se DEMO_EMAIL/DEMO_PASSWORD estiverem nos secrets
+                if not demo_email or not demo_pass:
+                    st.warning("Defina DEMO_EMAIL e DEMO_PASSWORD em st.secrets para usar o modo demo.")
+                else:
+                    jwt, user_id, err = supabase_login(demo_email, demo_pass)
+                    if err:
+                        st.error(f"Falha no modo demo: {err}")
+                    else:
+                        st.session_state["supabase_jwt"] = jwt
+                        st.session_state["supabase_user_id"] = user_id
+                        st.success("Demo Supabase OK ✅")
+                        st.rerun()
+
+        if st.session_state["supabase_jwt"] and st.session_state["supabase_user_id"]:
+            st.success("Supabase conectado. Você já pode usar PEI/Alunos ✅")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+        return False
+
+# trava até fazer os 2 logins
+if not sistema_seguranca_e_supabase():
+    st.stop()
+
+# ==============================================================================
+# 5. CONTEÚDO DA HOME (SÓ DEPOIS DOS LOGINS)
+# ==============================================================================
+nome_display = (st.session_state.get("usuario_nome", "Educador").split()[0]) if st.session_state.get("usuario_nome") else "Educador"
 
 mensagem_banner = "Unindo ciência, dados e empatia para transformar a educação."
 if 'OPENAI_API_KEY' in st.secrets:
@@ -456,116 +330,48 @@ if 'OPENAI_API_KEY' in st.secrets:
             client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
             res = client.chat.completions.create(
                 model="gpt-4o-mini",
-                messages=[{"role": "user", "content": "Crie uma frase curta e inspiradora sobre inclusão escolar. Não use nomes. Máximo 20 palavras."}]
+                messages=[{"role": "user", "content": "Crie uma frase curta e inspiradora sobre inclusão escolar. Máximo 20 palavras."}]
             )
             st.session_state['banner_msg'] = res.choices[0].message.content
         mensagem_banner = st.session_state['banner_msg']
     except:
         pass
 
+# Sidebar normal (após login)
 with st.sidebar:
-    if "usuario_nome" in st.session_state:
-        st.markdown(f"**👤 {st.session_state['usuario_nome']}**")
-        st.caption(f"{st.session_state.get('usuario_cargo','')}")
-        st.caption(f"Supabase: **{st.session_state.get('supabase_email','conectado')}**")
-        st.markdown("---")
+    st.markdown(f"**👤 {st.session_state['usuario_nome']}**")
+    st.caption(f"{st.session_state['usuario_cargo']}")
+    st.markdown("---")
+    st.markdown("✅ Supabase conectado")
+    st.caption(f"user_id: {st.session_state.get('supabase_user_id','')[:8]}...")
 
-    st.markdown("### 📢 Central de Feedback")
-    tipo = st.selectbox("Tipo:", ["Sugestão", "Erro", "Elogio"])
-    msg = st.text_area("Mensagem:", height=80)
-    st.markdown("<style>section[data-testid='stSidebar'] .stButton button { display: block !important; }</style>", unsafe_allow_html=True)
-    if st.button("Enviar"):
-        if msg:
-            st.toast("Enviado!", icon="✅")
-            time.sleep(1)
-
+# HERO
 st.markdown(f"""
-<div class="dash-hero hover-spring">
-    <div class="hero-text-block">
-        <div class="hero-title">Olá, {nome_display}!</div>
-        <div class="hero-subtitle">"{mensagem_banner}"</div>
+<div class="dash-hero hover-spring" style="background: radial-gradient(circle at top right, #0F52BA, #062B61);
+    border-radius: 16px; margin-bottom: 20px; margin-top: 10px;
+    box-shadow: 0 10px 25px -5px rgba(15, 82, 186, 0.3);
+    color: white; position: relative; overflow: hidden;
+    padding: 25px 35px; display: flex; align-items: center; justify-content: flex-start;">
+    <div>
+        <div style="font-family:Inter; font-weight:700; font-size:1.5rem; margin:0;">Olá, {nome_display}!</div>
+        <div style="font-family:Inter; font-size:0.9rem; opacity:0.9; font-weight:400;">"{mensagem_banner}"</div>
     </div>
-    <i class="ri-heart-pulse-fill hero-bg-icon"></i>
+    <i class="ri-heart-pulse-fill hero-bg-icon" style="position:absolute; right:20px; font-size:6rem; opacity:0.08; top:5px; transform: rotate(-10deg);"></i>
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("<div class='section-title'><i class='ri-cursor-fill'></i> Acesso Rápido</div>", unsafe_allow_html=True)
-
-logo_pei = get_base64_image("360.png")
-logo_paee = get_base64_image("pae.png")
-logo_hub = get_base64_image("hub.png")
-
+# Acesso rápido (mantive seus botões principais)
+st.markdown("### ⚡ Acesso Rápido")
 c1, c2, c3 = st.columns(3)
 
-def card_botao(coluna, img_b64, desc, chave_btn, page_path, cor_borda_class, fallback_icon):
-    with coluna:
-        img_html = f'<img src="data:image/png;base64,{img_b64}" class="nav-icon">' if img_b64 else f'<i class="{fallback_icon}" style="font-size:3rem; margin-bottom:10px;"></i>'
+with c1:
+    if st.button("📘 PEI", use_container_width=True, type="primary"):
+        st.switch_page("pages/1_PEI.py")
+with c2:
+    if st.button("🧩 PAEE", use_container_width=True):
+        st.switch_page("pages/2_PAE.py")
+with c3:
+    if st.button("🚀 HUB", use_container_width=True):
+        st.switch_page("pages/3_Hub_Inclusao.py")
 
-        st.markdown(f"""
-        <div class="nav-btn-card {cor_borda_class}">
-            {img_html}
-            <div class="nav-desc">{desc}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown('<div class="card-overlay-btn">', unsafe_allow_html=True)
-        if st.button("Acessar", key=chave_btn, use_container_width=True):
-            st.switch_page(page_path)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-card_botao(c1, logo_pei, "Plano de Ensino Individualizado Oficial.", "btn_pei", "pages/1_PEI.py", "b-blue", "ri-book-read-line")
-card_botao(c2, logo_paee, "Sala de Recursos e Tecnologias Assistivas.", "btn_paee", "pages/2_PAE.py", "b-purple", "ri-puzzle-line")
-card_botao(c3, logo_hub, "Adaptação de provas e roteiros.", "btn_hub", "pages/3_Hub_Inclusao.py", "b-teal", "ri-rocket-line")
-
-st.markdown("<div class='section-title'><i class='ri-book-mark-fill'></i> Conhecimento</div>", unsafe_allow_html=True)
-
-st.markdown("""
-<div class="bento-grid">
-    <a href="#" class="bento-item">
-        <div class="bento-icon" style="background:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
-        <div class="bento-title">PEI vs PAEE</div>
-        <div class="bento-desc">Diferenças fundamentais.</div>
-    </a>
-    <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="bento-item">
-        <div class="bento-icon" style="background:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
-        <div class="bento-title">Legislação</div>
-        <div class="bento-desc">LBI e Decretos.</div>
-    </a>
-    <a href="https://institutoneurosaber.com.br/" target="_blank" class="bento-item">
-        <div class="bento-icon" style="background:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
-        <div class="bento-title">Neurociência</div>
-        <div class="bento-desc">Desenvolvimento atípico.</div>
-    </a>
-    <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="bento-item">
-        <div class="bento-icon" style="background:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
-        <div class="bento-title">BNCC</div>
-        <div class="bento-desc">Currículo oficial.</div>
-    </a>
-</div>
-""", unsafe_allow_html=True)
-
-noticia_insight = "A aprendizagem acontece quando o cérebro se emociona. Crie vínculos antes de cobrar conteúdos."
-if 'OPENAI_API_KEY' in st.secrets:
-    try:
-        if 'insight_dia' not in st.session_state:
-            client = OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
-            res = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": "Dica de 1 frase curta sobre neurociência."}]
-            )
-            st.session_state['insight_dia'] = res.choices[0].message.content
-        noticia_insight = st.session_state['insight_dia']
-    except:
-        pass
-
-st.markdown(f"""
-<div class="insight-card-end hover-spring">
-    <div class="insight-icon-end"><i class="ri-lightbulb-flash-line"></i></div>
-    <div>
-        <div style="font-weight: 800; font-size: 0.8rem; color: #D69E2E; letter-spacing: 0.5px; text-transform: uppercase;">Insight do Dia</div>
-        <p style="margin:2px 0 0 0; font-size:0.9rem; opacity:0.9; color:#4A5568; font-style: italic;">"{noticia_insight}"</p>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.7rem; margin-top: 40px;'>Omnisfera desenvolvida e CRIADA por RODRIGO A. QUEIROZ; assim como PEI360, PAEE360 & HUB de Inclusão</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.7rem; margin-top: 40px;'>Omnisfera desenvolvida e CRIADA por RODRIGO A. QUEIROZ</div>", unsafe_allow_html=True)
