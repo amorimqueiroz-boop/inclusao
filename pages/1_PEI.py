@@ -1944,88 +1944,366 @@ with tab7:
 
 
 # ==============================================================================
-# 19. ABA DASHBOARD & DOCS (KPIs + Exportações)
+# 19. ABA DASHBOARD & DOCS (KPIs, Metas, Radar, DNA, Exportações, Sincronizar)
 # ==============================================================================
 with tab8:
     render_progresso()
     st.markdown("### <i class='ri-file-pdf-line'></i> Dashboard e Exportação", unsafe_allow_html=True)
 
-    dados = st.session_state.dados
+    d = st.session_state.dados
+    student_id = st.session_state.get("selected_student_id")
 
-    # ---------------- KPIs ----------------
-    st.markdown("#### 📊 Indicadores do PEI")
-    c1, c2, c3, c4 = st.columns(4)
+    # ----------------------------
+    # 0) Guardas
+    # ----------------------------
+    if not d.get("nome"):
+        st.warning("Preencha o nome do estudante na aba **Estudante** para liberar o Dashboard.")
+        st.stop()
 
-    c1.metric("Barreiras Ativas", sum(len(v) for v in dados.get("barreiras_selecionadas", {}).values()))
-    c2.metric("Estratégias (Ensino)", len(dados.get("estrategias_ensino", [])))
-    c3.metric("Rede de Apoio", len(dados.get("rede_apoio", [])))
-    c4.metric("Potencialidades", len(dados.get("potencias", [])))
+    # ----------------------------
+    # 1) HERO
+    # ----------------------------
+    init_avatar = (d.get("nome", "?")[:1].upper() if d.get("nome") else "?")
+    idade_str = calcular_idade(d.get("nasc"))
 
-    st.divider()
+    st.markdown(
+        f"""
+        <div class="dash-hero">
+            <div style="display:flex; align-items:center; gap:20px;">
+                <div class="apple-avatar">{init_avatar}</div>
+                <div style="color:white;">
+                    <h1 style="margin:0;">{d.get("nome","")}</h1>
+                    <p style="margin:4px 0 0 0; opacity:0.9;">
+                        {d.get("serie","")} {("— Turma " + d.get("turma","")) if d.get("turma") else ""}
+                    </p>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:0.75rem; opacity:0.85;">IDADE</div>
+                <div style="font-size:1.2rem; font-weight:800;">{idade_str}</div>
+                <div style="margin-top:8px; font-size:0.8rem;">
+                    {"✅ Vinculado ao Supabase" if student_id else "📝 Rascunho (não vinculado)"}
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    # ---------------- Metas SMART ----------------
-    st.markdown("#### 🎯 Metas SMART (extraídas da IA)")
-    metas = extrair_metas_estruturadas(dados.get("ia_sugestao", ""))
+    # ----------------------------
+    # 2) KPIs (4 cards)
+    # ----------------------------
+    c_kpi1, c_kpi2, c_kpi3, c_kpi4 = st.columns(4)
 
-    mc1, mc2, mc3 = st.columns(3)
-    mc1.info(f"**Curto Prazo**\n\n{metas.get('Curto')}")
-    mc2.info(f"**Médio Prazo**\n\n{metas.get('Medio')}")
-    mc3.info(f"**Longo Prazo**\n\n{metas.get('Longo')}")
-
-    st.divider()
-
-    # ---------------- Componentes Impactados ----------------
-    st.markdown("#### 📚 Componentes Curriculares Impactados")
-    comps = inferir_componentes_impactados(dados)
-    for c in comps:
-        st.markdown(f"- {c}")
-
-    st.divider()
-
-    # ---------------- Exportações ----------------
-    st.markdown("#### 📤 Exportar Documentos")
-
-    ec1, ec2, ec3 = st.columns(3)
-
-    with ec1:
-        if st.button("📄 Gerar PDF Oficial", use_container_width=True, type="primary"):
-            if not dados.get("ia_sugestao"):
-                st.warning("Gere o PEI na aba Consultoria IA antes.")
-            else:
-                pdf_bytes = gerar_pdf_final(dados)
-                st.download_button(
-                    "⬇️ Download PDF",
-                    pdf_bytes,
-                    file_name=f"PEI_{dados.get('nome','estudante')}.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                )
-
-    with ec2:
-        if st.button("📝 Gerar Word (.docx)", use_container_width=True):
-            if not dados.get("ia_sugestao"):
-                st.warning("Gere o PEI na aba Consultoria IA antes.")
-            else:
-                docx_io = gerar_docx_final(dados)
-                st.download_button(
-                    "⬇️ Download DOCX",
-                    docx_io,
-                    file_name=f"PEI_{dados.get('nome','estudante')}.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True,
-                )
-
-    with ec3:
-        st.download_button(
-            "💾 Backup JSON",
-            json.dumps(dados, ensure_ascii=False, indent=2, default=str),
-            file_name=f"PEI_{dados.get('nome','estudante')}.json",
-            mime="application/json",
-            use_container_width=True,
+    with c_kpi1:
+        n_pot = len(d.get("potencias", []))
+        color_p = "#38A169" if n_pot > 0 else "#CBD5E0"
+        st.markdown(
+            f"""<div class="metric-card">
+                    <div class="css-donut" style="--p:{min(n_pot*10,100)}%; --fill:{color_p};">
+                        <div class="d-val">{n_pot}</div>
+                    </div>
+                    <div class="d-lbl">Potencialidades</div>
+                </div>""",
+            unsafe_allow_html=True
         )
 
+    with c_kpi2:
+        n_bar = sum(len(v) for v in d.get("barreiras_selecionadas", {}).values())
+        color_b = "#E53E3E" if n_bar > 5 else "#DD6B20" if n_bar > 0 else "#CBD5E0"
+        st.markdown(
+            f"""<div class="metric-card">
+                    <div class="css-donut" style="--p:{min(n_bar*5,100)}%; --fill:{color_b};">
+                        <div class="d-val">{n_bar}</div>
+                    </div>
+                    <div class="d-lbl">Barreiras</div>
+                </div>""",
+            unsafe_allow_html=True
+        )
+
+    with c_kpi3:
+        hf = d.get("hiperfoco") or "-"
+        hf_emoji = get_hiperfoco_emoji(hf)
+        st.markdown(
+            f"""<div class="metric-card">
+                    <div style="font-size:2.6rem;">{hf_emoji}</div>
+                    <div style="font-weight:900; font-size:1.05rem; color:#2D3748; margin:10px 0 0 0; text-align:center;">
+                        {hf}
+                    </div>
+                    <div class="d-lbl" style="margin-top:6px;">Hiperfoco</div>
+                </div>""",
+            unsafe_allow_html=True
+        )
+
+    with c_kpi4:
+        txt_comp, bg_c, txt_c = calcular_complexidade_pei(d)
+        st.markdown(
+            f"""<div class="metric-card" style="background-color:{bg_c}; border-color:{txt_c};">
+                    <div class="comp-icon-box"><i class="ri-error-warning-line" style="color:{txt_c}; font-size: 2rem;"></i></div>
+                    <div style="font-weight:900; font-size:1.05rem; color:{txt_c}; margin:5px 0;">{txt_comp}</div>
+                    <div class="d-lbl" style="color:{txt_c};">Nível de Atenção</div>
+                </div>""",
+            unsafe_allow_html=True
+        )
+
+    # ----------------------------
+    # 3) Metas em 3 cards (lado a lado)
+    # ----------------------------
+    st.write("")
+    st.markdown("#### 🏁 Metas (extraídas do plano da IA)")
+    metas = extrair_metas_estruturadas(d.get("ia_sugestao", ""))
+
+    m1, m2, m3 = st.columns(3)
+    with m1:
+        st.markdown(
+            f"""<div class="soft-card sc-green">
+                    <div class="sc-head"><i class="ri-flag-2-fill" style="color:#38A169;"></i> Curto (2 meses)</div>
+                    <div class="sc-body">{metas.get("Curto","Gere o plano na aba IA.")}</div>
+                    <div class="bg-icon">🏁</div>
+                </div>""",
+            unsafe_allow_html=True
+        )
+    with m2:
+        st.markdown(
+            f"""<div class="soft-card sc-yellow">
+                    <div class="sc-head"><i class="ri-flag-2-fill" style="color:#D69E2E;"></i> Médio (1 semestre)</div>
+                    <div class="sc-body">{metas.get("Medio","Gere o plano na aba IA.")}</div>
+                    <div class="bg-icon">🧗</div>
+                </div>""",
+            unsafe_allow_html=True
+        )
+    with m3:
+        st.markdown(
+            f"""<div class="soft-card sc-blue">
+                    <div class="sc-head"><i class="ri-flag-2-fill" style="color:#3182CE;"></i> Longo (1 ano)</div>
+                    <div class="sc-body">{metas.get("Longo","Gere o plano na aba IA.")}</div>
+                    <div class="bg-icon">🏔️</div>
+                </div>""",
+            unsafe_allow_html=True
+        )
+
+    # ----------------------------
+    # 4) Radar + Rede + Medicação (2 colunas)
+    # ----------------------------
+    st.write("")
+    c_r1, c_r2 = st.columns(2)
+
+    with c_r1:
+        lista_meds = d.get("lista_medicamentos", [])
+        if lista_meds:
+            nomes_meds = ", ".join([m.get("nome","").strip() for m in lista_meds if m.get("nome")])
+            alerta_escola = any(m.get("escola") for m in lista_meds)
+            icon_alerta = '<i class="ri-alarm-warning-fill pulse-alert" style="font-size:1.2rem; margin-left:10px;"></i>' if alerta_escola else ""
+            msg_escola = '<div style="margin-top:6px; color:#C53030; font-weight:900; font-size:0.82rem;">🚨 ADMINISTRAÇÃO NA ESCOLA NECESSÁRIA</div>' if alerta_escola else ""
+            st.markdown(
+                f"""<div class="soft-card sc-orange">
+                        <div class="sc-head"><i class="ri-medicine-bottle-fill" style="color:#DD6B20;"></i> Atenção Farmacológica {icon_alerta}</div>
+                        <div class="sc-body"><b>Uso contínuo:</b> {nomes_meds}{msg_escola}</div>
+                        <div class="bg-icon">💊</div>
+                    </div>""",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                """<div class="soft-card sc-green">
+                        <div class="sc-head"><i class="ri-checkbox-circle-fill" style="color:#38A169;"></i> Medicação</div>
+                        <div class="sc-body">Nenhuma medicação informada.</div>
+                        <div class="bg-icon">✅</div>
+                    </div>""",
+                unsafe_allow_html=True
+            )
+
+    with c_r2:
+        try:
+            comps_inferidos = inferir_componentes_impactados(d)
+        except Exception:
+            comps_inferidos = ["(Não foi possível inferir automaticamente)"]
+
+        if comps_inferidos:
+            html_comps = "".join([f'<span class="rede-chip" style="border-color:#FC8181; color:#C53030;">{c}</span> ' for c in comps_inferidos])
+            st.markdown(
+                f"""<div class="soft-card sc-orange" style="border-left-color:#FC8181; background-color:#FFF5F5;">
+                        <div class="sc-head"><i class="ri-radar-fill" style="color:#C53030;"></i> Radar Curricular (Automático)</div>
+                        <div class="sc-body" style="margin-bottom:10px;">Componentes que exigem maior flexibilização (baseado nas barreiras):</div>
+                        <div>{html_comps}</div>
+                        <div class="bg-icon">🎯</div>
+                    </div>""",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                """<div class="soft-card sc-blue">
+                        <div class="sc-head"><i class="ri-radar-line" style="color:#3182CE;"></i> Radar Curricular</div>
+                        <div class="sc-body">Nenhum componente específico marcado como crítico.</div>
+                        <div class="bg-icon">🎯</div>
+                    </div>""",
+                unsafe_allow_html=True
+            )
+
+    # Rede de apoio (chip)
+    st.write("")
+    rede_html = "".join([f'<span class="rede-chip">{get_pro_icon(p)} {p}</span> ' for p in d.get("rede_apoio", [])]) if d.get("rede_apoio") else "<span style='opacity:0.6;'>Sem rede cadastrada.</span>"
+    st.markdown(
+        f"""<div class="soft-card sc-cyan">
+                <div class="sc-head"><i class="ri-team-fill" style="color:#0BC5EA;"></i> Rede de Apoio</div>
+                <div class="sc-body">{rede_html}</div>
+                <div class="bg-icon">🤝</div>
+            </div>""",
+        unsafe_allow_html=True
+    )
+
+    # ----------------------------
+    # 5) DNA de suporte (barras)
+    # ----------------------------
+    st.write("")
+    st.markdown("##### 🧬 DNA de Suporte (por domínio)")
+    dna_c1, dna_c2 = st.columns(2)
+    for i, area in enumerate(LISTAS_BARREIRAS.keys()):
+        qtd = len(d.get("barreiras_selecionadas", {}).get(area, []))
+        val = min(qtd * 20, 100)
+        target = dna_c1 if i < 3 else dna_c2
+        color = "#3182CE"
+        if val > 40:
+            color = "#DD6B20"
+        if val > 70:
+            color = "#E53E3E"
+        target.markdown(
+            f"""<div class="dna-bar-container">
+                    <div class="dna-bar-flex"><span>{area}</span><span>{qtd} barreiras</span></div>
+                    <div class="dna-bar-bg"><div class="dna-bar-fill" style="width:{val}%; background:{color};"></div></div>
+                </div>""",
+            unsafe_allow_html=True
+        )
+
+    # ----------------------------
+    # 6) Exportação + Sincronizar dentro da aba
+    # ----------------------------
     st.divider()
-    st.caption("⚠️ Os documentos exportados devem ser revisados e assinados pela equipe pedagógica.")
+    st.markdown("#### 📤 Exportação e Sincronização")
+
+    col_docs, col_data, col_sys = st.columns(3)
+
+    with col_docs:
+        st.caption("📄 Documentos")
+        if d.get("ia_sugestao"):
+            try:
+                pdf_bytes = gerar_pdf_final(d, tem_anexo=bool(st.session_state.get("pdf_text")))
+                st.download_button(
+                    "Baixar PDF Oficial",
+                    pdf_bytes,
+                    file_name=f"PEI_{d.get('nome','estudante')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"Não foi possível gerar PDF: {e}")
+
+            try:
+                docx = gerar_docx_final(d)
+                st.download_button(
+                    "Baixar Word Editável",
+                    docx,
+                    file_name=f"PEI_{d.get('nome','estudante')}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"Não foi possível gerar Word: {e}")
+        else:
+            st.info("Gere o Plano na aba **Consultoria IA** para liberar PDF/Word.")
+
+    with col_data:
+        st.caption("💾 Backup (JSON)")
+        st.info("Este arquivo salva **todo o PEI** (campos, seleções e texto da IA) para reabrir depois ou transferir entre versões.")
+        try:
+            json_payload = json.dumps(d, default=str, ensure_ascii=False)
+            st.download_button(
+                "Salvar arquivo .JSON",
+                json_payload,
+                file_name=f"PEI_{d.get('nome','estudante')}.json",
+                mime="application/json",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error(f"Falha ao preparar JSON: {e}")
+
+    with col_sys:
+        st.caption("🌐 Omnisfera (Supabase)")
+        if ensure_ascii:=False:
+            pass  # só para evitar lint em alguns editores
+
+        if not st.session_state.get("supabase_jwt") or not st.session_state.get("supabase_user_id"):
+            st.warning("Faça login Supabase na **Home** para habilitar sincronização.")
+        else:
+            # Botão de sincronizar dentro da aba
+            if not student_id:
+                st.info("Ainda não vinculado. Clique para **criar** o aluno no Supabase.")
+                if st.button("🔗 Sincronizar agora (criar aluno)", type="primary", use_container_width=True):
+                    try:
+                        if not d.get("nome"):
+                            st.warning("Preencha o NOME do estudante.")
+                        elif not d.get("serie"):
+                            st.warning("Selecione a SÉRIE/Ano.")
+                        else:
+                            created = db_create_student({
+                                "owner_id": OWNER_ID,
+                                "name": d.get("nome"),
+                                "birth_date": d.get("nasc").isoformat() if hasattr(d.get("nasc"), "isoformat") else str(d.get("nasc")),
+                                "grade": d.get("serie"),
+                                "class_group": d.get("turma") or None,
+                                "diagnosis": d.get("diagnostico") or None
+                            })
+                            if created and created.get("id"):
+                                st.session_state["selected_student_id"] = created["id"]
+                                st.session_state["selected_student_name"] = created.get("name") or ""
+                                st.success("Sincronizado ✅")
+                                st.rerun()
+                            else:
+                                st.error("Falha ao criar aluno. Verifique RLS/policies no Supabase.")
+                    except Exception as e:
+                        st.error(f"Erro ao sincronizar (criar aluno): {e}")
+
+            else:
+                st.success("✅ Aluno vinculado")
+                st.caption(f"student_id: {student_id[:8]}...")
+
+                b1, b2 = st.columns(2)
+                with b1:
+                    if st.button("💾 Salvar PEI", type="primary", use_container_width=True):
+                        try:
+                            supa_save_pei(student_id, d, st.session_state.get("pdf_text", ""))
+                            supa_sync_student_from_dados(student_id, d)
+                            st.success("Salvo no Supabase ✅")
+                        except Exception as e:
+                            st.error(f"Erro ao salvar PEI: {e}")
+
+                with b2:
+                    if st.button("🔄 Carregar PEI", use_container_width=True):
+                        try:
+                            row = supa_load_latest_pei(student_id)
+                            if row and row.get("payload"):
+                                payload = row["payload"]
+
+                                # datas
+                                try:
+                                    if payload.get("nasc"):
+                                        payload["nasc"] = date.fromisoformat(payload["nasc"])
+                                except:
+                                    pass
+                                try:
+                                    if payload.get("monitoramento_data"):
+                                        payload["monitoramento_data"] = date.fromisoformat(payload["monitoramento_data"])
+                                except:
+                                    pass
+
+                                st.session_state.dados.update(payload)
+                                st.session_state.pdf_text = row.get("pdf_text") or ""
+                                st.success("Carregado ✅")
+                                st.rerun()
+                            else:
+                                st.info("Ainda não existe PEI salvo para este aluno.")
+                        except Exception as e:
+                            st.error(f"Erro ao carregar: {e}")
 
 
 # ==============================================================================
