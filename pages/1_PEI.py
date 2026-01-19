@@ -1034,55 +1034,253 @@ with tab0:
         st.success("✅ Aluno sincronizado. Salvar/Carregar liberados.")
 
 # ==============================================================================
-# 12. ABA ESTUDANTE (AGORA É ONDE SE CRIA O ALUNO)
+# 12. ABA ESTUDANTE (COMPLETA: dados + família + laudo PDF + extração IA + medicação)
 # ==============================================================================
 with tab1:
     render_progresso()
     st.markdown("### <i class='ri-user-smile-line'></i> Dossiê do Estudante", unsafe_allow_html=True)
 
     c1, c2, c3, c4 = st.columns([3, 2, 2, 1])
-    st.session_state.dados['nome'] = c1.text_input("Nome Completo", st.session_state.dados['nome'])
-    st.session_state.dados['nasc'] = c2.date_input("Nascimento", value=st.session_state.dados.get('nasc', date(2015, 1, 1)))
+    st.session_state.dados["nome"] = c1.text_input("Nome Completo", st.session_state.dados.get("nome", ""))
+    st.session_state.dados["nasc"] = c2.date_input(
+        "Nascimento",
+        value=st.session_state.dados.get("nasc", date(2015, 1, 1)),
+    )
 
     try:
-        serie_idx = LISTA_SERIES.index(st.session_state.dados['serie']) if st.session_state.dados['serie'] in LISTA_SERIES else 0
-    except:
+        serie_idx = LISTA_SERIES.index(st.session_state.dados.get("serie")) if st.session_state.dados.get("serie") in LISTA_SERIES else 0
+    except Exception:
         serie_idx = 0
 
-    st.session_state.dados['serie'] = c3.selectbox("Série/Ano", LISTA_SERIES, index=serie_idx, placeholder="Selecione...")
-    st.session_state.dados['turma'] = c4.text_input("Turma", st.session_state.dados['turma'])
+    st.session_state.dados["serie"] = c3.selectbox(
+        "Série/Ano",
+        LISTA_SERIES,
+        index=serie_idx,
+        placeholder="Selecione...",
+    )
+    st.session_state.dados["turma"] = c4.text_input("Turma", st.session_state.dados.get("turma", ""))
+
+    if st.session_state.dados.get("serie"):
+        nome_seg, cor_seg, desc_seg = get_segmento_info_visual(st.session_state.dados["serie"])
+        c3.markdown(
+            f"<div class='segmento-badge' style='background-color:{cor_seg}; padding:6px 12px; border-radius:12px; color:white; font-weight:800; margin-top:6px;'>"
+            f"{nome_seg}</div>",
+            unsafe_allow_html=True,
+        )
+
+    idade_str = calcular_idade(st.session_state.dados.get("nasc"))
+    if st.session_state.dados.get("nome"):
+        st.caption(f"🧾 **{st.session_state.dados.get('nome','')}** • {idade_str}")
 
     st.divider()
-    st.markdown("##### Contexto Clínico")
-    st.session_state.dados['diagnostico'] = st.text_input("Diagnóstico", st.session_state.dados['diagnostico'])
+    st.markdown("##### Histórico & Contexto Familiar")
+
+    cc1, cc2 = st.columns(2)
+    st.session_state.dados["historico"] = cc1.text_area("Histórico escolar", st.session_state.dados.get("historico", ""), height=140)
+    st.session_state.dados["familia"] = cc2.text_area("Dinâmica familiar", st.session_state.dados.get("familia", ""), height=140)
+
+    # multiselect seguro
+    default_fam = [x for x in (st.session_state.dados.get("composicao_familiar_tags") or []) if x in LISTA_FAMILIA]
+    st.session_state.dados["composicao_familiar_tags"] = st.multiselect(
+        "Quem convive com o aluno?",
+        LISTA_FAMILIA,
+        default=default_fam,
+    )
+
+    st.divider()
+    st.markdown("##### 🏥 Contexto Clínico")
+    st.session_state.dados["diagnostico"] = st.text_input("Diagnóstico", st.session_state.dados.get("diagnostico", ""))
+
+    st.markdown("##### 💊 Medicação (se houver)")
+    usa_med = st.toggle("Uso contínuo de medicação?", value=len(st.session_state.dados.get("lista_medicamentos", [])) > 0)
+
+    if usa_med:
+        m1, m2, m3 = st.columns([3, 2, 2])
+        nm = m1.text_input("Nome do medicamento", key="med_nome")
+        ps = m2.text_input("Posologia", key="med_pos")
+        esc = m3.checkbox("Administrar na escola?", key="med_escola")
+
+        if st.button("Adicionar medicamento", use_container_width=True):
+            if (nm or "").strip():
+                st.session_state.dados["lista_medicamentos"].append(
+                    {"nome": nm.strip(), "posologia": (ps or "").strip(), "escola": bool(esc)}
+                )
+                st.rerun()
+
+    if st.session_state.dados.get("lista_medicamentos"):
+        for i, m in enumerate(st.session_state.dados["lista_medicamentos"]):
+            tag = "🏫" if m.get("escola") else ""
+            c_txt, c_btn = st.columns([5, 1])
+            c_txt.info(f"💊 **{m.get('nome','')}** ({m.get('posologia','')}) {tag}")
+            if c_btn.button("Excluir", key=f"del_med_{i}"):
+                st.session_state.dados["lista_medicamentos"].pop(i)
+                st.rerun()
+
+    st.divider()
+    st.markdown("##### 📎 Laudo/Relatório (PDF)")
+
+    p1, p2 = st.columns([3, 1])
+    with p1:
+        up = st.file_uploader("Envie o PDF (até 6 páginas serão lidas)", type="pdf", label_visibility="collapsed")
+        if up:
+            st.session_state.pdf_text = ler_pdf(up)
+            st.success("PDF carregado ✅")
+
+    with p2:
+        st.write("")
+        st.write("")
+        if st.button("✨ Extrair dados do laudo (IA)", type="primary", use_container_width=True, disabled=not bool(st.session_state.get("pdf_text"))):
+            if not api_key:
+                st.error("Configure a chave OpenAI na sidebar.")
+            else:
+                with st.spinner("Analisando laudo..."):
+                    dados_extraidos, erro = extrair_dados_pdf_ia(api_key, st.session_state.pdf_text)
+
+                if dados_extraidos:
+                    if dados_extraidos.get("diagnostico"):
+                        st.session_state.dados["diagnostico"] = dados_extraidos["diagnostico"]
+
+                    if dados_extraidos.get("medicamentos"):
+                        for med in dados_extraidos["medicamentos"]:
+                            st.session_state.dados["lista_medicamentos"].append(
+                                {
+                                    "nome": med.get("nome", ""),
+                                    "posologia": med.get("posologia", ""),
+                                    "escola": False,
+                                }
+                            )
+                    st.success("Dados extraídos ✅")
+                    st.rerun()
+                else:
+                    st.error(erro or "Erro ao extrair")
 
 # ==============================================================================
-# 13. ABA EVIDÊNCIAS
+# 13. ABA EVIDÊNCIAS (COMPLETA)
 # ==============================================================================
 with tab2:
     render_progresso()
     st.markdown("### <i class='ri-search-eye-line'></i> Coleta de Evidências", unsafe_allow_html=True)
 
-    st.session_state.dados['nivel_alfabetizacao'] = st.selectbox(
-        "Hipótese de Escrita",
-        LISTA_ALFABETIZACAO,
-        index=LISTA_ALFABETIZACAO.index(st.session_state.dados['nivel_alfabetizacao']) if st.session_state.dados['nivel_alfabetizacao'] in LISTA_ALFABETIZACAO else 0
+    atual = st.session_state.dados.get("nivel_alfabetizacao")
+    idx = LISTA_ALFABETIZACAO.index(atual) if atual in LISTA_ALFABETIZACAO else 0
+    st.session_state.dados["nivel_alfabetizacao"] = st.selectbox("Hipótese de Escrita", LISTA_ALFABETIZACAO, index=idx)
+
+    st.divider()
+    c1, c2, c3 = st.columns(3)
+
+    def _tog(label):
+        st.session_state.dados["checklist_evidencias"][label] = st.toggle(
+            label,
+            value=st.session_state.dados["checklist_evidencias"].get(label, False),
+        )
+
+    with c1:
+        st.markdown("**Pedagógico**")
+        for q in [
+            "Estagnação na aprendizagem",
+            "Lacuna em pré-requisitos",
+            "Dificuldade de generalização",
+            "Dificuldade de abstração",
+        ]:
+            _tog(q)
+
+    with c2:
+        st.markdown("**Cognitivo**")
+        for q in [
+            "Oscilação de foco",
+            "Fadiga mental rápida",
+            "Dificuldade de iniciar tarefas",
+            "Esquecimento recorrente",
+        ]:
+            _tog(q)
+
+    with c3:
+        st.markdown("**Comportamental**")
+        for q in [
+            "Dependência de mediação (1:1)",
+            "Baixa tolerância à frustração",
+            "Desorganização de materiais",
+            "Recusa de tarefas",
+        ]:
+            _tog(q)
+
+    st.divider()
+    st.markdown("##### Observações rápidas")
+    st.session_state.dados["orientacoes_especialistas"] = st.text_area(
+        "Registre observações de professores e especialistas (se houver)",
+        st.session_state.dados.get("orientacoes_especialistas", ""),
+        height=120,
     )
 
 # ==============================================================================
-# 14. ABA REDE DE APOIO
+# 14. ABA REDE DE APOIO (COMPLETA)
 # ==============================================================================
 with tab3:
     render_progresso()
     st.markdown("### <i class='ri-team-line'></i> Rede de Apoio", unsafe_allow_html=True)
-    st.session_state.dados['rede_apoio'] = st.multiselect("Profissionais:", LISTA_PROFISSIONAIS, default=st.session_state.dados['rede_apoio'])
+
+    default_prof = [x for x in (st.session_state.dados.get("rede_apoio") or []) if x in LISTA_PROFISSIONAIS]
+    st.session_state.dados["rede_apoio"] = st.multiselect(
+        "Profissionais envolvidos:",
+        LISTA_PROFISSIONAIS,
+        default=default_prof,
+    )
+
+    if st.session_state.dados["rede_apoio"]:
+        st.markdown("##### Visão rápida")
+        cols = st.columns(3)
+        for i, p in enumerate(st.session_state.dados["rede_apoio"]):
+            cols[i % 3].markdown(f"- {get_pro_icon(p)} **{p}**")
 
 # ==============================================================================
-# 15. ABA MAPEAMENTO
+# 15. ABA MAPEAMENTO (COMPLETA: hiperfoco + potências + barreiras + nível de suporte)
 # ==============================================================================
 with tab4:
     render_progresso()
     st.markdown("### <i class='ri-radar-line'></i> Mapeamento", unsafe_allow_html=True)
+
+    c1, c2 = st.columns(2)
+    st.session_state.dados["hiperfoco"] = c1.text_input("Hiperfoco", st.session_state.dados.get("hiperfoco", ""))
+    emoji = get_hiperfoco_emoji(st.session_state.dados.get("hiperfoco"))
+    c1.caption(f"{emoji} Use o hiperfoco como alavanca de engajamento.")
+
+    default_pot = [x for x in (st.session_state.dados.get("potencias") or []) if x in LISTA_POTENCIAS]
+    st.session_state.dados["potencias"] = c2.multiselect("Potencialidades", LISTA_POTENCIAS, default=default_pot)
+
+    st.divider()
+    st.markdown("##### Barreiras (CIF) + Nível de Suporte")
+
+    for area, itens in LISTAS_BARREIRAS.items():
+        with st.container(border=True):
+            st.markdown(f"**{area}**")
+
+            selecionadas = st.multiselect(
+                "Barreiras",
+                itens,
+                default=st.session_state.dados["barreiras_selecionadas"].get(area, []),
+                key=f"bar_{area}",
+            )
+            st.session_state.dados["barreiras_selecionadas"][area] = selecionadas
+
+            if selecionadas:
+                st.caption("Defina o nível de suporte para cada barreira selecionada:")
+            for b in selecionadas:
+                st.session_state.dados["niveis_suporte"][f"{area}_{b}"] = st.select_slider(
+                    f"Nível de suporte — {b}",
+                    ["Autônomo", "Monitorado", "Substancial", "Muito Substancial"],
+                    value=st.session_state.dados["niveis_suporte"].get(f"{area}_{b}", "Monitorado"),
+                    key=f"sup_{area}_{b}",
+                )
+
+    st.divider()
+    nivel, bg, cor = calcular_complexidade_pei(st.session_state.dados)
+    st.markdown(
+        f"<div style='background:{bg}; border:1px solid #E2E8F0; padding:14px; border-radius:14px;'>"
+        f"<b>Complexidade do PEI:</b> <span style='color:{cor}; font-weight:900;'>{nivel}</span>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
 
 # ==============================================================================
 # 16. ABA PLANO DE AÇÃO
