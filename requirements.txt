@@ -6,3 +6,4 @@ fpdf
 Pillow
 streamlit-cropper
 requests
+supabase
