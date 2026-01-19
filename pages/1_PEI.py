@@ -10,14 +10,6 @@ import json
 import os
 import re
 
-# ==============================================================================
-# 0. PATCH IMPORT (para Streamlit Cloud achar _client.py na raiz)
-# ==============================================================================
-import sys
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if ROOT_DIR not in sys.path:
-    sys.path.insert(0, ROOT_DIR)
-
 from _client import get_supabase_user
 
 # ==============================================================================
@@ -31,43 +23,77 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 1. GUARDAS (LOGIN + SUPABASE + ALUNO)
+# 1. GUARDAS (LOGIN + SUPABASE)
 # ==============================================================================
-def verificar_acesso():
+def verificar_login_app():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
         st.error("🔒 Acesso Negado. Faça login na Página Inicial.")
         st.stop()
 
+def verificar_login_supabase():
     if "supabase_jwt" not in st.session_state or not st.session_state["supabase_jwt"]:
-        st.error("⚠️ Esta versão do PEI precisa de login Supabase (JWT). Volte na Home e faça login novamente.")
+        st.warning("⚠️ Esta versão do PEI precisa de login Supabase (JWT). Volte na Home e faça login no Supabase.")
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("🏠 Voltar Home", use_container_width=True, type="primary"):
+                st.switch_page("Home.py")
+        with c2:
+            if st.button("🔄 Recarregar", use_container_width=True):
+                st.rerun()
         st.stop()
 
     if "supabase_user_id" not in st.session_state or not st.session_state["supabase_user_id"]:
-        st.error("⚠️ ID do usuário Supabase não encontrado. Volte na Home e faça login novamente.")
+        st.warning("⚠️ ID do usuário Supabase não encontrado. Volte na Home e faça login no Supabase novamente.")
+        if st.button("🏠 Voltar Home", use_container_width=True, type="primary"):
+            st.switch_page("Home.py")
         st.stop()
 
-verificar_acesso()
+verificar_login_app()
+verificar_login_supabase()
 
 def sb():
     return get_supabase_user(st.session_state["supabase_jwt"])
 
-# aluno selecionado (vem da página 0_Alunos)
-student_id = st.session_state.get("selected_student_id")
-student_name = st.session_state.get("selected_student_name")
-
-if not student_id:
-    st.warning("Selecione um aluno antes de editar o PEI.")
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("👥 Ir para Alunos", use_container_width=True, type="primary"):
-            st.switch_page("pages/0_Alunos.py")
-    with c2:
-        if st.button("⬅️ Voltar Home", use_container_width=True):
-            st.switch_page("Home.py")
-    st.stop()
+OWNER_ID = st.session_state["supabase_user_id"]
 
 # ==============================================================================
-# 2. BLOCO VISUAL (seu badge)
+# 2. SUPABASE: STUDENTS (listar/criar/pegar)
+# ==============================================================================
+def db_list_students(search: str | None = None):
+    q = (
+        sb()
+        .table("students")
+        .select("id, owner_id, name, birth_date, grade, class_group, diagnosis, created_at, updated_at")
+        .eq("owner_id", OWNER_ID)
+        .order("name", desc=False)
+    )
+    if search:
+        q = q.ilike("name", f"%{search}%")
+    res = q.execute()
+    return res.data or []
+
+def db_get_student(student_id: str):
+    res = (
+        sb()
+        .table("students")
+        .select("id, owner_id, name, birth_date, grade, class_group, diagnosis, created_at, updated_at")
+        .eq("id", student_id)
+        .limit(1)
+        .execute()
+    )
+    data = res.data or []
+    return data[0] if data else None
+
+def db_create_student(payload: dict):
+    res = sb().table("students").insert(payload).execute()
+    return (res.data or [None])[0]
+
+def select_student_in_session(row: dict):
+    st.session_state["selected_student_id"] = row["id"]
+    st.session_state["selected_student_name"] = row.get("name") or ""
+
+# ==============================================================================
+# 3. BLOCO VISUAL (badge / logo)
 # ==============================================================================
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -116,7 +142,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. LISTAS DE DADOS (mantidas)
+# 4. LISTAS DE DADOS
 # ==============================================================================
 LISTA_SERIES = [
     "Educação Infantil (Creche)", "Educação Infantil (Pré-Escola)",
@@ -146,7 +172,70 @@ LISTA_PROFISSIONAIS = ["Psicólogo Clínico", "Neuropsicólogo", "Fonoaudiólogo
 LISTA_FAMILIA = ["Mãe", "Pai", "Madrasta", "Padrasto", "Avó Materna", "Avó Paterna", "Avô Materno", "Avô Paterno", "Irmãos", "Tios", "Primos", "Tutor Legal", "Abrigo Institucional"]
 
 # ==============================================================================
-# 4. ESTADO DEFAULT
+# 5. SELEÇÃO / CRIAÇÃO DE ALUNO (DENTRO DO PEI)
+# ==============================================================================
+def render_student_gate():
+    st.title("📘 PEI - Plano de Ensino Individualizado")
+    st.info("Para começar, selecione um aluno existente ou crie um novo aqui mesmo.")
+
+    tab_sel, tab_new = st.tabs(["✅ Selecionar existente", "➕ Criar novo aluno"])
+
+    with tab_sel:
+        search = st.text_input("Buscar aluno", placeholder="Digite um nome...")
+        rows = db_list_students(search.strip() if search else None)
+        if not rows:
+            st.warning("Nenhum aluno encontrado.")
+        else:
+            options = {f"{r['name']} | {r.get('grade') or '-'} | {r.get('class_group') or '-'}": r for r in rows}
+            choice = st.selectbox("Escolha um aluno", list(options.keys()))
+            if st.button("Abrir PEI", type="primary", use_container_width=True):
+                select_student_in_session(options[choice])
+                st.rerun()
+
+    with tab_new:
+        nome = st.text_input("Nome do estudante", placeholder="Ex: Maria Silva")
+        nasc = st.date_input("Nascimento", value=date(2015, 1, 1))
+        grade = st.selectbox("Série/Ano", LISTA_SERIES, index=0)
+        turma = st.text_input("Turma", placeholder="Ex: A")
+        diag = st.text_input("Diagnóstico (opcional)", placeholder="Ex: TEA, TDAH...")
+
+        if st.button("Criar e abrir PEI", type="primary", use_container_width=True):
+            if not nome.strip():
+                st.warning("Informe o nome.")
+            else:
+                created = db_create_student({
+                    "owner_id": OWNER_ID,
+                    "name": nome.strip(),
+                    "birth_date": nasc.isoformat(),
+                    "grade": grade,
+                    "class_group": turma.strip() if turma else None,
+                    "diagnosis": diag.strip() if diag else None
+                })
+                if created:
+                    select_student_in_session(created)
+                    st.success("Aluno criado e selecionado ✅")
+                    st.rerun()
+                else:
+                    st.error("Não foi possível criar. Verifique RLS/policies do Supabase.")
+
+    st.divider()
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("👥 Ir para Alunos", use_container_width=True):
+            st.switch_page("pages/0_Alunos.py")
+    with c2:
+        if st.button("🏠 Voltar Home", use_container_width=True):
+            st.switch_page("Home.py")
+
+# Se ainda não existe aluno selecionado, abre o "gate" e para.
+student_id = st.session_state.get("selected_student_id")
+student_name = st.session_state.get("selected_student_name")
+if not student_id:
+    render_student_gate()
+    st.stop()
+
+# ==============================================================================
+# 6. ESTADO DEFAULT
 # ==============================================================================
 default_state = {
     'nome': student_name or '',
@@ -183,7 +272,6 @@ default_state = {
     'feedback_ajuste_game': ''
 }
 
-# inicializa/merge
 if 'dados' not in st.session_state:
     st.session_state.dados = default_state
 else:
@@ -195,7 +283,7 @@ if 'pdf_text' not in st.session_state:
     st.session_state.pdf_text = ""
 
 # ==============================================================================
-# 5. SUPABASE: carregar/salvar PEI do aluno
+# 7. SUPABASE: carregar/salvar PEI (pei_documents)
 # ==============================================================================
 def supa_load_latest_pei(student_id: str):
     res = (
@@ -203,6 +291,7 @@ def supa_load_latest_pei(student_id: str):
         .table("pei_documents")
         .select("*")
         .eq("student_id", student_id)
+        .eq("owner_id", OWNER_ID)
         .order("updated_at", desc=True)
         .limit(1)
         .execute()
@@ -211,7 +300,6 @@ def supa_load_latest_pei(student_id: str):
     return data[0] if data else None
 
 def supa_save_pei(student_id: str, payload: dict, pdf_text: str):
-    # serializa datas
     def _jsonify(x):
         return json.loads(json.dumps(x, default=str))
 
@@ -228,7 +316,7 @@ def supa_save_pei(student_id: str, payload: dict, pdf_text: str):
         }).eq("id", existing["id"]).execute()
     else:
         sb().table("pei_documents").insert({
-            "owner_id": st.session_state["supabase_user_id"],
+            "owner_id": OWNER_ID,
             "student_id": student_id,
             "school_year": year,
             "status": payload.get("status_validacao_pei", "draft"),
@@ -237,23 +325,21 @@ def supa_save_pei(student_id: str, payload: dict, pdf_text: str):
         }).execute()
 
 def supa_sync_student_from_dados(student_id: str, d: dict):
-    # mantém "students" atualizado com campos principais
     sb().table("students").update({
         "name": d.get("nome") or student_name,
         "birth_date": d.get("nasc").isoformat() if hasattr(d.get("nasc"), "isoformat") else d.get("nasc"),
         "grade": d.get("serie"),
         "class_group": d.get("turma"),
         "diagnosis": d.get("diagnostico"),
-    }).eq("id", student_id).execute()
+    }).eq("id", student_id).eq("owner_id", OWNER_ID).execute()
 
-# carrega PEI do banco (apenas 1 vez por aluno)
+# Carrega PEI do banco (1x por aluno)
 load_key = f"pei_loaded_{student_id}"
 if load_key not in st.session_state:
     latest = supa_load_latest_pei(student_id)
     if latest and latest.get("payload"):
         payload = latest["payload"]
 
-        # reconverte datas principais
         try:
             if payload.get("nasc"):
                 payload["nasc"] = date.fromisoformat(payload["nasc"])
@@ -269,13 +355,12 @@ if load_key not in st.session_state:
         if latest.get("pdf_text"):
             st.session_state.pdf_text = latest["pdf_text"] or ""
     else:
-        # garante nome pelo aluno selecionado
         st.session_state.dados["nome"] = student_name or st.session_state.dados.get("nome", "")
 
     st.session_state[load_key] = True
 
 # ==============================================================================
-# 6. UTILITÁRIOS (mantidos)
+# 8. UTILITÁRIOS
 # ==============================================================================
 def calcular_idade(data_nasc):
     if not data_nasc:
@@ -347,7 +432,7 @@ def finding_logo():
     return None
 
 def get_base64_image(image_path):
-    if not image_path:
+    if not image_path or not os.path.exists(image_path):
         return ""
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
@@ -364,8 +449,71 @@ def ler_pdf(arquivo):
     except:
         return ""
 
+# Helpers que seu dashboard usa (versões seguras)
+def get_hiperfoco_emoji(hf: str):
+    if not hf:
+        return "✨"
+    s = hf.lower()
+    if "futebol" in s or "esporte" in s:
+        return "⚽"
+    if "música" in s or "musica" in s:
+        return "🎵"
+    if "dinoss" in s:
+        return "🦖"
+    if "carro" in s:
+        return "🚗"
+    if "jogo" in s or "game" in s:
+        return "🎮"
+    if "desenho" in s or "arte" in s:
+        return "🎨"
+    return "⭐"
+
+def calcular_complexidade_pei(d: dict):
+    # bem simples: usa nº de barreiras como proxy
+    n_bar = sum(len(v) for v in (d.get("barreiras_selecionadas") or {}).values())
+    if n_bar >= 8:
+        return "Alta", "#FED7D7", "#C53030"
+    if n_bar >= 4:
+        return "Média", "#FEFCBF", "#B7791F"
+    return "Baixa", "#C6F6D5", "#2F855A"
+
+def extrair_metas_estruturadas(txt: str):
+    if not txt:
+        return None
+    # tenta achar tags [METAS_SMART] ... [FIM_METAS_SMART]
+    m = re.search(r"\[METAS_SMART\](.*?)\[FIM_METAS_SMART\]", txt, re.DOTALL | re.IGNORECASE)
+    if not m:
+        return None
+    bloco = m.group(1).strip()
+    # heurística simples
+    return {"Curto": bloco[:200] + ("..." if len(bloco) > 200 else ""), "Medio": "-", "Longo": "-"}
+
+def get_pro_icon(p: str):
+    return "🧑‍⚕️"
+
+def gerar_roteiro_gamificado(api_key, dados, pei_texto, feedback=""):
+    if not api_key:
+        return None, "⚠️ Configure a Chave API."
+    try:
+        client = OpenAI(api_key=api_key)
+        prompt = f"""
+Crie um roteiro gamificado curto para uma criança entender suas potências e desafios.
+Use linguagem lúdica, respeitosa e positiva. Máximo 450 palavras.
+Feedback opcional: {feedback}
+Dados: nome={dados.get('nome')}, hiperfoco={dados.get('hiperfoco')}, potencias={dados.get('potencias')}
+PEI (resumo): {str(pei_texto)[:2500]}
+Retorne com a tag [MAPA_TEXTO_GAMIFICADO] no início.
+"""
+        res = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return res.choices[0].message.content, None
+    except Exception as e:
+        return None, str(e)
+
 # ==============================================================================
-# 7. IA (mantido)
+# 9. IA
 # ==============================================================================
 def extrair_dados_pdf_ia(api_key, texto_pdf):
     if not api_key:
@@ -454,7 +602,7 @@ ESTRUTURA OBRIGATÓRIA:
         return None, str(e)
 
 # ==============================================================================
-# 8. GERADORES (PDF/DOCX) — mantidos (seu código)
+# 10. GERADORES (PDF/DOCX)
 # ==============================================================================
 class PDF_Classic(FPDF):
     def header(self):
@@ -556,7 +704,7 @@ def gerar_docx_final(dados):
     return b
 
 # ==============================================================================
-# 9. ESTILO VISUAL (mantido)
+# 11. ESTILO VISUAL
 # ==============================================================================
 def aplicar_estilo_visual():
     estilo = """
@@ -589,6 +737,7 @@ def aplicar_estilo_visual():
         div[data-testid="column"] .stButton button { border-radius: 8px !important; font-weight: 700 !important; height: 45px !important; background-color: #0F52BA !important; color: white !important; border: none !important; }
         div[data-testid="column"] .stButton button:hover { background-color: #0A3D8F !important; }
         .segmento-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.75rem; color: white; margin-top: 5px; }
+        .footer-signature { text-align:center; opacity:0.55; font-size:0.75rem; padding:30px 0 10px 0; }
     </style>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     """
@@ -613,114 +762,16 @@ def render_progresso():
     )
 
 # ==============================================================================
-# 10. SIDEBAR (agora salva no Supabase)
+# 12. SIDEBAR (SEMPRE DISPONÍVEL)
 # ==============================================================================
-def _require_supabase_session():
-    if "supabase_jwt" not in st.session_state:
-        st.error("Sessão Supabase não encontrada. Volte na Home e faça login novamente.")
-        st.stop()
-    if "supabase_user_id" not in st.session_state:
-        st.error("Usuário Supabase não encontrado na sessão. Volte na Home e faça login novamente.")
-        st.stop()
-
-def _sb_user():
-    return get_supabase_user(st.session_state["supabase_jwt"])
-
-def _require_student_selected():
-    sid = st.session_state.get("selected_student_id")
-    sname = st.session_state.get("selected_student_name")
-    if not sid:
-        st.warning("Nenhum aluno selecionado. Vá em **Alunos** e selecione um aluno para abrir o PEI.")
-        c1, c2 = st.columns([1, 1])
-        with c1:
-            if st.button("👥 Ir para Alunos", use_container_width=True):
-                st.switch_page("pages/0_Alunos.py")
-        with c2:
-            if st.button("🏠 Voltar para Home", use_container_width=True):
-                st.switch_page("Home.py")
-        st.stop()
-    return sid, sname
-
-def _default_pei_payload():
-    d = dict(st.session_state.dados)
-    for k in ["nasc", "monitoramento_data"]:
-        if isinstance(d.get(k), date):
-            d[k] = d[k].isoformat()
-    return d
-
-def _load_pei_from_db(student_id: str):
-    sbx = _sb_user()
-    res = (
-        sbx.table("pei_plans")
-        .select("*")
-        .eq("student_id", student_id)
-        .order("updated_at", desc=True)
-        .limit(1)
-        .execute()
-    )
-    if not res.data:
-        return None
-    return res.data[0]
-
-def _upsert_pei_in_db(student_id: str, title: str = "PEI", school_year: int | None = None):
-    sbx = _sb_user()
-    payload = _default_pei_payload()
-
-    up = {
-        "owner_id": st.session_state["supabase_user_id"],
-        "student_id": student_id,
-        "title": title,
-        "school_year": school_year,
-        "status": payload.get("status_validacao_pei", "draft") or "draft",
-        "pei_data": payload,
-        "pdf_text": (st.session_state.get("pdf_text") or "")[:20000],
-        "status_validacao_pei": payload.get("status_validacao_pei", "rascunho"),
-        "status_validacao_game": payload.get("status_validacao_game", "rascunho"),
-        "ia_mapa_texto": payload.get("ia_mapa_texto", ""),
-    }
-
-    current = _load_pei_from_db(student_id)
-    if current:
-        pid = current["id"]
-        sbx.table("pei_plans").update(up).eq("id", pid).execute()
-        return pid, "PEI atualizado no Supabase ✅"
-    else:
-        res = sbx.table("pei_plans").insert(up).execute()
-        pid = res.data[0]["id"] if res.data else None
-        return pid, "PEI criado no Supabase ✅"
-
-def _apply_loaded_pei(row: dict):
-    data = row.get("pei_data") or {}
-    if isinstance(data.get("nasc"), str):
-        try: data["nasc"] = date.fromisoformat(data["nasc"])
-        except: pass
-    if isinstance(data.get("monitoramento_data"), str):
-        try: data["monitoramento_data"] = date.fromisoformat(data["monitoramento_data"])
-        except: pass
-
-    st.session_state.dados.update(data)
-    st.session_state.pdf_text = row.get("pdf_text") or st.session_state.get("pdf_text", "")
-
-_require_supabase_session()
-student_id, student_name = _require_student_selected()
-
-if "pei_loaded_once" not in st.session_state:
-    st.session_state["pei_loaded_once"] = True
-    last = _load_pei_from_db(student_id)
-    if last and last.get("pei_data"):
-        _apply_loaded_pei(last)
-
 with st.sidebar:
-    logo = finding_logo()
-    if logo:
-        st.image(logo, width=120)
-
     st.markdown("### 👤 Sessão")
     st.caption(f"Usuário: **{st.session_state.get('usuario_nome','')}**")
     st.caption(f"Aluno: **{student_name or 'Selecionado'}**")
 
     st.markdown("---")
 
+    # OpenAI
     if 'OPENAI_API_KEY' in st.secrets:
         api_key = st.secrets['OPENAI_API_KEY']
         st.success("✅ OpenAI OK")
@@ -731,47 +782,45 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.markdown("### 📂 Carregar Backup (JSON local)")
-    uploaded_json = st.file_uploader("Arquivo .json", type="json")
-    if uploaded_json:
-        try:
-            d = json.load(uploaded_json)
-            if 'nasc' in d and isinstance(d['nasc'], str):
-                d['nasc'] = date.fromisoformat(d['nasc'])
-            if d.get('monitoramento_data') and isinstance(d['monitoramento_data'], str):
-                d['monitoramento_data'] = date.fromisoformat(d['monitoramento_data'])
-            st.session_state.dados.update(d)
-            st.success("Carregado!")
-            st.rerun()
-        except:
-            st.error("Erro no arquivo.")
+    st.markdown("### 🔄 Aluno")
+    if st.button("Trocar aluno", use_container_width=True):
+        st.session_state["selected_student_id"] = None
+        st.session_state["selected_student_name"] = None
+        st.rerun()
 
     st.markdown("---")
-
-    st.markdown("### 💾 Salvar no Supabase")
-    c_save, c_reload = st.columns(2)
-    with c_save:
+    st.markdown("### 💾 Supabase")
+    c1, c2 = st.columns(2)
+    with c1:
         if st.button("💾 Salvar", use_container_width=True, type="primary"):
-            with st.spinner("Salvando no Supabase..."):
-                pid, msg = _upsert_pei_in_db(
-                    student_id=student_id,
-                    title="PEI",
-                    school_year=date.today().year
-                )
-            st.success(msg)
-    with c_reload:
+            with st.spinner("Salvando..."):
+                supa_save_pei(student_id, st.session_state.dados, st.session_state.get("pdf_text", ""))
+                supa_sync_student_from_dados(student_id, st.session_state.dados)
+            st.success("Salvo no Supabase ✅")
+    with c2:
         if st.button("🔄 Recarregar", use_container_width=True):
-            with st.spinner("Buscando no Supabase..."):
-                row = _load_pei_from_db(student_id)
-            if row and row.get("pei_data"):
-                _apply_loaded_pei(row)
-                st.success("PEI recarregado ✅")
+            with st.spinner("Recarregando..."):
+                row = supa_load_latest_pei(student_id)
+            if row and row.get("payload"):
+                payload = row["payload"]
+                try:
+                    if payload.get("nasc"):
+                        payload["nasc"] = date.fromisoformat(payload["nasc"])
+                except:
+                    pass
+                try:
+                    if payload.get("monitoramento_data"):
+                        payload["monitoramento_data"] = date.fromisoformat(payload["monitoramento_data"])
+                except:
+                    pass
+                st.session_state.dados.update(payload)
+                st.session_state.pdf_text = row.get("pdf_text") or ""
+                st.success("Recarregado ✅")
                 st.rerun()
             else:
                 st.info("Ainda não existe PEI salvo para este aluno.")
 
     st.markdown("---")
-
     st.markdown("### 🧭 Navegação")
     if st.button("👥 Alunos", use_container_width=True):
         st.switch_page("pages/0_Alunos.py")
@@ -779,7 +828,7 @@ with st.sidebar:
         st.switch_page("Home.py")
 
 # ==============================================================================
-# 11. HEADER + ABAS
+# 13. HEADER + ABAS
 # ==============================================================================
 logo_path = finding_logo()
 b64_logo = get_base64_image(logo_path)
@@ -798,27 +847,14 @@ abas = [
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
 
 # ==============================================================================
-# 12. ABA INÍCIO
+# 14. ABA INÍCIO
 # ==============================================================================
 with tab0:
     st.markdown("### 🏛️ Central de Fundamentos e Legislação")
-    st.markdown(
-        """<div class="soft-card sc-blue" style="min-height: auto; margin-bottom: 20px;">
-        <div class="sc-head"><i class="ri-article-line" style="color:#3182CE;"></i> O que é o PEI? (Definição Técnica)</div>
-        <div class="sc-body">O <b>Plano de Ensino Individualizado (PEI)</b> é o instrumento norteador da inclusão escolar, baseado no DUA.</div>
-        <div class="bg-icon">📘</div></div>""",
-        unsafe_allow_html=True
-    )
-    st.markdown(
-        """<div class="soft-card sc-yellow" style="min-height: auto;">
-        <div class="sc-head"><i class="ri-balance-line" style="color:#D69E2E;"></i> Marco Legal (2025)</div>
-        <div class="sc-body">LDB e LBI. <b>📢 Decretos 12.686 e 12.773 (Dez/2025).</b></div>
-        <div class="bg-icon">⚖️</div></div>""",
-        unsafe_allow_html=True
-    )
+    st.info("Você está no PEI do aluno selecionado. Se quiser, use a Sidebar para trocar o aluno.")
 
 # ==============================================================================
-# 13. ABA ESTUDANTE
+# 15. ABA ESTUDANTE
 # ==============================================================================
 with tab1:
     render_progresso()
@@ -882,29 +918,8 @@ with tab1:
     st.markdown("##### Contexto Clínico")
     st.session_state.dados['diagnostico'] = st.text_input("Diagnóstico", st.session_state.dados['diagnostico'])
 
-    with st.container(border=True):
-        usa_med = st.toggle("💊 O aluno faz uso contínuo de medicação?", value=len(st.session_state.dados['lista_medicamentos']) > 0)
-        if usa_med:
-            c1m, c2m, c3m = st.columns([3, 2, 2])
-            nm = c1m.text_input("Nome", key="nm_med")
-            pos = c2m.text_input("Posologia", key="pos_med")
-            admin_escola = c3m.checkbox("Na escola?", key="adm_esc")
-            if st.button("Adicionar"):
-                st.session_state.dados['lista_medicamentos'].append({"nome": nm, "posologia": pos, "escola": admin_escola})
-                st.rerun()
-
-        if st.session_state.dados['lista_medicamentos']:
-            st.write("---")
-            for i, m in enumerate(st.session_state.dados['lista_medicamentos']):
-                tag = " [NA ESCOLA]" if m.get('escola') else ""
-                c_txt, c_btn = st.columns([5, 1])
-                c_txt.info(f"💊 **{m['nome']}** ({m['posologia']}){tag}")
-                if c_btn.button("Excluir", key=f"del_{i}"):
-                    st.session_state.dados['lista_medicamentos'].pop(i)
-                    st.rerun()
-
 # ==============================================================================
-# 14. ABA EVIDÊNCIAS
+# 16. ABA EVIDÊNCIAS
 # ==============================================================================
 with tab2:
     render_progresso()
@@ -916,23 +931,8 @@ with tab2:
         index=LISTA_ALFABETIZACAO.index(st.session_state.dados['nivel_alfabetizacao']) if st.session_state.dados['nivel_alfabetizacao'] in LISTA_ALFABETIZACAO else 0
     )
 
-    st.divider()
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown("**Pedagógico**")
-        for q in ["Estagnação na aprendizagem", "Dificuldade de generalização", "Dificuldade de abstração", "Lacuna em pré-requisitos"]:
-            st.session_state.dados['checklist_evidencias'][q] = st.toggle(q, value=st.session_state.dados['checklist_evidencias'].get(q, False))
-    with c2:
-        st.markdown("**Cognitivo**")
-        for q in ["Oscilação de foco", "Fadiga mental rápida", "Dificuldade de iniciar tarefas", "Esquecimento recorrente"]:
-            st.session_state.dados['checklist_evidencias'][q] = st.toggle(q, value=st.session_state.dados['checklist_evidencias'].get(q, False))
-    with c3:
-        st.markdown("**Comportamental**")
-        for q in ["Dependência de mediação (1:1)", "Baixa tolerância à frustração", "Desorganização de materiais", "Recusa de tarefas"]:
-            st.session_state.dados['checklist_evidencias'][q] = st.toggle(q, value=st.session_state.dados['checklist_evidencias'].get(q, False))
-
 # ==============================================================================
-# 15. ABA REDE DE APOIO
+# 17. ABA REDE DE APOIO
 # ==============================================================================
 with tab3:
     render_progresso()
@@ -941,124 +941,34 @@ with tab3:
     st.session_state.dados['orientacoes_especialistas'] = st.text_area("Orientações Clínicas", st.session_state.dados['orientacoes_especialistas'])
 
 # ==============================================================================
-# 16. ABA MAPEAMENTO
+# 18. ABA MAPEAMENTO
 # ==============================================================================
 with tab4:
     render_progresso()
     st.markdown("### <i class='ri-radar-line'></i> Mapeamento", unsafe_allow_html=True)
 
-    with st.container(border=True):
-        st.markdown("#### Potencialidades e Hiperfoco")
-        c1h, c2h = st.columns(2)
-        st.session_state.dados['hiperfoco'] = c1h.text_input("Hiperfoco", st.session_state.dados['hiperfoco'])
-        p_val = [p for p in st.session_state.dados.get('potencias', []) if p in LISTA_POTENCIAS]
-        st.session_state.dados['potencias'] = c2h.multiselect("Pontos Fortes", LISTA_POTENCIAS, default=p_val)
-
-    st.divider()
-
-    with st.container(border=True):
-        st.markdown("#### Barreiras e Nível de Suporte (CIF)")
-        c_bar1, c_bar2, c_bar3 = st.columns(3)
-
-        def render_cat_barreira(coluna, titulo, chave_json):
-            with coluna:
-                st.markdown(f"**{titulo}**")
-                itens = LISTAS_BARREIRAS[chave_json]
-                b_salvas = [b for b in st.session_state.dados['barreiras_selecionadas'].get(chave_json, []) if b in itens]
-                sel = st.multiselect("Selecione:", itens, key=f"ms_{chave_json}", default=b_salvas, label_visibility="collapsed")
-                st.session_state.dados['barreiras_selecionadas'][chave_json] = sel
-                if sel:
-                    for x in sel:
-                        st.session_state.dados['niveis_suporte'][f"{chave_json}_{x}"] = st.select_slider(
-                            x,
-                            ["Autônomo", "Monitorado", "Substancial", "Muito Substancial"],
-                            value=st.session_state.dados['niveis_suporte'].get(f"{chave_json}_{x}", "Monitorado"),
-                            key=f"sl_{chave_json}_{x}"
-                        )
-
-        render_cat_barreira(c_bar1, "Funções Cognitivas", "Funções Cognitivas")
-        render_cat_barreira(c_bar1, "Sensorial e Motor", "Sensorial e Motor")
-        render_cat_barreira(c_bar2, "Comunicação e Linguagem", "Comunicação e Linguagem")
-        render_cat_barreira(c_bar2, "Acadêmico", "Acadêmico")
-        render_cat_barreira(c_bar3, "Socioemocional", "Socioemocional")
-
 # ==============================================================================
-# 17. ABA PLANO DE AÇÃO
+# 19. ABA PLANO DE AÇÃO
 # ==============================================================================
 with tab5:
     render_progresso()
     st.markdown("### <i class='ri-tools-line'></i> Plano de Ação", unsafe_allow_html=True)
 
-    c1p, c2p, c3p = st.columns(3)
-    with c1p:
-        st.markdown("#### 1. Acesso")
-        st.session_state.dados['estrategias_acesso'] = st.multiselect(
-            "Recursos",
-            ["Tempo Estendido", "Apoio Leitura/Escrita", "Material Ampliado", "Tecnologia Assistiva", "Sala Silenciosa", "Mobiliário Adaptado"],
-            default=st.session_state.dados['estrategias_acesso']
-        )
-        st.session_state.dados['outros_acesso'] = st.text_input("Personalizado (Acesso)", st.session_state.dados['outros_acesso'])
-
-    with c2p:
-        st.markdown("#### 2. Ensino")
-        st.session_state.dados['estrategias_ensino'] = st.multiselect(
-            "Metodologia",
-            ["Fragmentação de Tarefas", "Pistas Visuais", "Mapas Mentais", "Modelagem", "Ensino Híbrido", "Instrução Explícita"],
-            default=st.session_state.dados['estrategias_ensino']
-        )
-        st.session_state.dados['outros_ensino'] = st.text_input("Personalizado (Ensino)", st.session_state.dados['outros_ensino'])
-
-    with c3p:
-        st.markdown("#### 3. Avaliação")
-        st.session_state.dados['estrategias_avaliacao'] = st.multiselect(
-            "Formato",
-            ["Prova Adaptada", "Prova Oral", "Consulta Permitida", "Portfólio", "Autoavaliação", "Parecer Descritivo"],
-            default=st.session_state.dados['estrategias_avaliacao']
-        )
-
 # ==============================================================================
-# 18. ABA MONITORAMENTO
+# 20. ABA MONITORAMENTO
 # ==============================================================================
 with tab6:
     render_progresso()
     st.markdown("### <i class='ri-loop-right-line'></i> Monitoramento", unsafe_allow_html=True)
 
-    st.session_state.dados['monitoramento_data'] = st.date_input(
-        "Data da Próxima Revisão",
-        value=st.session_state.dados.get('monitoramento_data', None)
-    )
-
-    st.divider()
-    st.warning("⚠️ **ATENÇÃO:** Preencher somente na revisão do PEI.")
-
-    with st.container(border=True):
-        c2m, c3m = st.columns(2)
-        with c2m:
-            st.session_state.dados['status_meta'] = st.selectbox(
-                "Status da Meta",
-                ["Não Iniciado", "Em Andamento", "Parcialmente Atingido", "Atingido", "Superado"],
-                index=0
-            )
-        with c3m:
-            st.session_state.dados['parecer_geral'] = st.selectbox(
-                "Parecer Geral",
-                ["Manter Estratégias", "Aumentar Suporte", "Reduzir Suporte (Autonomia)", "Alterar Metodologia", "Encaminhar para Especialista"],
-                index=0
-            )
-
-        st.session_state.dados['proximos_passos_select'] = st.multiselect(
-            "Ações Futuras",
-            ["Reunião com Família", "Encaminhamento Clínico", "Adaptação de Material", "Mudança de Lugar em Sala", "Novo PEI", "Observação em Sala"]
-        )
-
 # ==============================================================================
-# 19. ABA CONSULTORIA IA
+# 21. ABA CONSULTORIA IA
 # ==============================================================================
 with tab7:
     render_progresso()
     st.markdown("### <i class='ri-robot-2-line'></i> Consultoria Pedagógica", unsafe_allow_html=True)
 
-    if st.session_state.dados['serie']:
+    if st.session_state.dados.get('serie'):
         seg_nome, seg_cor, seg_desc = get_segmento_info_visual(st.session_state.dados['serie'])
         st.markdown(
             f"<div style='background-color: #F7FAFC; border-left: 5px solid {seg_cor}; padding: 15px; border-radius: 5px; margin-bottom: 20px;'>"
@@ -1069,7 +979,7 @@ with tab7:
     else:
         st.warning("⚠️ Selecione a Série/Ano na aba 'Estudante'.")
 
-    if (not st.session_state.dados['ia_sugestao']) or (st.session_state.dados.get('status_validacao_pei') == 'rascunho'):
+    if (not st.session_state.dados.get('ia_sugestao')) or (st.session_state.dados.get('status_validacao_pei') == 'rascunho'):
         col_btn, col_info = st.columns([1, 2])
         with col_btn:
             if st.button("✨ Gerar Estratégia Técnica", type="primary", use_container_width=True):
@@ -1081,79 +991,37 @@ with tab7:
                 else:
                     st.error(err)
 
-            st.write("")
-            if st.button("🔄 Gerar Guia Prático", use_container_width=True):
-                res, err = consultar_gpt_pedagogico(api_key, st.session_state.dados, st.session_state.pdf_text, modo_pratico=True)
-                if res:
-                    st.session_state.dados['ia_sugestao'] = res
-                    st.session_state.dados['status_validacao_pei'] = 'revisao'
-                    st.rerun()
-                else:
-                    st.error(err)
-
-    elif st.session_state.dados.get('status_validacao_pei') in ['revisao', 'aprovado']:
-
-        with st.expander("🧠 Como a IA construiu este relatório"):
-            st.markdown(
-                "1. **Análise de Contexto:** Cruzamento entre diagnóstico, idade ({}) e série ({}).\n"
-                "2. **Filtro Vygotsky:** Identificação da ZDP baseada nas barreiras.\n"
-                "3. **Mapeamento BNCC:** Seleção de códigos compatíveis com o ano letivo.\n"
-                .format(calcular_idade(st.session_state.dados['nasc']), st.session_state.dados['serie'])
-            )
-
-        with st.expander("🛡️ Calibragem e Segurança"):
-            st.markdown(
-                "* **Verificação Farmacológica:** isola análise de medicação.\n"
-                "* **Blindagem de Dados:** nenhuma info pessoal é retida após processamento.\n"
-                "* **Supervisão Humana:** exige validação do professor.\n"
-            )
-
-        st.markdown("#### 📝 Revisão do Plano")
-        texto_visual = re.sub(r'\[.*?\]', '', st.session_state.dados['ia_sugestao'])
-        st.markdown(texto_visual)
-        st.divider()
-        st.markdown("**⚠️ Responsabilidade do Educador:** A IA pode cometer erros. Valide.")
-
-        if st.session_state.dados.get('status_validacao_pei') == 'revisao':
-            c_ok, c_ajuste = st.columns(2)
-            if c_ok.button("✅ Aprovar Plano", type="primary", use_container_width=True):
-                st.session_state.dados['status_validacao_pei'] = 'aprovado'
-                st.success("Plano aprovado!")
-                st.rerun()
-            if c_ajuste.button("❌ Solicitar Ajuste", use_container_width=True):
-                st.session_state.dados['status_validacao_pei'] = 'ajustando'
-                st.rerun()
-
-        elif st.session_state.dados.get('status_validacao_pei') == 'aprovado':
-            st.success("Plano Validado.")
-            novo_texto = st.text_area("Edição Final Manual", value=st.session_state.dados['ia_sugestao'], height=300)
-            st.session_state.dados['ia_sugestao'] = novo_texto
-            if st.button("Regerar do Zero"):
-                st.session_state.dados['ia_sugestao'] = ''
-                st.session_state.dados['status_validacao_pei'] = 'rascunho'
-                st.rerun()
-
-    elif st.session_state.dados.get('status_validacao_pei') == 'ajustando':
-        st.warning("Descreva o ajuste:")
-        feedback = st.text_area("Seu feedback:", placeholder="Ex: Foque mais na alfabetização...")
-
-        if st.button("Regerar com Ajustes", type="primary"):
-            res, err = consultar_gpt_pedagogico(api_key, st.session_state.dados, st.session_state.pdf_text, modo_pratico=False, feedback_usuario=feedback)
-            if res:
-                st.session_state.dados['ia_sugestao'] = res
-                st.session_state.dados['status_validacao_pei'] = 'revisao'
-                st.rerun()
-            else:
-                st.error(err)
-
-        if st.button("Cancelar"):
-            st.session_state.dados['status_validacao_pei'] = 'revisao'
-            st.rerun()
-
 # ==============================================================================
-# 22. FOOTER
+# 22. ABA DASHBOARD & DOCS
 # ==============================================================================
-st.markdown(
-    "<div class='footer-signature'>PEI 360º v116.0 Gold Edition - Desenvolvido por Rodrigo A. Queiroz</div>",
-    unsafe_allow_html=True
-)
+with tab8:
+    render_progresso()
+    st.markdown("### <i class='ri-file-pdf-line'></i> Dashboard e Exportação", unsafe_allow_html=True)
+
+    if st.session_state.dados.get('ia_sugestao'):
+        st.markdown("#### 📤 Exportação")
+        pdf = gerar_pdf_final(st.session_state.dados, len(st.session_state.pdf_text) > 0)
+        st.download_button(
+            "Baixar PDF Oficial",
+            pdf,
+            f"PEI_{st.session_state.dados.get('nome','Aluno')}.pdf",
+            "application/pdf",
+            use_container_width=True
+        )
+        docx = gerar_docx_final(st.session_state.dados)
+        st.download_button(
+            "Baixar Word Editável",
+            docx,
+            f"PEI_{st.session_state.dados.get('nome','Aluno')}.docx",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True
+        )
+
+        st.markdown("#### 💾 Salvar no Supabase")
+        if st.button("Salvar agora", type="primary"):
+            with st.spinner("Salvando..."):
+                supa_save_pei(student_id, st.session_state.dados, st.session_state.get("pdf_text", ""))
+                supa_sync_student_from_dados(student_id, st.session_state.dados)
+            st.success("Salvo ✅")
+    else:
+        st.info("Gere o Plano na aba Consultoria IA para liberar o download
