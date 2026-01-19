@@ -1034,14 +1034,17 @@ with tab0:
         st.success("✅ Aluno sincronizado. Salvar/Carregar liberados.")
 
 # ==============================================================================
-# 12. ABA ESTUDANTE (COMPLETA: dados + família + laudo PDF + extração IA + medicação)
+# 12. ABA ESTUDANTE (REFEITA com recursos do legado)
 # ==============================================================================
 with tab1:
     render_progresso()
     st.markdown("### <i class='ri-user-smile-line'></i> Dossiê do Estudante", unsafe_allow_html=True)
 
+    # --------- Identificação ----------
     c1, c2, c3, c4 = st.columns([3, 2, 2, 1])
+
     st.session_state.dados["nome"] = c1.text_input("Nome Completo", st.session_state.dados.get("nome", ""))
+
     st.session_state.dados["nasc"] = c2.date_input(
         "Nascimento",
         value=st.session_state.dados.get("nasc", date(2015, 1, 1)),
@@ -1058,101 +1061,140 @@ with tab1:
         index=serie_idx,
         placeholder="Selecione...",
     )
-    st.session_state.dados["turma"] = c4.text_input("Turma", st.session_state.dados.get("turma", ""))
 
     if st.session_state.dados.get("serie"):
         nome_seg, cor_seg, desc_seg = get_segmento_info_visual(st.session_state.dados["serie"])
         c3.markdown(
-            f"<div class='segmento-badge' style='background-color:{cor_seg}; padding:6px 12px; border-radius:12px; color:white; font-weight:800; margin-top:6px;'>"
-            f"{nome_seg}</div>",
+            f"<div class='segmento-badge' style='background-color:{cor_seg}'>{nome_seg}</div>",
             unsafe_allow_html=True,
         )
+        c3.caption(desc_seg)
 
-    idade_str = calcular_idade(st.session_state.dados.get("nasc"))
-    if st.session_state.dados.get("nome"):
-        st.caption(f"🧾 **{st.session_state.dados.get('nome','')}** • {idade_str}")
+    st.session_state.dados["turma"] = c4.text_input("Turma", st.session_state.dados.get("turma", ""))
 
     st.divider()
+
+    # --------- Histórico & família ----------
     st.markdown("##### Histórico & Contexto Familiar")
+    c_hist, c_fam = st.columns(2)
 
-    cc1, cc2 = st.columns(2)
-    st.session_state.dados["historico"] = cc1.text_area("Histórico escolar", st.session_state.dados.get("historico", ""), height=140)
-    st.session_state.dados["familia"] = cc2.text_area("Dinâmica familiar", st.session_state.dados.get("familia", ""), height=140)
+    st.session_state.dados["historico"] = c_hist.text_area(
+        "Histórico Escolar",
+        st.session_state.dados.get("historico", ""),
+        height=160,
+        placeholder="Ex: defasagens, adaptações anteriores, evolução, observações da equipe…",
+    )
 
-    # multiselect seguro
-    default_fam = [x for x in (st.session_state.dados.get("composicao_familiar_tags") or []) if x in LISTA_FAMILIA]
+    st.session_state.dados["familia"] = c_fam.text_area(
+        "Dinâmica Familiar",
+        st.session_state.dados.get("familia", ""),
+        height=160,
+        placeholder="Ex: rotina, responsáveis, acompanhamento, comunicação com a escola…",
+    )
+
+    default_familia_valido = [x for x in st.session_state.dados.get("composicao_familiar_tags", []) if x in LISTA_FAMILIA]
     st.session_state.dados["composicao_familiar_tags"] = st.multiselect(
         "Quem convive com o aluno?",
         LISTA_FAMILIA,
-        default=default_fam,
+        default=default_familia_valido,
     )
 
     st.divider()
-    st.markdown("##### 🏥 Contexto Clínico")
-    st.session_state.dados["diagnostico"] = st.text_input("Diagnóstico", st.session_state.dados.get("diagnostico", ""))
 
-    st.markdown("##### 💊 Medicação (se houver)")
-    usa_med = st.toggle("Uso contínuo de medicação?", value=len(st.session_state.dados.get("lista_medicamentos", [])) > 0)
+    # --------- Upload de laudo + extração IA ----------
+    col_pdf, col_btn_ia = st.columns([2, 1], vertical_alignment="top")
 
-    if usa_med:
-        m1, m2, m3 = st.columns([3, 2, 2])
-        nm = m1.text_input("Nome do medicamento", key="med_nome")
-        ps = m2.text_input("Posologia", key="med_pos")
-        esc = m3.checkbox("Administrar na escola?", key="med_escola")
-
-        if st.button("Adicionar medicamento", use_container_width=True):
-            if (nm or "").strip():
-                st.session_state.dados["lista_medicamentos"].append(
-                    {"nome": nm.strip(), "posologia": (ps or "").strip(), "escola": bool(esc)}
-                )
-                st.rerun()
-
-    if st.session_state.dados.get("lista_medicamentos"):
-        for i, m in enumerate(st.session_state.dados["lista_medicamentos"]):
-            tag = "🏫" if m.get("escola") else ""
-            c_txt, c_btn = st.columns([5, 1])
-            c_txt.info(f"💊 **{m.get('nome','')}** ({m.get('posologia','')}) {tag}")
-            if c_btn.button("Excluir", key=f"del_med_{i}"):
-                st.session_state.dados["lista_medicamentos"].pop(i)
-                st.rerun()
-
-    st.divider()
-    st.markdown("##### 📎 Laudo/Relatório (PDF)")
-
-    p1, p2 = st.columns([3, 1])
-    with p1:
-        up = st.file_uploader("Envie o PDF (até 6 páginas serão lidas)", type="pdf", label_visibility="collapsed")
+    with col_pdf:
+        st.markdown("**📎 Upload de Laudo (PDF)**")
+        up = st.file_uploader(
+            "Arraste o arquivo aqui",
+            type="pdf",
+            label_visibility="collapsed",
+        )
         if up:
             st.session_state.pdf_text = ler_pdf(up)
-            st.success("PDF carregado ✅")
-
-    with p2:
-        st.write("")
-        st.write("")
-        if st.button("✨ Extrair dados do laudo (IA)", type="primary", use_container_width=True, disabled=not bool(st.session_state.get("pdf_text"))):
-            if not api_key:
-                st.error("Configure a chave OpenAI na sidebar.")
+            if st.session_state.pdf_text:
+                st.success("PDF lido ✅ (usando até 6 páginas)")
             else:
-                with st.spinner("Analisando laudo..."):
-                    dados_extraidos, erro = extrair_dados_pdf_ia(api_key, st.session_state.pdf_text)
+                st.warning("Não consegui extrair texto do PDF (pode estar escaneado/imagem).")
 
-                if dados_extraidos:
-                    if dados_extraidos.get("diagnostico"):
-                        st.session_state.dados["diagnostico"] = dados_extraidos["diagnostico"]
+    with col_btn_ia:
+        st.write("")
+        st.write("")
+        if st.button(
+            "✨ Extrair Dados do Laudo",
+            type="primary",
+            use_container_width=True,
+            disabled=(not st.session_state.get("pdf_text")),
+        ):
+            with st.spinner("Analisando laudo..."):
+                dados_extraidos, erro = extrair_dados_pdf_ia(api_key, st.session_state.pdf_text)
 
-                    if dados_extraidos.get("medicamentos"):
-                        for med in dados_extraidos["medicamentos"]:
-                            st.session_state.dados["lista_medicamentos"].append(
-                                {
-                                    "nome": med.get("nome", ""),
-                                    "posologia": med.get("posologia", ""),
-                                    "escola": False,
-                                }
-                            )
-                    st.success("Dados extraídos ✅")
-                    st.rerun()
+            if dados_extraidos:
+                # Diagnóstico
+                if dados_extraidos.get("diagnostico"):
+                    st.session_state.dados["diagnostico"] = dados_extraidos["diagnostico"]
+
+                # Medicamentos
+                meds = dados_extraidos.get("medicamentos") or []
+                if meds:
+                    for med in meds:
+                        st.session_state.dados["lista_medicamentos"].append(
+                            {
+                                "nome": (med.get("nome") or "").strip(),
+                                "posologia": (med.get("posologia") or "").strip(),
+                                "escola": False,
+                            }
+                        )
+
+                st.success("Dados extraídos ✅")
+                st.rerun()
+            else:
+                st.error(f"Erro: {erro}")
+
+    st.divider()
+
+    # --------- Contexto clínico + medicação ----------
+    st.markdown("##### Contexto Clínico")
+    st.session_state.dados["diagnostico"] = st.text_input(
+        "Diagnóstico",
+        st.session_state.dados.get("diagnostico", ""),
+        placeholder="Ex: TEA nível 1, TDAH, Dislexia… (se houver CID, cole também)",
+    )
+
+    with st.container(border=True):
+        usa_med = st.toggle(
+            "💊 O aluno faz uso contínuo de medicação?",
+            value=len(st.session_state.dados.get("lista_medicamentos", [])) > 0,
+        )
+
+        if usa_med:
+            c_m1, c_m2, c_m3 = st.columns([3, 2, 2])
+            nm = c_m1.text_input("Nome", key="nm_med")
+            pos = c_m2.text_input("Posologia", key="pos_med")
+            admin_escola = c_m3.checkbox("Na escola?", key="adm_esc")
+
+            if st.button("Adicionar", use_container_width=False):
+                if not nm.strip():
+                    st.warning("Informe o nome do medicamento.")
                 else:
-                    st.error(erro or "Erro ao extrair")
+                    st.session_state.dados["lista_medicamentos"].append(
+                        {"nome": nm.strip(), "posologia": pos.strip(), "escola": bool(admin_escola)}
+                    )
+                    st.rerun()
+
+        # Lista e excluir
+        meds_list = st.session_state.dados.get("lista_medicamentos", [])
+        if meds_list:
+            st.write("---")
+            for i, m in enumerate(list(meds_list)):
+                tag = " [NA ESCOLA]" if m.get("escola") else ""
+                c_txt, c_btn = st.columns([5, 1])
+                c_txt.info(f"💊 **{m.get('nome','')}** ({m.get('posologia','')}){tag}")
+                if c_btn.button("Excluir", key=f"del_{i}"):
+                    st.session_state.dados["lista_medicamentos"].pop(i)
+                    st.rerun()
+
 
 # ==============================================================================
 # 13. ABA EVIDÊNCIAS (COMPLETA)
