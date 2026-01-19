@@ -1480,77 +1480,121 @@ with tab3:
 
 
 # ==============================================================================
-# 15. ABA MAPEAMENTO (COMPLETA: hiperfoco + potências + barreiras + nível de suporte)
+# 15. ABA MAPEAMENTO (Hiperfoco + Potências + Barreiras + Nível de Suporte)
 # ==============================================================================
 with tab4:
     render_progresso()
     st.markdown("### <i class='ri-radar-line'></i> Mapeamento", unsafe_allow_html=True)
-    st.caption("Mapeie forças, hiperfocos e barreiras que impactam aprendizagem e participação.")
+    st.caption("Mapeie forças, hiperfocos e barreiras. Para cada barreira selecionada, defina o nível de suporte necessário.")
 
-    # Garantias de estado (caso algo não tenha entrado no default_state)
+    # =========================
+    # Garantias de estado
+    # =========================
     st.session_state.dados.setdefault("hiperfoco", "")
     st.session_state.dados.setdefault("potencias", [])
     st.session_state.dados.setdefault("barreiras_selecionadas", {k: [] for k in LISTAS_BARREIRAS.keys()})
+    st.session_state.dados.setdefault("niveis_suporte", {})  # chave: f"{dominio}_{barreira}" -> valor
 
     # =========================
     # 1) POTENCIALIDADES + HIPERFOCO
     # =========================
     with st.container(border=True):
         st.markdown("#### 🌟 Potencialidades e Hiperfoco")
-
         c1, c2 = st.columns(2)
+
         st.session_state.dados["hiperfoco"] = c1.text_input(
             "Hiperfoco (se houver)",
             st.session_state.dados.get("hiperfoco", ""),
             placeholder="Ex.: Dinossauros, Minecraft, Mapas, Carros, Desenho..."
         )
 
-        pot_val = [p for p in st.session_state.dados.get("potencias", []) if p in LISTA_POTENCIAS]
+        p_val = [p for p in st.session_state.dados.get("potencias", []) if p in LISTA_POTENCIAS]
         st.session_state.dados["potencias"] = c2.multiselect(
             "Potencialidades / Pontos fortes",
             LISTA_POTENCIAS,
-            default=pot_val,
-            help="Selecione as forças do estudante (isso orienta estratégias e engajamento)."
+            default=p_val
         )
 
     st.divider()
 
     # =========================
-    # 2) BARREIRAS (DIVIDIDAS POR DOMÍNIO)
+    # 2) BARREIRAS (DIVIDIDAS POR DOMÍNIO) + NÍVEL DE SUPORTE
     # =========================
-    st.markdown("#### 🧩 Barreiras por domínio")
-    st.caption("Selecione apenas as barreiras observadas no cotidiano escolar. Evite marcar tudo.")
+    st.markdown("#### 🧩 Barreiras e Nível de Suporte (CIF)")
+    st.caption("Selecione as barreiras observadas e indique o suporte necessário para cada uma.")
 
-    col_left, col_right = st.columns(2)
-    cols = [col_left, col_right]
+    # Função auxiliar para renderizar um domínio inteiro (multiselect + sliders)
+    def render_dominio_barreiras(dominio: str, opcoes: list[str]):
+        with st.container(border=True):
+            st.markdown(f"**{dominio}**")
 
-    for i, (dominio, opcoes) in enumerate(LISTAS_BARREIRAS.items()):
-        alvo = cols[i % 2]
+            # multiselect do domínio
+            salvas = [b for b in st.session_state.dados["barreiras_selecionadas"].get(dominio, []) if b in opcoes]
+            selecionadas = st.multiselect(
+                "Selecione as barreiras",
+                opcoes,
+                default=salvas,
+                key=f"ms_bar_{dominio}",
+                label_visibility="collapsed"
+            )
+            st.session_state.dados["barreiras_selecionadas"][dominio] = selecionadas
+
+            # sliders para cada barreira selecionada
+            if selecionadas:
+                st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+                st.markdown("**Nível de suporte por barreira**")
+                for b in selecionadas:
+                    chave = f"{dominio}_{b}"
+                    st.session_state.dados["niveis_suporte"].setdefault(chave, "Monitorado")
+
+                    st.session_state.dados["niveis_suporte"][chave] = st.select_slider(
+                        b,
+                        options=["Autônomo", "Monitorado", "Substancial", "Muito Substancial"],
+                        value=st.session_state.dados["niveis_suporte"].get(chave, "Monitorado"),
+                        key=f"sl_{dominio}_{b}"
+                    )
+
+    # Layout em 2 colunas (como ficava bonito antes)
+    colL, colR = st.columns(2)
+
+    # Ordem sugerida (boa leitura)
+    dominios_ordenados = [
+        "Funções Cognitivas",
+        "Comunicação e Linguagem",
+        "Socioemocional",
+        "Sensorial e Motor",
+        "Acadêmico",
+    ]
+
+    # Render em colunas alternadas
+    for idx, dom in enumerate(dominios_ordenados):
+        opcoes = LISTAS_BARREIRAS.get(dom, [])
+        alvo = colL if idx % 2 == 0 else colR
         with alvo:
-            with st.container(border=True):
-                st.markdown(f"**{dominio}**")
+            render_dominio_barreiras(dom, opcoes)
 
-                st.session_state.dados["barreiras_selecionadas"].setdefault(dominio, [])
+    # =========================
+    # 3) LIMPEZA AUTOMÁTICA (remover níveis de barreiras desmarcadas)
+    # =========================
+    # Chaves válidas atuais
+    chaves_validas = set()
+    for dom, itens in st.session_state.dados["barreiras_selecionadas"].items():
+        for b in itens:
+            chaves_validas.add(f"{dom}_{b}")
 
-                st.session_state.dados["barreiras_selecionadas"][dominio] = st.multiselect(
-                    "Selecione as barreiras observadas",
-                    opcoes,
-                    default=[
-                        x for x in st.session_state.dados["barreiras_selecionadas"].get(dominio, [])
-                        if x in opcoes
-                    ],
-                    key=f"barreiras_{dominio}",
-                    label_visibility="collapsed"
-                )
+    niveis = st.session_state.dados.get("niveis_suporte", {})
+    niveis_limpo = {k: v for k, v in niveis.items() if k in chaves_validas}
+    st.session_state.dados["niveis_suporte"] = niveis_limpo
 
     st.divider()
 
     # =========================
-    # 3) RESUMO (VISUAL)
+    # 4) RESUMO (rápido e útil)
     # =========================
     st.markdown("#### 📌 Resumo do Mapeamento")
 
     csum1, csum2 = st.columns(2)
+
     with csum1:
         hf = (st.session_state.dados.get("hiperfoco") or "").strip()
         if hf:
@@ -1572,9 +1616,12 @@ with tab4:
             st.info("🧩 **Barreiras:** nenhuma selecionada")
         else:
             st.warning(f"🧩 **Barreiras selecionadas:** {total_bar}")
-            # lista compacta
             for dom, vals in selecionadas.items():
-                st.markdown(f"**{dom}:** " + " • ".join(vals))
+                st.markdown(f"**{dom}:**")
+                for b in vals:
+                    chave = f"{dom}_{b}"
+                    nivel = st.session_state.dados["niveis_suporte"].get(chave, "Monitorado")
+                    st.markdown(f"- {b} → **{nivel}**")
 
 
 
