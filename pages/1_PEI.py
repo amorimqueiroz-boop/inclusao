@@ -1114,10 +1114,11 @@ col_pdf, col_action = st.columns([2, 1], vertical_alignment="center")
 
 with col_pdf:
     up = st.file_uploader(
-        "Arraste o arquivo aqui",
-        type="pdf",
-        label_visibility="collapsed",
-    )
+    "Arraste o arquivo aqui",
+    type="pdf",
+    label_visibility="collapsed",
+    key="pei_laudo_pdf_uploader",
+)
     if up:
         st.session_state.pdf_text = ler_pdf(up)
         if st.session_state.pdf_text:
