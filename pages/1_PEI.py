@@ -1563,54 +1563,58 @@ with tab4:
     # 3) Render por domínio (multiselect + sliders + observação)
     # -------------------------
     def render_dominio(dominio: str, opcoes: list[str]):
-        with st.container(border=True):
-            st.markdown(f"**{dominio}**")
+    with st.container(border=True):
+        st.markdown(f"**{dominio}**")
 
-            # multiselect
-            salvas = [b for b in st.session_state.dados["barreiras_selecionadas"].get(dominio, []) if b in opcoes]
-            selecionadas = st.multiselect(
-                "Selecione as barreiras",
-                opcoes,
-                default=salvas,
-                key=f"ms_{dominio}",
-                label_visibility="collapsed"
-            )
-            st.session_state.dados["barreiras_selecionadas"][dominio] = selecionadas
+        # multiselect
+        salvas = [b for b in st.session_state.dados["barreiras_selecionadas"].get(dominio, []) if b in opcoes]
+        selecionadas = st.multiselect(
+            "Selecione as barreiras",
+            opcoes,
+            default=salvas,
+            key=f"ms_{dominio}",
+            label_visibility="collapsed"
+        )
+        st.session_state.dados["barreiras_selecionadas"][dominio] = selecionadas
 
-            # sliders por barreira
-            if selecionadas:
-                st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
-                st.markdown("**Intensidade de apoio por barreira**")
+        if selecionadas:
+            st.markdown("---")
+            st.markdown("**Nível de apoio por barreira**")
+            st.caption("Use esta barra para indicar a intensidade de suporte necessária na rotina (não é DUA).")
 
-                for b in selecionadas:
-                    chave = f"{dominio}_{b}"
-                    st.session_state.dados["niveis_suporte"].setdefault(chave, "Monitorado")
+            for b in selecionadas:
+                chave = f"{dominio}_{b}"
+                st.session_state.dados["niveis_suporte"].setdefault(chave, "Monitorado")
 
-                    # Nome limpo + descrição curta abaixo (sem parênteses no nome)
-                    st.markdown(f"**{b}**")
-                    desc = DESCR_BARREIRAS.get(b, "")
-                    if desc:
-                        st.caption(desc)
+                # Linha visual: barreira + slider ao lado (fica BEM diferente do anterior)
+                colA, colB = st.columns([2.2, 2.8], vertical_alignment="center")
 
+                with colA:
+                    st.markdown(f"✅ **{b}**")  # nome limpo, sem parênteses
+                with colB:
                     st.session_state.dados["niveis_suporte"][chave] = st.select_slider(
-                        "Nível de apoio",
+                        "Nível de Apoio",
                         options=["Autônomo", "Monitorado", "Substancial", "Muito Substancial"],
                         value=st.session_state.dados["niveis_suporte"].get(chave, "Monitorado"),
                         key=f"sl_{dominio}_{b}",
-                        label_visibility="collapsed"
+                        help=(
+                            "Autônomo: realiza sem mediação | "
+                            "Monitorado: precisa de checagens | "
+                            "Substancial: precisa de mediação frequente | "
+                            "Muito Substancial: precisa de suporte intenso/contínuo"
+                        )
                     )
 
-                st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+        # observação por domínio (mantido)
+        st.session_state.dados["observacoes_barreiras"].setdefault(dominio, "")
+        st.session_state.dados["observacoes_barreiras"][dominio] = st.text_area(
+            "Observações (opcional)",
+            value=st.session_state.dados["observacoes_barreiras"].get(dominio, ""),
+            placeholder="Ex.: quando ocorre, gatilhos, o que ajuda, o que piora, estratégias que já funcionam...",
+            height=90,
+            key=f"obs_{dominio}"
+        )
 
-            # observação por domínio (mantido — você curtiu)
-            st.session_state.dados["observacoes_barreiras"].setdefault(dominio, "")
-            st.session_state.dados["observacoes_barreiras"][dominio] = st.text_area(
-                "Observações (opcional)",
-                value=st.session_state.dados["observacoes_barreiras"].get(dominio, ""),
-                placeholder="Ex.: quando ocorre, gatilhos, o que ajuda, o que piora, estratégias que já funcionam...",
-                height=90,
-                key=f"obs_{dominio}"
-            )
 
     # -------------------------
     # 4) 3 colunas (como você preferiu)
