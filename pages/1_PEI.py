@@ -1105,7 +1105,102 @@ with tab1:
     st.divider()
 
     # --------- Upload de laudo + extração IA ----------
-    col_pdf, col_btn_ia = st.columns([2, 1], vertical_alignment="top")
+   # --------- Upload de laudo + extração IA (layout melhor + revisão meds) ----------
+st.session_state.dados.setdefault("meds_extraidas_tmp", [])
+st.session_state.dados.setdefault("status_meds_extraidas", "idle")
+
+st.markdown("##### 📎 Laudo (PDF) + Extração Inteligente")
+col_pdf, col_action = st.columns([2, 1], vertical_alignment="center")
+
+with col_pdf:
+    up = st.file_uploader(
+        "Arraste o arquivo aqui",
+        type="pdf",
+        label_visibility="collapsed",
+    )
+    if up:
+        st.session_state.pdf_text = ler_pdf(up)
+        if st.session_state.pdf_text:
+            st.success("PDF lido ✅ (usando até 6 páginas)")
+        else:
+            st.warning("Não consegui extrair texto do PDF (pode estar escaneado/imagem).")
+
+with col_action:
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+    cbtn1, cbtn2, cbtn3 = st.columns([1, 2, 1])
+    with cbtn2:
+        extrair = st.button(
+            "✨ Extrair Dados do Laudo",
+            type="primary",
+            use_container_width=True,
+            disabled=(not st.session_state.get("pdf_text")),
+        )
+
+    if extrair:
+        with st.spinner("Analisando laudo..."):
+            dados_extraidos, erro = extrair_dados_pdf_ia(api_key, st.session_state.pdf_text)
+
+        if dados_extraidos:
+            # Diagnóstico
+            if dados_extraidos.get("diagnostico"):
+                st.session_state.dados["diagnostico"] = dados_extraidos["diagnostico"]
+
+            # Medicamentos -> vão para revisão antes de salvar
+            meds = dados_extraidos.get("medicamentos") or []
+            meds_norm = []
+            for med in meds:
+                meds_norm.append({
+                    "nome": (med.get("nome") or "").strip(),
+                    "posologia": (med.get("posologia") or "").strip(),
+                    "escola": False,  # usuário decide na revisão
+                })
+
+            st.session_state.dados["meds_extraidas_tmp"] = meds_norm
+            st.session_state.dados["status_meds_extraidas"] = "review" if meds_norm else "idle"
+
+            st.success("Diagnóstico extraído ✅ (medicações: revisar abaixo)")
+            st.rerun()
+        else:
+            st.error(f"Erro: {erro}")
+
+# --------- Revisão das meds extraídas ----------
+if st.session_state.dados.get("status_meds_extraidas") == "review":
+    meds_tmp = st.session_state.dados.get("meds_extraidas_tmp", [])
+
+    with st.container(border=True):
+        st.markdown("**💊 Medicações encontradas no laudo (confirme antes de adicionar)**")
+        if not meds_tmp:
+            st.info("Nenhuma medicação identificada.")
+            st.session_state.dados["status_meds_extraidas"] = "idle"
+        else:
+            for i, m in enumerate(meds_tmp):
+                cc1, cc2, cc3 = st.columns([3, 2, 1.5])
+                m["nome"] = cc1.text_input("Nome", value=m.get("nome", ""), key=f"tmp_med_nome_{i}")
+                m["posologia"] = cc2.text_input("Posologia", value=m.get("posologia", ""), key=f"tmp_med_pos_{i}")
+                m["escola"] = cc3.checkbox("Na escola?", value=bool(m.get("escola", False)), key=f"tmp_med_esc_{i}")
+
+            a1, a2, a3 = st.columns([2, 2, 2])
+            if a1.button("✅ Adicionar ao PEI", type="primary", use_container_width=True):
+                for m in meds_tmp:
+                    if (m.get("nome") or "").strip():
+                        st.session_state.dados["lista_medicamentos"].append({
+                            "nome": (m.get("nome") or "").strip(),
+                            "posologia": (m.get("posologia") or "").strip(),
+                            "escola": bool(m.get("escola", False)),
+                        })
+                st.session_state.dados["meds_extraidas_tmp"] = []
+                st.session_state.dados["status_meds_extraidas"] = "idle"
+                st.success("Medicações adicionadas ✅")
+                st.rerun()
+
+            if a2.button("🧹 Limpar lista extraída", use_container_width=True):
+                st.session_state.dados["meds_extraidas_tmp"] = []
+                st.session_state.dados["status_meds_extraidas"] = "idle"
+                st.rerun()
+
+            if a3.button("↩️ Voltar sem adicionar", use_container_width=True):
+                st.session_state.dados["status_meds_extraidas"] = "idle"
+                st.rerun()
 
     with col_pdf:
         st.markdown("**📎 Upload de Laudo (PDF)**")
