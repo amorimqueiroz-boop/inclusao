@@ -1584,17 +1584,178 @@ with tab7:
 
 
 # ==============================================================================
-# 19. ABA DASHBOARD & DOCS (mantida mínima)
+# 19. ABA DASHBOARD & DOCS (KPIs + Exportações)
 # ==============================================================================
 with tab8:
     render_progresso()
     st.markdown("### <i class='ri-file-pdf-line'></i> Dashboard e Exportação", unsafe_allow_html=True)
-    st.info("Exportação completa será reativada no próximo ajuste (ponto 2).")
+
+    dados = st.session_state.dados
+
+    # ---------------- KPIs ----------------
+    st.markdown("#### 📊 Indicadores do PEI")
+    c1, c2, c3, c4 = st.columns(4)
+
+    c1.metric("Barreiras Ativas", sum(len(v) for v in dados.get("barreiras_selecionadas", {}).values()))
+    c2.metric("Estratégias (Ensino)", len(dados.get("estrategias_ensino", [])))
+    c3.metric("Rede de Apoio", len(dados.get("rede_apoio", [])))
+    c4.metric("Potencialidades", len(dados.get("potencias", [])))
+
+    st.divider()
+
+    # ---------------- Metas SMART ----------------
+    st.markdown("#### 🎯 Metas SMART (extraídas da IA)")
+    metas = extrair_metas_estruturadas(dados.get("ia_sugestao", ""))
+
+    mc1, mc2, mc3 = st.columns(3)
+    mc1.info(f"**Curto Prazo**\n\n{metas.get('Curto')}")
+    mc2.info(f"**Médio Prazo**\n\n{metas.get('Medio')}")
+    mc3.info(f"**Longo Prazo**\n\n{metas.get('Longo')}")
+
+    st.divider()
+
+    # ---------------- Componentes Impactados ----------------
+    st.markdown("#### 📚 Componentes Curriculares Impactados")
+    comps = inferir_componentes_impactados(dados)
+    for c in comps:
+        st.markdown(f"- {c}")
+
+    st.divider()
+
+    # ---------------- Exportações ----------------
+    st.markdown("#### 📤 Exportar Documentos")
+
+    ec1, ec2, ec3 = st.columns(3)
+
+    with ec1:
+        if st.button("📄 Gerar PDF Oficial", use_container_width=True, type="primary"):
+            if not dados.get("ia_sugestao"):
+                st.warning("Gere o PEI na aba Consultoria IA antes.")
+            else:
+                pdf_bytes = gerar_pdf_final(dados)
+                st.download_button(
+                    "⬇️ Download PDF",
+                    pdf_bytes,
+                    file_name=f"PEI_{dados.get('nome','estudante')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                )
+
+    with ec2:
+        if st.button("📝 Gerar Word (.docx)", use_container_width=True):
+            if not dados.get("ia_sugestao"):
+                st.warning("Gere o PEI na aba Consultoria IA antes.")
+            else:
+                docx_io = gerar_docx_final(dados)
+                st.download_button(
+                    "⬇️ Download DOCX",
+                    docx_io,
+                    file_name=f"PEI_{dados.get('nome','estudante')}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True,
+                )
+
+    with ec3:
+        st.download_button(
+            "💾 Backup JSON",
+            json.dumps(dados, ensure_ascii=False, indent=2, default=str),
+            file_name=f"PEI_{dados.get('nome','estudante')}.json",
+            mime="application/json",
+            use_container_width=True,
+        )
+
+    st.divider()
+    st.caption("⚠️ Os documentos exportados devem ser revisados e assinados pela equipe pedagógica.")
+
 
 # ==============================================================================
-# 20. FOOTER
+# 20. ABA JORNADA GAMIFICADA (Roteiro + PDF)
 # ==============================================================================
-st.markdown(
-    "<div class='footer-signature'>PEI 360º v116.0 Gold Edition - Desenvolvido por Rodrigo A. Queiroz</div>",
-    unsafe_allow_html=True
-)
+with tab_mapa:
+    render_progresso()
+    st.markdown("### <i class='ri-gamepad-line'></i> Jornada Gamificada", unsafe_allow_html=True)
+
+    dados = st.session_state.dados
+    st.session_state.dados.setdefault("status_validacao_game", "rascunho")
+    st.session_state.dados.setdefault("feedback_ajuste_game", "")
+
+    if not dados.get("ia_sugestao"):
+        st.warning("⚠️ Gere primeiro o PEI Técnico na aba **Consultoria IA**.")
+        st.stop()
+
+    if not api_key:
+        st.error("Configure a chave OpenAI na sidebar.")
+        st.stop()
+
+    # --------- Geração ----------
+    if dados.get("status_validacao_game") == "rascunho":
+        if st.button("🎮 Gerar Jornada Gamificada", type="primary", use_container_width=True):
+            texto, err = gerar_roteiro_gamificado(
+                api_key,
+                dados,
+                dados.get("ia_sugestao", ""),
+            )
+            if texto:
+                st.session_state.dados["ia_mapa_texto"] = texto
+                st.session_state.dados["status_validacao_game"] = "revisao"
+                st.rerun()
+            else:
+                st.error(err or "Erro ao gerar jornada.")
+
+    # --------- Revisão ----------
+    elif dados.get("status_validacao_game") == "revisao":
+        st.markdown("#### 🗺️ Roteiro Gerado")
+        st.markdown(dados.get("ia_mapa_texto", ""))
+
+        c1, c2 = st.columns(2)
+        if c1.button("✅ Aprovar Jornada", type="primary", use_container_width=True):
+            st.session_state.dados["status_validacao_game"] = "aprovado"
+            st.rerun()
+        if c2.button("❌ Solicitar Ajuste", use_container_width=True):
+            st.session_state.dados["status_validacao_game"] = "ajustando"
+            st.rerun()
+
+    # --------- Ajuste ----------
+    elif dados.get("status_validacao_game") == "ajustando":
+        st.warning("Descreva o ajuste desejado:")
+        fb = st.text_area("Feedback:", placeholder="Ex: mais visual, menos texto…")
+        if st.button("Regerar Jornada", type="primary", use_container_width=True):
+            texto, err = gerar_roteiro_gamificado(
+                api_key,
+                dados,
+                dados.get("ia_sugestao", ""),
+                feedback_game=fb,
+            )
+            if texto:
+                st.session_state.dados["ia_mapa_texto"] = texto
+                st.session_state.dados["status_validacao_game"] = "revisao"
+                st.rerun()
+            else:
+                st.error(err or "Erro ao regerar.")
+
+        if st.button("Cancelar", use_container_width=True):
+            st.session_state.dados["status_validacao_game"] = "revisao"
+            st.rerun()
+
+    # --------- Aprovado ----------
+    elif dados.get("status_validacao_game") == "aprovado":
+        st.success("🎉 Jornada aprovada!")
+        texto_edit = st.text_area(
+            "Edição Final (opcional)",
+            value=dados.get("ia_mapa_texto", ""),
+            height=320,
+        )
+        st.session_state.dados["ia_mapa_texto"] = texto_edit
+
+        pdf_game = gerar_pdf_tabuleiro_simples(texto_edit)
+        st.download_button(
+            "⬇️ Baixar Jornada (PDF)",
+            pdf_game,
+            file_name=f"Jornada_{dados.get('nome','estudante')}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
+
+        if st.button("🔁 Refazer Jornada", use_container_width=True):
+            st.session_state.dados["status_validacao_game"] = "rascunho"
+            st.rerun()
