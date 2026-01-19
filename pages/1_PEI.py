@@ -1130,12 +1130,13 @@ with col_action:
     st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
     cbtn1, cbtn2, cbtn3 = st.columns([1, 2, 1])
     with cbtn2:
-        extrair = st.button(
-            "✨ Extrair Dados do Laudo",
-            type="primary",
-            use_container_width=True,
-            disabled=(not st.session_state.get("pdf_text")),
-        )
+       extrair = st.button(
+    "✨ Extrair Dados do Laudo",
+    type="primary",
+    use_container_width=True,
+    disabled=(not st.session_state.get("pdf_text")),
+    key="btn_extrair_laudo",
+)
 
     if extrair:
         with st.spinner("Analisando laudo..."):
