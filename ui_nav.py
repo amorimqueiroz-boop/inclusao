@@ -1,243 +1,249 @@
 # ui_nav.py
 import streamlit as st
-import os
-import base64
+import os, base64
 
-# ==============================================================================
-# 1. CONFIGURAÇÃO DOS ÍCONES E CORES
-# ==============================================================================
-# Definimos aqui os CDNs exatos que você pediu para garantir que os ícones carreguem
+# Flaticon UIcons v3.0.0 (padrão Omnisfera) + Inter
 FLATICON_CSS = """
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css'>
 <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
 <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-straight/css/uicons-solid-straight.css'>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 """
 
-# Configuração de cada botão (Chave, Rótulo, Ícone, Cor, Biblioteca)
-# Ajustei os nomes das classes (fi-br, fi-sr, fi-ss) para bater com as bibliotecas que você pediu.
+COLORS = {
+    "home": "#0F172A",
+    "estudantes": "#2B6CEB",
+    "pei": "#2F7DF6",
+    "paee": "#22A765",
+    "hub": "#D98A0A",
+    "diario": "#E05A1C",
+    "mon": "#8B5CF6",
+    "ia": "#0F172A",
+    "logout": "#64748B",
+}
+
+# Ícones “seguros” que você já vinha usando
+ICONS = {
+    "home": "fi fi-br-house-chimney",     # bold-rounded
+    "estudantes": "fi fi-sr-users-alt",   # solid-rounded
+    "pei": "fi fi-sr-puzzle-alt",         # solid-rounded
+    "paee": "fi fi-ss-route",             # solid-straight
+    "hub": "fi fi-sr-lightbulb-on",       # solid-rounded
+    "diario": "fi fi-br-compass-alt",     # bold-rounded
+    "mon": "fi fi-br-chart-line-up",      # bold-rounded
+    "ia": "fi fi-br-brain",               # bold-rounded
+    "logout": "fi fi-sr-sign-out-alt",    # solid-rounded
+}
+
 NAV_ITEMS = [
-    {
-        "key": "home",
-        "label": "Home",
-        "icon": "fi fi-br-home",  # Bold Rounded
-        "color": "#1F2937"        # Cinza Escuro
-    },
-    {
-        "key": "pei",
-        "label": "Estratégias & PEI",
-        "icon": "fi fi-sr-chess-piece", # Solid Rounded (Estratégia)
-        "color": "#3B82F6"              # Azul
-    },
-    {
-        "key": "paee",
-        "label": "Plano de Ação",
-        "icon": "fi fi-ss-rocket-lunch", # Solid Straight (Ação/Foguete)
-        "color": "#10B981"               # Verde
-    },
-    {
-        "key": "hub",
-        "label": "Hub de Recursos",
-        "icon": "fi fi-sr-apps",      # Solid Rounded (Hub/Recursos)
-        "color": "#F59E0B"            # Amarelo/Laranja
-    },
-    {
-        "key": "diario",
-        "label": "Diário de Bordo",
-        "icon": "fi fi-br-book-alt",  # Bold Rounded
-        "color": "#F97316"            # Laranja
-    },
-    {
-        "key": "mon",
-        "label": "Evolução & Dados",
-        "icon": "fi fi-br-chart-histogram", # Bold Rounded
-        "color": "#8B5CF6"                  # Roxo
-    }
+    ("home", "Home"),
+    ("estudantes", "Alunos"),
+    ("pei", "Estratégias & PEI"),
+    ("paee", "Plano de Ação"),
+    ("hub", "Hub"),
+    ("diario", "Diário"),
+    ("mon", "Dados"),
+    # ("ia", "IA"),  # habilite quando quiser
 ]
 
-# ==============================================================================
-# 2. FUNÇÕES AUXILIARES
-# ==============================================================================
-def _get_image_b64(path: str) -> str:
-    """Carrega a logo e converte para Base64 para usar no HTML."""
+def _b64(path: str) -> str:
     if not os.path.exists(path):
         return ""
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
-def _get_current_view():
-    """Descobre qual aba está ativa lendo a URL (?view=...)"""
+def _get_view_from_query(default="home") -> str:
+    """Lê ?view=... (robusto para string/lista)."""
     try:
         qp = st.query_params
-        return qp.get("view", "home")
-    except:
-        return "home"
+        v = qp.get("view", default)
+        if isinstance(v, list):
+            v = v[0] if v else default
+        return v or default
+    except Exception:
+        return default
 
-# ==============================================================================
-# 3. RENDERIZAÇÃO DA BARRA (TOPBAR)
-# ==============================================================================
-def render_topbar_nav():
-    """
-    Renderiza a barra de navegação superior fixa.
-    """
-    
-    # 1. Esconde a Sidebar padrão e o Header padrão do Streamlit
-    st.markdown("""
-        <style>
-            [data-testid="stSidebar"] {display: none !important;}
-            [data-testid="stHeader"] {display: none !important;}
-            .block-container {
-                padding-top: 80px !important; /* Espaço para a barra não cobrir o conteúdo */
-            }
-        </style>
-    """, unsafe_allow_html=True)
+def set_view(view_key: str):
+    """Define view e força rerun."""
+    st.session_state.view = view_key
+    try:
+        st.query_params["view"] = view_key
+    except Exception:
+        pass
+    st.rerun()
 
-    # 2. Prepara os dados
-    active_view = _get_current_view()
-    logo_b64 = _get_image_b64("omni_icone.png") # Certifique-se que o arquivo existe
-    
-    # Logo HTML (Giratória)
+def render_topbar_nav(
+    active: str | None = None,
+    show_on_login: bool = True,
+    height_px: int = 54,
+):
+    """
+    Barra superior fina, full-width, discreta.
+    Navegação: links (?view=...) + roteamento no Python.
+    Retorna: view ativa (str)
+    """
+    authed = bool(st.session_state.get("autenticado", True))
+    if (not authed) and (not show_on_login):
+        return None
+
+    if "view" not in st.session_state:
+        st.session_state.view = "home"
+
+    # sincronia: query param manda
+    qv = _get_view_from_query(st.session_state.view)
+    st.session_state.view = qv
+    active = active or qv
+
+    # logo
+    logo_b64 = _b64("omni_icone.png")
     if logo_b64:
-        logo_html = f'<img class="nav-logo-spin" src="data:image/png;base64,{logo_b64}">'
+        logo_html = f'<img class="omni-spin" src="data:image/png;base64,{logo_b64}" alt="Omnisfera" />'
     else:
-        logo_html = '<div class="nav-logo-fallback"></div>'
+        logo_html = '<div class="omni-mark-fallback" aria-label="Omnisfera"></div>'
 
-    # 3. Constrói os Links (Botões)
+    # links
     links_html = ""
-    for item in NAV_ITEMS:
-        is_active = (item["key"] == active_view)
-        active_class = "active" if is_active else ""
-        
-        # A lógica de clique é via URL parameter (?view=key) que recarrega a página
+    for key, label in NAV_ITEMS:
+        ic = ICONS.get(key, "fi fi-br-circle")
+        color = COLORS.get(key, "#0F172A")
+        cls = "omni-link active" if key == active else "omni-link"
         links_html += f"""
-        <a class="nav-item {active_class}" href="?view={item['key']}" target="_self">
-            <i class="{item['icon']}" style="color: {item['color']};"></i>
-            <span class="nav-label">{item['label']}</span>
-        </a>
-        """
+<a class="{cls}" href="?view={key}" target="_self">
+  <i class="{ic} omni-ic" style="color:{color};"></i>
+  <span class="omni-lbl">{label}</span>
+</a>
+"""
 
-    # 4. HTML & CSS Completo
-    st.markdown(f"""
-    {FLATICON_CSS}
-    <style>
-        /* Container Principal da Barra */
-        .omni-navbar {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 60px;
-            background-color: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #E5E7EB;
-            z-index: 999999;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
-            font-family: 'Inter', sans-serif;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-        }}
+    # logout (se você quiser acionar logout real, vamos via query param ?logout=1)
+    logout_html = f"""
+<a class="omni-link omni-logout" href="?logout=1" target="_self">
+  <i class="{ICONS['logout']} omni-ic" style="color:rgba(15,23,42,0.55);"></i>
+  <span class="omni-lbl">Sair</span>
+</a>
+"""
 
-        /* Lado Esquerdo: Logo + Texto */
-        .nav-left {{
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }}
-        
-        .nav-logo-spin {{
-            height: 32px;
-            width: 32px;
-            animation: spin 30s linear infinite;
-        }}
-        
-        .nav-brand-text {{
-            font-size: 18px;
-            font-weight: 800;
-            color: #1F2937;
-            letter-spacing: -0.5px;
-            text-transform: uppercase;
-        }}
+    st.markdown(
+        f"""
+{FLATICON_CSS}
+<style>
+/* limpa chrome do Streamlit */
+header[data-testid="stHeader"]{{display:none !important;}}
+[data-testid="stSidebar"]{{display:none !important;}}
+[data-testid="stSidebarNav"]{{display:none !important;}}
+[data-testid="stToolbar"]{{display:none !important;}}
 
-        @keyframes spin {{ 100% {{ transform: rotate(360deg); }} }}
+/* respiro para o conteúdo */
+.block-container{{
+  padding-top: {height_px + 22}px !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+}}
 
-        /* Lado Direito: Itens de Menu */
-        .nav-right {{
-            display: flex;
-            align-items: center;
-            gap: 20px; /* Espaço entre os ícones */
-        }}
+@keyframes spin{{from{{transform:rotate(0deg);}}to{{transform:rotate(360deg);}}}}
 
-        .nav-item {{
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            padding: 4px 8px;
-            transition: all 0.2s ease;
-            opacity: 0.7; /* Leve transparência quando inativo */
-        }}
+.omni-topbar{{
+  position:fixed; top:0; left:0; right:0;
+  height:{height_px}px;
+  z-index:2147483647;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 0 18px;
+  background: rgba(248,250,252,0.86);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226,232,240,0.85);
+  box-shadow: 0 8px 20px rgba(15,23,42,0.06);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+}}
 
-        .nav-item:hover {{
-            opacity: 1;
-            transform: translateY(-2px);
-        }}
+/* esquerda */
+.omni-left{{display:flex; align-items:center; gap:10px; min-width: 260px;}}
+.omni-spin{{width:30px; height:30px; border-radius:999px; animation: spin 40s linear infinite;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.10));}}
+.omni-mark-fallback{{width:30px; height:30px; border-radius:999px;
+  background: conic-gradient(from 0deg,#3B82F6,#22C55E,#F59E0B,#F97316,#A855F7,#3B82F6);
+  animation: spin 40s linear infinite;}}
+.omni-brand{{display:flex; flex-direction:column; line-height:1;}}
+.omni-title{{font-weight: 900; letter-spacing: .14em; text-transform: uppercase;
+  font-size: 0.78rem; color:#0F172A;}}
+.omni-sub{{margin-top:2px; font-size:0.68rem; color: rgba(15,23,42,0.55); letter-spacing:.04em;}}
 
-        .nav-item i {{
-            font-size: 20px; /* Tamanho do ícone */
-            margin-bottom: 2px;
-        }}
+/* direita */
+.omni-right{{display:flex; align-items:flex-end; gap: 14px;}}
+.omni-link{{
+  text-decoration:none !important;
+  display:flex; flex-direction:column; align-items:center;
+  gap: 4px;
+  padding: 6px 6px 4px 6px;
+  border-radius: 12px;
+  transition: transform .14s ease, background .14s ease, box-shadow .14s ease, opacity .14s ease;
+  opacity: 0.86;
+}}
+.omni-link:hover{{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.55);
+  box-shadow: 0 10px 22px rgba(15,23,42,0.08);
+  opacity: 1;
+}}
+.omni-ic{{font-size: 20px; line-height: 1;}}
+.omni-lbl{{font-size: 0.62rem; color: rgba(15,23,42,0.55); letter-spacing: .03em; white-space: nowrap;}}
+.omni-link.active{{opacity: 1;}}
+.omni-link.active .omni-lbl{{color: rgba(15,23,42,0.82); font-weight: 700;}}
+.omni-link.active::after{{
+  content:"";
+  width: 18px; height: 2px;
+  border-radius: 99px;
+  background: rgba(15,23,42,0.18);
+  margin-top: 2px;
+}}
+.omni-divider{{width:1px; height: 26px; background: rgba(226,232,240,1); margin: 0 2px;}}
+.omni-logout .omni-lbl{{color: rgba(15,23,42,0.40);}}
 
-        .nav-label {{
-            font-size: 10px;
-            font-weight: 600;
-            color: #6B7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }}
+@media (max-width: 980px){{
+  .omni-sub{{display:none;}}
+  .omni-lbl{{display:none;}}
+  .omni-right{{gap:10px;}}
+  .block-container{{padding-top: {height_px + 18}px !important;}}
+}}
+</style>
 
-        /* Estado Ativo (Página Atual) */
-        .nav-item.active {{
-            opacity: 1;
-        }}
-        
-        .nav-item.active .nav-label {{
-            color: #111827;
-            font-weight: 800;
-        }}
-        
-        /* Pequeno indicador abaixo do item ativo */
-        .nav-item.active::after {{
-            content: '';
-            display: block;
-            width: 4px;
-            height: 4px;
-            background-color: #111827;
-            border-radius: 50%;
-            margin-top: 2px;
-        }}
-
-        /* Responsividade para telas pequenas */
-        @media (max-width: 768px) {{
-            .nav-label {{ display: none; }} /* Esconde texto no mobile */
-            .nav-right {{ gap: 15px; }}
-            .nav-brand-text {{ display: none; }} /* Esconde nome Omnisfera se ficar apertado */
-        }}
-
-    </style>
-
-    <div class="omni-navbar">
-        <div class="nav-left">
-            {logo_html}
-            <div class="nav-brand-text">Omnisfera</div>
-        </div>
-        <div class="nav-right">
-            {links_html}
-        </div>
+<div class="omni-topbar">
+  <div class="omni-left">
+    {logo_html}
+    <div class="omni-brand">
+      <div class="omni-title">OMNISFERA</div>
+      <div class="omni-sub">Inclusão • PEI • PAEE • Dados</div>
     </div>
-    """, unsafe_allow_html=True)
+  </div>
 
-    return active_view
+  <div class="omni-right">
+    {links_html}
+    <div class="omni-divider"></div>
+    {logout_html}
+  </div>
+</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # logout via query param
+    try:
+        qp = st.query_params
+        lg = qp.get("logout", None)
+        if isinstance(lg, list):
+            lg = lg[0] if lg else None
+        if lg == "1":
+            if "autenticado" in st.session_state:
+                st.session_state.autenticado = False
+            # limpa logout param e volta home
+            st.query_params.clear()
+            st.query_params["view"] = "home"
+            st.session_state.view = "home"
+            st.rerun()
+    except Exception:
+        pass
+
+    return active
