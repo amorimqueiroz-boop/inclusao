@@ -12,7 +12,7 @@ def render_omnisfera_nav():
         "mon":    "pages/5_Monitoramento_Avaliacao.py",
     }
 
-    # navegação por query param
+    # Navegação (?go=)
     qp = st.query_params
     if "go" in qp:
         dest = qp["go"]
@@ -20,7 +20,7 @@ def render_omnisfera_nav():
             st.query_params.clear()
             st.switch_page(ROUTES[dest])
 
-    # logo base64
+    # Logo base64
     def logo_src():
         for f in ["omni_icone.png", "logo.png", "iconeaba.png", "omni.png", "ominisfera.png"]:
             if os.path.exists(f):
@@ -30,35 +30,36 @@ def render_omnisfera_nav():
 
     src = logo_src()
 
-    # Ajuste fino: se o Share/header estiver “encostando”, aumente TOP_PX.
-    TOP_PX = 54
+    # Ajuste fino: posição no topo, por cima do header
+    TOP_PX = 8
     RIGHT_PX = 14
 
     st.markdown(f"""
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 
 <style>
-/* --- Opcional: esconder o header do Streamlit (descomente se quiser) --- */
-/*
-header[data-testid="stHeader"] {{
-  display: none !important;
-}}
+/* 1) Header do Streamlit não deve "vazar" nem competir com clique
+   - Se você quiser, pode ocultar completamente o header (linha display:none)
 */
-
-/* Em alguns temas o header tem “camada” que fica por cima — isso reduz interferência */
 header[data-testid="stHeader"] {{
   background: transparent !important;
   box-shadow: none !important;
+  z-index: 1 !important;
 }}
 
-/* Dock totalmente opaco (sem blur, sem alpha) */
+/* Opcional: esconder o "chrome" do header (Share/ícones) sem remover o header inteiro.
+   Isso evita clicar por baixo do dock.
+*/
+header[data-testid="stHeader"] * {{
+  visibility: hidden !important;
+}}
+
+/* 2) Nosso dock por cima (z-index absurdamente alto) */
 .omni-dock {{
   position: fixed !important;
   top: {TOP_PX}px !important;
   right: {RIGHT_PX}px !important;
-
-  z-index: 2147483647 !important; /* máximo “prático” */
-  opacity: 1 !important;
+  z-index: 2147483647 !important;
 
   display: flex;
   align-items: center;
@@ -67,17 +68,16 @@ header[data-testid="stHeader"] {{
   padding: 10px 14px;
   border-radius: 999px;
 
-  background-color: #FFFFFF !important; /* branco sólido */
+  background: #FFFFFF !important;
   border: 1px solid #E5E7EB !important;
-
-  /* impede “vazar” visual por composição */
-  background-clip: padding-box !important;
-  isolation: isolate !important;
-
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12) !important;
+
+  opacity: 1 !important;
+  isolation: isolate !important;
+  pointer-events: auto !important;
 }}
 
-/* Logo */
+/* 3) Logo */
 @keyframes spin {{
   from {{ transform: rotate(0deg); }}
   to {{ transform: rotate(360deg); }}
@@ -96,7 +96,7 @@ header[data-testid="stHeader"] {{
   margin: 0 2px;
 }}
 
-/* Ícone em círculo */
+/* 4) Botões circulares (estilo "dock") */
 .omni-ico {{
   width: 38px;
   height: 38px;
@@ -106,7 +106,7 @@ header[data-testid="stHeader"] {{
   align-items: center;
   justify-content: center;
 
-  background-color: #FFFFFF !important;
+  background: #FFFFFF !important;
   border: 1px solid #E5E7EB !important;
 
   text-decoration: none !important;
@@ -128,7 +128,6 @@ header[data-testid="stHeader"] {{
 }}
 
 .omni-rel {{ position: relative; }}
-
 .omni-dot {{
   position: absolute;
   width: 7px;
