@@ -1,5 +1,13 @@
 # home_portal.py
 import streamlit as st
+from ui_nav import boot_ui, ensure_auth_state
+
+ensure_auth_state()
+boot_ui(do_route=False)
+
+if not st.session_state.autenticado:
+    st.query_params["go"] = "login"
+    st.switch_page("streamlit_app.py")  # se isso der problema, eu ajusto pra fallback sem switch
 import base64
 import os
 from ui_nav import render_omnisfera_nav
