@@ -2,26 +2,20 @@
 import streamlit as st
 import os, base64
 
-# -------------------------
-# ROTAS (ajuste se necessário)
-# -------------------------
 PAGES = {
     "home":   "home_portal.py",
     "alunos": "pages/0_Alunos.py",
     "pei":    "pages/1_PEI.py",
     "paee":   "pages/2_PAE.py",
     "hub":    "pages/3_Hub_Inclusao.py",
-    # se você ainda não tiver esses arquivos, deixe comentado:
+    # opcional:
     # "diario": "pages/4_Diario_de_Bordo.py",
     # "dados":  "pages/5_Monitoramento_Avaliacao.py",
 }
 
-# -------------------------
-# CORES POR MÓDULO
-# -------------------------
 COLORS = {
     "home":   "#111827",
-    "alunos": "#2563EB",
+    "alunos": "#2563EB +",
     "pei":    "#3B82F6",
     "paee":   "#10B981",
     "hub":    "#F59E0B",
@@ -29,9 +23,6 @@ COLORS = {
     "dados":  "#8B5CF6",
 }
 
-# -------------------------
-# ÍCONES (Flaticon UIcons v3.0.0)
-# -------------------------
 FLATICON_CSS = """
 <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css">
 <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
@@ -73,9 +64,6 @@ def _clear_qp():
         pass
 
 def _nav_if_requested():
-    """
-    Se a URL tiver ?go=paee, navega via switch_page().
-    """
     go = _get_qp("go")
     if go:
         target = PAGES.get(go)
@@ -84,19 +72,15 @@ def _nav_if_requested():
             st.switch_page(target)
 
 def render_topbar_nav(active: str):
-    """
-    Topbar fina + links clicáveis (sem botões invisíveis).
-    """
     _nav_if_requested()
 
-    # Logo
+    # logo
     logo_b64 = _b64("omni_icone.png")
     if logo_b64:
         logo_html = f"<img class='omni-mark' src='data:image/png;base64,{logo_b64}' alt='Omnisfera'/>"
     else:
         logo_html = "<div class='omni-mark omni-mark-fallback'></div>"
 
-    # Itens (mostra só os que existem em PAGES)
     items = [
         ("home", "Home"),
         ("alunos", "Alunos"),
@@ -123,19 +107,29 @@ def render_topbar_nav(active: str):
 </a>
 """
 
-    # Render único (evita “HTML vazando”)
+    # ✅ RENDER ÚNICO (evita HTML "vazando")
     st.markdown(
         f"""
 {FLATICON_CSS}
 <style>
-/* limpa UI padrão */
+/* ✅ ZERAR QUALQUER ESPAÇO NO TOPO */
+html, body {{
+  margin: 0 !important;
+  padding: 0 !important;
+}}
+.stApp {{
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}}
+/* ✅ remove header/sidebar padrão */
 header[data-testid="stHeader"]{{display:none !important;}}
 [data-testid="stSidebar"]{{display:none !important;}}
 [data-testid="stSidebarNav"]{{display:none !important;}}
 [data-testid="stToolbar"]{{display:none !important;}}
 
+/* ✅ empurra conteúdo para baixo da barra */
 .block-container{{
-  padding-top: 86px !important;
+  padding-top: 84px !important;
   padding-left: 2rem !important;
   padding-right: 2rem !important;
   padding-bottom: 2rem !important;
@@ -143,25 +137,30 @@ header[data-testid="stHeader"]{{display:none !important;}}
 
 @keyframes spin{{from{{transform:rotate(0deg);}}to{{transform:rotate(360deg);}}}}
 
-/* TOPBAR */
+/* ✅ TOPBAR grudada no topo */
 .omni-topbar{{
-  position: fixed;
-  top:0; left:0; right:0;
-  height: 62px;
-  z-index: 2147483647;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 0 22px;
-  background: rgba(247,250,252,0.86);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(226,232,240,0.85);
-  box-shadow: 0 8px 20px rgba(15,23,42,0.06);
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 62px !important;
+  z-index: 2147483647 !important;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+
+  padding: 0 22px !important;
+
+  background: rgba(247,250,252,0.92) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border-bottom: 1px solid rgba(226,232,240,0.95) !important;
+  box-shadow: 0 8px 20px rgba(15,23,42,0.06) !important;
+
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial !important;
 }}
 
-/* ESQUERDA */
 .omni-left{{display:flex; align-items:center; gap:12px;}}
 .omni-mark{{
   width: 32px; height: 32px;
@@ -179,19 +178,19 @@ header[data-testid="stHeader"]{{display:none !important;}}
   color:#0F172A;
 }}
 
-/* DIREITA */
 .omni-right{{
   display:flex;
   align-items:flex-end;
   gap: 18px;
 }}
 
-/* LINK = BOTÃO REAL (neutraliza estilo padrão de link) */
-.omni-link{{
+/* ✅ neutraliza comportamento de link */
+.omni-link, .omni-link:visited, .omni-link:hover, .omni-link:active {{
   text-decoration: none !important;
   color: inherit !important;
-  outline: none !important;
+}}
 
+.omni-link{{
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -204,42 +203,29 @@ header[data-testid="stHeader"]{{display:none !important;}}
   opacity: .74;
   transition: opacity .16s ease, transform .16s ease;
 }}
-.omni-link:hover{{
-  opacity: 1;
-  transform: translateY(-1px);
-}}
-.omni-ic{{
-  font-size: 20px;
-  line-height: 1;
-}}
-/* label discreto, SEM caixa alta forçada */
+.omni-link:hover{{ opacity: 1; transform: translateY(-1px); }}
+
+.omni-ic{{ font-size: 20px; line-height: 1; }}
+
 .omni-label{{
   font-size: 11px;
   font-weight: 700;
   color: rgba(15,23,42,0.55);
   letter-spacing: .02em;
-  text-transform: none;
+  text-transform: none !important;
 }}
 
-/* underline pequeno só no ativo */
 .omni-underline{{
   width: 18px;
   height: 2px;
   border-radius: 999px;
   background: transparent;
 }}
-.omni-link.active{{
-  opacity: 1;
-}}
-.omni-link.active .omni-label{{
-  color: rgba(15,23,42,0.82);
-  font-weight: 800;
-}}
-.omni-link.active .omni-underline{{
-  background: rgba(15,23,42,0.18);
-}}
 
-/* divisor + sair */
+.omni-link.active{{ opacity: 1; }}
+.omni-link.active .omni-label{{ color: rgba(15,23,42,0.82); font-weight: 800; }}
+.omni-link.active .omni-underline{{ background: rgba(15,23,42,0.18); }}
+
 .omni-divider{{
   width: 1px;
   height: 22px;
