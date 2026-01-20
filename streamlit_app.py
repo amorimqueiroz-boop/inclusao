@@ -1,6 +1,5 @@
 import streamlit as st
-from ui_nav 
-import boot_ui, ensure_auth_state
+from ui_nav import boot_ui, ensure_auth_state, route_from_query
 
 st.set_page_config(page_title="Omnisfera", layout="wide")
 
