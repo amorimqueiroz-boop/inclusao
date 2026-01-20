@@ -1,141 +1,265 @@
+# ui_nav.py
 import streamlit as st
-import os
-import base64
-from datetime import date
+import os, base64
 
-# ==============================================================================
-# 1. CONFIGURAÇÕES E AMBIENTE
-# ==============================================================================
-APP_VERSION = "v116.0"
 
-def verificar_ambiente():
-    try: return st.secrets.get("ENV") == "TESTE"
-    except: return False
+def render_omnisfera_nav():
+    # -------------------------------
+    # 1) Estado SPA
+    # -------------------------------
+    if "view" not in st.session_state:
+        st.session_state.view = "home"
 
-IS_TEST_ENV = verificar_ambiente()
+    def go(view_key: str):
+        st.session_state.view = view_key
+        st.rerun()
 
-# ==============================================================================
-# 2. UTILITÁRIOS (IMAGENS)
-# ==============================================================================
-def get_base64_image(image_path):
-    if not image_path or not os.path.exists(image_path): return ""
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode()
+    ACTIVE = st.session_state.view
 
-# ==============================================================================
-# 3. ESTILO GLOBAL (CSS LIMPO)
-# ==============================================================================
-def aplicar_estilo_global(logo_pagina=None):
-    """
-    Aplica apenas:
-    1. Fontes Padrão (Nunito/Inter).
-    2. Sidebar com fundo branco.
-    3. Constrói o menu lateral personalizado.
-    """
-    
-    # Define fonte e cores básicas
-    st.markdown("""
-    <style>
-        /* Importação das Fontes */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
-        
-        /* Aplicação Global da Fonte */
-        html, body, [class*="css"] { 
-            font-family: 'Nunito', sans-serif; 
-        }
-        
-        /* Forçar Sidebar Branca */
-        section[data-testid="stSidebar"] {
-            background-color: #FFFFFF !important;
-            border-right: 1px solid #E2E8F0;
-        }
-    </style>
-    """, unsafe_allow_html=True)
+    # -------------------------------
+    # 2) Logo base64
+    # -------------------------------
+    def logo_src():
+        for f in ["omni_icone.png", "logo.png", "iconeaba.png", "omni.png", "ominisfera.png"]:
+            if os.path.exists(f):
+                with open(f, "rb") as img:
+                    return f"data:image/png;base64,{base64.b64encode(img.read()).decode()}"
+        return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
 
-    # Constrói a Sidebar (Logo + Navegação)
-    logo_para_usar = logo_pagina if logo_pagina else "omni_icone.png"
-    construir_sidebar_manual(get_base64_image(logo_para_usar))
+    src = logo_src()
 
-# ==============================================================================
-# 4. SIDEBAR E NAVEGAÇÃO
-# ==============================================================================
-def construir_sidebar_manual(img_b64):
-    with st.sidebar:
-        # Espaço no topo
-        st.write("") 
-        
-        # Logo da Página (Se houver)
-        if img_b64: 
-            st.markdown(f"""
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img src="data:image/png;base64,{img_b64}" width="70">
-            </div>
-            """, unsafe_allow_html=True)
+    # -------------------------------
+    # 3) Config visual
+    # -------------------------------
+    TOP_PX = 8
+    RIGHT_PX = 14
 
-        # Dados do Usuário (Se logado)
-        if st.session_state.get("autenticado"):
-            nome = st.session_state["usuario_nome"].split()[0]
-            cargo = st.session_state["usuario_cargo"]
-            st.markdown(f"""
-            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
-                <small style="color: #718096; font-weight: bold;">USUÁRIO</small><br>
-                <span style="color: #2D3748; font-weight: bold;">{nome}</span><br>
-                <span style="color: #718096; font-size: 0.8rem;">{cargo}</span>
-            </div>
-            """, unsafe_allow_html=True)
+    COLORS = {
+        "home": "#111827",
+        "estudantes": "#2B6CEB",
+        "pei": "#3B82F6",
+        "paee": "#22C55E",
+        "hub": "#F59E0B",
+        "diario": "#F97316",
+        "mon": "#A855F7",
+    }
 
-        # Links de Navegação
-        st.markdown("---")
-        st.caption("NAVEGAÇÃO")
-        
-        st.page_link("Home.py", label="Dashboard", icon="🏠")
-        st.page_link("pages/1_PEI.py", label="PEI 360º", icon="📘")
-        st.page_link("pages/2_PAE.py", label="PAEE & T.A.", icon="🧩")
-        st.page_link("pages/3_Hub_Inclusao.py", label="Hub Inclusão", icon="🚀")
-        
-        # Botão Sair
-        st.markdown("---")
-        if st.button("🔒 Sair", use_container_width=True):
-            st.session_state["autenticado"] = False
-            st.rerun()
-
-# ==============================================================================
-# 5. SISTEMA DE LOGIN
-# ==============================================================================
-def verificar_acesso():
-    if st.session_state.get("autenticado", False): return True
-    
-    # Layout de Login Limpo
-    c1, c2, c3 = st.columns([1, 2, 1])
-    with c2:
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown(f"""
-        <div style="text-align: center; border: 1px solid #E2E8F0; padding: 30px; border-radius: 15px; background: white;">
-            <h2 style="color: #0F52BA;">{'🛠️ MODO TESTE' if IS_TEST_ENV else 'Bem-vindo'}</h2>
-            <p>Faça login para continuar</p>
-        </div>
-        <br>
-        """, unsafe_allow_html=True)
-
-        if IS_TEST_ENV:
-            if st.button("🚀 ENTRAR (RÁPIDO)", use_container_width=True, type="primary"):
-                st.session_state.update({"autenticado": True, "usuario_nome": "Tester", "usuario_cargo": "Dev"})
-                st.rerun()
+    def style_for(key: str):
+        solid = COLORS[key]
+        if key == ACTIVE:
+            return (
+                f"background:{solid}; color:#FFFFFF;"
+                "box-shadow: 0 0 0 3px rgba(255,255,255,0.95), 0 10px 22px rgba(15,23,42,0.12);"
+                "filter:none;"
+            )
         else:
-            nome = st.text_input("Nome")
-            cargo = st.text_input("Cargo")
-            senha = st.text_input("Senha", type="password")
-            
-            if st.button("🔒 ACESSAR", use_container_width=True, type="primary"):
-                hoje = date.today()
-                senha_ok = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
-                
-                if not nome or not cargo: 
-                    st.warning("Preencha todos os campos.")
-                elif senha != senha_ok: 
-                    st.error("Senha incorreta.")
-                else:
-                    st.session_state.update({"autenticado": True, "usuario_nome": nome, "usuario_cargo": cargo})
-                    st.rerun()
-    
-    return False
+            return (
+                f"background:{solid}; color:rgba(255,255,255,0.78);"
+                "box-shadow: 0 2px 10px rgba(15,23,42,0.06);"
+                "filter:saturate(0.65) brightness(1.12); opacity:0.72;"
+            )
+
+    # -------------------------------
+    # 4) CSS + dock (visual)
+    # -------------------------------
+    st.markdown(
+        f"""
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+
+<style>
+/* “Mute” no header do Streamlit para o dock dominar */
+header[data-testid="stHeader"] {{
+  background: transparent !important;
+  box-shadow: none !important;
+  z-index: 1 !important;
+}}
+header[data-testid="stHeader"] * {{
+  visibility: hidden !important;
+}}
+
+/* DOCK (visual) */
+.omni-dock {{
+  position: fixed !important;
+  top: {TOP_PX}px !important;
+  right: {RIGHT_PX}px !important;
+  z-index: 2147483647 !important;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+
+  background: #FFFFFF !important;
+  border: 1px solid #E5E7EB !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12) !important;
+
+  pointer-events: none !important; /* clique será nos botões do Streamlit */
+  isolation: isolate !important;
+}}
+
+@keyframes spin {{
+  from {{ transform: rotate(0deg); }}
+  to {{ transform: rotate(360deg); }}
+}}
+.omni-logo {{
+  width: 28px;
+  height: 28px;
+  animation: spin 10s linear infinite;
+}}
+
+.omni-sep {{
+  width: 1px;
+  height: 22px;
+  background: #E5E7EB;
+  margin: 0 2px;
+}}
+
+/* Bolinhas menores */
+.omni-ico {{
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(17,24,39,0.06);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+}}
+
+.omni-ic {{
+  font-size: 16px;
+  line-height: 1;
+  color: inherit;
+}}
+</style>
+
+<div class="omni-dock" aria-label="Omnisfera Dock">
+  <img src="{src}" class="omni-logo" alt="Omnisfera" />
+  <div class="omni-sep"></div>
+
+  <div class="omni-ico" style="{style_for('home')}"><i class="ri-home-5-line omni-ic"></i></div>
+  <div class="omni-ico" style="{style_for('estudantes')}"><i class="ri-group-line omni-ic"></i></div>
+  <div class="omni-ico" style="{style_for('pei')}"><i class="ri-puzzle-2-line omni-ic"></i></div>
+  <div class="omni-ico" style="{style_for('paee')}"><i class="ri-map-pin-2-line omni-ic"></i></div>
+  <div class="omni-ico" style="{style_for('hub')}"><i class="ri-lightbulb-line omni-ic"></i></div>
+  <div class="omni-ico" style="{style_for('diario')}"><i class="ri-compass-3-line omni-ic"></i></div>
+  <div class="omni-ico" style="{style_for('mon')}"><i class="ri-line-chart-line omni-ic"></i></div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+    # -------------------------------
+    # 5) Camada clicável REAL (Streamlit)
+    # -------------------------------
+    st.markdown('<div id="omni-click-anchor"></div>', unsafe_allow_html=True)
+
+    c_logo, c_sep, c1, c2, c3, c4, c5, c6, c7 = st.columns(
+        [0.6, 0.08, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7],
+        gap="small",
+    )
+
+    with c_logo:
+        if st.button(" ", key="omni_nav_logo", help="Home"):
+            go("home")
+
+    with c_sep:
+        st.write("")  # ocupa espaço do separador
+
+    with c1:
+        if st.button(" ", key="omni_nav_home", help="Home"):
+            go("home")
+
+    with c2:
+        if st.button(" ", key="omni_nav_estudantes", help="Estudantes"):
+            go("estudantes")
+
+    with c3:
+        if st.button(" ", key="omni_nav_pei", help="Estratégias & PEI"):
+            go("pei")
+
+    with c4:
+        if st.button(" ", key="omni_nav_paee", help="Plano de Ação (PAEE)"):
+            go("paee")
+
+    with c5:
+        if st.button(" ", key="omni_nav_hub", help="Hub de Recursos"):
+            go("hub")
+
+    with c6:
+        if st.button(" ", key="omni_nav_diario", help="Diário de Bordo"):
+            go("diario")
+
+    with c7:
+        if st.button(" ", key="omni_nav_mon", help="Evolução & Acompanhamento"):
+            go("mon")
+
+    # -------------------------------
+    # 6) CSS pós-render — VERSÃO ROBUSTA (captura 1-3 wrappers)
+    # -------------------------------
+    st.markdown(
+        f"""
+<style>
+/* 🔥 Streamlit muda wrappers. Então miramos no 1º, 2º e 3º irmão após a âncora */
+#omni-click-anchor + div,
+#omni-click-anchor + div + div,
+#omni-click-anchor + div + div + div {{
+  position: fixed !important;
+  top: {TOP_PX}px !important;
+  right: {RIGHT_PX}px !important;
+  z-index: 2147483647 !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 10px !important;
+  padding: 8px 12px !important;
+  border-radius: 999px !important;
+
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  opacity: 0 !important;            /* some com as caixas no corpo */
+  pointer-events: auto !important;  /* mas continua clicável */
+}}
+
+/* Botões viram áreas de clique do tamanho exato das bolinhas */
+#omni-click-anchor + div [data-testid="stButton"] button,
+#omni-click-anchor + div + div [data-testid="stButton"] button,
+#omni-click-anchor + div + div + div [data-testid="stButton"] button {{
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 999px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}}
+#omni-click-anchor + div [data-testid="stButton"] button p,
+#omni-click-anchor + div + div [data-testid="stButton"] button p,
+#omni-click-anchor + div + div + div [data-testid="stButton"] button p {{
+  display: none !important;
+}}
+
+/* Logo: área clicável do tamanho da logo */
+#omni-click-anchor + div [data-testid="column"]:nth-child(1) [data-testid="stButton"] button,
+#omni-click-anchor + div + div [data-testid="column"]:nth-child(1) [data-testid="stButton"] button,
+#omni-click-anchor + div + div + div [data-testid="column"]:nth-child(1) [data-testid="stButton"] button {{
+  width: 28px !important;
+  height: 28px !important;
+}}
+
+/* Coluna do separador (2ª): só ocupa espaço */
+#omni-click-anchor + div [data-testid="column"]:nth-child(2),
+#omni-click-anchor + div + div [data-testid="column"]:nth-child(2),
+#omni-click-anchor + div + div + div [data-testid="column"]:nth-child(2) {{
+  width: 1px !important;
+}}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
+    return ACTIVE
