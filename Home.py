@@ -1,11 +1,8 @@
-# Home.py — OMNISFERA (Portal + Login) | Flaticon UIcons + Cards Premium
+# Home.py — OMNISFERA (Portal + Login) | Cards Premium (suave) + Flaticon UIcons
 import streamlit as st
 import base64, os
 
-# =========================================================
-# 0) CONFIG
-# =========================================================
-APP_VERSION = "v116.2"
+APP_VERSION = "v116.3"
 
 st.set_page_config(
     page_title="Omnisfera | Ecossistema",
@@ -14,9 +11,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# 🔁 Ajuste só se o nome do arquivo for diferente:
+# 🔁 Ajuste se seu arquivo tiver outro nome:
 ROUTES = {
-    "estudantes": "pages/0_Alunos.py",               # Página chama "aluno", mas exibimos "Estudantes"
+    "estudantes": "pages/0_Alunos.py",   # página chama aluno, exibimos "Estudantes"
     "pei":        "pages/1_PEI.py",
     "paee":       "pages/2_PAE.py",
     "hub":        "pages/3_Hub_Inclusao.py",
@@ -24,15 +21,9 @@ ROUTES = {
     "mon":        "pages/5_Monitoramento_Avaliacao.py",
 }
 
-# =========================================================
-# 1) HELPERS
-# =========================================================
-def get_base64_image(path: str) -> str:
-    if not os.path.exists(path):
-        return ""
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode("utf-8")
-
+# -------------------------
+# SESSION INIT
+# -------------------------
 def _init_session():
     if "autenticado" not in st.session_state:
         st.session_state.autenticado = False
@@ -45,34 +36,59 @@ def _init_session():
 
 _init_session()
 
-# =========================================================
-# 2) ICON FONTS + CSS (paleta mais “chique”)
-# =========================================================
+# -------------------------
+# UTILS
+# -------------------------
+def get_base64_image(path: str) -> str:
+    if not os.path.exists(path):
+        return ""
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
+
+# -------------------------
+# ICONS (padronizados p/ evitar sumir)
+# -------------------------
+# Padronizei para evitar "br" (brands), que falha mais.
+# Você pediu IA fixo:
+ICON_AI = "fi fi-ss-chip-brain"
+
+ICONS = {
+    "estudantes": "fi fi-ss-users-alt",
+    "pei":        "fi fi-sr-puzzle-alt",
+    "paee":       "fi fi-rr-track",          # rr ok se carregar
+    "hub":        "fi fi-sr-lightbulb-on",
+    "diario":     "fi fi-sr-compass",        # trocado (antes era br-compass-alt)
+    "mon":        "fi fi-sr-chart-line-up",  # trocado (antes era br-analyse)
+}
+
+# -------------------------
+# CSS
+# -------------------------
 st.markdown("""
 <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
 <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-straight/css/uicons-solid-straight.css">
 <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css">
-<link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-brands/css/uicons-brands.css">
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Nunito:wght@400;600;700;800;900&display=swap');
 
 :root{
   --bg: #F6F8FB;
-  --ink: #0B1220;      /* navy chique */
+  --ink: #0B1220;
   --muted: #5B677A;
   --line: rgba(15,23,42,0.10);
   --glass: rgba(255,255,255,0.86);
 
-  /* cores dos módulos (mais “premium”, menos neon) */
-  --c-students: #2563EB;
-  --c-pei:      #2F6FED;
-  --c-paee:     #16A34A;
-  --c-hub:      #D97706;
-  --c-diario:   #EA580C;
-  --c-mon:      #7C3AED;
+  /* tons mais elegantes (suaves) */
+  --c-students: #2F6FED;
+  --c-pei:      #3B82F6;
+  --c-paee:     #22C55E;
+  --c-hub:      #F59E0B;
+  --c-diario:   #F97316;
+  --c-mon:      #A855F7;
 
-  --shadow: 0 14px 40px rgba(2,6,23,0.10);
+  --shadow-soft: 0 10px 26px rgba(2,6,23,0.08);
+  --shadow-hover: 0 18px 44px rgba(2,6,23,0.12);
 }
 
 html, body, [class*="css"]{
@@ -116,10 +132,7 @@ header[data-testid="stHeader"]{display:none !important;}
   animation: spin 55s linear infinite;
   filter: drop-shadow(0 2px 6px rgba(2,6,23,0.15));
 }
-.portal-logo-text{
-  height: 38px;
-  width:auto;
-}
+.portal-logo-text{ height: 38px; width:auto; }
 .portal-subtitle{
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
   font-weight: 650;
@@ -135,9 +148,9 @@ header[data-testid="stHeader"]{display:none !important;}
 
 /* HERO */
 .dash-hero{
-  background: radial-gradient(circle at top right, rgba(37,99,235,0.95), rgba(9,24,62,0.96));
+  background: radial-gradient(circle at top right, rgba(37,99,235,0.90), rgba(9,24,62,0.92));
   border-radius: 18px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-soft);
   color: white;
   position: relative;
   overflow: hidden;
@@ -145,7 +158,7 @@ header[data-testid="stHeader"]{display:none !important;}
   display:flex;
   align-items:center;
   justify-content: space-between;
-  border: 1px solid rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.12);
   min-height: 110px;
   animation: fadeInUp .55s ease;
 }
@@ -166,13 +179,13 @@ header[data-testid="stHeader"]{display:none !important;}
 .hero-bg-ic{
   position:absolute;
   right: 22px;
-  font-size: 6rem;
-  opacity: 0.08;
-  top: 6px;
+  font-size: 5.4rem;
+  opacity: 0.10;
+  top: 10px;
   transform: rotate(-10deg);
 }
 
-/* TITULOS */
+/* SECTION TITLE */
 .section-title{
   font-family:'Inter', sans-serif;
   font-weight: 900;
@@ -184,71 +197,89 @@ header[data-testid="stHeader"]{display:none !important;}
   gap: 10px;
 }
 
-/* ===== CARDS PREMIUM ===== */
+/* ===== CARD (BRANCO + FAIXA ELEGANTE) ===== */
 .card-shell{
+  position: relative;
   background: white;
   border-radius: 18px;
-  border: 1px solid rgba(148,163,184,0.25);
-  box-shadow: 0 10px 30px rgba(2,6,23,0.06);
+  border: 1px solid rgba(148,163,184,0.22);
+  box-shadow: var(--shadow-soft);
   overflow: hidden;
   animation: fadeInUp .55s ease;
+  transition: transform .20s ease, box-shadow .20s ease, border-color .20s ease;
+}
+.card-shell:hover{
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(148,163,184,0.35);
 }
 
-/* topo colorido */
-.card-top{
-  padding: 16px 16px 14px 16px;
-  color: white;
-  position: relative;
-}
-.card-kicker{
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  font-weight: 900;
-  letter-spacing: .10em;
-  text-transform: uppercase;
-  font-size: 0.62rem;
-  opacity: 0.85;
-}
-.card-title{
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  font-weight: 900;
-  font-size: 1.00rem;
-  margin-top: 6px;
-}
-.card-desc{
-  margin-top: 6px;
-  font-weight: 650;
-  font-size: 0.82rem;
-  opacity: 0.90;
-  line-height: 1.25;
+/* faixa de cor — fina e chique */
+.card-accent{
+  position:absolute;
+  top:0; left:0; right:0;
+  height: 6px;
+  background: var(--accent);
 }
 
-/* ícone branco em bolha sólida (mesma cor) */
-.ico-bubble{
+/* conteúdo */
+.card-body{
+  padding: 16px 16px 10px 16px;
+  display:flex;
+  gap: 12px;
+  align-items:flex-start;
+}
+.ico-chip{
   width: 44px;
   height: 44px;
   border-radius: 16px;
   display:flex;
   align-items:center;
   justify-content:center;
-  background: rgba(255,255,255,0.16);
-  border: 1px solid rgba(255,255,255,0.22);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+  background: var(--accent);
+  box-shadow: 0 10px 22px rgba(2,6,23,0.10);
 }
-.ico-bubble i{
-  font-size: 1.35rem;
-  line-height: 1;
+.ico-chip i{
+  font-size: 1.25rem;
   color: white;
+  line-height: 1;
+  margin-top: 2px;
+}
+.card-title{
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  font-weight: 900;
+  font-size: 0.98rem;
+  color: var(--ink);
+  margin: 0;
+  padding: 0;
+}
+.card-desc{
+  margin-top: 6px;
+  color: rgba(91,103,122,0.92);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+.card-brand{
+  margin-left:auto;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  font-weight: 900;
+  font-size: 0.62rem;
+  letter-spacing: .12em;
+  color: rgba(2,6,23,0.35);
+  text-transform: uppercase;
+  margin-top: 2px;
 }
 
-/* rodapé do card com botão integrado */
+/* botão integrado no card */
 .card-bottom{
-  padding: 12px 14px 14px 14px;
-  background: rgba(2,6,23,0.02);
-  border-top: 1px solid rgba(148,163,184,0.18);
+  padding: 10px 14px 14px 14px;
+  border-top: 1px solid rgba(148,163,184,0.16);
+  background: rgba(2,6,23,0.015);
 }
 
-/* deixa TODOS os botões desses cards com cara integrada */
-div[data-testid="stButton"] > button{
+/* Botão com visual integrado */
+.card-bottom div[data-testid="stButton"] > button{
   width: 100%;
   height: 44px;
   border-radius: 14px !important;
@@ -256,9 +287,11 @@ div[data-testid="stButton"] > button{
   border: 1px solid rgba(15,23,42,0.10) !important;
   background: rgba(255,255,255,0.92) !important;
   color: var(--ink) !important;
+  transition: transform .12s ease, filter .12s ease;
 }
-div[data-testid="stButton"] > button:hover{
+.card-bottom div[data-testid="stButton"] > button:hover{
   filter: brightness(0.99);
+  transform: translateY(-1px);
   border-color: rgba(15,23,42,0.14) !important;
 }
 
@@ -296,9 +329,9 @@ div[data-testid="stButton"] > button:hover{
 </style>
 """, unsafe_allow_html=True)
 
-# =========================================================
-# 3) HEADER FIXO (logo grande)
-# =========================================================
+# -------------------------
+# HEADER FIXO (logo grande)
+# -------------------------
 icone_b64 = get_base64_image("omni_icone.png")
 texto_b64 = get_base64_image("omni_texto.png")
 
@@ -319,9 +352,9 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-# =========================================================
-# 4) LOGIN (Manifesto fica SÓ AQUI)
-# =========================================================
+# -------------------------
+# LOGIN
+# -------------------------
 def try_supabase_login(email: str, password: str) -> bool:
     try:
         url = st.secrets.get("SUPABASE_URL", "")
@@ -336,7 +369,6 @@ def try_supabase_login(email: str, password: str) -> bool:
         return False
 
 def demo_login(email: str, password: str) -> bool:
-    # (mantém por compatibilidade; você pode remover depois)
     return (email.strip().lower() == "demo@omnisfera.net") and (password == "OmniDemo@2026!")
 
 def render_login():
@@ -367,7 +399,7 @@ def render_login():
 
     st.markdown("#### Credenciais")
     usuario = st.text_input("Usuário (Email)", placeholder="seu@email.com")
-    senha = st.text_input("Senha", type="password", placeholder="••••••••")
+    senha = st.text_input("Senha", type="password", placeholder="")
 
     can = bool(aceitou and nome.strip() and cargo.strip() and usuario.strip() and senha.strip())
 
@@ -382,7 +414,6 @@ def render_login():
             st.session_state.usuario_email = usuario.strip()
             st.rerun()
 
-    # ✅ Manifesto fica só no login:
     st.markdown("---")
     st.markdown("#### Manifesto Omnisfera")
     st.info(
@@ -397,9 +428,9 @@ if not st.session_state.autenticado:
     render_login()
     st.stop()
 
-# =========================================================
-# 5) HOME (PORTAL) — sem Manifesto
-# =========================================================
+# -------------------------
+# HOME (portal)
+# -------------------------
 nome_display = (st.session_state.usuario_nome or "Educador").split()[0]
 mensagem_banner = "Unindo ciência, dados e empatia para transformar a educação."
 
@@ -409,29 +440,33 @@ st.markdown(f"""
     <div class="hero-title">Olá, {nome_display}!</div>
     <div class="hero-subtitle">"{mensagem_banner}"</div>
   </div>
-  <div class="hero-bg-ic"><i class="fi fi-ss-chip-brain"></i></div>
+  <div class="hero-bg-ic"><i class="{ICON_AI}"></i></div>
 </div>
 """, unsafe_allow_html=True)
 
 st.markdown("""
 <div class="section-title">
-  <i class="fi fi-sr-house-chimney-crack"></i>
-  Acesso Rápido
+  <span style="opacity:.9;">Acesso Rápido</span>
 </div>
 """, unsafe_allow_html=True)
 
-def portal_card(col, title, desc, icon_i_html, color, btn_key, route_key):
+def portal_card(col, title, desc, icon_class, accent_css_var, btn_key, route_key):
     with col:
         st.markdown(f"""
-        <div class="card-shell">
-          <div class="card-top" style="background:{color};">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-              <div class="ico-bubble">{icon_i_html}</div>
-              <div class="card-kicker">OMNISFERA</div>
+        <div class="card-shell" style="--accent: var({accent_css_var});">
+          <div class="card-accent"></div>
+
+          <div class="card-body">
+            <div class="ico-chip"><i class="{icon_class}"></i></div>
+
+            <div style="flex:1;">
+              <div class="card-title">{title}</div>
+              <div class="card-desc">{desc}</div>
             </div>
-            <div class="card-title">{title}</div>
-            <div class="card-desc">{desc}</div>
+
+            <div class="card-brand">OMNISFERA</div>
           </div>
+
           <div class="card-bottom">
         """, unsafe_allow_html=True)
 
@@ -446,63 +481,44 @@ def portal_card(col, title, desc, icon_i_html, color, btn_key, route_key):
 
 c1, c2, c3 = st.columns(3)
 portal_card(
-    c1,
-    "Estudantes",
+    c1, "Estudantes",
     "Cadastro, histórico, evidências e rede de apoio.",
-    '<i class="fi fi-ss-users-alt"></i>',
-    "var(--c-students)",
-    "go_estudantes",
-    "estudantes",
+    ICONS["estudantes"], "--c-students",
+    "go_estudantes", "estudantes",
 )
 portal_card(
-    c2,
-    "Estratégias & PEI",
+    c2, "Estratégias & PEI",
     "Barreiras, suportes, estratégias e rubricas (PEI).",
-    '<i class="fi fi-sr-puzzle-alt"></i>',
-    "var(--c-pei)",
-    "go_pei",
-    "pei",
+    ICONS["pei"], "--c-pei",
+    "go_pei", "pei",
 )
 portal_card(
-    c3,
-    "Plano de Ação (PAEE)",
+    c3, "Plano de Ação (PAEE)",
     "Metas SMART, ações, responsáveis e cronograma.",
-    '<i class="fi fi-rr-track"></i>',
-    "var(--c-paee)",
-    "go_paee",
-    "paee",
+    ICONS["paee"], "--c-paee",
+    "go_paee", "paee",
 )
 
 c4, c5, c6 = st.columns(3)
 portal_card(
-    c4,
-    "Hub de Recursos",
+    c4, "Hub de Recursos",
     "Adaptações, TA, atividades e modelos.",
-    '<i class="fi fi-sr-lightbulb-on"></i>',
-    "var(--c-hub)",
-    "go_hub",
-    "hub",
+    ICONS["hub"], "--c-hub",
+    "go_hub", "hub",
 )
 portal_card(
-    c5,
-    "Diário de Bordo",
+    c5, "Diário de Bordo",
     "Registros de contexto, hipóteses e decisões (em construção).",
-    '<i class="fi fi-br-compass-alt"></i>',
-    "var(--c-diario)",
-    "go_diario",
-    "diario",
+    ICONS["diario"], "--c-diario",
+    "go_diario", "diario",
 )
 portal_card(
-    c6,
-    "Evolução & Dados",
+    c6, "Evolução & Dados",
     "Indicadores, evidências e acompanhamento longitudinal.",
-    '<i class="fi fi-br-analyse"></i>',
-    "var(--c-mon)",
-    "go_mon",
-    "mon",
+    ICONS["mon"], "--c-mon",
+    "go_mon", "mon",
 )
 
-# Conteúdo de inclusão
 st.markdown("""
 <div class="section-title">
   <i class="fi fi-ss-chip-brain"></i>
@@ -519,7 +535,7 @@ st.markdown("""
 - **Monitoramento**: rubricas + evidências + revisão periódica = progresso real.
 """)
 
-# Rodapé (mantém)
+# Rodapé (logado + sair)
 st.markdown("---")
 cL, cR = st.columns([2, 1])
 with cL:
