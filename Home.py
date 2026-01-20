@@ -338,186 +338,220 @@ if view == "login":
 # HOME PORTAL
 # -------------------------
 if view == "home":
-    # HEADER FIXO com logo (como antigo)
+    # =========================
+    # HEADER FIXO (antigo)
+    # =========================
     icone_b64 = get_base64_image("omni_icone.png")
     texto_b64 = get_base64_image("omni_texto.png")
 
     if icone_b64 and texto_b64:
-        header_html = f"""
-<div class="portal-header">
-  <img src="data:image/png;base64,{icone_b64}" class="portal-logo-spin" alt="Omnisfera"/>
-  <img src="data:image/png;base64,{texto_b64}" class="portal-logo-text" alt="Omnisfera"/>
-  <div class="portal-subtitle">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
-</div>
-"""
+        st.markdown(f"""
+        <div class="logo-container">
+            <img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">
+            <img src="data:image/png;base64,{texto_b64}" class="logo-text-static">
+            <div class="header-subtitle-text">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
+        </div>
+        """, unsafe_allow_html=True)
     else:
-        header_html = """
-<div class="portal-header">
-  <div style="font-size:32px">🌐</div>
-  <div style="font-weight:900; letter-spacing:.6px;">OMNISFERA</div>
-  <div class="portal-subtitle">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
-</div>
-"""
-    st.markdown(header_html, unsafe_allow_html=True)
+        st.markdown("""
+        <div class="logo-container">
+            <h1 style="color:#0F52BA; margin:0;">🌐 OMNISFERA</h1>
+            <div class="header-subtitle-text">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
+        </div>
+        """, unsafe_allow_html=True)
 
     nome_display = st.session_state.get("usuario_nome", "Educador").split()[0]
 
+    # =========================
     # HERO
+    # =========================
     mensagem_banner = "Unindo ciência, dados e empatia para transformar a educação."
     st.markdown(f"""
-<div class="dash-hero">
-  <div>
-    <div class="hero-title">Olá, {nome_display}!</div>
-    <div class="hero-subtitle">"{mensagem_banner}"</div>
-  </div>
-  <i class="ri-heart-pulse-fill hero-bg-icon"></i>
-</div>
-""", unsafe_allow_html=True)
+    <div class="dash-hero hover-spring">
+        <div class="hero-text-block">
+            <div class="hero-title">Olá, {nome_display}!</div>
+            <div class="hero-subtitle">"{mensagem_banner}"</div>
+        </div>
+        <i class="ri-heart-pulse-fill hero-bg-icon"></i>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # MANIFESTO (do seu texto antigo)
+    # =========================
+    # MANIFESTO
+    # =========================
     st.markdown("<div class='section-title'><i class='ri-flag-2-fill'></i> Manifesto Omnisfera</div>", unsafe_allow_html=True)
     st.info(
         "“A Omnisfera foi desenvolvida com muito cuidado e carinho com o objetivo de auxiliar as escolas na tarefa de incluir. "
         "Ela tem o potencial para revolucionar o cenário da inclusão no Brasil.”"
     )
 
-    # 6 CARDS (SPA)
+    # =========================
+    # ACESSO RÁPIDO (6 CARDS BONITOS + BOTÃO OVERLAY)
+    # =========================
     st.markdown("<div class='section-title'><i class='ri-cursor-fill'></i> Acesso Rápido</div>", unsafe_allow_html=True)
-    st.markdown('<div class="tools-grid">', unsafe_allow_html=True)
 
-    def tool_card(title, desc, emoji, bg, view_target, btn_label):
-        st.markdown(f"""
-<div class="tool-card">
-  <div class="tool-top">
-    <div>
-      <div class="tool-title">{title}</div>
-      <div class="tool-desc">{desc}</div>
-    </div>
-    <div class="tool-ico" style="background:{bg};">{emoji}</div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-        st.markdown('<div class="tool-btn">', unsafe_allow_html=True)
-        if st.button(btn_label, use_container_width=True, key=f"go_{view_target}"):
-            go(view_target)
-        st.markdown("</div>", unsafe_allow_html=True)
+    # util: cria card + botão transparente que controla SPA
+    def portal_card(col, title, desc, icon_html, key_btn, target_view, border_color):
+        with col:
+            st.markdown(f"""
+            <div class="nav-btn-card" style="border-bottom: 4px solid {border_color};">
+                {icon_html}
+                <div style="font-weight:900; font-size:0.9rem; color:#1A202C; margin-top:4px;">{title}</div>
+                <div class="nav-desc">{desc}</div>
+            </div>
+            """, unsafe_allow_html=True)
 
-    tool_card("👥 Estudantes", "Cadastro, histórico, evidências e vinculações.", "👥", "rgba(37,99,235,0.12)", "estudantes", "Abrir Estudantes")
-    tool_card("🧩 Estratégias & PEI", "Barreiras, suporte, estratégias e rubricas.", "🧩", "rgba(59,130,246,0.12)", "pei", "Abrir PEI")
-    tool_card("📍 Plano de Ação (PAEE)", "Metas SMART, ações, responsáveis e cronograma.", "📍", "rgba(34,197,94,0.12)", "paee", "Abrir PAEE")
-    tool_card("💡 Hub de Recursos", "Adaptações, TA, atividades e modelos.", "💡", "rgba(245,158,11,0.14)", "hub", "Abrir Hub")
-    tool_card("🧭 Diário de Bordo", "Registros de contexto, hipóteses e decisões pedagógicas.", "🧭", "rgba(249,115,22,0.14)", "diario", "Abrir Diário")
-    tool_card("📈 Avaliação & Acompanhamento", "Indicadores, evidências e progresso longitudinal.", "📈", "rgba(168,85,247,0.14)", "mon", "Abrir Avaliação")
+            st.markdown('<div class="card-overlay-btn">', unsafe_allow_html=True)
+            if st.button("Acessar", key=key_btn, use_container_width=True):
+                st.session_state.view = target_view
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    # ícones (PNG se tiver, fallback se não)
+    def icon_png_or_fallback(png_name, fallback_ri):
+        b64 = get_base64_image(png_name)
+        if b64:
+            return f'<img src="data:image/png;base64,{b64}" class="nav-icon">'
+        return f'<i class="{fallback_ri}" style="font-size:2.6rem; margin-bottom:8px; color:#0F52BA;"></i>'
 
-    # INCLUSÃO EM 60s
+    c1, c2, c3 = st.columns(3)
+    portal_card(
+        c1,
+        "Estudantes",
+        "Cadastro, histórico e evidências do estudante.",
+        icon_png_or_fallback("students.png", "ri-group-line"),
+        "go_estudantes",
+        "estudantes",
+        "#2563EB",
+    )
+    portal_card(
+        c2,
+        "Estratégias & PEI",
+        "Barreiras, suportes, estratégias e rubricas.",
+        icon_png_or_fallback("360.png", "ri-book-read-line"),
+        "go_pei",
+        "pei",
+        "#3B82F6",
+    )
+    portal_card(
+        c3,
+        "Plano de Ação (PAEE)",
+        "Metas SMART, ações, responsáveis e cronograma.",
+        icon_png_or_fallback("pae.png", "ri-map-pin-2-line"),
+        "go_paee",
+        "paee",
+        "#22C55E",
+    )
+
+    c4, c5, c6 = st.columns(3)
+    portal_card(
+        c4,
+        "Hub de Recursos",
+        "Adaptações, TA, atividades e modelos.",
+        icon_png_or_fallback("hub.png", "ri-lightbulb-flash-line"),
+        "go_hub",
+        "hub",
+        "#F59E0B",
+    )
+    portal_card(
+        c5,
+        "Diário de Bordo",
+        "Registros de contexto, hipóteses e decisões.",
+        icon_png_or_fallback("diario.png", "ri-compass-3-line"),
+        "go_diario",
+        "diario",
+        "#F97316",
+    )
+    portal_card(
+        c6,
+        "Avaliação & Acompanhamento",
+        "Indicadores, evidências e evolução longitudinal.",
+        icon_png_or_fallback("monitoramento.png", "ri-line-chart-line"),
+        "go_mon",
+        "mon",
+        "#A855F7",
+    )
+
+    # =========================
+    # CONTEÚDO DE INCLUSÃO (forte)
+    # =========================
     st.markdown("<div class='section-title'><i class='ri-timer-flash-fill'></i> Inclusão em 60 segundos</div>", unsafe_allow_html=True)
     st.markdown("""
 - **Incluir** não é “adaptar o aluno”: é **reduzir barreiras** para participação e aprendizagem.
 - **Barreiras** (LBI): comunicacionais, metodológicas, atitudinais e tecnológicas/instrumentais.
 - **DUA**: múltiplos caminhos de **engajamento**, **representação** e **ação/expressão**.
 - **PEI**: organiza necessidades, objetivos, estratégias, apoios e evidências.
-- **PAEE**: transforma estratégia em **ações**, rotina, responsáveis e cronograma.
-- **Monitoramento**: rubricas + evidências + revisão periódica = progresso real (com rastreabilidade).
+- **PAEE**: transforma estratégia em **rotina de ações** (responsáveis + cronograma + recursos).
+- **Monitoramento**: rubricas + evidências + revisão periódica = progresso real.
 """)
 
-    # FLUXO OMNISFERA (PEI → PAEE → MON)
-    st.markdown("<div class='section-title'><i class='ri-route-fill'></i> Fluxo Omnisfera</div>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.success("**1) PEI**\n\nMapeie barreiras, defina níveis de suporte e registre estratégias.\n\n✅ Saída: Plano pedagógico claro.")
-    with c2:
-        st.warning("**2) PAEE**\n\nConverta em ações: metas SMART, rotina, responsabilidades e recursos.\n\n✅ Saída: Execução na escola.")
-    with c3:
-        st.info("**3) Monitoramento**\n\nColete evidências e avalie por rubricas.\n\n✅ Saída: Evolução longitudinal.")
-
-    # DUA NA PRÁTICA (tabela)
     st.markdown("<div class='section-title'><i class='ri-layout-4-fill'></i> DUA na prática</div>", unsafe_allow_html=True)
     st.markdown("""
 | Princípio | O que garantir | Exemplos rápidos |
 |---|---|---|
 | **Engajamento** | motivação e vínculo | escolhas, metas curtas, hiperfoco, gamificação |
-| **Representação** | diferentes formas de apresentar | áudio, visual, concreto, exemplo guiado, texto simplificado |
-| **Ação/Expressão** | diferentes formas de responder | oral, desenho, teclado, CAA, checklist, prova adaptada |
+| **Representação** | diferentes formas de apresentar | áudio, visual, concreto, exemplo guiado |
+| **Ação/Expressão** | diferentes formas de responder | oral, desenho, teclado, CAA, checklist |
 """)
 
-    # BARREIRAS (LBI) com exemplos
-    st.markdown("<div class='section-title'><i class='ri-shield-star-fill'></i> Barreiras mais comuns (LBI) e como agir</div>", unsafe_allow_html=True)
-    with st.expander("🗣️ Comunicacionais", expanded=False):
-        st.write("Sinais: aluno não compreende instruções, não consegue se expressar, ruído na interação.")
-        st.write("Ações: instruções em passos, visual de rotina, CAA/apoios visuais, checagem de compreensão.")
-    with st.expander("📚 Metodológicas", expanded=False):
-        st.write("Sinais: tarefa exige um caminho único, tempo rígido, avaliação única.")
-        st.write("Ações: flexibilizar produto, reduzir carga, scaffolding, rubricas, tempo extra, modelos.")
-    with st.expander("🤝 Atitudinais", expanded=False):
-        st.write("Sinais: expectativas baixas, rótulos, isolamento, ‘não dá conta’.")
-        st.write("Ações: linguagem inclusiva, altas expectativas realistas, pares tutores, cultura de pertencimento.")
-    with st.expander("🛠️ Tecnológicas/Instrumentais", expanded=False):
-        st.write("Sinais: falta de recurso, ferramenta inadequada, acessibilidade digital inexistente.")
-        st.write("Ações: TA baixa/média/alta, acessibilidade em materiais, alternativa offline, recursos de leitura.")
+    st.markdown("<div class='section-title'><i class='ri-shield-star-fill'></i> Barreiras (LBI) — exemplos e ações</div>", unsafe_allow_html=True)
+    with st.expander("🗣️ Comunicacionais"):
+        st.write("**Sinais:** não compreende instruções / dificuldade de expressar / ruído na interação.")
+        st.write("**Ações:** instrução em passos + apoios visuais + checagem de compreensão + CAA quando necessário.")
+    with st.expander("📚 Metodológicas"):
+        st.write("**Sinais:** caminho único / tempo rígido / avaliação única.")
+        st.write("**Ações:** flexibilizar produto + scaffolding + rubricas + tempo extra + modelos.")
+    with st.expander("🤝 Atitudinais"):
+        st.write("**Sinais:** rótulos, isolamento, baixas expectativas.")
+        st.write("**Ações:** linguagem inclusiva + altas expectativas realistas + pares tutores + pertencimento.")
+    with st.expander("🛠️ Tecnológicas/Instrumentais"):
+        st.write("**Sinais:** falta de recursos / inacessibilidade digital.")
+        st.write("**Ações:** TA baixa/média/alta + alternativas offline + acessibilidade em materiais.")
 
-    # CHECKLIST
-    st.markdown("<div class='section-title'><i class='ri-checkbox-circle-fill'></i> Checklist rápido do professor</div>", unsafe_allow_html=True)
-    st.markdown("""
-- Eu sei **qual é a barreira** (não apenas o diagnóstico)?
-- A tarefa permite **mais de um caminho** para concluir?
-- Eu defini **o mínimo essencial** (o que realmente preciso avaliar)?
-- A sala tem **apoios visuais/rotina** para reduzir ansiedade?
-- O estudante tem **uma forma alternativa** de responder?
-- Eu registrei **evidência** (foto, rubrica, observação objetiva)?
-""")
-
-    # CONHECIMENTO (bento expandido)
+    # =========================
+    # CONHECIMENTO (BENTO)
+    # =========================
     st.markdown("<div class='section-title'><i class='ri-book-mark-fill'></i> Conhecimento</div>", unsafe_allow_html=True)
     st.markdown("""
-<div class="bento-grid">
-  <a href="#" class="bento-item">
-    <div class="bento-icon" style="background:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
-    <div class="bento-title">PEI vs PAEE</div>
-    <div class="bento-desc">Diferenças e quando usar.</div>
-  </a>
-  <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="bento-item">
-    <div class="bento-icon" style="background:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
-    <div class="bento-title">Lei Brasileira de Inclusão</div>
-    <div class="bento-desc">Marco legal e princípios.</div>
-  </a>
-  <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="bento-item">
-    <div class="bento-icon" style="background:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
-    <div class="bento-title">BNCC</div>
-    <div class="bento-desc">Currículo oficial.</div>
-  </a>
-  <a href="#" class="bento-item">
-    <div class="bento-icon" style="background:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
-    <div class="bento-title">Neurodesenvolvimento</div>
-    <div class="bento-desc">Sinais, apoios e escola.</div>
-  </a>
-  <a href="#" class="bento-item">
-    <div class="bento-icon" style="background:#EEF2FF; color:#4F46E5;"><i class="ri-settings-3-line"></i></div>
-    <div class="bento-title">Rubricas</div>
-    <div class="bento-desc">Avaliar com clareza.</div>
-  </a>
-  <a href="#" class="bento-item">
-    <div class="bento-icon" style="background:#FDF2F8; color:#DB2777;"><i class="ri-tools-fill"></i></div>
-    <div class="bento-title">Tecnologia Assistiva</div>
-    <div class="bento-desc">Baixa, média e alta.</div>
-  </a>
-</div>
-""", unsafe_allow_html=True)
+    <div class="bento-grid">
+        <a href="#" class="bento-item">
+            <div class="bento-icon" style="background:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
+            <div class="bento-title">PEI vs PAEE</div>
+            <div class="bento-desc">Diferenças e quando usar.</div>
+        </a>
+        <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="bento-item">
+            <div class="bento-icon" style="background:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
+            <div class="bento-title">Lei Brasileira de Inclusão</div>
+            <div class="bento-desc">Marco legal e princípios.</div>
+        </a>
+        <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="bento-item">
+            <div class="bento-icon" style="background:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
+            <div class="bento-title">BNCC</div>
+            <div class="bento-desc">Currículo oficial.</div>
+        </a>
+        <a href="#" class="bento-item">
+            <div class="bento-icon" style="background:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
+            <div class="bento-title">Neurodesenvolvimento</div>
+            <div class="bento-desc">Sinais e apoios na escola.</div>
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # INSIGHT (com conteúdo real — depois ligamos IA)
+    # =========================
+    # INSIGHT
+    # =========================
     insight = "A aprendizagem acontece quando o cérebro se emociona. Crie vínculos antes de cobrar conteúdos."
     st.markdown(f"""
-<div class="insight-card">
-  <div class="insight-ico"><i class="ri-lightbulb-flash-line"></i></div>
-  <div>
-    <div class="insight-kicker">Insight do Dia</div>
-    <div class="insight-text">"{insight}"</div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+    <div class="insight-card-end hover-spring">
+        <div class="insight-icon-end"><i class="ri-lightbulb-flash-line"></i></div>
+        <div>
+            <div style="font-weight: 900; font-size: 0.8rem; color: #D69E2E; letter-spacing: 0.5px; text-transform: uppercase;">Insight do Dia</div>
+            <p style="margin:2px 0 0 0; font-size:0.9rem; opacity:0.9; color:#4A5568; font-style: italic;">"{insight}"</p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("<div class='footer-sign'>Omnisfera — Criada por Rodrigo A. Queiroz • PEI360 • PAEE360 • HUB de Inclusão</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; color:#CBD5E0; font-size:0.72rem; margin-top:34px;'>Omnisfera — Criada por Rodrigo A. Queiroz • PEI360 • PAEE360 • HUB de Inclusão</div>", unsafe_allow_html=True)
 
 # -------------------------
 # OTHER VIEWS (placeholders)
