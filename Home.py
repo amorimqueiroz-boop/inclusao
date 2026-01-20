@@ -361,8 +361,9 @@ if view == "home":
     st.markdown(header_html, unsafe_allow_html=True)
 
     nome_display = st.session_state.get("usuario_nome", "Educador").split()[0]
-    mensagem_banner = "Unindo ciência, dados e empatia para transformar a educação."
 
+    # HERO
+    mensagem_banner = "Unindo ciência, dados e empatia para transformar a educação."
     st.markdown(f"""
 <div class="dash-hero">
   <div>
@@ -373,9 +374,15 @@ if view == "home":
 </div>
 """, unsafe_allow_html=True)
 
-    st.markdown("<div class='section-title'><i class='ri-cursor-fill'></i> Acesso Rápido</div>", unsafe_allow_html=True)
+    # MANIFESTO (do seu texto antigo)
+    st.markdown("<div class='section-title'><i class='ri-flag-2-fill'></i> Manifesto Omnisfera</div>", unsafe_allow_html=True)
+    st.info(
+        "“A Omnisfera foi desenvolvida com muito cuidado e carinho com o objetivo de auxiliar as escolas na tarefa de incluir. "
+        "Ela tem o potencial para revolucionar o cenário da inclusão no Brasil.”"
+    )
 
     # 6 CARDS (SPA)
+    st.markdown("<div class='section-title'><i class='ri-cursor-fill'></i> Acesso Rápido</div>", unsafe_allow_html=True)
     st.markdown('<div class="tools-grid">', unsafe_allow_html=True)
 
     def tool_card(title, desc, emoji, bg, view_target, btn_label):
@@ -395,31 +402,85 @@ if view == "home":
             go(view_target)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # Linha 1
     tool_card("👥 Estudantes", "Cadastro, histórico, evidências e vinculações.", "👥", "rgba(37,99,235,0.12)", "estudantes", "Abrir Estudantes")
     tool_card("🧩 Estratégias & PEI", "Barreiras, suporte, estratégias e rubricas.", "🧩", "rgba(59,130,246,0.12)", "pei", "Abrir PEI")
-    tool_card("📍 Plano de Ação (PAEE)", "Metas, ações, responsáveis e cronograma.", "📍", "rgba(34,197,94,0.12)", "paee", "Abrir PAEE")
-
-    # Linha 2
+    tool_card("📍 Plano de Ação (PAEE)", "Metas SMART, ações, responsáveis e cronograma.", "📍", "rgba(34,197,94,0.12)", "paee", "Abrir PAEE")
     tool_card("💡 Hub de Recursos", "Adaptações, TA, atividades e modelos.", "💡", "rgba(245,158,11,0.14)", "hub", "Abrir Hub")
-    tool_card("🧭 Diário de Bordo", "Registros, hipóteses, decisões e contexto.", "🧭", "rgba(249,115,22,0.14)", "diario", "Abrir Diário")
+    tool_card("🧭 Diário de Bordo", "Registros de contexto, hipóteses e decisões pedagógicas.", "🧭", "rgba(249,115,22,0.14)", "diario", "Abrir Diário")
     tool_card("📈 Avaliação & Acompanhamento", "Indicadores, evidências e progresso longitudinal.", "📈", "rgba(168,85,247,0.14)", "mon", "Abrir Avaliação")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # BENTO GRID
+    # INCLUSÃO EM 60s
+    st.markdown("<div class='section-title'><i class='ri-timer-flash-fill'></i> Inclusão em 60 segundos</div>", unsafe_allow_html=True)
+    st.markdown("""
+- **Incluir** não é “adaptar o aluno”: é **reduzir barreiras** para participação e aprendizagem.
+- **Barreiras** (LBI): comunicacionais, metodológicas, atitudinais e tecnológicas/instrumentais.
+- **DUA**: múltiplos caminhos de **engajamento**, **representação** e **ação/expressão**.
+- **PEI**: organiza necessidades, objetivos, estratégias, apoios e evidências.
+- **PAEE**: transforma estratégia em **ações**, rotina, responsáveis e cronograma.
+- **Monitoramento**: rubricas + evidências + revisão periódica = progresso real (com rastreabilidade).
+""")
+
+    # FLUXO OMNISFERA (PEI → PAEE → MON)
+    st.markdown("<div class='section-title'><i class='ri-route-fill'></i> Fluxo Omnisfera</div>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.success("**1) PEI**\n\nMapeie barreiras, defina níveis de suporte e registre estratégias.\n\n✅ Saída: Plano pedagógico claro.")
+    with c2:
+        st.warning("**2) PAEE**\n\nConverta em ações: metas SMART, rotina, responsabilidades e recursos.\n\n✅ Saída: Execução na escola.")
+    with c3:
+        st.info("**3) Monitoramento**\n\nColete evidências e avalie por rubricas.\n\n✅ Saída: Evolução longitudinal.")
+
+    # DUA NA PRÁTICA (tabela)
+    st.markdown("<div class='section-title'><i class='ri-layout-4-fill'></i> DUA na prática</div>", unsafe_allow_html=True)
+    st.markdown("""
+| Princípio | O que garantir | Exemplos rápidos |
+|---|---|---|
+| **Engajamento** | motivação e vínculo | escolhas, metas curtas, hiperfoco, gamificação |
+| **Representação** | diferentes formas de apresentar | áudio, visual, concreto, exemplo guiado, texto simplificado |
+| **Ação/Expressão** | diferentes formas de responder | oral, desenho, teclado, CAA, checklist, prova adaptada |
+""")
+
+    # BARREIRAS (LBI) com exemplos
+    st.markdown("<div class='section-title'><i class='ri-shield-star-fill'></i> Barreiras mais comuns (LBI) e como agir</div>", unsafe_allow_html=True)
+    with st.expander("🗣️ Comunicacionais", expanded=False):
+        st.write("Sinais: aluno não compreende instruções, não consegue se expressar, ruído na interação.")
+        st.write("Ações: instruções em passos, visual de rotina, CAA/apoios visuais, checagem de compreensão.")
+    with st.expander("📚 Metodológicas", expanded=False):
+        st.write("Sinais: tarefa exige um caminho único, tempo rígido, avaliação única.")
+        st.write("Ações: flexibilizar produto, reduzir carga, scaffolding, rubricas, tempo extra, modelos.")
+    with st.expander("🤝 Atitudinais", expanded=False):
+        st.write("Sinais: expectativas baixas, rótulos, isolamento, ‘não dá conta’.")
+        st.write("Ações: linguagem inclusiva, altas expectativas realistas, pares tutores, cultura de pertencimento.")
+    with st.expander("🛠️ Tecnológicas/Instrumentais", expanded=False):
+        st.write("Sinais: falta de recurso, ferramenta inadequada, acessibilidade digital inexistente.")
+        st.write("Ações: TA baixa/média/alta, acessibilidade em materiais, alternativa offline, recursos de leitura.")
+
+    # CHECKLIST
+    st.markdown("<div class='section-title'><i class='ri-checkbox-circle-fill'></i> Checklist rápido do professor</div>", unsafe_allow_html=True)
+    st.markdown("""
+- Eu sei **qual é a barreira** (não apenas o diagnóstico)?
+- A tarefa permite **mais de um caminho** para concluir?
+- Eu defini **o mínimo essencial** (o que realmente preciso avaliar)?
+- A sala tem **apoios visuais/rotina** para reduzir ansiedade?
+- O estudante tem **uma forma alternativa** de responder?
+- Eu registrei **evidência** (foto, rubrica, observação objetiva)?
+""")
+
+    # CONHECIMENTO (bento expandido)
     st.markdown("<div class='section-title'><i class='ri-book-mark-fill'></i> Conhecimento</div>", unsafe_allow_html=True)
     st.markdown("""
 <div class="bento-grid">
   <a href="#" class="bento-item">
     <div class="bento-icon" style="background:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
     <div class="bento-title">PEI vs PAEE</div>
-    <div class="bento-desc">Diferenças fundamentais.</div>
+    <div class="bento-desc">Diferenças e quando usar.</div>
   </a>
   <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="bento-item">
     <div class="bento-icon" style="background:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
-    <div class="bento-title">Legislação</div>
-    <div class="bento-desc">LBI e diretrizes.</div>
+    <div class="bento-title">Lei Brasileira de Inclusão</div>
+    <div class="bento-desc">Marco legal e princípios.</div>
   </a>
   <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="bento-item">
     <div class="bento-icon" style="background:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
@@ -428,13 +489,23 @@ if view == "home":
   </a>
   <a href="#" class="bento-item">
     <div class="bento-icon" style="background:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
-    <div class="bento-title">DUA & Barreiras</div>
-    <div class="bento-desc">Aplicação prática.</div>
+    <div class="bento-title">Neurodesenvolvimento</div>
+    <div class="bento-desc">Sinais, apoios e escola.</div>
+  </a>
+  <a href="#" class="bento-item">
+    <div class="bento-icon" style="background:#EEF2FF; color:#4F46E5;"><i class="ri-settings-3-line"></i></div>
+    <div class="bento-title">Rubricas</div>
+    <div class="bento-desc">Avaliar com clareza.</div>
+  </a>
+  <a href="#" class="bento-item">
+    <div class="bento-icon" style="background:#FDF2F8; color:#DB2777;"><i class="ri-tools-fill"></i></div>
+    <div class="bento-title">Tecnologia Assistiva</div>
+    <div class="bento-desc">Baixa, média e alta.</div>
   </a>
 </div>
 """, unsafe_allow_html=True)
 
-    # INSIGHT DO DIA (fallback)
+    # INSIGHT (com conteúdo real — depois ligamos IA)
     insight = "A aprendizagem acontece quando o cérebro se emociona. Crie vínculos antes de cobrar conteúdos."
     st.markdown(f"""
 <div class="insight-card">
