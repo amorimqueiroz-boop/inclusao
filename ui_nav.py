@@ -1,6 +1,7 @@
 # ui_nav.py
 from __future__ import annotations
 
+import base64
 from pathlib import Path
 import streamlit as st
 
@@ -22,7 +23,7 @@ def ensure_auth_state():
 
 
 # =============================================================================
-# UTILS
+# FILE / PATH UTILS
 # =============================================================================
 def _project_root() -> Path:
     return Path(__file__).resolve().parent
@@ -40,8 +41,18 @@ def _get_qp(key: str, default: str | None = None) -> str | None:
         return default
 
 
+def _img_to_data_uri(path: Path) -> str | None:
+    if not path.exists() or not path.is_file():
+        return None
+    try:
+        data = base64.b64encode(path.read_bytes()).decode("utf-8")
+        return f"data:image/png;base64,{data}"
+    except Exception:
+        return None
+
+
 # =============================================================================
-# ICONS
+# ICONS (FLATICON UICONS)
 # =============================================================================
 def inject_icons_cdn():
     st.markdown(
@@ -55,7 +66,7 @@ def inject_icons_cdn():
 
 
 # =============================================================================
-# CSS SHELL
+# CSS SHELL (HIDE STREAMLIT UI + TOPBAR)
 # =============================================================================
 def inject_shell_css():
     st.markdown(
@@ -69,12 +80,12 @@ footer, #MainMenu,
   display: none !important;
 }}
 
-/* empurra conteúdo para não ficar atrás da topbar */
+/* empurra conteúdo */
 .main .block-container {{
   padding-top: {TOPBAR_HEIGHT + TOPBAR_PADDING}px !important;
 }}
 
-/* topbar */
+/* topbar base */
 .omni-topbar {{
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -92,24 +103,67 @@ footer, #MainMenu,
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }}
 
+/* brand (logo + wordmark) */
 .omni-brand {{
   display:flex;
   align-items:center;
   gap:10px;
   color: rgba(255,255,255,0.95);
-  font-weight: 750;
-  font-size: 14px;
   user-select:none;
 }}
 
-.omni-dot {{
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.78);
-  box-shadow: 0 0 12px rgba(255,255,255,0.22);
+.omni-logo-wrap {{
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    0 0 0 4px rgba(255,255,255,0.04),
+    0 12px 30px rgba(0,0,0,0.20),
+    0 0 26px rgba(255,255,255,0.14);
 }}
 
+.omni-logo {{
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 14px rgba(255,255,255,0.25));
+}}
+
+.omni-wordmark {{
+  display:flex;
+  flex-direction:column;
+  line-height: 1.05;
+}}
+
+.omni-wordmark .name {{
+  font-weight: 950;
+  font-size: 14px;
+  letter-spacing: .2px;
+}}
+
+.omni-wordmark .tag {{
+  font-size: 11px;
+  opacity: .62;
+  margin-top: 2px;
+}}
+
+/* pulse “gritando” com elegância */
+@keyframes omniPulse {{
+  0%   {{ box-shadow: 0 0 0 4px rgba(255,255,255,0.04), 0 12px 30px rgba(0,0,0,0.20), 0 0 18px rgba(255,255,255,0.10); }}
+  50%  {{ box-shadow: 0 0 0 5px rgba(255,255,255,0.06), 0 14px 34px rgba(0,0,0,0.24), 0 0 30px rgba(255,255,255,0.18); }}
+  100% {{ box-shadow: 0 0 0 4px rgba(255,255,255,0.04), 0 12px 30px rgba(0,0,0,0.20), 0 0 18px rgba(255,255,255,0.10); }}
+}}
+.omni-logo-wrap {{
+  animation: omniPulse 3.2s ease-in-out infinite;
+}}
+
+/* nav */
 .omni-nav {{
   display:flex;
   align-items:center;
@@ -163,7 +217,7 @@ footer, #MainMenu,
 # ROUTES
 # =============================================================================
 def ROUTES():
-    # IMPORTANTE: Home agora é pages/home.py (como está no seu repo)
+    # Home atual: pages/home.py (como está no seu repo)
     return {
         "home": {
             "label": "Home",
@@ -195,7 +249,7 @@ def ROUTES():
             "icon": "fi fi-sr-book-open-cover",
             "color": "#FFB86C",
         },
-        # futuras (desabilita automaticamente se não existir)
+        # futuras (desabilita se não existir)
         "diario": {
             "label": "Diário",
             "page": "pages/4_Diario.py",
@@ -219,10 +273,19 @@ def get_active_go(default: str = "home") -> str:
 
 
 # =============================================================================
-# TOPBAR
+# TOPBAR RENDER
 # =============================================================================
 def render_topbar(active_go: str):
     routes = ROUTES()
+
+    # logo embutida (base64) — funciona no Streamlit Cloud
+    logo_path = _project_root() / "omni_icone.png"
+    logo_uri = _img_to_data_uri(logo_path)
+    logo_html = (
+        f"<img class='omni-logo' src='{logo_uri}'/>"
+        if logo_uri
+        else "<span style='font-size:18px; line-height:1;'>🌿</span>"
+    )
 
     def _item(go: str) -> str:
         r = routes[go]
@@ -248,9 +311,15 @@ def render_topbar(active_go: str):
         f"""
 <div class="omni-topbar">
   <div class="omni-brand">
-    <div class="omni-dot"></div>
-    <div>Omnisfera</div>
+    <div class="omni-logo-wrap">
+      {logo_html}
+    </div>
+    <div class="omni-wordmark">
+      <div class="name">Omnisfera</div>
+      <div class="tag">Inclusão • PEI • Dados</div>
+    </div>
   </div>
+
   <div class="omni-nav">
     {items_html}
   </div>
@@ -264,7 +333,7 @@ def render_topbar(active_go: str):
 # ROUTER
 # =============================================================================
 def route_from_query(default_go: str = "home"):
-    # evita loop de roteamento
+    # evita loop
     if st.session_state.get("_already_routed"):
         return
 
@@ -280,7 +349,7 @@ def route_from_query(default_go: str = "home"):
 
 
 # =============================================================================
-# BOOT
+# BOOTSTRAP
 # =============================================================================
 def boot_ui(do_route: bool = False):
     ensure_auth_state()
