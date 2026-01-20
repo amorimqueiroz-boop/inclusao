@@ -12,7 +12,7 @@ def render_omnisfera_nav():
         "mon":    "pages/5_Monitoramento_Avaliacao.py",
     }
 
-    # Navegação (?go=)
+    # --- Navegação (?go=) ---
     qp = st.query_params
     if "go" in qp:
         dest = qp["go"]
@@ -20,7 +20,35 @@ def render_omnisfera_nav():
             st.query_params.clear()
             st.switch_page(ROUTES[dest])
 
-    # Logo base64
+    # --- Descobrir página atual (pelo path) ---
+    # Em multipage, o Streamlit costuma expor o script atual.
+    # Esse método é estável o suficiente para o "active".
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        ctx = get_script_run_ctx()
+        current_script = (ctx.script_path or "").replace("\\", "/") if ctx else ""
+    except Exception:
+        current_script = ""
+
+    def active_key():
+        s = current_script.lower()
+        if s.endswith("/home.py") or s.endswith("home.py"):
+            return "home"
+        if s.endswith("/pages/1_pei.py") or s.endswith("1_pei.py"):
+            return "pei"
+        if s.endswith("/pages/2_pae.py") or s.endswith("2_pae.py"):
+            return "paee"
+        if s.endswith("/pages/3_hub_inclusao.py") or s.endswith("3_hub_inclusao.py"):
+            return "hub"
+        if s.endswith("/pages/4_diario_de_bordo.py") or s.endswith("4_diario_de_bordo.py"):
+            return "diario"
+        if s.endswith("/pages/5_monitoramento_avaliacao.py") or s.endswith("5_monitoramento_avaliacao.py"):
+            return "mon"
+        return "home"
+
+    ACTIVE = active_key()
+
+    # --- Logo base64 ---
     def logo_src():
         for f in ["omni_icone.png", "logo.png", "iconeaba.png", "omni.png", "ominisfera.png"]:
             if os.path.exists(f):
@@ -30,15 +58,32 @@ def render_omnisfera_nav():
 
     src = logo_src()
 
-    # Posição por cima do header do Streamlit
     TOP_PX = 8
     RIGHT_PX = 14
+
+    # Cores por página
+    COLORS = {
+        "home":   "#111827",
+        "pei":    "#3B82F6",
+        "paee":   "#22C55E",
+        "hub":    "#F59E0B",
+        "diario": "#F97316",
+        "mon":    "#A855F7",
+    }
+
+    def btn_style(key: str) -> str:
+        # Neutro: cinza bem leve + ícone escuro
+        # Ativo: fundo colorido + ícone branco + ring sutil
+        if key == ACTIVE:
+            return f"background:{COLORS[key]}; color:#FFFFFF; box-shadow: 0 0 0 3px rgba(255,255,255,0.9), 0 10px 22px rgba(15,23,42,0.12);"
+        else:
+            return "background:#F3F4F6; color:#111827; box-shadow: 0 2px 10px rgba(15,23,42,0.06);"
 
     st.markdown(f"""
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 
 <style>
-/* Header do Streamlit "mutado" para não competir com o dock */
+/* Header do Streamlit mutado para não competir */
 header[data-testid="stHeader"] {{
   background: transparent !important;
   box-shadow: none !important;
@@ -48,7 +93,7 @@ header[data-testid="stHeader"] * {{
   visibility: hidden !important;
 }}
 
-/* Dock (mais fino) */
+/* Dock (fino) */
 .omni-dock {{
   position: fixed !important;
   top: {TOP_PX}px !important;
@@ -57,9 +102,8 @@ header[data-testid="stHeader"] * {{
 
   display: flex;
   align-items: center;
-
-  gap: 10px;              /* ↓ era 12 */
-  padding: 8px 12px;      /* ↓ era 10px 14px */
+  gap: 10px;
+  padding: 8px 12px;
   border-radius: 999px;
 
   background: #FFFFFF !important;
@@ -71,59 +115,43 @@ header[data-testid="stHeader"] * {{
   pointer-events: auto !important;
 }}
 
-/* Logo */
-@keyframes spin {{
-  from {{ transform: rotate(0deg); }}
-  to {{ transform: rotate(360deg); }}
-}}
+/* Logo um pouco maior pra equilibrar */
+@keyframes spin {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
 .omni-logo {{
-  width: 26px;            /* ↓ era 28 */
-  height: 26px;           /* ↓ era 28 */
+  width: 28px;   /* ↑ voltou um pouco */
+  height: 28px;
   animation: spin 10s linear infinite;
 }}
 
-/* Separador */
 .omni-sep {{
   width: 1px;
-  height: 22px;           /* ↓ era 26 */
+  height: 22px;
   background: #E5E7EB;
   margin: 0 2px;
 }}
 
-/* Botões circulares coloridos (ícone branco) */
+/* Botões */
 .omni-ico {{
-  width: 34px;            /* ↓ era 38 */
-  height: 34px;           /* ↓ era 38 */
+  width: 34px;
+  height: 34px;
   border-radius: 999px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   text-decoration: none !important;
-
-  /* borda sutil para manter o “dock premium” */
   border: 1px solid rgba(17,24,39,0.06) !important;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
-  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
 }}
 
 .omni-ico:hover {{
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
   filter: brightness(1.02);
 }}
 
 .omni-ic {{
-  font-size: 18px;        /* ↓ era 20 */
+  font-size: 18px;
   line-height: 1;
-  color: #FFFFFF !important;  /* ícone branco */
-}}
-
-/* Acessibilidade: foco ao navegar com teclado */
-.omni-ico:focus {{
-  outline: 3px solid rgba(59,130,246,0.25);
-  outline-offset: 2px;
+  color: inherit; /* cor vem do style inline */
 }}
 </style>
 
@@ -131,28 +159,33 @@ header[data-testid="stHeader"] * {{
   <img src="{src}" class="omni-logo" alt="Omnisfera" />
   <div class="omni-sep"></div>
 
-  <!-- target=_self garante abrir na mesma aba -->
-  <a class="omni-ico" href="?go=home"   target="_self" title="Home" style="background:#111827">
+  <a class="omni-ico" href="?go=home"   target="_self" title="Home"
+     style="{btn_style('home')}">
     <i class="ri-home-5-line omni-ic"></i>
   </a>
 
-  <a class="omni-ico" href="?go=pei"    target="_self" title="Estratégias & PEI" style="background:#3B82F6">
+  <a class="omni-ico" href="?go=pei"    target="_self" title="Estratégias & PEI"
+     style="{btn_style('pei')}">
     <i class="ri-puzzle-2-line omni-ic"></i>
   </a>
 
-  <a class="omni-ico" href="?go=paee"   target="_self" title="Plano de Ação (PAEE)" style="background:#22C55E">
+  <a class="omni-ico" href="?go=paee"   target="_self" title="Plano de Ação (PAEE)"
+     style="{btn_style('paee')}">
     <i class="ri-map-pin-2-line omni-ic"></i>
   </a>
 
-  <a class="omni-ico" href="?go=hub"    target="_self" title="Hub de Recursos" style="background:#F59E0B">
+  <a class="omni-ico" href="?go=hub"    target="_self" title="Hub de Recursos"
+     style="{btn_style('hub')}">
     <i class="ri-lightbulb-line omni-ic"></i>
   </a>
 
-  <a class="omni-ico" href="?go=diario" target="_self" title="Diário de Bordo" style="background:#F97316">
+  <a class="omni-ico" href="?go=diario" target="_self" title="Diário de Bordo"
+     style="{btn_style('diario')}">
     <i class="ri-compass-3-line omni-ic"></i>
   </a>
 
-  <a class="omni-ico" href="?go=mon"    target="_self" title="Evolução & Acompanhamento" style="background:#A855F7">
+  <a class="omni-ico" href="?go=mon"    target="_self" title="Evolução & Acompanhamento"
+     style="{btn_style('mon')}">
     <i class="ri-line-chart-line omni-ic"></i>
   </a>
 </div>
