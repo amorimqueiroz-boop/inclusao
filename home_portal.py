@@ -3,6 +3,8 @@ import streamlit as st
 import base64
 import os
 
+from ui_nav import render_topbar_nav
+
 # =========================================================
 # CONFIG
 # =========================================================
@@ -13,6 +15,7 @@ PAGES = {
     "pei": "pages/1_PEI.py",
     "paee": "pages/2_PAE.py",
     "hub": "pages/3_Hub_Inclusao.py",
+    # opcionais (se existirem na sua repo)
     "diario": "pages/4_Diario_de_Bordo.py",
     "mon": "pages/5_Monitoramento_Avaliacao.py",
 }
@@ -22,8 +25,10 @@ PAGES = {
 # =========================================================
 def _supabase_login(email: str, password: str):
     """
-    Login Supabase Auth (se estiver configurado).
-    st.secrets: SUPABASE_URL e SUPABASE_ANON_KEY (ou SUPABASE_KEY)
+    Login Supabase Auth.
+    Precisa existir no secrets:
+      SUPABASE_URL
+      SUPABASE_ANON_KEY   (ou SUPABASE_KEY)
     """
     try:
         from supabase import create_client
@@ -44,7 +49,7 @@ def _supabase_login(email: str, password: str):
         return (False, f"Falha no login Supabase: {e}")
 
 # =========================================================
-# PAGE CONFIG (sempre no topo)
+# PAGE CONFIG (sempre no topo do arquivo)
 # =========================================================
 icone_pag = "omni_icone.png" if os.path.exists("omni_icone.png") else "🧩"
 st.set_page_config(
@@ -72,22 +77,28 @@ def get_base64_image(path: str) -> str:
         return base64.b64encode(f.read()).decode()
 
 def goto(page_path: str):
-    if not os.path.exists(page_path):
-        st.error(f"Página não encontrada: {page_path}")
+    # No Streamlit Cloud às vezes os.path.exists pode falhar por path relativo;
+    # mas o switch_page é o que importa. Ainda assim, mantemos uma mensagem amigável.
+    if not page_path:
+        st.error("Página alvo vazia.")
         st.stop()
-    st.switch_page(page_path)
+
+    # tenta trocar; se der erro, mostramos orientação
+    try:
+        st.switch_page(page_path)
+    except Exception:
+        st.error(f"Não consegui abrir a página: {page_path}. Verifique se o arquivo existe e o caminho está correto.")
+        st.stop()
 
 def logout():
     st.session_state.autenticado = False
+    st.session_state.usuario_nome = ""
+    st.session_state.usuario_cargo = ""
+    st.session_state.usuario_email = ""
     st.rerun()
 
 # =========================================================
-# DEBUG MARK (evita “tela branca”)
-# =========================================================
-st.markdown("<!-- home_portal.py carregou -->", unsafe_allow_html=True)
-
-# =========================================================
-# CSS (High design)
+# CSS (Home) — SEM header fixo (quem manda no topo é o ui_nav.py)
 # =========================================================
 st.markdown(
     """
@@ -95,6 +106,7 @@ st.markdown(
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
+<!-- Flaticon UIcons Solid Rounded (para ícones dos cards da Home) -->
 <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
 
 <style>
@@ -121,83 +133,8 @@ html, body, [class*="css"]{
   color: var(--text);
 }
 
-header[data-testid="stHeader"]{display:none !important;}
-[data-testid="stSidebar"]{display:none !important;}
-[data-testid="stSidebarNav"]{display:none !important;}
-[data-testid="stToolbar"]{display:none !important;}
-
-.block-container{
-  padding-top: 116px !important;
-  padding-left: 2rem !important;
-  padding-right: 2rem !important;
-  padding-bottom: 2rem !important;
-}
-
-@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-
-/* HEADER FIXO */
-.portal-header{
-  position: fixed; top:0; left:0; right:0;
-  height: 92px;
-  z-index: 99999;
-  display:flex;
-  align-items:center;
-  gap: 14px;
-  padding: 10px 28px;
-  background: rgba(247,250,252,0.88);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(226,232,240,0.85);
-  box-shadow: 0 6px 18px rgba(15,23,42,0.05);
-}
-
-.portal-logo-wrap{
-  display:flex;
-  align-items:center;
-  gap: 12px;
-  min-width: 320px;
-}
-
-.portal-logo-spin{
-  height: 58px;
-  width:auto;
-  animation: spin 45s linear infinite;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.10));
-}
-
-.portal-logo-text{
-  height: 28px;
-  width:auto;
-}
-
-.portal-subtitle{
-  font-family:'Inter', sans-serif;
-  font-weight: 700;
-  font-size: 0.96rem;
-  color: #64748B;
-  border-left: 2px solid rgba(203,213,225,0.9);
-  padding-left: 14px;
-  height: 40px;
-  display:flex;
-  align-items:center;
-  letter-spacing: -0.2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.portal-right{
-  margin-left:auto;
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  color: rgba(15,23,42,0.55);
-  font-family:'Inter', sans-serif;
-  font-weight: 800;
-  font-size: 0.72rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-}
+/* NÃO mexemos em .block-container aqui.
+   O ui_nav.py controla o padding-top para o menu fixo. */
 
 /* HERO */
 .hero{
@@ -366,55 +303,13 @@ header[data-testid="stHeader"]{display:none !important;}
   height: 40px !important;
   font-weight: 900 !important;
 }
-
-@media (max-width: 900px){
-  .portal-subtitle{ display:none; }
-  .block-container{ padding-top: 110px !important; }
-}
 </style>
 """,
     unsafe_allow_html=True,
 )
 
 # =========================================================
-# HEADER
-# =========================================================
-icone_b64 = get_base64_image("omni_icone.png")
-texto_b64 = get_base64_image("omni_texto.png")
-
-if icone_b64 and texto_b64:
-    st.markdown(
-        f"""
-<div class="portal-header">
-  <div class="portal-logo-wrap">
-    <img src="data:image/png;base64,{icone_b64}" class="portal-logo-spin" alt="Omnisfera"/>
-    <img src="data:image/png;base64,{texto_b64}" class="portal-logo-text" alt="Omnisfera"/>
-    <div class="portal-subtitle">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
-  </div>
-  <div class="portal-right">{APP_VERSION}</div>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-else:
-    st.markdown(
-        f"""
-<div class="portal-header">
-  <div class="portal-logo-wrap">
-    <div style="width:58px;height:58px;border-radius:999px;background:conic-gradient(from 0deg,#3B82F6,#22C55E,#F59E0B,#F97316,#A855F7,#3B82F6);"></div>
-    <div style="display:flex;flex-direction:column;gap:2px;">
-      <div style="font-family:Inter,sans-serif;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#0F172A;font-size:.88rem;">OMNISFERA</div>
-      <div style="font-family:Inter,sans-serif;font-weight:700;color:#64748B;font-size:.80rem;">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
-    </div>
-  </div>
-  <div class="portal-right">{APP_VERSION}</div>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-
-# =========================================================
-# LOGIN
+# LOGIN (Home sem menu; logado -> mostra menu)
 # =========================================================
 if not st.session_state.get("autenticado", False):
     st.markdown("<div class='login-wrap'>", unsafe_allow_html=True)
@@ -460,6 +355,11 @@ if not st.session_state.get("autenticado", False):
 
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
+
+# =========================================================
+# MENU (ui_nav) — agora a Home também usa o topo do sistema
+# =========================================================
+render_topbar_nav(active="home")
 
 # =========================================================
 # HOME (Portal)
@@ -514,8 +414,19 @@ tool_card(c3, "Plano de Ação (PAEE)", "Metas SMART, ações, responsáveis e c
 
 c4, c5, c6 = st.columns(3)
 tool_card(c4, "Hub de Recursos", "Adaptações, TA, atividades, modelos e trilhas.", "fi fi-sr-lightbulb-on", "--c-hub", "go_hub", PAGES["hub"])
-tool_card(c5, "Diário de Bordo", "Registros de contexto, hipóteses e decisões.", "fi fi-sr-compass-alt", "--c-di", "go_diario", PAGES["diario"])
-tool_card(c6, "Evolução & Dados", "Indicadores, evidências e acompanhamento longitudinal.", "fi fi-sr-chart-line-up", "--c-mon", "go_mon", PAGES["mon"])
+
+# Só mostra se a página existir no seu projeto
+if os.path.exists(PAGES.get("diario", "")):
+    tool_card(c5, "Diário de Bordo", "Registros de contexto, hipóteses e decisões.", "fi fi-sr-compass-alt", "--c-di", "go_diario", PAGES["diario"])
+else:
+    with c5:
+        st.info("Diário (em breve)")
+
+if os.path.exists(PAGES.get("mon", "")):
+    tool_card(c6, "Evolução & Dados", "Indicadores, evidências e acompanhamento longitudinal.", "fi fi-sr-chart-line-up", "--c-mon", "go_mon", PAGES["mon"])
+else:
+    with c6:
+        st.info("Dados (em breve)")
 
 # =========================================================
 # FOOTER (logado + sair)
