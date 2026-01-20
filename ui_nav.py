@@ -2,51 +2,54 @@
 import streamlit as st
 import os, base64
 
-# -------------------------
-# CONFIG (cores + ícones)
-# -------------------------
+# =========================
+# MAPA DE PÁGINAS (ajuste se mudar nomes)
+# =========================
+PAGES = {
+    "home":       "home_portal.py",          # sua home fora de /pages
+    "alunos":     "pages/0_Alunos.py",
+    "pei":        "pages/1_PEI.py",
+    "paee":       "pages/2_PAE.py",
+    "hub":        "pages/3_Hub_Inclusao.py",
+    "diario":     "pages/4_Diario_de_Bordo.py",        # se existir
+    "dados":      "pages/5_Monitoramento_Avaliacao.py" # se existir
+}
+
+# Cores por módulo (discretas)
+COLORS = {
+    "home":   "#111827",
+    "alunos": "#2563EB",
+    "pei":    "#3B82F6",
+    "paee":   "#10B981",
+    "hub":    "#F59E0B",
+    "diario": "#F97316",
+    "dados":  "#8B5CF6",
+}
+
+# =========================
+# ICONES (Flaticon UIcons v3.0.0)
+# Padrão que você definiu:
+# Home/Diário/Dados/IA = bold-rounded (fi-br-*)
+# PEI/Hub = solid-rounded (fi-sr-*)
+# PAEE = solid-straight (fi-ss-*)
+# =========================
 FLATICON_CSS = """
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css'>
 <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
 <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
 """
 
-COLORS = {
-    "home": "#0F172A",
-    "alunos": "#2B6CEB",
-    "pei": "#2F7DF6",
-    "paee": "#22A765",
-    "hub": "#D98A0A",
-    "diario": "#E05A1C",
-    "dados": "#8B5CF6",
-    "logout": "#64748B",
-}
-
-# Ícones seguros (Flaticon)
 ICONS = {
-    "home": "fi fi-br-house-chimney",     # bold-rounded
-    "alunos": "fi fi-sr-users-alt",       # solid-rounded
-    "pei": "fi fi-sr-puzzle-alt",         # solid-rounded
-    "paee": "fi fi-ss-route",             # solid-straight
-    "hub": "fi fi-sr-lightbulb-on",       # solid-rounded
-    "diario": "fi fi-br-compass-alt",     # bold-rounded
-    "dados": "fi fi-br-chart-line-up",    # bold-rounded
-    "logout": "fi fi-sr-sign-out-alt",    # solid-rounded
+    "home":   "fi fi-br-home",
+    "alunos": "fi fi-br-users",                 # bold-rounded
+    "pei":    "fi fi-sr-puzzle-alt",            # solid-rounded
+    "paee":   "fi fi-ss-route",                 # solid-straight (alternativa: fi-ss-rocket-lunch)
+    "hub":    "fi fi-sr-lightbulb-on",          # solid-rounded
+    "diario": "fi fi-br-book-alt",              # bold-rounded
+    "dados":  "fi fi-br-chart-histogram",       # bold-rounded
+    "sair":   "fi fi-br-sign-out-alt",          # bold-rounded
 }
-
-# Links para MULTIPAGE (o seu caso)
-NAV_LINKS = [
-    ("home",   "Home",                  "Home.py"),
-    ("alunos", "Alunos",                "pages/0_Alunos.py"),
-    ("pei",    "Estratégias & PEI",     "pages/1_PEI.py"),
-    ("paee",   "Plano de Ação",         "pages/2_PAE.py"),
-    ("hub",    "Hub",                   "pages/3_Hub_Inclusao.py"),
-    ("diario", "Diário",                "pages/4_Diario_de_Bordo.py"),
-    ("dados",  "Dados",                 "pages/5_Monitoramento_Avaliacao.py"),
-]
 
 def _b64(path: str) -> str:
     if not os.path.exists(path):
@@ -54,202 +57,217 @@ def _b64(path: str) -> str:
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
-def _goto(target_path: str):
-    """Navega no multipage do Streamlit."""
+def _get_query_param(name: str):
     try:
-        st.switch_page(target_path)
+        qp = st.query_params
+        v = qp.get(name)
+        if isinstance(v, list):
+            return v[0] if v else None
+        return v
     except Exception:
-        # fallback: não quebra o app
-        st.error(f"Não consegui abrir: {target_path}")
+        return None
 
-def render_topbar_nav(active_key: str, hide_on_home: bool = True):
+def _clear_query_params():
+    try:
+        st.query_params.clear()
+    except Exception:
+        pass
+
+def _nav_if_requested():
     """
-    Topbar fina full-width.
-    - active_key: qual item está ativo (ex: 'paee' dentro do 2_PAE.py)
-    - hide_on_home: se True, não mostra na Home (Home fica limpa)
+    Se a URL vier com ?go=paee, troca de página e limpa params
+    """
+    go = _get_query_param("go")
+    if go:
+        target = PAGES.get(go)
+        _clear_query_params()
+        if target:
+            st.switch_page(target)
+
+def render_topbar_nav(active: str, show_logout: bool = True):
+    """
+    Topbar fina, discreta, full-width.
+    Navegação por links (?go=...) + switch_page.
     """
 
-    # Se quiser esconder na Home, basta não chamar na Home.
-    # Aqui só garantimos não explodir.
+    # 1) Se chegou com ?go=..., navega e sai
+    _nav_if_requested()
 
-    # Logo
-    logo_b64 = _b64("omni_icone.png")
-    if logo_b64:
-        logo_html = f'<img class="omni-spin" src="data:image/png;base64,{logo_b64}" alt="Omnisfera" />'
-    else:
-        logo_html = '<div class="omni-mark-fallback" aria-label="Omnisfera"></div>'
-
-    # Links HTML (visual)
-    links_html = ""
-    for k, label, _path in NAV_LINKS:
-        ic = ICONS.get(k, "fi fi-br-circle")
-        color = COLORS.get(k, "#0F172A")
-        cls = "omni-link active" if (k == active_key) else "omni-link"
-        links_html += f"""
-<div class="{cls}">
-  <i class="{ic} omni-ic" style="color:{color};"></i>
-  <span class="omni-lbl">{label}</span>
-</div>
-"""
-
-    st.markdown(
-        f"""
+    # 2) Esconde sidebar/toolbar e cria espaço pro topo
+    st.markdown(f"""
 {FLATICON_CSS}
 <style>
+/* limpa UI padrão */
 header[data-testid="stHeader"]{{display:none !important;}}
+[data-testid="stSidebar"]{{display:none !important;}}
 [data-testid="stSidebarNav"]{{display:none !important;}}
+[data-testid="stToolbar"]{{display:none !important;}}
 
-/* respiro para não cobrir conteúdo */
+/* espaço pro conteúdo não ficar embaixo da barra */
 .block-container{{
-  padding-top: 76px !important;
+  padding-top: 88px !important;
   padding-left: 2rem !important;
   padding-right: 2rem !important;
 }}
 
+/* topbar */
 @keyframes spin{{from{{transform:rotate(0deg);}}to{{transform:rotate(360deg);}}}}
 
 .omni-topbar{{
-  position:fixed; top:0; left:0; right:0;
-  height:54px;
-  z-index:2147483647;
+  position: fixed;
+  top:0; left:0; right:0;
+  height: 62px;
+  z-index: 2147483647;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding: 0 18px;
-  background: rgba(248,250,252,0.86);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  padding: 0 22px;
+  background: rgba(247,250,252,0.86);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(226,232,240,0.85);
   box-shadow: 0 8px 20px rgba(15,23,42,0.06);
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
 }}
 
-.omni-left{{display:flex; align-items:center; gap:10px; min-width: 260px;}}
-.omni-spin{{width:30px; height:30px; border-radius:999px; animation: spin 40s linear infinite;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.10));}}
-.omni-mark-fallback{{width:30px; height:30px; border-radius:999px;
-  background: conic-gradient(from 0deg,#3B82F6,#22C55E,#F59E0B,#F97316,#A855F7,#3B82F6);
-  animation: spin 40s linear infinite;}}
-.omni-brand{{display:flex; flex-direction:column; line-height:1;}}
-.omni-title{{font-weight: 900; letter-spacing: .14em; text-transform: uppercase;
-  font-size: 0.78rem; color:#0F172A;}}
-.omni-sub{{margin-top:2px; font-size:0.68rem; color: rgba(15,23,42,0.55); letter-spacing:.04em;}}
-
-.omni-right{{display:flex; align-items:flex-end; gap: 14px;}}
-.omni-link{{
-  display:flex; flex-direction:column; align-items:center;
-  gap: 4px;
-  padding: 6px 6px 4px 6px;
-  border-radius: 12px;
-  transition: transform .14s ease, background .14s ease, box-shadow .14s ease, opacity .14s ease;
-  opacity: 0.86;
+.omni-left{{
+  display:flex; align-items:center; gap: 12px;
+  min-width: 320px;
 }}
+
+.omni-mark{{
+  width: 32px; height: 32px; border-radius: 999px;
+  animation: spin 45s linear infinite;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.10));
+}}
+
+.omni-title{{
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: .82rem;
+  color: #0F172A;
+}}
+
+.omni-right{{
+  display:flex; align-items:flex-end; gap: 18px;
+}}
+
+.omni-link{{
+  text-decoration: none;
+  display:flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  opacity: .72;
+  transform: translateY(0);
+  transition: opacity .16s ease, transform .16s ease;
+}}
+
 .omni-link:hover{{
+  opacity: 1;
   transform: translateY(-1px);
-  background: rgba(255,255,255,0.55);
-  box-shadow: 0 10px 22px rgba(15,23,42,0.08);
+}}
+
+.omni-ic{{
+  font-size: 20px;
+  line-height: 1;
+}}
+
+.omni-label{{
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(15,23,42,0.52);
+}}
+
+.omni-link.active{{
   opacity: 1;
 }}
-.omni-ic{{font-size: 20px; line-height: 1;}}
-.omni-lbl{{font-size: 0.62rem; color: rgba(15,23,42,0.55); letter-spacing: .03em; white-space: nowrap;}}
-.omni-link.active{{opacity: 1;}}
-.omni-link.active .omni-lbl{{color: rgba(15,23,42,0.82); font-weight: 700;}}
-.omni-link.active::after{{
-  content:"";
-  width: 18px; height: 2px;
-  border-radius: 99px;
-  background: rgba(15,23,42,0.18);
+
+.omni-link.active .omni-label{{
+  color: rgba(15,23,42,0.82);
+}}
+
+.omni-dot{{
+  width: 20px;
+  height: 2px;
+  border-radius: 999px;
   margin-top: 2px;
+  background: rgba(15,23,42,0.18);
+}}
+
+.omni-divider{{
+  width:1px; height: 22px;
+  background: rgba(226,232,240,1);
+  margin: 0 4px;
 }}
 
 @media (max-width: 980px){{
-  .omni-sub{{display:none;}}
-  .omni-lbl{{display:none;}}
-  .omni-right{{gap:10px;}}
+  .omni-label{{display:none;}}
+  .omni-left{{min-width: 200px;}}
 }}
-</style>
-
-<div class="omni-topbar">
-  <div class="omni-left">
-    {logo_html}
-    <div class="omni-brand">
-      <div class="omni-title">OMNISFERA</div>
-      <div class="omni-sub">Inclusão • PEI • PAEE • Dados</div>
-    </div>
-  </div>
-
-  <div class="omni-right">
-    {links_html}
-  </div>
-</div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-       # -------------------------
-    # BOTÕES CLICÁVEIS (reais) — multipage
-    # Estratégia: renderiza botões, mas remove do fluxo (height:0) e fixa na barra.
-    # -------------------------
-    st.markdown('<div id="omni-click-anchor"></div>', unsafe_allow_html=True)
-
-    # Renderiza botões (eles ficam no DOM, mas serão "teletransportados" e escondidos)
-    cols = st.columns([1] * len(NAV_LINKS), gap="small")
-    for i, (k, label, path) in enumerate(NAV_LINKS):
-        with cols[i]:
-            if st.button(" ", key=f"nav_{k}", help=label):
-                _goto(path)
-
-    # CSS: remove o bloco do fluxo + fixa em cima da topbar + some com as "caixas"
-    st.markdown("""
-<style>
-/* Pega o bloco logo após a âncora (às vezes o Streamlit insere um wrapper extra) */
-#omni-click-anchor + div,
-#omni-click-anchor + div + div {
-  position: fixed !important;
-  top: 0px !important;
-  right: 0px !important;
-  height: 54px !important;
-  width: auto !important;
-  z-index: 2147483647 !important;
-
-  /* remove do layout para não criar aquelas caixas no corpo */
-  margin: 0 !important;
-  padding: 0 18px !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-
-  /* NÃO deixa ocupar espaço no conteúdo */
-  transform: translateY(-9999px) !important;  /* tira do viewport */
-}
-
-/* A camada de clique real: a gente recria outra por cima, alinhada na direita */
-#omni-click-layer {
-  position: fixed !important;
-  top: 0 !important;
-  right: 0 !important;
-  height: 54px !important;
-  z-index: 2147483647 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 14px !important;
-  padding: 0 18px !important;
-  background: transparent !important;
-}
-
-/* Botões: área de clique por item (ícone + label) */
-#omni-click-layer [data-testid="stButton"] button {
-  width: 48px !important;
-  height: 54px !important;
-  padding: 0 !important;
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-#omni-click-layer [data-testid="stButton"] button p { display:none !important; }
 </style>
 """, unsafe_allow_html=True)
 
-    # Cria uma camada de clique "limpa" (sem caixas) reaproveitando os botões já renderizados
-    # Truque: clonamos via CSS? Streamlit não permite clone. Então a solução prática é:
-    # manter os botões fora do viewport e criar NOVOS botões dentro de um container fixo.
+    # 3) Logo (arquivo omni_icone.png)
+    logo_b64 = _b64("omni_icone.png")
+    if logo_b64:
+        logo_html = f"<img class='omni-mark' src='data:image/png;base64,{logo_b64}'/>"
+    else:
+        logo_html = "<div class='omni-mark' style='background:conic-gradient(from 0deg,#3B82F6,#22C55E,#F59E0B,#F97316,#A855F7,#3B82F6);'></div>"
+
+    # 4) Monta itens
+    items = [
+        ("home",   "Home"),
+        ("alunos", "Alunos"),
+        ("pei",    "Estratégias & PEI"),
+        ("paee",   "Plano de Ação"),
+        ("hub",    "Hub"),
+        ("diario", "Diário"),
+        ("dados",  "Dados"),
+    ]
+
+    links_html = ""
+    for key, label in items:
+        # se a página não existir no seu projeto, pula
+        if key not in PAGES:
+            continue
+        is_active = "active" if key == active else ""
+        color = COLORS.get(key, "#111827")
+        icon = ICONS.get(key, "fi fi-br-circle")
+        dot = "<div class='omni-dot'></div>" if key == active else "<div style='height:2px;'></div>"
+
+        links_html += f"""
+<a class="omni-link {is_active}" href="?go={key}" target="_self" aria-label="{label}">
+  <i class="{icon} omni-ic" style="color:{color};"></i>
+  <div class="omni-label">{label}</div>
+  {dot}
+</a>
+"""
+
+    # 5) Logout (opcional)
+    logout_html = ""
+    if show_logout:
+        logout_html = f"""
+<div class="omni-divider"></div>
+<a class="omni-link" href="?go=home" target="_self" aria-label="Sair">
+  <i class="{ICONS['sair']} omni-ic" style="color:rgba(15,23,42,0.55);"></i>
+  <div class="omni-label">Sair</div>
+  <div style="height:2px;"></div>
+</a>
+"""
+
+    st.markdown(f"""
+<div class="omni-topbar">
+  <div class="omni-left">
+    {logo_html}
+    <div class="omni-title">OMNISFERA</div>
+  </div>
+  <div class="omni-right">
+    {links_html}
+    {logout_html}
+  </div>
+</div>
+""", unsafe_allow_html=True)
