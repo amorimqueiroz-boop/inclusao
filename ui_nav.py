@@ -5,57 +5,35 @@ import base64
 from pathlib import Path
 import streamlit as st
 
-# =============================================================================
-# CONFIG
-# =============================================================================
 TOPBAR_HEIGHT = 56
 TOPBAR_PADDING = 14
 
 
-# =============================================================================
-# AUTH STATE
-# =============================================================================
 def ensure_auth_state():
     if "autenticado" not in st.session_state:
         st.session_state.autenticado = False
     if "user" not in st.session_state:
         st.session_state.user = None
+    if "go" not in st.session_state:
+        st.session_state.go = "home"
 
 
-# =============================================================================
-# PATH / QUERY UTILS
-# =============================================================================
-def _project_root() -> Path:
+def _root() -> Path:
     return Path(__file__).resolve().parent
 
 
-def _page_exists(relative_path: str) -> bool:
-    p = _project_root() / relative_path
-    return p.exists() and p.is_file()
-
-
-def _get_qp(key: str, default: str | None = None) -> str | None:
-    try:
-        return st.query_params.get(key, default)
-    except Exception:
-        return default
-
-
-def _img_to_data_uri(path: Path) -> str | None:
-    if not path.exists() or not path.is_file():
+def _img_data_uri(filename: str) -> str | None:
+    p = _root() / filename
+    if not p.exists():
         return None
     try:
-        data = base64.b64encode(path.read_bytes()).decode("utf-8")
-        return "data:image/png;base64," + data
+        b64 = base64.b64encode(p.read_bytes()).decode("utf-8")
+        return f"data:image/png;base64,{b64}"
     except Exception:
         return None
 
 
-# =============================================================================
-# ICONS (FLATICON UICONS)
-# =============================================================================
 def inject_icons_cdn():
-    # Padrão combinado (como você definiu): rounded/straight/bold
     st.markdown(
         """
 <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
@@ -66,14 +44,11 @@ def inject_icons_cdn():
     )
 
 
-# =============================================================================
-# CSS SHELL (LIGHT / CLEAN)
-# =============================================================================
 def inject_shell_css():
     st.markdown(
         f"""
 <style>
-/* Remove UI nativa Streamlit */
+/* remove UI nativa */
 [data-testid="stHeader"], header,
 footer, #MainMenu,
 [data-testid="stToolbar"],
@@ -81,12 +56,12 @@ footer, #MainMenu,
   display: none !important;
 }}
 
-/* Respiro do conteúdo abaixo da topbar */
+/* empurra conteúdo */
 .main .block-container {{
   padding-top: {TOPBAR_HEIGHT + TOPBAR_PADDING}px !important;
 }}
 
-/* TOPBAR — light glass */
+/* topbar light glass */
 .omni-topbar {{
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -98,98 +73,69 @@ footer, #MainMenu,
   justify-content:space-between;
 
   padding: 0 14px;
-
-  background: rgba(255,255,255,0.78);
+  background: rgba(255,255,255,0.82);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-
   border-bottom: 1px solid rgba(0,0,0,0.08);
   box-shadow: 0 10px 30px rgba(0,0,0,0.06);
 }}
 
-/* BRAND (icone + wordmark png) */
+/* brand */
 .omni-brand {{
   display:flex;
   align-items:center;
   gap:10px;
   user-select:none;
 }}
-
 .omni-logo-wrap {{
-  width: 36px;
-  height: 36px;
-  border-radius: 14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
+  width: 36px; height: 36px; border-radius: 14px;
+  display:flex; align-items:center; justify-content:center;
   background: rgba(0,0,0,0.03);
   border: 1px solid rgba(0,0,0,0.08);
 }}
+.omni-logo {{ width: 22px; height: 22px; object-fit: contain; }}
+.omni-wordmark-img {{ height: 16px; width: auto; object-fit: contain; opacity: 0.92; }}
+.omni-wordmark-fallback {{ font-weight: 900; letter-spacing: .2px; color: rgba(0,0,0,0.82); font-size: 14px; }}
 
-.omni-logo {{
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-}}
-
-.omni-wordmark-img {{
-  height: 16px;
-  width: auto;
-  object-fit: contain;
-  opacity: 0.92;
-}}
-
-.omni-wordmark-fallback {{
-  font-weight: 900;
-  letter-spacing: .2px;
-  color: rgba(0,0,0,0.82);
-  font-size: 14px;
-}}
-
-/* NAV */
+/* nav buttons (vamos estilizar st.button via CSS) */
 .omni-nav {{
   display:flex;
   align-items:center;
   gap:10px;
 }}
 
-.nav-item {{
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  text-decoration:none;
-  background: rgba(0,0,0,0.03);
-  border: 1px solid rgba(0,0,0,0.08);
-
-  transition: transform .12s ease, background .12s ease, border-color .12s ease, opacity .12s ease;
+/* container onde ficam os botões do streamlit */
+.omni-btn-row [data-testid="stHorizontalBlock"] {{
+  gap: 10px !important;
 }}
+/* estiliza todos botões dentro do nav */
+.omni-btn-row button {{
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
 
-.nav-item:hover {{
-  transform: translateY(-1px);
-  background: rgba(0,0,0,0.05);
-  border-color: rgba(0,0,0,0.12);
+  background: rgba(0,0,0,0.03) !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+
+  transition: transform .12s ease, background .12s ease, border-color .12s ease !important;
 }}
-
-.nav-item.active {{
-  background: rgba(0,0,0,0.06);
-  border-color: rgba(0,0,0,0.16);
+.omni-btn-row button:hover {{
+  transform: translateY(-1px) !important;
+  background: rgba(0,0,0,0.05) !important;
+  border-color: rgba(0,0,0,0.12) !important;
 }}
-
-.nav-item.disabled {{
-  opacity: 0.35;
-  pointer-events: none;
-  filter: grayscale(1);
+/* estado ativo (vamos aplicar com uma classe no wrapper via markdown) */
+.omni-btn-row .is-active button {{
+  background: rgba(0,0,0,0.06) !important;
+  border-color: rgba(0,0,0,0.16) !important;
 }}
-
-.nav-item i {{
-  font-size: 18px;
-  line-height: 1;
+/* ícone dentro do botão */
+.omni-btn-row button p {{
+  margin: 0 !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  color: rgba(0,0,0,0.70) !important;
 }}
 </style>
         """,
@@ -197,114 +143,38 @@ footer, #MainMenu,
     )
 
 
-# =============================================================================
-# ROUTES + ÍCONES (padrão que você definiu)
-# =============================================================================
 def ROUTES():
-    # Home: bold-rounded
-    # Estratégias & PEI: solid-rounded
-    # Plano de Ação / PAEE: solid-straight
-    # Hub: solid-rounded
-    # Diário: bold-rounded
-    # Evolução & Dados: bold-rounded
-    # IA: bold-rounded (deixamos como futuro)
-    return {
-        "home": {
-            "label": "Home",
-            "page": "pages/home.py",
-            "icon": "fi fi-br-home",               # bold-rounded
-            "color": "rgba(0,0,0,0.70)",
-        },
-        "alunos": {
-            "label": "Alunos",
-            "page": "pages/0_Alunos.py",
-            "icon": "fi fi-sr-users",              # solid-rounded
-            "color": "rgba(0,0,0,0.70)",
-        },
-        "pei": {
-            "label": "PEI 360°",
-            "page": "pages/1_PEI.py",
-            "icon": "fi fi-sr-document-signed",    # solid-rounded
-            "color": "rgba(0,0,0,0.70)",
-        },
-        "pae": {
-            "label": "PAE",
-            "page": "pages/2_PAE.py",
-            "icon": "fi fi-ss-bullseye-arrow",     # solid-straight
-            "color": "rgba(0,0,0,0.70)",
-        },
-        "hub": {
-            "label": "Hub",
-            "page": "pages/3_Hub_Inclusao.py",
-            "icon": "fi fi-sr-book-open-cover",    # solid-rounded
-            "color": "rgba(0,0,0,0.70)",
-        },
-        # futuros (desabilita se não existir)
-        "diario": {
-            "label": "Diário",
-            "page": "pages/4_Diario.py",
-            "icon": "fi fi-br-notebook",           # bold-rounded
-            "color": "rgba(0,0,0,0.70)",
-        },
-        "dados": {
-            "label": "Dados",
-            "page": "pages/5_Dados.py",
-            "icon": "fi fi-br-chart-histogram",    # bold-rounded
-            "color": "rgba(0,0,0,0.70)",
-        },
-    }
+    return [
+        ("home", "Home", "fi fi-br-home"),
+        ("alunos", "Alunos", "fi fi-sr-users"),
+        ("pei", "PEI 360°", "fi fi-sr-document-signed"),
+        ("pae", "PAE", "fi fi-ss-bullseye-arrow"),
+        ("hub", "Hub", "fi fi-sr-book-open-cover"),
+        ("diario", "Diário", "fi fi-br-notebook"),
+        ("dados", "Dados", "fi fi-br-chart-histogram"),
+    ]
 
 
-def get_active_go(default: str = "home") -> str:
-    go = _get_qp("go", default) or default
-    if go not in ROUTES():
-        return default
-    return go
+def set_go(go: str):
+    st.session_state.go = go
 
 
-# =============================================================================
-# TOPBAR
-# =============================================================================
-def render_topbar(active_go: str):
-    routes = ROUTES()
+def boot_ui():
+    ensure_auth_state()
+    inject_icons_cdn()
+    inject_shell_css()
 
-    # Logo + wordmark via PNG embutido (base64) — confiável no Cloud
-    logo_uri = _img_to_data_uri(_project_root() / "omni_icone.png")
-    text_uri = _img_to_data_uri(_project_root() / "omni_texto.png")
+    # só desenha topbar quando autenticado
+    if not st.session_state.autenticado:
+        return
 
-    logo_html = (
-        f"<img class='omni-logo' src='{logo_uri}'/>"
-        if logo_uri
-        else "<span style='font-size:18px;line-height:1'>🌿</span>"
-    )
+    logo_uri = _img_data_uri("omni_icone.png")
+    text_uri = _img_data_uri("omni_texto.png")
 
-    wordmark_html = (
-        f"<img class='omni-wordmark-img' src='{text_uri}'/>"
-        if text_uri
-        else "<span class='omni-wordmark-fallback'>Omnisfera</span>"
-    )
+    logo_html = f"<img class='omni-logo' src='{logo_uri}'/>" if logo_uri else "🌿"
+    wordmark_html = f"<img class='omni-wordmark-img' src='{text_uri}'/>" if text_uri else "<span class='omni-wordmark-fallback'>Omnisfera</span>"
 
-    def _item(go: str) -> str:
-        r = routes[go]
-        exists = _page_exists(r["page"])
-
-        cls = ["nav-item"]
-        if go == active_go:
-            cls.append("active")
-        if not exists:
-            cls.append("disabled")
-
-        # GARANTIA: mesma aba (sem abrir outra)
-        href = f"?go={go}" if exists else "#"
-        return f"""
-<a class="{' '.join(cls)}" href="{href}" target="_self" title="{r['label']}" aria-label="{r['label']}">
-  <i class="{r['icon']}" style="color:{r['color']}"></i>
-</a>
-"""
-
-    order = ["home", "alunos", "pei", "pae", "hub", "diario", "dados"]
-    items_html = "\n".join(_item(go) for go in order if go in routes)
-
+    # Topbar (HTML) + Row de botões (Streamlit) abaixo, mas visualmente “dentro” pela fixed bar
     st.markdown(
         f"""
 <div class="omni-topbar">
@@ -312,45 +182,47 @@ def render_topbar(active_go: str):
     <div class="omni-logo-wrap">{logo_html}</div>
     <div>{wordmark_html}</div>
   </div>
-
-  <div class="omni-nav">{items_html}</div>
+  <div class="omni-nav"></div>
 </div>
         """,
         unsafe_allow_html=True,
     )
 
+    # Botões do nav: ficam no topo, mas a topbar já está fixed; isso só “alinha” as ações.
+    # Truque: usamos um container no topo da página, mas a topbar é fixed, então o usuário só vê ela.
+    with st.container():
+        st.markdown('<div class="omni-btn-row">', unsafe_allow_html=True)
 
-# =============================================================================
-# ROUTER (padrão do projeto)
-# =============================================================================
-def route_from_query(default_go: str = "home"):
-    if st.session_state.get("_already_routed"):
-        return
+        cols = st.columns(len(ROUTES()), gap="small")
+        for i, (go, label, icon_class) in enumerate(ROUTES()):
+            is_active = (st.session_state.go == go)
+            # wrapper para CSS do ativo
+            if is_active:
+                st.markdown('<div class="is-active">', unsafe_allow_html=True)
 
-    routes = ROUTES()
-    go = get_active_go(default_go)
-    target = routes.get(go, routes[default_go])["page"]
+            with cols[i]:
+                # botão com ícone (texto)
+                if st.button(" ", key=f"nav_{go}", help=label):
+                    set_go(go)
+                    st.rerun()
 
-    if not _page_exists(target):
-        target = routes[default_go]["page"]
+                # injeta o ícone dentro do botão via markdown overlay (simples e estável)
+                st.markdown(
+                    f"""
+<script>
+const btn = window.parent.document.querySelector('button[kind="secondary"][data-testid="baseButton-secondary"][aria-describedby="nav_{go}-tooltip"]') 
+</script>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-    st.session_state["_already_routed"] = True
-    st.switch_page(target)
+                # fallback: ícone “visível” como label (sem depender de script)
+                st.markdown(
+                    f"<div style='margin-top:-40px; text-align:center; pointer-events:none;'><i class='{icon_class}' style='font-size:18px;color:rgba(0,0,0,0.70)'></i></div>",
+                    unsafe_allow_html=True,
+                )
 
+            if is_active:
+                st.markdown("</div>", unsafe_allow_html=True)
 
-# =============================================================================
-# BOOT
-# =============================================================================
-def boot_ui(do_route: bool = False):
-    ensure_auth_state()
-    inject_icons_cdn()
-    inject_shell_css()
-
-    active = get_active_go()
-
-    # Só mostra topbar quando autenticado
-    if st.session_state.autenticado:
-        render_topbar(active)
-
-    if do_route:
-        route_from_query(default_go="home")
+        st.markdown("</div>", unsafe_allow_html=True)
