@@ -6,6 +6,24 @@ import os
 import time
 
 from _client import supabase_login  # <- agora existe no _client.py
+from ui_nav import render_omnisfera_nav
+render_omnisfera_nav()
+
+view = st.session_state.get("view", "home")
+
+if view == "home":
+    render_home()
+elif view == "pei":
+    render_pei()
+elif view == "paee":
+    render_paee()
+elif view == "hub":
+    render_hub()
+elif view == "diario":
+    render_diario()
+elif view == "mon":
+    render_monitoramento()
+
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL E AMBIENTE
