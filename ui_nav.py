@@ -1,9 +1,4 @@
 # ui_nav.py
-
-# não mostrar menu minimal na Home (portal)
-if st.session_state.get("view") == "home":
-    return
-
 import streamlit as st
 
 def _safe_get_query_view():
@@ -21,7 +16,7 @@ def _ensure_state():
     if "view" not in st.session_state:
         st.session_state.view = "login" if not st.session_state.autenticado else "home"
 
-def render_topbar_nav():
+def render_topbar_nav(hide_on_views=("home", "login")):
     """
     Topbar full-width + SPA view control.
     - Não usa f-string com CSS
@@ -46,6 +41,10 @@ def render_topbar_nav():
     authed = bool(st.session_state.get("autenticado", False))
     active = st.session_state.get("view", "login")
 
+    # ✅ Não renderiza topbar minimal em views específicas
+    if active in set(hide_on_views):
+        return
+
     # cores do ativo
     colors = {
         "home": "#111827",
@@ -56,20 +55,20 @@ def render_topbar_nav():
         "diario": "#F97316",
         "mon": "#A855F7",
     }
+
     def ic_color(key: str):
         if key == active:
             return colors.get(key, "#111827")
         return "rgba(17,24,39,0.42)"
 
-    # CSS/HTML sem chaves de template
+    # CSS/HTML
     st.markdown("""
 <style>
 header[data-testid="stHeader"]{display:none !important;}
-/* esconde sidebar (mesmo em multipage) */
 [data-testid="stSidebar"]{display:none !important;}
 [data-testid="stSidebarNav"]{display:none !important;}
-/* espaço para a barra */
 .block-container{padding-top:76px !important; padding-left:2rem !important; padding-right:2rem !important;}
+
 .omni-topbar{
   position:fixed; top:0; left:0; right:0; height:58px;
   z-index:2147483647;
@@ -102,8 +101,6 @@ header[data-testid="stHeader"]{display:none !important;}
 </style>
 """, unsafe_allow_html=True)
 
-    # HTML do menu (sem ícones externos; usamos caracteres/emoji por enquanto para estabilidade)
-    # Depois que estabilizar, colocamos RemixIcon (sem risco).
     if authed:
         st.markdown(
             f"""
@@ -123,19 +120,6 @@ header[data-testid="stHeader"]{display:none !important;}
     <span class="omni-sep"></span>
     <a class="omni-link" href="?view=logout" target="_self" title="Sair"><span class="omni-ic" style="color:rgba(17,24,39,0.55)">⎋</span></a>
   </div>
-</div>
-""",
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            """
-<div class="omni-topbar">
-  <div class="omni-left">
-    <div class="omni-mark"></div>
-    <div class="omni-name">OMNISFERA</div>
-  </div>
-  <div class="omni-right"></div>
 </div>
 """,
             unsafe_allow_html=True,
