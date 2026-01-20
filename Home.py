@@ -1,21 +1,24 @@
 # Home.py
 import streamlit as st
+from datetime import date
+import base64, os
 
 st.set_page_config(page_title="Omnisfera", page_icon="🧩", layout="wide")
 
-# ✅ Garantia visual imediata
-st.write("BOOT OK ✅ (se você está vendo isso, Home carregou)")
-
-# init state
+# -------------------------
+# INIT SESSION
+# -------------------------
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 if "view" not in st.session_state:
     st.session_state.view = "login" if not st.session_state.autenticado else "home"
 
-# lê view da URL (se tiver)
+# lê view da URL (se existir)
 try:
     if "view" in st.query_params:
-        st.session_state.view = st.query_params["view"]
+        v = st.query_params["view"]
+        if v in ("login","home","estudantes","pei","paee","hub","diario","mon"):
+            st.session_state.view = v
 except Exception:
     pass
 
@@ -23,30 +26,291 @@ except Exception:
 if not st.session_state.autenticado:
     st.session_state.view = "login"
 
-# ✅ Import protegido: se quebrar, você vê o erro (não fica branco)
+# -------------------------
+# NAV (só aparece fora de home/login)
+# -------------------------
 try:
     from ui_nav import render_topbar_nav
+    render_topbar_nav(hide_on_views=("home","login"))
 except Exception as e:
-    st.error("Erro ao importar ui_nav.py")
+    st.error("Erro ao carregar ui_nav")
     st.exception(e)
     st.stop()
 
-# Render topbar minimal fora da Home/Login
-try:
-    render_topbar_nav(hide_on_views=("home", "login"))
-except Exception as e:
-    st.error("Erro ao renderizar topbar")
-    st.exception(e)
-    st.stop()
+# -------------------------
+# UTIL
+# -------------------------
+APP_VERSION = "v116.0"
 
+def get_base64_image(image_path: str) -> str:
+    if not os.path.exists(image_path):
+        return ""
+    with open(image_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+def go(view_name: str):
+    st.session_state.view = view_name
+    st.rerun()
+
+# -------------------------
+# CSS HOME (inspirado no antigo)
+# -------------------------
+st.markdown("""
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+html, body, [class*="css"]{
+  font-family:'Nunito', sans-serif;
+  background:#F7FAFC;
+  color:#2D3748;
+}
+header[data-testid="stHeader"]{display:none !important;}
+[data-testid="stSidebar"]{display:none !important;}
+[data-testid="stSidebarNav"]{display:none !important;}
+
+/* HOME usa header fixo próprio */
+.block-container{
+  padding-top: 120px !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+  padding-bottom: 2rem !important;
+}
+
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes fadeInUp{from{opacity:0; transform:translateY(10px);}to{opacity:1; transform:translateY(0);}}
+
+/* HEADER FIXO */
+.portal-header{
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 90px;
+  z-index: 99999;
+  display:flex;
+  align-items:center;
+  gap: 16px;
+  padding: 8px 28px;
+  background: rgba(247,250,252,0.88);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.55);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+.portal-subtitle{
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: #718096;
+  border-left: 2px solid #CBD5E0;
+  padding-left: 14px;
+  height: 40px;
+  display:flex;
+  align-items:center;
+  letter-spacing: -0.3px;
+}
+.portal-logo-spin{
+  height: 72px;
+  width:auto;
+  animation: spin 45s linear infinite;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.10));
+}
+.portal-logo-text{
+  height: 42px;
+  width:auto;
+}
+
+/* HERO */
+.dash-hero{
+  background: radial-gradient(circle at top right, #0F52BA, #062B61);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(15, 82, 186, 0.30);
+  color: white;
+  position: relative;
+  overflow: hidden;
+  padding: 26px 34px;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  border: 1px solid rgba(255,255,255,0.12);
+  min-height: 105px;
+  animation: fadeInUp .55s ease;
+}
+.hero-title{
+  font-family:'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 1.55rem;
+  margin:0;
+  line-height:1.1;
+}
+.hero-subtitle{
+  font-family:'Inter', sans-serif;
+  font-size: 0.92rem;
+  opacity: 0.92;
+  font-weight: 400;
+  margin-top: 6px;
+}
+.hero-bg-icon{
+  position:absolute;
+  right: 22px;
+  font-size: 6rem;
+  opacity: 0.07;
+  top: 6px;
+  transform: rotate(-10deg);
+}
+
+/* SECTION TITLE */
+.section-title{
+  font-family:'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color:#1A202C;
+  margin: 22px 0 12px 0;
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+
+/* CARDS (6) */
+.tools-grid{
+  display:grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 12px;
+}
+.tool-card{
+  grid-column: span 4;
+  background:white;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+  animation: fadeInUp .55s ease;
+}
+.tool-top{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.tool-ico{
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size: 1.4rem;
+}
+.tool-title{
+  font-weight: 900;
+  color:#1A202C;
+  margin:0;
+  font-size: 0.95rem;
+  letter-spacing: .1px;
+}
+.tool-desc{
+  margin-top: 8px;
+  color:#718096;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.tool-btn button{
+  width:100%;
+  height: 44px;
+  border-radius: 12px !important;
+  font-weight: 900 !important;
+}
+
+/* BENTO */
+.bento-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.bento-item{
+  background:white;
+  border-radius: 14px;
+  padding: 15px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+  text-decoration:none;
+  color: inherit;
+  display:flex;
+  flex-direction: column;
+  align-items:center;
+  text-align:center;
+  transition: transform .16s ease;
+}
+.bento-item:hover{ transform: translateY(-2px); border-color:#CBD5E0; }
+.bento-icon{
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+.bento-title{ font-weight: 800; font-size: 0.86rem; color:#1A202C; margin-bottom: 2px; }
+.bento-desc{ font-size: 0.75rem; color:#718096; font-weight:600; line-height:1.2; }
+
+/* INSIGHT */
+.insight-card{
+  background: linear-gradient(135deg, #FFFBEB 0%, #FFFFFF 100%);
+  border-radius: 14px;
+  padding: 15px 18px;
+  display:flex;
+  gap: 14px;
+  border: 1px solid rgba(214,158,46,0.20);
+  box-shadow: 0 5px 15px rgba(214,158,46,0.08);
+}
+.insight-ico{
+  width: 46px; height: 46px;
+  border-radius: 999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size: 1.4rem;
+  color:#D69E2E;
+  background: rgba(214,158,46,0.12);
+}
+.insight-kicker{
+  font-weight: 900;
+  font-size: 0.78rem;
+  color:#D69E2E;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.insight-text{
+  margin-top: 2px;
+  color:#4A5568;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.footer-sign{
+  text-align:center;
+  color:#CBD5E0;
+  font-size: 0.72rem;
+  margin-top: 34px;
+}
+@media (max-width: 900px){
+  .tool-card{grid-column: span 12;}
+  .block-container{padding-top: 110px !important;}
+}
+</style>
+""", unsafe_allow_html=True)
+
+# -------------------------
+# LOGIN VIEW (mantém sua estrutura nova; aqui está simples)
+# -------------------------
 view = st.session_state.view
-
-# LOGIN
 if view == "login":
     st.markdown("## Acesso — Omnisfera")
 
     with st.container(border=True):
         st.markdown("### Termo de Confidencialidade")
+        st.caption("Ao acessar, você declara ciência de que as informações são confidenciais e de uso pedagógico.")
         aceitou = st.checkbox("Li e concordo com o Termo de Confidencialidade.", value=False)
 
         c1, c2 = st.columns(2)
@@ -60,7 +324,7 @@ if view == "login":
 
         disabled = not (aceitou and nome.strip() and cargo.strip() and usuario.strip() and senha.strip())
         if st.button("Entrar", type="primary", use_container_width=True, disabled=disabled):
-            # ✅ Por enquanto: só simula login (você pluga Supabase aqui)
+            # ✅ aqui você pluga o Supabase depois
             st.session_state.autenticado = True
             st.session_state.usuario_nome = nome.strip()
             st.session_state.usuario_cargo = cargo.strip()
@@ -70,37 +334,239 @@ if view == "login":
 
     st.stop()
 
+# -------------------------
 # HOME PORTAL
+# -------------------------
 if view == "home":
-    st.markdown("## Home (Portal)")
-    st.caption("Aqui entra seu portal com cards grandes e conteúdo de inclusão.")
-    st.write("Se isso aparece, o branco foi resolvido ✅")
+    # =========================
+    # HEADER FIXO (antigo)
+    # =========================
+    icone_b64 = get_base64_image("omni_icone.png")
+    texto_b64 = get_base64_image("omni_texto.png")
+
+    if icone_b64 and texto_b64:
+        st.markdown(f"""
+        <div class="logo-container">
+            <img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">
+            <img src="data:image/png;base64,{texto_b64}" class="logo-text-static">
+            <div class="header-subtitle-text">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div class="logo-container">
+            <h1 style="color:#0F52BA; margin:0;">🌐 OMNISFERA</h1>
+            <div class="header-subtitle-text">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    nome_display = st.session_state.get("usuario_nome", "Educador").split()[0]
+
+    # =========================
+    # HERO
+    # =========================
+    mensagem_banner = "Unindo ciência, dados e empatia para transformar a educação."
+    st.markdown(f"""
+    <div class="dash-hero hover-spring">
+        <div class="hero-text-block">
+            <div class="hero-title">Olá, {nome_display}!</div>
+            <div class="hero-subtitle">"{mensagem_banner}"</div>
+        </div>
+        <i class="ri-heart-pulse-fill hero-bg-icon"></i>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # =========================
+    # MANIFESTO
+    # =========================
+    st.markdown("<div class='section-title'><i class='ri-flag-2-fill'></i> Manifesto Omnisfera</div>", unsafe_allow_html=True)
+    st.info(
+        "“A Omnisfera foi desenvolvida com muito cuidado e carinho com o objetivo de auxiliar as escolas na tarefa de incluir. "
+        "Ela tem o potencial para revolucionar o cenário da inclusão no Brasil.”"
+    )
+
+    # =========================
+    # ACESSO RÁPIDO (6 CARDS BONITOS + BOTÃO OVERLAY)
+    # =========================
+    st.markdown("<div class='section-title'><i class='ri-cursor-fill'></i> Acesso Rápido</div>", unsafe_allow_html=True)
+
+    # util: cria card + botão transparente que controla SPA
+    def portal_card(col, title, desc, icon_html, key_btn, target_view, border_color):
+        with col:
+            st.markdown(f"""
+            <div class="nav-btn-card" style="border-bottom: 4px solid {border_color};">
+                {icon_html}
+                <div style="font-weight:900; font-size:0.9rem; color:#1A202C; margin-top:4px;">{title}</div>
+                <div class="nav-desc">{desc}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.markdown('<div class="card-overlay-btn">', unsafe_allow_html=True)
+            if st.button("Acessar", key=key_btn, use_container_width=True):
+                st.session_state.view = target_view
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    # ícones (PNG se tiver, fallback se não)
+    def icon_png_or_fallback(png_name, fallback_ri):
+        b64 = get_base64_image(png_name)
+        if b64:
+            return f'<img src="data:image/png;base64,{b64}" class="nav-icon">'
+        return f'<i class="{fallback_ri}" style="font-size:2.6rem; margin-bottom:8px; color:#0F52BA;"></i>'
 
     c1, c2, c3 = st.columns(3)
-    with c1:
-        if st.button("Estudantes", use_container_width=True):
-            st.session_state.view = "estudantes"
-            st.rerun()
-    with c2:
-        if st.button("Estratégias & PEI", use_container_width=True):
-            st.session_state.view = "pei"
-            st.rerun()
-    with c3:
-        if st.button("Plano de Ação (PAEE)", use_container_width=True):
-            st.session_state.view = "paee"
-            st.rerun()
+    portal_card(
+        c1,
+        "Estudantes",
+        "Cadastro, histórico e evidências do estudante.",
+        icon_png_or_fallback("students.png", "ri-group-line"),
+        "go_estudantes",
+        "estudantes",
+        "#2563EB",
+    )
+    portal_card(
+        c2,
+        "Estratégias & PEI",
+        "Barreiras, suportes, estratégias e rubricas.",
+        icon_png_or_fallback("360.png", "ri-book-read-line"),
+        "go_pei",
+        "pei",
+        "#3B82F6",
+    )
+    portal_card(
+        c3,
+        "Plano de Ação (PAEE)",
+        "Metas SMART, ações, responsáveis e cronograma.",
+        icon_png_or_fallback("pae.png", "ri-map-pin-2-line"),
+        "go_paee",
+        "paee",
+        "#22C55E",
+    )
 
+    c4, c5, c6 = st.columns(3)
+    portal_card(
+        c4,
+        "Hub de Recursos",
+        "Adaptações, TA, atividades e modelos.",
+        icon_png_or_fallback("hub.png", "ri-lightbulb-flash-line"),
+        "go_hub",
+        "hub",
+        "#F59E0B",
+    )
+    portal_card(
+        c5,
+        "Diário de Bordo",
+        "Registros de contexto, hipóteses e decisões.",
+        icon_png_or_fallback("diario.png", "ri-compass-3-line"),
+        "go_diario",
+        "diario",
+        "#F97316",
+    )
+    portal_card(
+        c6,
+        "Avaliação & Acompanhamento",
+        "Indicadores, evidências e evolução longitudinal.",
+        icon_png_or_fallback("monitoramento.png", "ri-line-chart-line"),
+        "go_mon",
+        "mon",
+        "#A855F7",
+    )
+
+    # =========================
+    # CONTEÚDO DE INCLUSÃO (forte)
+    # =========================
+    st.markdown("<div class='section-title'><i class='ri-timer-flash-fill'></i> Inclusão em 60 segundos</div>", unsafe_allow_html=True)
+    st.markdown("""
+- **Incluir** não é “adaptar o aluno”: é **reduzir barreiras** para participação e aprendizagem.
+- **Barreiras** (LBI): comunicacionais, metodológicas, atitudinais e tecnológicas/instrumentais.
+- **DUA**: múltiplos caminhos de **engajamento**, **representação** e **ação/expressão**.
+- **PEI**: organiza necessidades, objetivos, estratégias, apoios e evidências.
+- **PAEE**: transforma estratégia em **rotina de ações** (responsáveis + cronograma + recursos).
+- **Monitoramento**: rubricas + evidências + revisão periódica = progresso real.
+""")
+
+    st.markdown("<div class='section-title'><i class='ri-layout-4-fill'></i> DUA na prática</div>", unsafe_allow_html=True)
+    st.markdown("""
+| Princípio | O que garantir | Exemplos rápidos |
+|---|---|---|
+| **Engajamento** | motivação e vínculo | escolhas, metas curtas, hiperfoco, gamificação |
+| **Representação** | diferentes formas de apresentar | áudio, visual, concreto, exemplo guiado |
+| **Ação/Expressão** | diferentes formas de responder | oral, desenho, teclado, CAA, checklist |
+""")
+
+    st.markdown("<div class='section-title'><i class='ri-shield-star-fill'></i> Barreiras (LBI) — exemplos e ações</div>", unsafe_allow_html=True)
+    with st.expander("🗣️ Comunicacionais"):
+        st.write("**Sinais:** não compreende instruções / dificuldade de expressar / ruído na interação.")
+        st.write("**Ações:** instrução em passos + apoios visuais + checagem de compreensão + CAA quando necessário.")
+    with st.expander("📚 Metodológicas"):
+        st.write("**Sinais:** caminho único / tempo rígido / avaliação única.")
+        st.write("**Ações:** flexibilizar produto + scaffolding + rubricas + tempo extra + modelos.")
+    with st.expander("🤝 Atitudinais"):
+        st.write("**Sinais:** rótulos, isolamento, baixas expectativas.")
+        st.write("**Ações:** linguagem inclusiva + altas expectativas realistas + pares tutores + pertencimento.")
+    with st.expander("🛠️ Tecnológicas/Instrumentais"):
+        st.write("**Sinais:** falta de recursos / inacessibilidade digital.")
+        st.write("**Ações:** TA baixa/média/alta + alternativas offline + acessibilidade em materiais.")
+
+    # =========================
+    # CONHECIMENTO (BENTO)
+    # =========================
+    st.markdown("<div class='section-title'><i class='ri-book-mark-fill'></i> Conhecimento</div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="bento-grid">
+        <a href="#" class="bento-item">
+            <div class="bento-icon" style="background:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
+            <div class="bento-title">PEI vs PAEE</div>
+            <div class="bento-desc">Diferenças e quando usar.</div>
+        </a>
+        <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="bento-item">
+            <div class="bento-icon" style="background:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
+            <div class="bento-title">Lei Brasileira de Inclusão</div>
+            <div class="bento-desc">Marco legal e princípios.</div>
+        </a>
+        <a href="http://basenacionalcomum.mec.gov.br/" target="_blank" class="bento-item">
+            <div class="bento-icon" style="background:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
+            <div class="bento-title">BNCC</div>
+            <div class="bento-desc">Currículo oficial.</div>
+        </a>
+        <a href="#" class="bento-item">
+            <div class="bento-icon" style="background:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
+            <div class="bento-title">Neurodesenvolvimento</div>
+            <div class="bento-desc">Sinais e apoios na escola.</div>
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # =========================
+    # INSIGHT
+    # =========================
+    insight = "A aprendizagem acontece quando o cérebro se emociona. Crie vínculos antes de cobrar conteúdos."
+    st.markdown(f"""
+    <div class="insight-card-end hover-spring">
+        <div class="insight-icon-end"><i class="ri-lightbulb-flash-line"></i></div>
+        <div>
+            <div style="font-weight: 900; font-size: 0.8rem; color: #D69E2E; letter-spacing: 0.5px; text-transform: uppercase;">Insight do Dia</div>
+            <p style="margin:2px 0 0 0; font-size:0.9rem; opacity:0.9; color:#4A5568; font-style: italic;">"{insight}"</p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<div style='text-align:center; color:#CBD5E0; font-size:0.72rem; margin-top:34px;'>Omnisfera — Criada por Rodrigo A. Queiroz • PEI360 • PAEE360 • HUB de Inclusão</div>", unsafe_allow_html=True)
+
+# -------------------------
+# OTHER VIEWS (placeholders)
+# -------------------------
 elif view == "estudantes":
-    st.markdown("## Estudantes")
+    st.markdown("## Estudantes (placeholder)")
 elif view == "pei":
-    st.markdown("## Estratégias & PEI")
+    st.markdown("## Estratégias & PEI (placeholder)")
 elif view == "paee":
-    st.markdown("## Plano de Ação (PAEE)")
+    st.markdown("## Plano de Ação (PAEE) (placeholder)")
 elif view == "hub":
-    st.markdown("## Hub de Recursos")
+    st.markdown("## Hub de Recursos (placeholder)")
 elif view == "diario":
-    st.markdown("## Diário de Bordo")
+    st.markdown("## Diário de Bordo (placeholder)")
 elif view == "mon":
-    st.markdown("## Evolução & Acompanhamento")
+    st.markdown("## Avaliação & Acompanhamento (placeholder)")
 else:
     st.warning(f"View desconhecida: {view}")
