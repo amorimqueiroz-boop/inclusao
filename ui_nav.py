@@ -278,3 +278,48 @@ def boot_ui(hide_on_go: tuple[str, ...] = ("login",), do_route: bool = False):
 
     if do_route:
         route_from_query(default_go="home")
+
+    def ensure_auth_state():
+    if "autenticado" not in st.session_state:
+        st.session_state.autenticado = False
+    if "user" not in st.session_state:
+        st.session_state.user = None
+
+
+def route_gate(default_go: str = "home"):
+    """
+    Gateway de rota:
+    - se não autenticado -> força go=login
+    - se autenticado -> permite navegação normal
+    """
+    ensure_auth_state()
+
+    go = get_active_go(default_go="home")
+
+    if not st.session_state.autenticado:
+        # força login
+        try:
+            st.query_params["go"] = "login"
+        except Exception:
+            pass
+        return "login"
+
+    return go
+
+
+def boot_ui(hide_on_go: tuple[str, ...] = ("login",), do_route: bool = False):
+    """
+    Chame no topo do entrypoint e das páginas.
+    """
+    ensure_auth_state()
+    inject_icons_cdn()
+    inject_shell_css(TOPBAR_H, TOPBAR_PAD)
+
+    # Se não estiver autenticado, esconda topbar
+    active = get_active_go()
+    if active not in hide_on_go and st.session_state.autenticado:
+        render_topbar(active)
+
+    # roteamento só no entrypoint
+    if do_route:
+        route_from_query(default_go="home")
