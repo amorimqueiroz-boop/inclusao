@@ -4,6 +4,26 @@ from openai import OpenAI
 import base64
 import os
 import time
+import streamlit as st
+st.set_page_config(page_title="Omnisfera", layout="wide")
+
+st.write("BOOT OK ✅")  # <- se isso não aparece, o app nem começou
+
+try:
+    from ui_nav import render_topbar_nav
+    st.write("IMPORT ui_nav OK ✅")
+except Exception as e:
+    st.error(f"Erro import ui_nav: {e}")
+    st.stop()
+
+try:
+    render_topbar_nav()
+    st.write("RENDER NAV OK ✅")
+except Exception as e:
+    st.error(f"Erro render nav: {e}")
+    st.stop()
+
+st.write("PAGE CONTINUES ✅")
 
 from _client import supabase_login  # <- agora existe no _client.py
 # ui_nav.py
