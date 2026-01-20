@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 from ui_nav import boot_ui, ensure_auth_state
 
 ensure_auth_state()
