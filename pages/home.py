@@ -7,13 +7,22 @@ boot_ui(do_route=False)
 
 if not st.session_state.autenticado:
     st.query_params["go"] = "login"
-    st.switch_page("streamlit_app.py")  # se isso der problema, eu ajusto pra fallback sem switch
-import base64
-import os
-from ui_nav import render_omnisfera_nav
-render_omnisfera_nav(active="home")
-import streamlit as st
-from ui_nav import render_omnisfera_nav
+    st.stop()
+
+st.title("Home — Omnisfera")
+
+col1, col2 = st.columns([1, 5])
+with col1:
+    if st.button("Sair"):
+        st.session_state.autenticado = False
+        st.session_state.user = None
+        st.query_params["go"] = "login"
+        st.switch_page("streamlit_app.py")
+
+with col2:
+    user = st.session_state.user or {}
+    st.caption(f"Logado como: {user.get('email', '—')}")
+    st.info("Agora é aqui que vamos resgatar sua Home rica com cards e navegação elegante.")
 
 # =========================================================
 # CONFIG
