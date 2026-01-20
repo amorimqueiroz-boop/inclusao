@@ -30,7 +30,7 @@ def render_omnisfera_nav():
 
     src = logo_src()
 
-    # Ajuste fino: posição no topo, por cima do header
+    # Posição por cima do header do Streamlit
     TOP_PX = 8
     RIGHT_PX = 14
 
@@ -38,23 +38,17 @@ def render_omnisfera_nav():
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 
 <style>
-/* 1) Header do Streamlit não deve "vazar" nem competir com clique
-   - Se você quiser, pode ocultar completamente o header (linha display:none)
-*/
+/* Header do Streamlit "mutado" para não competir com o dock */
 header[data-testid="stHeader"] {{
   background: transparent !important;
   box-shadow: none !important;
   z-index: 1 !important;
 }}
-
-/* Opcional: esconder o "chrome" do header (Share/ícones) sem remover o header inteiro.
-   Isso evita clicar por baixo do dock.
-*/
 header[data-testid="stHeader"] * {{
   visibility: hidden !important;
 }}
 
-/* 2) Nosso dock por cima (z-index absurdamente alto) */
+/* Dock (mais fino) */
 .omni-dock {{
   position: fixed !important;
   top: {TOP_PX}px !important;
@@ -63,9 +57,9 @@ header[data-testid="stHeader"] * {{
 
   display: flex;
   align-items: center;
-  gap: 12px;
 
-  padding: 10px 14px;
+  gap: 10px;              /* ↓ era 12 */
+  padding: 8px 12px;      /* ↓ era 10px 14px */
   border-radius: 999px;
 
   background: #FFFFFF !important;
@@ -77,65 +71,59 @@ header[data-testid="stHeader"] * {{
   pointer-events: auto !important;
 }}
 
-/* 3) Logo */
+/* Logo */
 @keyframes spin {{
   from {{ transform: rotate(0deg); }}
   to {{ transform: rotate(360deg); }}
 }}
 .omni-logo {{
-  width: 28px;
-  height: 28px;
+  width: 26px;            /* ↓ era 28 */
+  height: 26px;           /* ↓ era 28 */
   animation: spin 10s linear infinite;
 }}
 
 /* Separador */
 .omni-sep {{
   width: 1px;
-  height: 26px;
+  height: 22px;           /* ↓ era 26 */
   background: #E5E7EB;
   margin: 0 2px;
 }}
 
-/* 4) Botões circulares (estilo "dock") */
+/* Botões circulares coloridos (ícone branco) */
 .omni-ico {{
-  width: 38px;
-  height: 38px;
+  width: 34px;            /* ↓ era 38 */
+  height: 34px;           /* ↓ era 38 */
   border-radius: 999px;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  background: #FFFFFF !important;
-  border: 1px solid #E5E7EB !important;
-
   text-decoration: none !important;
 
+  /* borda sutil para manter o “dock premium” */
+  border: 1px solid rgba(17,24,39,0.06) !important;
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
-  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
 }}
 
 .omni-ico:hover {{
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
-  background: #FAFAFA;
+  filter: brightness(1.02);
 }}
 
 .omni-ic {{
-  font-size: 20px;
+  font-size: 18px;        /* ↓ era 20 */
   line-height: 1;
-  color: #111827;
+  color: #FFFFFF !important;  /* ícone branco */
 }}
 
-.omni-rel {{ position: relative; }}
-.omni-dot {{
-  position: absolute;
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  bottom: 7px;
-  right: 7px;
-  border: 1px solid rgba(17,24,39,0.10);
+/* Acessibilidade: foco ao navegar com teclado */
+.omni-ico:focus {{
+  outline: 3px solid rgba(59,130,246,0.25);
+  outline-offset: 2px;
 }}
 </style>
 
@@ -143,34 +131,29 @@ header[data-testid="stHeader"] * {{
   <img src="{src}" class="omni-logo" alt="Omnisfera" />
   <div class="omni-sep"></div>
 
-  <a class="omni-ico omni-rel" href="?go=home" title="Home">
+  <!-- target=_self garante abrir na mesma aba -->
+  <a class="omni-ico" href="?go=home"   target="_self" title="Home" style="background:#111827">
     <i class="ri-home-5-line omni-ic"></i>
-    <span class="omni-dot" style="background:#111827"></span>
   </a>
 
-  <a class="omni-ico omni-rel" href="?go=pei" title="Estratégias & PEI">
+  <a class="omni-ico" href="?go=pei"    target="_self" title="Estratégias & PEI" style="background:#3B82F6">
     <i class="ri-puzzle-2-line omni-ic"></i>
-    <span class="omni-dot" style="background:#3B82F6"></span>
   </a>
 
-  <a class="omni-ico omni-rel" href="?go=paee" title="Plano de Ação (PAEE)">
+  <a class="omni-ico" href="?go=paee"   target="_self" title="Plano de Ação (PAEE)" style="background:#22C55E">
     <i class="ri-map-pin-2-line omni-ic"></i>
-    <span class="omni-dot" style="background:#22C55E"></span>
   </a>
 
-  <a class="omni-ico omni-rel" href="?go=hub" title="Hub de Recursos">
+  <a class="omni-ico" href="?go=hub"    target="_self" title="Hub de Recursos" style="background:#F59E0B">
     <i class="ri-lightbulb-line omni-ic"></i>
-    <span class="omni-dot" style="background:#F59E0B"></span>
   </a>
 
-  <a class="omni-ico omni-rel" href="?go=diario" title="Diário de Bordo">
+  <a class="omni-ico" href="?go=diario" target="_self" title="Diário de Bordo" style="background:#F97316">
     <i class="ri-compass-3-line omni-ic"></i>
-    <span class="omni-dot" style="background:#F97316"></span>
   </a>
 
-  <a class="omni-ico omni-rel" href="?go=mon" title="Evolução & Acompanhamento">
+  <a class="omni-ico" href="?go=mon"    target="_self" title="Evolução & Acompanhamento" style="background:#A855F7">
     <i class="ri-line-chart-line omni-ic"></i>
-    <span class="omni-dot" style="background:#A855F7"></span>
   </a>
 </div>
 """, unsafe_allow_html=True)
