@@ -18,21 +18,16 @@ def _ensure_state():
 
 def render_topbar_nav(hide_on_views=("home", "login")):
     """
-    Topbar full-width + SPA view control.
-    - Não usa f-string com CSS
-    - Não usa .format()
-    - Não limpa query params
-    - Não depende de arquivos de imagem
+    Topbar minimal (para views internas).
+    NÃO aparece em: home + login (portal/login).
     """
 
     _ensure_state()
 
-    # lê view do query param (se existir)
     v = _safe_get_query_view()
-    if v in ("login","home","estudantes","pei","paee","hub","diario","mon","logout"):
+    if v in ("login", "home", "estudantes", "pei", "paee", "hub", "diario", "mon", "logout"):
         st.session_state.view = v
 
-    # logout
     if st.session_state.view == "logout":
         st.session_state.autenticado = False
         st.session_state.view = "login"
@@ -41,11 +36,9 @@ def render_topbar_nav(hide_on_views=("home", "login")):
     authed = bool(st.session_state.get("autenticado", False))
     active = st.session_state.get("view", "login")
 
-    # ✅ Não renderiza topbar minimal em views específicas
     if active in set(hide_on_views):
         return
 
-    # cores do ativo
     colors = {
         "home": "#111827",
         "estudantes": "#2563EB",
@@ -61,8 +54,8 @@ def render_topbar_nav(hide_on_views=("home", "login")):
             return colors.get(key, "#111827")
         return "rgba(17,24,39,0.42)"
 
-    # CSS/HTML
-    st.markdown("""
+    st.markdown(
+        """
 <style>
 header[data-testid="stHeader"]{display:none !important;}
 [data-testid="stSidebar"]{display:none !important;}
@@ -99,16 +92,21 @@ header[data-testid="stHeader"]{display:none !important;}
 .omni-ic{font-size:22px; line-height:1; font-weight:900;}
 .omni-sep{width:1px; height:22px; background: rgba(229,231,235,0.9);}
 </style>
-""", unsafe_allow_html=True)
+""",
+        unsafe_allow_html=True,
+    )
 
-    if authed:
-        st.markdown(
-            f"""
+    if not authed:
+        return
+
+    st.markdown(
+        f"""
 <div class="omni-topbar">
   <div class="omni-left">
     <div class="omni-mark"></div>
     <div class="omni-name">OMNISFERA</div>
   </div>
+
   <div class="omni-right">
     <a class="omni-link" href="?view=home" target="_self" title="Home"><span class="omni-ic" style="color:{ic_color('home')}">⌂</span></a>
     <a class="omni-link" href="?view=estudantes" target="_self" title="Estudantes"><span class="omni-ic" style="color:{ic_color('estudantes')}">◉</span></a>
@@ -122,5 +120,5 @@ header[data-testid="stHeader"]{display:none !important;}
   </div>
 </div>
 """,
-            unsafe_allow_html=True,
-        )
+        unsafe_allow_html=True,
+    )
