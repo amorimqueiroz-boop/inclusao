@@ -5,6 +5,16 @@ import base64
 from datetime import date
 import pandas as pd
 from openai import OpenAI
+from ui_nav import render_omnisfera_nav
+
+active = render_omnisfera_nav(show_on_login=True)
+
+if active == "home":
+    ...
+elif active == "estudantes":
+    ...
+elif active == "pei":
+    ...
 
 # ==============================================================================
 # 1) CONFIG
