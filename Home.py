@@ -50,10 +50,9 @@ def go(view_name: str):
     st.rerun()
 
 # -------------------------
-# CSS (COESO) — PORTAL HOME
+# CSS (INJEÇÃO CERTA: <style> ... </style> + unsafe_allow_html=True)
 # -------------------------
-st.markdown("""
-<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Nunito:wght@400;600;700;800;900&display=swap');
 
@@ -62,10 +61,13 @@ html, body, [class*="css"]{
   background:#F7FAFC;
   color:#2D3748;
 }
+
+/* escondendo o header padrão do Streamlit */
 header[data-testid="stHeader"]{display:none !important;}
 [data-testid="stSidebar"]{display:none !important;}
 [data-testid="stSidebarNav"]{display:none !important;}
 
+/* espaço para o header do portal */
 .block-container{
   padding-top: 120px !important;
   padding-left: 2rem !important;
@@ -165,20 +167,15 @@ header[data-testid="stHeader"]{display:none !important;}
   gap: 8px;
 }
 
-/* GRID 6 CARDS */
-.tools-grid{
-  display:grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 12px;
-}
+/* CARDS 6 */
 .tool-card{
-  grid-column: span 4;
   background:white;
   border-radius: 16px;
   padding: 16px;
   border: 1px solid #E2E8F0;
   box-shadow: 0 2px 6px rgba(0,0,0,0.02);
   animation: fadeInUp .55s ease;
+  height: 100%;
 }
 .tool-top{
   display:flex;
@@ -201,7 +198,6 @@ header[data-testid="stHeader"]{display:none !important;}
   color:#1A202C;
   margin:0;
   font-size: 0.95rem;
-  letter-spacing: .1px;
 }
 .tool-desc{
   margin-top: 8px;
@@ -210,17 +206,17 @@ header[data-testid="stHeader"]{display:none !important;}
   font-weight: 700;
   line-height: 1.25;
 }
-.tool-btn button{
-  width:100%;
-  height: 44px;
-  border-radius: 12px !important;
-  font-weight: 900 !important;
-}
 .tool-line{
   height: 4px;
   border-radius: 999px;
   margin-top: 12px;
   opacity: .95;
+}
+.tool-btn button{
+  width:100%;
+  height: 44px;
+  border-radius: 12px !important;
+  font-weight: 900 !important;
 }
 
 /* BENTO */
@@ -300,14 +296,14 @@ header[data-testid="stHeader"]{display:none !important;}
 }
 
 @media (max-width: 900px){
-  .tool-card{grid-column: span 12;}
   .block-container{padding-top: 110px !important;}
 }
 </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(CSS, unsafe_allow_html=True)
 
 # -------------------------
-# VIEW ROUTING
+# VIEW
 # -------------------------
 view = st.session_state.view
 
@@ -316,17 +312,6 @@ view = st.session_state.view
 # -------------------------
 if view == "login":
     st.markdown("## Acesso — Omnisfera")
-
-    # logo no login (se existir)
-    icone = get_base64_image("omni_icone.png")
-    texto = get_base64_image("omni_texto.png")
-    if icone and texto:
-        st.markdown(f"""
-        <div style="display:flex; align-items:center; gap:10px; justify-content:center; margin-top:10px; margin-bottom:8px;">
-          <img src="data:image/png;base64,{icone}" style="height:64px; animation: spin 45s linear infinite;">
-          <img src="data:image/png;base64,{texto}" style="height:34px;">
-        </div>
-        """, unsafe_allow_html=True)
 
     with st.container(border=True):
         st.markdown("### Termo de Confidencialidade")
@@ -344,7 +329,6 @@ if view == "login":
 
         disabled = not (aceitou and nome.strip() and cargo.strip() and usuario.strip() and senha.strip())
         if st.button("Entrar", type="primary", use_container_width=True, disabled=disabled):
-            # Aqui você pluga Supabase depois.
             st.session_state.autenticado = True
             st.session_state.usuario_nome = nome.strip()
             st.session_state.usuario_cargo = cargo.strip()
@@ -361,7 +345,6 @@ if view == "home":
     icone_b64 = get_base64_image("omni_icone.png")
     texto_b64 = get_base64_image("omni_texto.png")
 
-    # Header fixo grande do portal
     if icone_b64 and texto_b64:
         st.markdown(f"""
         <div class="portal-header">
@@ -395,10 +378,9 @@ if view == "home":
     st.markdown("<div class='section-title'><i class='ri-flag-2-fill'></i> Manifesto Omnisfera</div>", unsafe_allow_html=True)
     st.info("“A Omnisfera foi desenvolvida com muito cuidado e carinho com o objetivo de auxiliar as escolas na tarefa de incluir. Ela tem o potencial para revolucionar o cenário da inclusão no Brasil.”")
 
-    # ---------- Cards 6 ----------
     st.markdown("<div class='section-title'><i class='ri-cursor-fill'></i> Acesso Rápido</div>", unsafe_allow_html=True)
 
-    def tool_card(title, desc, icon, color, btn_key, target_view):
+    def card(title, desc, icon, color, key, target):
         st.markdown(f"""
         <div class="tool-card">
           <div class="tool-top">
@@ -406,80 +388,41 @@ if view == "home":
               <div class="tool-ico" style="background:{color}20; color:{color};">
                 <i class="{icon}"></i>
               </div>
-              <div>
-                <div class="tool-title">{title}</div>
-              </div>
+              <div class="tool-title">{title}</div>
             </div>
           </div>
           <div class="tool-desc">{desc}</div>
           <div class="tool-line" style="background:{color};"></div>
         </div>
         """, unsafe_allow_html=True)
-
         st.markdown('<div class="tool-btn">', unsafe_allow_html=True)
-        if st.button("Acessar", key=btn_key, use_container_width=True):
-            go(target_view)
+        if st.button("Acessar", key=key, use_container_width=True):
+            go(target)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # grid com 6 cards (2 linhas)
-    colA, colB, colC = st.columns(3)
-    with colA:
-        tool_card("Estudantes", "Cadastro, histórico, evidências e rede de apoio.", "ri-group-line", "#2563EB", "go_est", "estudantes")
-    with colB:
-        tool_card("Estratégias & PEI", "Barreiras, suportes, estratégias e rubricas.", "ri-puzzle-2-line", "#3B82F6", "go_pei", "pei")
-    with colC:
-        tool_card("Plano de Ação (PAEE)", "Metas SMART, ações, responsáveis e cronograma.", "ri-map-pin-2-line", "#22C55E", "go_paee", "paee")
+    a,b,c = st.columns(3)
+    with a: card("Estudantes","Cadastro, histórico, evidências e rede de apoio.","ri-group-line","#2563EB","go_est","estudantes")
+    with b: card("Estratégias & PEI","Barreiras, suportes, estratégias e rubricas.","ri-puzzle-2-line","#3B82F6","go_pei","pei")
+    with c: card("Plano de Ação (PAEE)","Metas SMART, ações, responsáveis e cronograma.","ri-map-pin-2-line","#22C55E","go_paee","paee")
 
-    colD, colE, colF = st.columns(3)
-    with colD:
-        tool_card("Hub de Recursos", "Modelos, TA, adaptações e atividades.", "ri-lightbulb-flash-fill", "#F59E0B", "go_hub", "hub")
-    with colE:
-        tool_card("Diário de Bordo", "Registros de contexto, hipóteses e decisões.", "ri-compass-3-fill", "#F97316", "go_diario", "diario")
-    with colF:
-        tool_card("Avaliação & Acompanhamento", "Evidências, rubricas e evolução longitudinal.", "ri-line-chart-fill", "#A855F7", "go_mon", "mon")
+    d,e,f = st.columns(3)
+    with d: card("Hub de Recursos","Modelos, TA, adaptações e atividades.","ri-lightbulb-flash-fill","#F59E0B","go_hub","hub")
+    with e: card("Diário de Bordo","Registros de contexto, hipóteses e decisões.","ri-compass-3-fill","#F97316","go_diario","diario")
+    with f: card("Avaliação & Acompanhamento","Evidências, rubricas e evolução longitudinal.","ri-line-chart-fill","#A855F7","go_mon","mon")
 
-    # ---------- Conteúdo de Inclusão ----------
     st.markdown("<div class='section-title'><i class='ri-timer-flash-fill'></i> Inclusão em 60 segundos</div>", unsafe_allow_html=True)
     st.markdown("""
 - **Incluir** não é “adaptar o aluno”: é **reduzir barreiras** para participação e aprendizagem.
 - **Barreiras** (LBI): comunicacionais, metodológicas, atitudinais e tecnológicas/instrumentais.
 - **DUA**: múltiplos caminhos de **engajamento**, **representação** e **ação/expressão**.
 - **PEI**: organiza necessidades, objetivos, estratégias, apoios e evidências.
-- **PAEE**: transforma estratégia em **rotina de ações** (responsáveis + cronograma + recursos).
+- **PAEE**: transforma estratégia em **rotina de ações**.
 - **Monitoramento**: rubricas + evidências + revisão periódica = progresso real.
 """)
-
-    st.markdown("<div class='section-title'><i class='ri-layout-4-fill'></i> DUA na prática</div>", unsafe_allow_html=True)
-    st.markdown("""
-| Princípio | O que garantir | Exemplos rápidos |
-|---|---|---|
-| **Engajamento** | motivação e vínculo | escolhas, metas curtas, hiperfoco, gamificação |
-| **Representação** | diferentes formas de apresentar | áudio, visual, concreto, exemplo guiado |
-| **Ação/Expressão** | diferentes formas de responder | oral, desenho, teclado, CAA, checklist |
-""")
-
-    st.markdown("<div class='section-title'><i class='ri-shield-star-fill'></i> Barreiras (LBI) — exemplos e ações</div>", unsafe_allow_html=True)
-    with st.expander("🗣️ Comunicacionais"):
-        st.write("**Sinais:** não compreende instruções / dificuldade de expressar / ruído na interação.")
-        st.write("**Ações:** instrução em passos + apoios visuais + checagem de compreensão + CAA quando necessário.")
-    with st.expander("📚 Metodológicas"):
-        st.write("**Sinais:** caminho único / tempo rígido / avaliação única.")
-        st.write("**Ações:** flexibilizar produto + scaffolding + rubricas + tempo extra + modelos.")
-    with st.expander("🤝 Atitudinais"):
-        st.write("**Sinais:** rótulos, isolamento, baixas expectativas.")
-        st.write("**Ações:** linguagem inclusiva + altas expectativas realistas + pares tutores + pertencimento.")
-    with st.expander("🛠️ Tecnológicas/Instrumentais"):
-        st.write("**Sinais:** falta de recursos / inacessibilidade digital.")
-        st.write("**Ações:** TA baixa/média/alta + alternativas offline + acessibilidade em materiais.")
 
     st.markdown("<div class='section-title'><i class='ri-book-mark-fill'></i> Conhecimento</div>", unsafe_allow_html=True)
     st.markdown("""
     <div class="bento-grid">
-        <a href="#" class="bento-item">
-            <div class="bento-icon" style="background:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
-            <div class="bento-title">PEI vs PAEE</div>
-            <div class="bento-desc">Diferenças e quando usar.</div>
-        </a>
         <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" class="bento-item">
             <div class="bento-icon" style="background:#FFFFF0; color:#D69E2E;"><i class="ri-scales-3-line"></i></div>
             <div class="bento-title">Lei Brasileira de Inclusão</div>
@@ -489,6 +432,11 @@ if view == "home":
             <div class="bento-icon" style="background:#F0FFF4; color:#38A169;"><i class="ri-compass-3-line"></i></div>
             <div class="bento-title">BNCC</div>
             <div class="bento-desc">Currículo oficial.</div>
+        </a>
+        <a href="#" class="bento-item">
+            <div class="bento-icon" style="background:#EBF8FF; color:#3182CE;"><i class="ri-question-answer-line"></i></div>
+            <div class="bento-title">PEI vs PAEE</div>
+            <div class="bento-desc">Diferenças e quando usar.</div>
         </a>
         <a href="#" class="bento-item">
             <div class="bento-icon" style="background:#FFF5F7; color:#D53F8C;"><i class="ri-brain-line"></i></div>
@@ -511,24 +459,9 @@ if view == "home":
 
     st.markdown("<div class='footer-sign'>Omnisfera — Criada por Rodrigo A. Queiroz • PEI360 • PAEE360 • HUB de Inclusão</div>", unsafe_allow_html=True)
 
-# -------------------------
-# OUTRAS VIEWS (por enquanto mantém placeholders)
-# -------------------------
-elif view == "estudantes":
-    st.markdown("## Estudantes (placeholder)")
-elif view == "pei":
-    st.markdown("## Estratégias & PEI (placeholder)")
-elif view == "paee":
-    st.markdown("## Plano de Ação (PAEE) (placeholder)")
-elif view == "hub":
-    st.markdown("## Hub de Recursos (placeholder)")
-elif view == "diario":
-    st.markdown("## Diário de Bordo (placeholder)")
-elif view == "mon":
-    st.markdown("## Avaliação & Acompanhamento (placeholder)")
 elif view == "logout":
     st.session_state.autenticado = False
     st.session_state.view = "login"
     st.rerun()
 else:
-    st.warning(f"View desconhecida: {view}")
+    st.markdown(f"## {view} (placeholder)")
