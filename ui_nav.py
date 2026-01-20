@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 import os, base64
 
 # =========================
-# ROTAS DAS PÁGINAS
+# ROTAS DAS PÁGINAS (as que EXISTEM)
 # =========================
 PAGES = {
     "home":   "home_portal.py",
@@ -12,7 +12,7 @@ PAGES = {
     "pei":    "pages/1_PEI.py",
     "paee":   "pages/2_PAE.py",
     "hub":    "pages/3_Hub_Inclusao.py",
-    # se existir depois, você adiciona:
+    # quando criar, basta descomentar:
     # "diario": "pages/4_Diario_de_Bordo.py",
     # "dados":  "pages/5_Monitoramento_Avaliacao.py",
 }
@@ -38,8 +38,7 @@ FLATICON_CSS = """
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800;900&display=swap" rel="stylesheet">
 """
 
-# ÍCONES — todos "fi-sr-*" (mesma biblioteca = não quebra)
-# (se algum não aparecer, trocamos por outro da mesma família rapidinho)
+# ÍCONES — todos "fi-sr-*" (mesma biblioteca)
 ICONS = {
     "home":   "fi fi-sr-home",
     "alunos": "fi fi-sr-users",
@@ -112,7 +111,7 @@ def _js_fix_top():
     )
 
 # =========================
-# TOPBAR — APENAS ÍCONES
+# TOPBAR — APENAS ÍCONES (com disabled para páginas ainda inexistentes)
 # =========================
 def render_topbar_nav(active: str):
     _nav_if_requested()
@@ -123,6 +122,7 @@ def render_topbar_nav(active: str):
         if logo_b64 else "<div class='omni-logo omni-logo-fallback'></div>"
     )
 
+    # Itens do menu (aparecem sempre)
     items = [
         ("home", "Home"),
         ("alunos", "Alunos"),
@@ -135,16 +135,31 @@ def render_topbar_nav(active: str):
 
     links = ""
     for key, label in items:
-        if key not in PAGES:
-            continue
         icon = ICONS.get(key, "fi fi-sr-circle")
         color = COLORS.get(key, "#111827")
-        is_active = "active" if key == active else ""
-        links += f"""
-<a class="omni-ico-link {is_active}" href="?go={key}" aria-label="{label}" title="{label}">
+
+        exists = key in PAGES
+        is_active = (key == active)
+
+        if exists:
+            # clicável
+            cls = "omni-ico-link active" if is_active else "omni-ico-link"
+            tip = label
+            links += f"""
+<a class="{cls}" href="?go={key}" aria-label="{label}" title="{label}">
   <i class="{icon}" style="color:{color};"></i>
-  <span class="omni-tip">{label}</span>
+  <span class="omni-tip">{tip}</span>
 </a>
+"""
+        else:
+            # NÃO clicável (em breve)
+            cls = "omni-ico-link omni-disabled"
+            tip = f"{label} • Em breve"
+            links += f"""
+<span class="{cls}" aria-label="{label}" title="{tip}">
+  <i class="{icon}" style="color:rgba(15,23,42,0.28);"></i>
+  <span class="omni-tip">{tip}</span>
+</span>
 """
 
     st.markdown(
@@ -157,27 +172,27 @@ header[data-testid="stHeader"]{{display:none!important;height:0!important;}}
 [data-testid="stSidebar"], [data-testid="stSidebarNav"]{{display:none!important;}}
 div[data-testid="stAppViewContainer"]{{padding-top:0!important;margin-top:0!important;}}
 div[data-testid="stAppViewContainer"] > section.main{{padding-top:0!important;margin-top:0!important;}}
-.block-container{{padding-top:72px!important;}}
+
+/* espaço pro conteúdo (barra mais fina) */
+.block-container{{padding-top:62px!important;}}
 
 @keyframes spin{{from{{transform:rotate(0deg);}}to{{transform:rotate(360deg);}}}}
 
 .omni-topbar{{
   position:fixed; top:0; left:0; right:0;
-  height:64px;
+  height:52px;                 /* MAIS FINO */
   display:flex; align-items:center; justify-content:space-between;
-  padding:0 22px;
-  background:rgba(255,255,255,0.96);
-  backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
-  border-bottom:1px solid rgba(226,232,240,0.95);
-  box-shadow:0 8px 20px rgba(15,23,42,0.06);
+  padding:0 18px;
+  background:#ffffff;          /* BRANCO */
+  border-bottom:1px solid rgba(226,232,240,0.85);
+  box-shadow:0 6px 16px rgba(15,23,42,0.04);
   z-index:999999;
   font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
 }}
 
-.omni-left{{display:flex; align-items:center; gap:12px;}}
+.omni-left{{display:flex; align-items:center; gap:10px;}}
 .omni-logo{{
-  width:32px; height:32px; border-radius:999px;
+  width:28px; height:28px; border-radius:999px;
   animation:spin 45s linear infinite;
 }}
 .omni-logo-fallback{{
@@ -185,44 +200,40 @@ div[data-testid="stAppViewContainer"] > section.main{{padding-top:0!important;ma
 }}
 .omni-title{{
   font-weight:900; letter-spacing:.14em; text-transform:uppercase;
-  font-size:.78rem; color:#0F172A;
+  font-size:.74rem; color:#0F172A;
 }}
 
-.omni-right{{display:flex; align-items:center; gap:14px;}}
+.omni-right{{display:flex; align-items:center; gap:10px;}}
 
+/* Ícones */
 .omni-ico-link{{
-  width:44px; height:44px;
+  width:40px; height:40px;
   display:flex; align-items:center; justify-content:center;
-  border-radius:14px;
+  border-radius:12px;
   text-decoration:none;
-  opacity:.75;
-  transition:transform .14s ease, opacity .14s ease, background .14s ease;
+  opacity:.78;
+  transition:transform .12s ease, opacity .12s ease, background .12s ease;
   position:relative;
 }}
 .omni-ico-link:hover{{opacity:1; transform:translateY(-1px); background:rgba(15,23,42,0.04);}}
+.omni-ico-link i{{font-size:20px; line-height:1;}}
 
-.omni-ico-link i{{font-size:22px; line-height:1;}}
-
-/* Ativo: bem discreto */
+/* Ativo: só um “glass” discreto, SEM risco */
 .omni-ico-link.active{{opacity:1; background:rgba(15,23,42,0.06);}}
-.omni-ico-link.active::after{{
-  content:"";
-  position:absolute;
-  bottom:6px;
-  width:16px; height:2px;
-  border-radius:999px;
-  background:rgba(15,23,42,0.22);
-}}
 
-/* Tooltip (aparece no hover) */
+/* Disabled: não clica */
+.omni-disabled{{cursor:not-allowed; opacity:1;}}
+.omni-disabled:hover{{transform:none; background:transparent;}}
+
+/* Tooltip */
 .omni-tip{{
   position:absolute;
-  top:52px;
+  top:44px;
   padding:6px 10px;
   background:rgba(15,23,42,0.92);
   color:#fff;
   font-size:12px;
-  font-weight:700;
+  font-weight:800;
   border-radius:10px;
   white-space:nowrap;
   opacity:0;
@@ -230,9 +241,11 @@ div[data-testid="stAppViewContainer"] > section.main{{padding-top:0!important;ma
   pointer-events:none;
   transition:opacity .12s ease, transform .12s ease;
 }}
-.omni-ico-link:hover .omni-tip{{opacity:1; transform:translateY(0);}}
+.omni-ico-link:hover .omni-tip,
+.omni-disabled:hover .omni-tip{{opacity:1; transform:translateY(0);}}
 
-.omni-divider{{width:1px;height:22px;background:rgba(226,232,240,1); margin:0 2px;}}
+/* Divider */
+.omni-divider{{width:1px;height:18px;background:rgba(226,232,240,1); margin:0 2px;}}
 
 @media (max-width: 860px){{
   .omni-title{{display:none;}}
