@@ -157,22 +157,28 @@ def render_topbar():
 
     # LINKS FUNCIONAIS (igual sidebar)
     with st.container():
-        cols = st.columns(7, gap="small")
+    cols = st.columns(7, gap="small")
 
-        with cols[0]:
-            st.page_link("pages/home.py", icon="🏠", label="")
-        with cols[1]:
-            st.page_link("pages/0_Alunos.py", icon="👥", label="")
-        with cols[2]:
-            st.page_link("pages/1_PEI.py", icon="🧠", label="")
-        with cols[3]:
-            st.page_link("pages/2_PAE.py", icon="🎯", label="")
-        with cols[4]:
-            st.page_link("pages/3_Hub_Inclusao.py", icon="📚", label="")
-        with cols[5]:
-            st.page_link("pages/4_Diario.py", icon="📝", label="")
-        with cols[6]:
-            st.page_link("pages/5_Dados.py", icon="📈", label="")
+    with cols[0]:
+        st.page_link("pages/home.py", icon="🏠", label="")
+
+    with cols[1]:
+        st.page_link("pages/0_Alunos.py", icon="👥", label="")
+
+    with cols[2]:
+        st.page_link("pages/1_PEI.py", icon="🧠", label="")
+
+    with cols[3]:
+        st.page_link("pages/2_PAE.py", icon="🎯", label="")
+
+    with cols[4]:
+        st.page_link("pages/3_Hub_Inclusao.py", icon="📚", label="")
+
+    with cols[5]:
+        st.page_link("pages/4_Diario_de_Bordo.py", icon="📝", label="")
+
+    with cols[6]:
+        st.page_link("pages/5_Monitoramento_Avaliacao.py", icon="📈", label="")
 
 
 # -----------------------------------------------------------------------------
