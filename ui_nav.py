@@ -1,9 +1,10 @@
+# ui_nav.py
 import streamlit as st
 import streamlit.components.v1 as components
 import os, base64
 
 # =========================
-# ROTAS DAS PÁGINAS
+# ROTAS DAS PÁGINAS (as que EXISTEM)
 # =========================
 PAGES = {
     "home":   "home_portal.py",
@@ -11,6 +12,9 @@ PAGES = {
     "pei":    "pages/1_PEI.py",
     "paee":   "pages/2_PAE.py",
     "hub":    "pages/3_Hub_Inclusao.py",
+    # quando criar, basta descomentar:
+    # "diario": "pages/4_Diario_de_Bordo.py",
+    # "dados":  "pages/5_Monitoramento_Avaliacao.py",
 }
 
 # =========================
@@ -27,13 +31,14 @@ COLORS = {
 }
 
 # =========================
-# FLATICON
+# FLATICON (UMA SÓ FAMÍLIA: SOLID ROUNDED)
 # =========================
 FLATICON_CSS = """
 <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800;900&display=swap" rel="stylesheet">
 """
 
+# ÍCONES — todos "fi-sr-*" (mesma biblioteca)
 ICONS = {
     "home":   "fi fi-sr-home",
     "alunos": "fi fi-sr-users",
@@ -49,20 +54,25 @@ ICONS = {
 # UTIL
 # =========================
 def _b64(path: str) -> str:
-    if not os.path.exists(path): return ""
+    if not os.path.exists(path):
+        return ""
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
 def _get_qp(name: str):
     try:
-        return st.query_params.get(name)
-    except:
+        qp = st.query_params
+        v = qp.get(name)
+        if isinstance(v, list):
+            return v[0] if v else None
+        return v
+    except Exception:
         return None
 
 def _clear_qp():
     try:
         st.query_params.clear()
-    except:
+    except Exception:
         pass
 
 def _nav_if_requested():
@@ -80,13 +90,20 @@ def _js_fix_top():
     try{
       document.documentElement.style.margin='0';
       document.documentElement.style.padding='0';
+      document.body.style.margin='0';
+      document.body.style.padding='0';
+
       const vc = document.querySelector('div[data-testid="stAppViewContainer"]');
-      if(vc){ vc.style.paddingTop='0'; }
+      if(vc){ vc.style.paddingTop='0'; vc.style.marginTop='0'; }
+
       const main = document.querySelector('div[data-testid="stAppViewContainer"] > section.main');
-      if(main){ main.style.paddingTop='0'; }
+      if(main){ main.style.paddingTop='0'; main.style.marginTop='0'; }
     }catch(e){}
   }
-  run(); setTimeout(run, 200); setTimeout(run, 600);
+  run();
+  setTimeout(run, 50);
+  setTimeout(run, 200);
+  setTimeout(run, 600);
 })();
 </script>
 """,
@@ -94,14 +111,18 @@ def _js_fix_top():
     )
 
 # =========================
-# RENDER TOPBAR
+# TOPBAR — APENAS ÍCONES (com disabled para páginas ainda inexistentes)
 # =========================
 def render_topbar_nav(active: str):
     _nav_if_requested()
 
     logo_b64 = _b64("omni_icone.png")
-    logo_html = f"<img class='omni-logo' src='data:image/png;base64,{logo_b64}'/>" if logo_b64 else "<div class='omni-logo omni-logo-fallback'></div>"
+    logo_html = (
+        f"<img class='omni-logo' src='data:image/png;base64,{logo_b64}' alt='Omnisfera'/>"
+        if logo_b64 else "<div class='omni-logo omni-logo-fallback'></div>"
+    )
 
+    # Itens do menu (aparecem sempre)
     items = [
         ("home", "Home"),
         ("alunos", "Alunos"),
@@ -116,54 +137,119 @@ def render_topbar_nav(active: str):
     for key, label in items:
         icon = ICONS.get(key, "fi fi-sr-circle")
         color = COLORS.get(key, "#111827")
+
         exists = key in PAGES
-        
+        is_active = (key == active)
+
         if exists:
-            cls = "omni-ico-link active" if key == active else "omni-ico-link"
+            # clicável
+            cls = "omni-ico-link active" if is_active else "omni-ico-link"
+            tip = label
             links += f"""
-            <a class="{cls}" href="?go={key}">
-                <i class="{icon}" style="color:{color};"></i>
-                <span class="omni-tip">{label}</span>
-            </a>"""
+<a class="{cls}" href="?go={key}" aria-label="{label}" title="{label}">
+  <i class="{icon}" style="color:{color};"></i>
+  <span class="omni-tip">{tip}</span>
+</a>
+"""
         else:
+            # NÃO clicável (em breve)
+            cls = "omni-ico-link omni-disabled"
+            tip = f"{label} • Em breve"
             links += f"""
-            <span class="omni-ico-link omni-disabled">
-                <i class="{icon}" style="color:rgba(15,23,42,0.2);"></i>
-                <span class="omni-tip">{label} • Em breve</span>
-            </span>"""
+<span class="{cls}" aria-label="{label}" title="{tip}">
+  <i class="{icon}" style="color:rgba(15,23,42,0.28);"></i>
+  <span class="omni-tip">{tip}</span>
+</span>
+"""
 
     st.markdown(
         f"""
 {FLATICON_CSS}
 <style>
-header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stSidebar"] {{display:none!important;}}
-.block-container {{padding-top:60px!important;}}
+html, body {{ margin:0!important; padding:0!important; }}
+header[data-testid="stHeader"]{{display:none!important;height:0!important;}}
+[data-testid="stToolbar"]{{display:none!important;}}
+[data-testid="stSidebar"], [data-testid="stSidebarNav"]{{display:none!important;}}
+div[data-testid="stAppViewContainer"]{{padding-top:0!important;margin-top:0!important;}}
+div[data-testid="stAppViewContainer"] > section.main{{padding-top:0!important;margin-top:0!important;}}
 
-.omni-topbar {{
-    position:fixed; top:0; left:0; right:0; height:52px;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:0 20px; background:#fff; border-bottom:1px solid #e2e8f0;
-    z-index:999999; font-family:Inter, sans-serif;
-}}
-.omni-left, .omni-right {{display:flex; align-items:center; gap:8px;}}
-.omni-logo {{width:28px; height:28px; border-radius:50%;}}
-.omni-title {{font-weight:900; font-size:11px; letter-spacing:1.5px; color:#0f172a; margin-left:8px;}}
+/* espaço pro conteúdo (barra mais fina) */
+.block-container{{padding-top:62px!important;}}
 
-.omni-ico-link {{
-    width:38px; height:38px; display:flex; align-items:center; justify-content:center;
-    border-radius:10px; text-decoration:none; position:relative; transition: 0.2s;
-}}
-.omni-ico-link:hover {{background: #f1f5f9;}}
-.omni-ico-link i {{font-size:18px;}}
-.omni-ico-link.active {{background: #f1f5f9; border: 1px solid #e2e8f0;}}
+@keyframes spin{{from{{transform:rotate(0deg);}}to{{transform:rotate(360deg);}}}}
 
-.omni-tip {{
-    position:absolute; top:48px; left:50%; transform:translateX(-50%) translateY(-5px);
-    background:#0f172a; color:#fff; padding:5px 10px; border-radius:6px;
-    font-size:11px; white-space:nowrap; opacity:0; pointer-events:none; transition:0.2s;
+.omni-topbar{{
+  position:fixed; top:0; left:0; right:0;
+  height:52px;                 /* MAIS FINO */
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 18px;
+  background:#ffffff;          /* BRANCO */
+  border-bottom:1px solid rgba(226,232,240,0.85);
+  box-shadow:0 6px 16px rgba(15,23,42,0.04);
+  z-index:999999;
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
 }}
-.omni-ico-link:hover .omni-tip {{opacity:1; transform:translateX(-50%) translateY(0);}}
-.omni-divider {{width:1px; height:20px; background:#e2e8f0; margin:0 5px;}}
+
+.omni-left{{display:flex; align-items:center; gap:10px;}}
+.omni-logo{{
+  width:28px; height:28px; border-radius:999px;
+  animation:spin 45s linear infinite;
+}}
+.omni-logo-fallback{{
+  background:conic-gradient(from 0deg,#3B82F6,#22C55E,#F59E0B,#F97316,#A855F7,#3B82F6);
+}}
+.omni-title{{
+  font-weight:900; letter-spacing:.14em; text-transform:uppercase;
+  font-size:.74rem; color:#0F172A;
+}}
+
+.omni-right{{display:flex; align-items:center; gap:10px;}}
+
+/* Ícones */
+.omni-ico-link{{
+  width:40px; height:40px;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:12px;
+  text-decoration:none;
+  opacity:.78;
+  transition:transform .12s ease, opacity .12s ease, background .12s ease;
+  position:relative;
+}}
+.omni-ico-link:hover{{opacity:1; transform:translateY(-1px); background:rgba(15,23,42,0.04);}}
+.omni-ico-link i{{font-size:20px; line-height:1;}}
+
+/* Ativo: só um “glass” discreto, SEM risco */
+.omni-ico-link.active{{opacity:1; background:rgba(15,23,42,0.06);}}
+
+/* Disabled: não clica */
+.omni-disabled{{cursor:not-allowed; opacity:1;}}
+.omni-disabled:hover{{transform:none; background:transparent;}}
+
+/* Tooltip */
+.omni-tip{{
+  position:absolute;
+  top:44px;
+  padding:6px 10px;
+  background:rgba(15,23,42,0.92);
+  color:#fff;
+  font-size:12px;
+  font-weight:800;
+  border-radius:10px;
+  white-space:nowrap;
+  opacity:0;
+  transform:translateY(-4px);
+  pointer-events:none;
+  transition:opacity .12s ease, transform .12s ease;
+}}
+.omni-ico-link:hover .omni-tip,
+.omni-disabled:hover .omni-tip{{opacity:1; transform:translateY(0);}}
+
+/* Divider */
+.omni-divider{{width:1px;height:18px;background:rgba(226,232,240,1); margin:0 2px;}}
+
+@media (max-width: 860px){{
+  .omni-title{{display:none;}}
+}}
 </style>
 
 <div class="omni-topbar">
@@ -171,11 +257,12 @@ header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stSideb
     {logo_html}
     <div class="omni-title">OMNISFERA</div>
   </div>
+
   <div class="omni-right">
     {links}
     <div class="omni-divider"></div>
-    <a class="omni-ico-link" href="?go=home">
-      <i class="fi fi-sr-exit" style="color:#ef4444;"></i>
+    <a class="omni-ico-link" href="?go=home" aria-label="Sair" title="Sair">
+      <i class="{ICONS["sair"]}" style="color:rgba(15,23,42,0.55);"></i>
       <span class="omni-tip">Sair</span>
     </a>
   </div>
@@ -183,4 +270,5 @@ header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stSideb
 """,
         unsafe_allow_html=True,
     )
+
     _js_fix_top()
