@@ -1,5 +1,12 @@
 import streamlit as st
-from ui_nav import boot_ui
+from ui_nav import boot_ui, ensure_auth_state
+
+ensure_auth_state()
+boot_ui(do_route=False)
+
+if not st.session_state.autenticado:
+    st.query_params["go"] = "login"
+    st.stop()
 
 boot_ui(do_route=False)
 
