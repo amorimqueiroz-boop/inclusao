@@ -1,3 +1,7 @@
+import streamlit as st
+from ui_nav import boot_ui
+
+boot_ui(do_route=True)
 import importlib.util
 import os
 
