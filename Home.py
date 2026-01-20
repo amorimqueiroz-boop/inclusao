@@ -1,7 +1,6 @@
 # Home.py
 import streamlit as st
 import base64, os
-from datetime import datetime
 
 # =========================================================
 # CONFIG
@@ -9,7 +8,7 @@ from datetime import datetime
 APP_VERSION = "v116.0"
 
 PAGES = {
-    "estudantes": "pages/0_Alunos.py",
+    "estudantes": "pages/0_Alunos.py",                 # arquivo chama 0_Alunos, mas o texto é "Estudantes"
     "pei":        "pages/1_PEI.py",
     "paee":       "pages/2_PAE.py",
     "hub":        "pages/3_Hub_Inclusao.py",
@@ -17,15 +16,13 @@ PAGES = {
     "mon":        "pages/5_Monitoramento_Avaliacao.py",
 }
 
-# (Opcional) Se você já tem supabase no projeto, plugamos aqui.
-# Se ainda não tiver, o login vai mostrar aviso (sem quebrar a Home).
 def _supabase_login(email: str, password: str):
     """
-    Tenta autenticar via Supabase Auth.
-    Requer st.secrets: SUPABASE_URL e SUPABASE_ANON_KEY (ou SUPABASE_KEY).
+    Login Supabase Auth (se estiver configurado).
+    st.secrets: SUPABASE_URL e SUPABASE_ANON_KEY (ou SUPABASE_KEY)
     """
     try:
-        from supabase import create_client  # supabase-py
+        from supabase import create_client
         url = st.secrets.get("SUPABASE_URL")
         key = st.secrets.get("SUPABASE_ANON_KEY") or st.secrets.get("SUPABASE_KEY")
         if not url or not key:
@@ -33,8 +30,6 @@ def _supabase_login(email: str, password: str):
 
         supabase = create_client(url, key)
         res = supabase.auth.sign_in_with_password({"email": email, "password": password})
-
-        # res.user pode variar por versão; tratamos robusto:
         user = getattr(res, "user", None) or (res.get("user") if isinstance(res, dict) else None)
         if not user:
             return (False, "Credenciais inválidas.")
@@ -53,13 +48,10 @@ st.set_page_config(page_title="Omnisfera | Portal", page_icon=icone_pag, layout=
 # =========================================================
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
-
 if "usuario_nome" not in st.session_state:
     st.session_state.usuario_nome = ""
-
 if "usuario_cargo" not in st.session_state:
     st.session_state.usuario_cargo = ""
-
 if "usuario_email" not in st.session_state:
     st.session_state.usuario_email = ""
 
@@ -73,7 +65,6 @@ def get_base64_image(path: str) -> str:
         return base64.b64encode(f.read()).decode()
 
 def goto(page_path: str):
-    # garante que existe o arquivo
     if not os.path.exists(page_path):
         st.error(f"Página não encontrada: {page_path}")
         st.stop()
@@ -81,27 +72,19 @@ def goto(page_path: str):
 
 def logout():
     st.session_state.autenticado = False
-    # opcional: limpar dados
-    # st.session_state.usuario_nome = ""
-    # st.session_state.usuario_cargo = ""
-    # st.session_state.usuario_email = ""
     st.rerun()
 
 # =========================================================
-# GLOBAL CSS (High Design / Estável)
-# - Carrega TODOS os packs Flaticon usados: sr, rr, br, ss
+# CSS (High design, estável)
+# - Padronizado em Flaticon Solid Rounded (fi-sr-*)
 # =========================================================
 st.markdown("""
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-
-<!-- Flaticon UIcons packs (para fi-sr / fi-rr / fi-br / fi-ss) -->
+<!-- Flaticon UIcons Solid Rounded -->
 <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
-<link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css">
-<link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-brands/css/uicons-brands.css">
-<link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-straight/css/uicons-solid-straight.css">
 
 <style>
 :root{
@@ -110,17 +93,16 @@ st.markdown("""
   --muted: #64748B;
   --border: #E2E8F0;
 
-  /* acentos por módulo (elegantes / menos saturados) */
-  --c-home: #1F2A44;
-  --c-est:  #2563EB;
-  --c-pei:  #3B82F6;
-  --c-paee: #22C55E;
-  --c-hub:  #F59E0B;
-  --c-di:   #F97316;
-  --c-mon:  #A855F7;
+  /* acentos por módulo (mais chique / menos saturado) */
+  --c-est:  #2B6CEB;
+  --c-pei:  #2F7DF6;
+  --c-paee: #22A765;
+  --c-hub:  #D98A0A;
+  --c-di:   #E05A1C;
+  --c-mon:  #8B5CF6;
 
   --shadow1: 0 10px 30px rgba(15,23,42,0.06);
-  --shadow2: 0 14px 38px rgba(15,23,42,0.10);
+  --shadow2: 0 16px 40px rgba(15,23,42,0.10);
 }
 
 html, body, [class*="css"]{
@@ -142,14 +124,10 @@ header[data-testid="stHeader"]{display:none !important;}
 }
 
 @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-@keyframes fadeInUp{from{opacity:0; transform:translateY(10px);}to{opacity:1; transform:translateY(0);}}
 
-/* =========================================================
-   HEADER FIXO (Omnisfera)
-   ========================================================= */
+/* HEADER FIXO */
 .portal-header{
-  position: fixed;
-  top: 0; left: 0; right: 0;
+  position: fixed; top:0; left:0; right:0;
   height: 92px;
   z-index: 99999;
   display:flex;
@@ -211,9 +189,7 @@ header[data-testid="stHeader"]{display:none !important;}
   text-transform: uppercase;
 }
 
-/* =========================================================
-   HERO
-   ========================================================= */
+/* HERO */
 .hero{
   background: radial-gradient(circle at top right, #0F52BA, #062B61);
   border-radius: 16px;
@@ -227,7 +203,6 @@ header[data-testid="stHeader"]{display:none !important;}
   justify-content: space-between;
   border: 1px solid rgba(255,255,255,0.12);
   min-height: 96px;
-  animation: fadeInUp .55s ease;
 }
 
 .hero-title{
@@ -246,15 +221,7 @@ header[data-testid="stHeader"]{display:none !important;}
   margin-top: 6px;
 }
 
-.hero-bg{
-  position:absolute;
-  right: 20px;
-  top: 6px;
-  font-size: 5.8rem;
-  opacity: 0.08;
-  transform: rotate(-10deg);
-}
-
+/* SECTION */
 .section-title{
   font-family:'Inter', sans-serif;
   font-weight: 900;
@@ -266,24 +233,14 @@ header[data-testid="stHeader"]{display:none !important;}
   gap: 10px;
 }
 
-/* =========================================================
-   CARDS GRID (alto padrão)
-   ========================================================= */
-.tools-grid{
-  display:grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 14px;
-}
-
+/* CARD */
 .tool-card{
-  grid-column: span 4;
   background: white;
   border-radius: 18px;
   border: 1px solid var(--border);
   box-shadow: 0 2px 8px rgba(15,23,42,0.03);
   overflow: hidden;
-  animation: fadeInUp .55s ease;
-  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
 
 .tool-card:hover{
@@ -292,7 +249,7 @@ header[data-testid="stHeader"]{display:none !important;}
   border-color: rgba(203,213,225,1);
 }
 
-.tool-topbar{
+.tool-topline{
   height: 4px;
   width: 100%;
 }
@@ -316,13 +273,8 @@ header[data-testid="stHeader"]{display:none !important;}
   box-shadow: 0 8px 18px rgba(15,23,42,0.10);
 }
 
-.tool-ico i{
-  font-size: 20px;
-  line-height: 1;
-  display:flex;
-}
+.tool-ico i{ font-size: 20px; line-height:1; display:flex; }
 
-.tool-meta{flex:1;}
 .tool-title{
   font-family:'Inter', sans-serif;
   font-weight: 900;
@@ -330,6 +282,7 @@ header[data-testid="stHeader"]{display:none !important;}
   margin: 0;
   color:#0F172A;
 }
+
 .tool-desc{
   margin-top: 6px;
   color: #64748B;
@@ -337,6 +290,7 @@ header[data-testid="stHeader"]{display:none !important;}
   font-weight: 700;
   line-height: 1.25;
 }
+
 .tool-brand{
   margin-top: 10px;
   font-family:'Inter', sans-serif;
@@ -347,34 +301,31 @@ header[data-testid="stHeader"]{display:none !important;}
   text-transform: uppercase;
 }
 
-/* CTA integrado */
+/* CTA com cor do módulo */
 .tool-cta{
   padding: 0 16px 16px 16px;
 }
+
 .tool-cta button{
   width:100%;
   height: 44px;
   border-radius: 14px !important;
   font-family:'Inter', sans-serif !important;
   font-weight: 900 !important;
-  border: 1px solid rgba(226,232,240,1) !important;
-  background: rgba(248,250,252,1) !important;
-  color: rgba(15,23,42,0.80) !important;
-  transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
-}
-.tool-cta button:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(15,23,42,0.08);
-  filter: brightness(1.02);
+  border: 1px solid rgba(255,255,255,0.22) !important;
+  color: white !important;
+  box-shadow: 0 10px 22px rgba(15,23,42,0.10);
+  transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
 }
 
-/* =========================================================
-   LOGIN CARD
-   ========================================================= */
-.login-wrap{
-  max-width: 520px;
-  margin: 0 auto;
+.tool-cta button:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+  box-shadow: 0 14px 28px rgba(15,23,42,0.14);
 }
+
+/* LOGIN */
+.login-wrap{ max-width: 520px; margin: 0 auto; }
 .login-card{
   background: white;
   border: 1px solid var(--border);
@@ -405,7 +356,7 @@ header[data-testid="stHeader"]{display:none !important;}
   margin-bottom: 12px;
 }
 
-/* Rodapé */
+/* FOOTER */
 .footer{
   margin-top: 26px;
   display:flex;
@@ -426,7 +377,6 @@ header[data-testid="stHeader"]{display:none !important;}
 }
 
 @media (max-width: 900px){
-  .tool-card{ grid-column: span 12; }
   .portal-subtitle{ display:none; }
   .block-container{ padding-top: 110px !important; }
 }
@@ -434,26 +384,13 @@ header[data-testid="stHeader"]{display:none !important;}
 """, unsafe_allow_html=True)
 
 # =========================================================
-# HEADER RENDER
+# HEADER
 # =========================================================
 icone_b64 = get_base64_image("omni_icone.png")
 texto_b64 = get_base64_image("omni_texto.png")
 
-header_html = """
-<div class="portal-header">
-  <div class="portal-logo-wrap">
-    <div style="width:58px;height:58px;border-radius:999px;background:conic-gradient(from 0deg,#3B82F6,#22C55E,#F59E0B,#F97316,#A855F7,#3B82F6);"></div>
-    <div style="display:flex;flex-direction:column;gap:2px;">
-      <div style="font-family:Inter,sans-serif;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#0F172A;font-size:.88rem;">OMNISFERA</div>
-      <div style="font-family:Inter,sans-serif;font-weight:700;color:#64748B;font-size:.80rem;">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
-    </div>
-  </div>
-  <div class="portal-right">""" + APP_VERSION + """</div>
-</div>
-"""
-
 if icone_b64 and texto_b64:
-    header_html = f"""
+    st.markdown(f"""
 <div class="portal-header">
   <div class="portal-logo-wrap">
     <img src="data:image/png;base64,{icone_b64}" class="portal-logo-spin" alt="Omnisfera"/>
@@ -462,30 +399,38 @@ if icone_b64 and texto_b64:
   </div>
   <div class="portal-right">{APP_VERSION}</div>
 </div>
-"""
-
-st.markdown(header_html, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
+else:
+    st.markdown(f"""
+<div class="portal-header">
+  <div class="portal-logo-wrap">
+    <div style="width:58px;height:58px;border-radius:999px;background:conic-gradient(from 0deg,#3B82F6,#22C55E,#F59E0B,#F97316,#A855F7,#3B82F6);"></div>
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div style="font-family:Inter,sans-serif;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#0F172A;font-size:.88rem;">OMNISFERA</div>
+      <div style="font-family:Inter,sans-serif;font-weight:700;color:#64748B;font-size:.80rem;">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
+    </div>
+  </div>
+  <div class="portal-right">{APP_VERSION}</div>
+</div>
+""", unsafe_allow_html=True)
 
 # =========================================================
 # LOGIN
 # =========================================================
 if not st.session_state.autenticado:
     st.markdown("<div class='login-wrap'>", unsafe_allow_html=True)
-
     st.markdown("""
 <div class="login-card">
   <div class="login-title">Acesso</div>
   <div class="login-sub">Entre com suas credenciais de usuário.</div>
-
   <div class="termo-box">
     <strong>Termo de Confidencialidade (Versão Beta)</strong><br><br>
-    Ao acessar, você reconhece que este sistema está em fase de testes, e concorda em não compartilhar informações,
-    telas, fluxos ou resultados sem autorização. Evite inserir dados sensíveis reais de estudantes sem permissão institucional.
+    Ao acessar, você reconhece que este sistema está em fase de testes e concorda em não compartilhar telas,
+    fluxos ou resultados sem autorização. Evite inserir dados sensíveis reais sem permissão institucional.
   </div>
 </div>
 """, unsafe_allow_html=True)
 
-    # Inputs (fora do HTML para funcionar)
     with st.container():
         aceitou = st.checkbox("Li e concordo com o Termo de Confidencialidade.", value=False)
 
@@ -493,7 +438,7 @@ if not st.session_state.autenticado:
         with c1:
             nome = st.text_input("Nome", placeholder="Seu nome")
         with c2:
-            cargo = st.text_input("Cargo (opcional)", placeholder="Ex.: Coordenação, Consultoria, Docência")
+            cargo = st.text_input("Cargo (opcional)", placeholder="")
 
         usuario = st.text_input("Usuário (Email)", placeholder="seuemail@escola.com")
         senha = st.text_input("Senha", type="password", placeholder="")
@@ -503,7 +448,6 @@ if not st.session_state.autenticado:
         if st.button("Entrar", type="primary", use_container_width=True, disabled=disabled):
             ok, info = _supabase_login(usuario.strip(), senha)
             if not ok:
-                # Se ainda não configurou supabase, você verá a msg clara aqui.
                 st.error(info)
                 st.stop()
 
@@ -517,40 +461,32 @@ if not st.session_state.autenticado:
     st.stop()
 
 # =========================================================
-# HOME (PORTAL)
+# HOME (Portal)
 # =========================================================
-first_name = (st.session_state.usuario_nome.split()[0] if st.session_state.usuario_nome else "Olá")
+first = (st.session_state.usuario_nome.split()[0] if st.session_state.usuario_nome else "Olá")
 banner = "Unindo ciência, dados e empatia para transformar a educação."
 
 st.markdown(f"""
 <div class="hero">
   <div>
-    <div class="hero-title">Olá, {first_name}!</div>
+    <div class="hero-title">Olá, {first}!</div>
     <div class="hero-subtitle">“{banner}”</div>
   </div>
-  <div class="hero-bg"><i class="fi fi-ss-chip-brain"></i></div>
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("<div class='section-title'><i class='fi fi-ss-users-alt'></i> Acesso Rápido</div>", unsafe_allow_html=True)
+st.markdown("<div class='section-title'><i class='fi fi-sr-grid'></i> Acesso Rápido</div>", unsafe_allow_html=True)
 
-def render_tool_card(
-    *,
-    title: str,
-    desc: str,
-    icon_class: str,
-    color_css: str,
-    button_key: str,
-    page_path: str
-):
-    st.markdown(f"""
+def tool_card(col, title, desc, icon_class, color_var, key_btn, page_path):
+    with col:
+        st.markdown(f"""
 <div class="tool-card">
-  <div class="tool-topbar" style="background:{color_css};"></div>
+  <div class="tool-topline" style="background: var({color_var});"></div>
   <div class="tool-body">
-    <div class="tool-ico" style="background:{color_css};">
+    <div class="tool-ico" style="background: var({color_var});">
       <i class="{icon_class}"></i>
     </div>
-    <div class="tool-meta">
+    <div style="flex:1;">
       <div class="tool-title">{title}</div>
       <div class="tool-desc">{desc}</div>
       <div class="tool-brand">OMNISFERA</div>
@@ -559,86 +495,91 @@ def render_tool_card(
 </div>
 """, unsafe_allow_html=True)
 
-    st.markdown("<div class='tool-cta'>", unsafe_allow_html=True)
-    if st.button("Acessar", key=button_key, use_container_width=True):
-        goto(page_path)
-    st.markdown("</div>", unsafe_allow_html=True)
+        # botão com a cor do módulo
+        st.markdown(f"""
+<style>
+button[data-testid="{key_btn}"] {{
+  background: var({color_var}) !important;
+}}
+</style>
+""", unsafe_allow_html=True)
 
-# GRID 6 cards (3 + 3)
+        st.markdown("<div class='tool-cta'>", unsafe_allow_html=True)
+        if st.button("Acessar", key=key_btn, use_container_width=True):
+            goto(page_path)
+        st.markdown("</div>", unsafe_allow_html=True)
+
 c1, c2, c3 = st.columns(3)
-with c1:
-    render_tool_card(
-        title="Estudantes",
-        desc="Cadastro, histórico, evidências e rede de apoio.",
-        icon_class="fi fi-ss-users-alt",
-        color_css="var(--c-est)",
-        button_key="go_estudantes",
-        page_path=PAGES["estudantes"],
-    )
-with c2:
-    render_tool_card(
-        title="Estratégias & PEI",
-        desc="Barreiras, suportes, estratégias e rubricas (PEI).",
-        icon_class="fi fi-sr-puzzle-alt",
-        color_css="var(--c-pei)",
-        button_key="go_pei",
-        page_path=PAGES["pei"],
-    )
-with c3:
-    render_tool_card(
-        title="Plano de Ação (PAEE)",
-        desc="Metas SMART, ações, responsáveis e cronograma.",
-        icon_class="fi fi-rr-track",
-        color_css="var(--c-paee)",
-        button_key="go_paee",
-        page_path=PAGES["paee"],
-    )
+tool_card(
+    c1,
+    "Estudantes",
+    "Cadastro, histórico, evidências e rede de apoio.",
+    "fi fi-sr-users-alt",
+    "--c-est",
+    "go_estudantes",
+    PAGES["estudantes"],
+)
+tool_card(
+    c2,
+    "Estratégias & PEI",
+    "Barreiras, suportes, estratégias e rubricas (PEI).",
+    "fi fi-sr-puzzle-alt",
+    "--c-pei",
+    "go_pei",
+    PAGES["pei"],
+)
+tool_card(
+    c3,
+    "Plano de Ação (PAEE)",
+    "Metas SMART, ações, responsáveis e cronograma.",
+    "fi fi-sr-route",
+    "--c-paee",
+    "go_paee",
+    PAGES["paee"],
+)
 
 c4, c5, c6 = st.columns(3)
-with c4:
-    render_tool_card(
-        title="Hub de Recursos",
-        desc="Adaptações, TA, atividades, modelos e trilhas.",
-        icon_class="fi fi-sr-lightbulb-on",
-        color_css="var(--c-hub)",
-        button_key="go_hub",
-        page_path=PAGES["hub"],
-    )
-with c5:
-    render_tool_card(
-        title="Diário de Bordo",
-        desc="Registros de contexto, hipóteses e decisões (em construção).",
-        icon_class="fi fi-br-compass-alt",
-        color_css="var(--c-di)",
-        button_key="go_diario",
-        page_path=PAGES["diario"],
-    )
-with c6:
-    render_tool_card(
-        title="Evolução & Dados",
-        desc="Indicadores, evidências e acompanhamento longitudinal.",
-        icon_class="fi fi-br-analyse",
-        color_css="var(--c-mon)",
-        button_key="go_mon",
-        page_path=PAGES["mon"],
-    )
+tool_card(
+    c4,
+    "Hub de Recursos",
+    "Adaptações, TA, atividades, modelos e trilhas.",
+    "fi fi-sr-lightbulb-on",
+    "--c-hub",
+    "go_hub",
+    PAGES["hub"],
+)
+tool_card(
+    c5,
+    "Diário de Bordo",
+    "Registros de contexto, hipóteses e decisões.",
+    "fi fi-sr-compass-alt",
+    "--c-di",
+    "go_diario",
+    PAGES["diario"],
+)
+tool_card(
+    c6,
+    "Evolução & Dados",
+    "Indicadores, evidências e acompanhamento longitudinal.",
+    "fi fi-sr-chart-line-up",
+    "--c-mon",
+    "go_mon",
+    PAGES["mon"],
+)
 
-# Conteúdo de inclusão (compacto e útil)
-st.markdown("<div class='section-title'><i class='fi fi-sr-house-chimney-crack'></i> Inclusão em 60 segundos</div>", unsafe_allow_html=True)
-st.markdown("""
-- **Incluir** não é “adaptar o aluno”: é **reduzir barreiras** para participação e aprendizagem.  
-- **DUA**: múltiplos caminhos de **engajamento**, **representação** e **ação/expressão**.  
-- **PEI** organiza necessidades, objetivos, estratégias, apoios e evidências.  
-- **PAEE** transforma estratégia em **rotina de ações** (responsáveis + cronograma).  
-- **Monitoramento**: rubricas + evidências + revisão periódica = progresso real.  
-""")
+# =========================================================
+# ÁREA DE CONTEÚDO (FUTURO)
+# =========================================================
+# Aqui você vai plugar depois:
+# - blocos de inclusão / DUA / barreiras
+# - cards de leitura / conhecimento
+# - insights do dia
+# - novidades / alertas
+# =========================================================
 
-# Rodapé (logado + sair)
-st.markdown("<div class='footer'>", unsafe_allow_html=True)
-left = st.container()
-right = st.container()
-st.markdown("</div>", unsafe_allow_html=True)
-
+# =========================================================
+# FOOTER (logado + sair)
+# =========================================================
 cL, cR = st.columns([4, 1])
 with cL:
     who = st.session_state.usuario_nome or "Usuário"
@@ -646,7 +587,7 @@ with cL:
     email = st.session_state.usuario_email.strip()
     extra = f" • {cargo}" if cargo else ""
     extra2 = f" • {email}" if email else ""
-    st.markdown(f"<div class='who'>Logado como: {who}{extra}{extra2}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='footer'><div class='who'>Logado como: {who}{extra}{extra2}</div></div>", unsafe_allow_html=True)
 
 with cR:
     if st.button("Sair", use_container_width=True):
