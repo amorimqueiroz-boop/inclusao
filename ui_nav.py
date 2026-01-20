@@ -1,274 +1,228 @@
 # ui_nav.py
 import streamlit as st
-import streamlit.components.v1 as components
 import os, base64
 
-# =========================
-# ROTAS DAS PÁGINAS (as que EXISTEM)
-# =========================
-PAGES = {
-    "home":   "home_portal.py",
-    "alunos": "pages/0_Alunos.py",
-    "pei":    "pages/1_PEI.py",
-    "paee":   "pages/2_PAE.py",
-    "hub":    "pages/3_Hub_Inclusao.py",
-    # quando criar, basta descomentar:
-    # "diario": "pages/4_Diario_de_Bordo.py",
-    # "dados":  "pages/5_Monitoramento_Avaliacao.py",
-}
+def render_omnisfera_nav():
+    # -------------------------------
+    # 1) Estado SPA
+    # -------------------------------
+    if "view" not in st.session_state:
+        st.session_state.view = "home"
 
-# =========================
-# CORES POR MÓDULO
-# =========================
-COLORS = {
-    "home":   "#111827",
-    "alunos": "#2563EB",
-    "pei":    "#3B82F6",
-    "paee":   "#10B981",
-    "hub":    "#F59E0B",
-    "diario": "#F97316",
-    "dados":  "#8B5CF6",
-}
+    def go(view_key: str):
+        st.session_state.view = view_key
+        st.rerun()
 
-# =========================
-# FLATICON (UMA SÓ FAMÍLIA: SOLID ROUNDED)
-# =========================
-FLATICON_CSS = """
-<link rel="stylesheet" href="https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800;900&display=swap" rel="stylesheet">
-"""
+    ACTIVE = st.session_state.view
 
-# ÍCONES — todos "fi-sr-*" (mesma biblioteca)
-ICONS = {
-    "home":   "fi fi-sr-home",
-    "alunos": "fi fi-sr-users",
-    "pei":    "fi fi-sr-puzzle-alt",
-    "paee":   "fi fi-sr-route",
-    "hub":    "fi fi-sr-lightbulb-on",
-    "diario": "fi fi-sr-book-alt",
-    "dados":  "fi fi-sr-chart-line-up",
-    "sair":   "fi fi-sr-exit",
-}
+    # -------------------------------
+    # 2) Logo base64
+    # -------------------------------
+    def logo_src():
+        for f in ["omni_icone.png", "logo.png", "iconeaba.png", "omni.png", "ominisfera.png"]:
+            if os.path.exists(f):
+                with open(f, "rb") as img:
+                    return f"data:image/png;base64,{base64.b64encode(img.read()).decode()}"
+        return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
 
-# =========================
-# UTIL
-# =========================
-def _b64(path: str) -> str:
-    if not os.path.exists(path):
-        return ""
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
+    src = logo_src()
 
-def _get_qp(name: str):
-    try:
-        qp = st.query_params
-        v = qp.get(name)
-        if isinstance(v, list):
-            return v[0] if v else None
-        return v
-    except Exception:
-        return None
+    # -------------------------------
+    # 3) Config visual
+    # -------------------------------
+    TOP_PX = 8
+    RIGHT_PX = 14
 
-def _clear_qp():
-    try:
-        st.query_params.clear()
-    except Exception:
-        pass
+    COLORS = {
+        "home": "#111827",
+        "pei": "#3B82F6",
+        "paee": "#22C55E",
+        "hub": "#F59E0B",
+        "diario": "#F97316",
+        "mon": "#A855F7",
+    }
 
-def _nav_if_requested():
-    go = _get_qp("go")
-    if go and go in PAGES:
-        _clear_qp()
-        st.switch_page(PAGES[go])
-
-def _js_fix_top():
-    components.html(
+    def style_for(key: str):
         """
-<script>
-(function(){
-  function run(){
-    try{
-      document.documentElement.style.margin='0';
-      document.documentElement.style.padding='0';
-      document.body.style.margin='0';
-      document.body.style.padding='0';
-
-      const vc = document.querySelector('div[data-testid="stAppViewContainer"]');
-      if(vc){ vc.style.paddingTop='0'; vc.style.marginTop='0'; }
-
-      const main = document.querySelector('div[data-testid="stAppViewContainer"] > section.main');
-      if(main){ main.style.paddingTop='0'; main.style.marginTop='0'; }
-    }catch(e){}
-  }
-  run();
-  setTimeout(run, 50);
-  setTimeout(run, 200);
-  setTimeout(run, 600);
-})();
-</script>
-""",
-        height=0,
-    )
-
-# =========================
-# TOPBAR — APENAS ÍCONES (com disabled para páginas ainda inexistentes)
-# =========================
-def render_topbar_nav(active: str):
-    _nav_if_requested()
-
-    logo_b64 = _b64("omni_icone.png")
-    logo_html = (
-        f"<img class='omni-logo' src='data:image/png;base64,{logo_b64}' alt='Omnisfera'/>"
-        if logo_b64 else "<div class='omni-logo omni-logo-fallback'></div>"
-    )
-
-    # Itens do menu (aparecem sempre)
-    items = [
-        ("home", "Home"),
-        ("alunos", "Alunos"),
-        ("pei", "Estratégias & PEI"),
-        ("paee", "Plano de Ação"),
-        ("hub", "Hub"),
-        ("diario", "Diário"),
-        ("dados", "Dados"),
-    ]
-
-    links = ""
-    for key, label in items:
-        icon = ICONS.get(key, "fi fi-sr-circle")
-        color = COLORS.get(key, "#111827")
-
-        exists = key in PAGES
-        is_active = (key == active)
-
-        if exists:
-            # clicável
-            cls = "omni-ico-link active" if is_active else "omni-ico-link"
-            tip = label
-            links += f"""
-<a class="{cls}" href="?go={key}" aria-label="{label}" title="{label}">
-  <i class="{icon}" style="color:{color};"></i>
-  <span class="omni-tip">{tip}</span>
-</a>
-"""
+        - Inativo: cor opaca (RGBA) + ícone branco com alpha
+        - Ativo: cor sólida + ring/glow
+        """
+        solid = COLORS[key]
+        # versão opaca: usamos alpha via CSS rgba aproximado com overlay (filter)
+        if key == ACTIVE:
+            return f"background:{solid}; color:#FFFFFF; box-shadow: 0 0 0 3px rgba(255,255,255,0.95), 0 10px 22px rgba(15,23,42,0.12); filter:none;"
         else:
-            # NÃO clicável (em breve)
-            cls = "omni-ico-link omni-disabled"
-            tip = f"{label} • Em breve"
-            links += f"""
-<span class="{cls}" aria-label="{label}" title="{tip}">
-  <i class="{icon}" style="color:rgba(15,23,42,0.28);"></i>
-  <span class="omni-tip">{tip}</span>
-</span>
-"""
+            return f"background:{solid}; color:rgba(255,255,255,0.78); box-shadow: 0 2px 10px rgba(15,23,42,0.06); filter:saturate(0.65) brightness(1.12); opacity:0.72;"
 
-    st.markdown(
-        f"""
-{FLATICON_CSS}
+    # -------------------------------
+    # 4) CSS + dock (visual)
+    # -------------------------------
+    st.markdown(f"""
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+
 <style>
-html, body {{ margin:0!important; padding:0!important; }}
-header[data-testid="stHeader"]{{display:none!important;height:0!important;}}
-[data-testid="stToolbar"]{{display:none!important;}}
-[data-testid="stSidebar"], [data-testid="stSidebarNav"]{{display:none!important;}}
-div[data-testid="stAppViewContainer"]{{padding-top:0!important;margin-top:0!important;}}
-div[data-testid="stAppViewContainer"] > section.main{{padding-top:0!important;margin-top:0!important;}}
-
-/* espaço pro conteúdo (barra mais fina) */
-.block-container{{padding-top:62px!important;}}
-
-@keyframes spin{{from{{transform:rotate(0deg);}}to{{transform:rotate(360deg);}}}}
-
-.omni-topbar{{
-  position:fixed; top:0; left:0; right:0;
-  height:52px;                 /* MAIS FINO */
-  display:flex; align-items:center; justify-content:space-between;
-  padding:0 18px;
-  background:#ffffff;          /* BRANCO */
-  border-bottom:1px solid rgba(226,232,240,0.85);
-  box-shadow:0 6px 16px rgba(15,23,42,0.04);
-  z-index:999999;
-  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+/* “Mute” no header do Streamlit para o dock dominar */
+header[data-testid="stHeader"] {{
+  background: transparent !important;
+  box-shadow: none !important;
+  z-index: 1 !important;
+}}
+header[data-testid="stHeader"] * {{
+  visibility: hidden !important;
 }}
 
-.omni-left{{display:flex; align-items:center; gap:10px;}}
-.omni-logo{{
-  width:28px; height:28px; border-radius:999px;
-  animation:spin 45s linear infinite;
+/* DOCK (visual) */
+.omni-dock {{
+  position: fixed !important;
+  top: {TOP_PX}px !important;
+  right: {RIGHT_PX}px !important;
+  z-index: 2147483647 !important;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+
+  background: #FFFFFF !important;
+  border: 1px solid #E5E7EB !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12) !important;
+
+  pointer-events: none !important; /* clique será nos botões do Streamlit */
+  isolation: isolate !important;
 }}
-.omni-logo-fallback{{
-  background:conic-gradient(from 0deg,#3B82F6,#22C55E,#F59E0B,#F97316,#A855F7,#3B82F6);
+
+@keyframes spin {{
+  from {{ transform: rotate(0deg); }}
+  to {{ transform: rotate(360deg); }}
 }}
-.omni-title{{
-  font-weight:900; letter-spacing:.14em; text-transform:uppercase;
-  font-size:.74rem; color:#0F172A;
+.omni-logo {{
+  width: 28px;
+  height: 28px;
+  animation: spin 10s linear infinite;
 }}
 
-.omni-right{{display:flex; align-items:center; gap:10px;}}
-
-/* Ícones */
-.omni-ico-link{{
-  width:40px; height:40px;
-  display:flex; align-items:center; justify-content:center;
-  border-radius:12px;
-  text-decoration:none;
-  opacity:.78;
-  transition:transform .12s ease, opacity .12s ease, background .12s ease;
-  position:relative;
+.omni-sep {{
+  width: 1px;
+  height: 22px;
+  background: #E5E7EB;
+  margin: 0 2px;
 }}
-.omni-ico-link:hover{{opacity:1; transform:translateY(-1px); background:rgba(15,23,42,0.04);}}
-.omni-ico-link i{{font-size:20px; line-height:1;}}
 
-/* Ativo: só um “glass” discreto, SEM risco */
-.omni-ico-link.active{{opacity:1; background:rgba(15,23,42,0.06);}}
-
-/* Disabled: não clica */
-.omni-disabled{{cursor:not-allowed; opacity:1;}}
-.omni-disabled:hover{{transform:none; background:transparent;}}
-
-/* Tooltip */
-.omni-tip{{
-  position:absolute;
-  top:44px;
-  padding:6px 10px;
-  background:rgba(15,23,42,0.92);
-  color:#fff;
-  font-size:12px;
-  font-weight:800;
-  border-radius:10px;
-  white-space:nowrap;
-  opacity:0;
-  transform:translateY(-4px);
-  pointer-events:none;
-  transition:opacity .12s ease, transform .12s ease;
+/* Bolinhas menores */
+.omni-ico {{
+  width: 30px;   /* ↓ menor */
+  height: 30px;  /* ↓ menor */
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(17,24,39,0.06);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
 }}
-.omni-ico-link:hover .omni-tip,
-.omni-disabled:hover .omni-tip{{opacity:1; transform:translateY(0);}}
 
-/* Divider */
-.omni-divider{{width:1px;height:18px;background:rgba(226,232,240,1); margin:0 2px;}}
-
-@media (max-width: 860px){{
-  .omni-title{{display:none;}}
+.omni-ic {{
+  font-size: 16px; /* ↓ menor */
+  line-height: 1;
+  color: inherit;
 }}
 </style>
 
-<div class="omni-topbar">
-  <div class="omni-left">
-    {logo_html}
-    <div class="omni-title">OMNISFERA</div>
-  </div>
+<div class="omni-dock" aria-label="Omnisfera Dock">
+  <img src="{src}" class="omni-logo" alt="Omnisfera" />
+  <div class="omni-sep"></div>
 
-  <div class="omni-right">
-    {links}
-    <div class="omni-divider"></div>
-    <a class="omni-ico-link" href="?go=home" aria-label="Sair" title="Sair">
-      <i class="{ICONS["sair"]}" style="color:rgba(15,23,42,0.55);"></i>
-      <span class="omni-tip">Sair</span>
-    </a>
-  </div>
+  <div class="omni-ico" style="{style_for('home')}"><i class="ri-home-5-line omni-ic"></i></div>
+  <div class="omni-ico" style="{style_for('pei')}"><i class="ri-puzzle-2-line omni-ic"></i></div>
+  <div class="omni-ico" style="{style_for('paee')}"><i class="ri-map-pin-2-line omni-ic"></i></div>
+  <div class="omni-ico" style="{style_for('hub')}"><i class="ri-lightbulb-line omni-ic"></i></div>
+  <div class="omni-ico" style="{style_for('diario')}"><i class="ri-compass-3-line omni-ic"></i></div>
+  <div class="omni-ico" style="{style_for('mon')}"><i class="ri-line-chart-line omni-ic"></i></div>
 </div>
-""",
-        unsafe_allow_html=True,
+""", unsafe_allow_html=True)
+
+    # -------------------------------
+    # 5) Camada clicável REAL (Streamlit) — agora fixada corretamente
+    #    Estratégia: renderiza os botões e depois “sequestra” o bloco via CSS pelo id.
+    # -------------------------------
+    # cria um wrapper “âncora” que conseguimos selecionar com CSS
+    st.markdown('<div id="omni-click-anchor"></div>', unsafe_allow_html=True)
+
+    # Renderiza botões (no fluxo normal), mas vamos fixar com CSS mirando no bloco logo após a âncora.
+    c_logo, c_sep, c1, c2, c3, c4, c5, c6 = st.columns(
+        [0.6, 0.08, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7],
+        gap="small"
     )
 
-    _js_fix_top()
+    with c_logo:
+        if st.button(" ", key="omni_nav_logo", help="Home"):
+            go("home")
+    with c_sep:
+        st.write("")  # só ocupa espaço
+    with c1:
+        if st.button(" ", key="omni_nav_home", help="Home"):
+            go("home")
+    with c2:
+        if st.button(" ", key="omni_nav_pei", help="Estratégias & PEI"):
+            go("pei")
+    with c3:
+        if st.button(" ", key="omni_nav_paee", help="Plano de Ação (PAEE)"):
+            go("paee")
+    with c4:
+        if st.button(" ", key="omni_nav_hub", help="Hub de Recursos"):
+            go("hub")
+    with c5:
+        if st.button(" ", key="omni_nav_diario", help="Diário de Bordo"):
+            go("diario")
+    with c6:
+        if st.button(" ", key="omni_nav_mon", help="Evolução & Acompanhamento"):
+            go("mon")
+
+    # CSS pós-render: fixa o “bloco” de botões imediatamente após a âncora
+    st.markdown(f"""
+<style>
+/* Pega o bloco de colunas que vem logo depois da âncora e fixa no topo direito */
+#omni-click-anchor + div {{
+  position: fixed !important;
+  top: {TOP_PX}px !important;
+  right: {RIGHT_PX}px !important;
+  z-index: 2147483647 !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 10px !important;
+  padding: 8px 12px !important;
+  border-radius: 999px !important;
+
+  /* invisível (o visual está no HTML do dock) */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}}
+
+/* Botões viram áreas de clique do tamanho exato das bolinhas */
+#omni-click-anchor + div [data-testid="stButton"] button {{
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 999px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}}
+#omni-click-anchor + div [data-testid="stButton"] button p {{
+  display: none !important;
+}}
+
+/* Logo: área clicável do tamanho da logo */
+#omni-click-anchor + div [data-testid="column"]:nth-child(1) [data-testid="stButton"] button {{
+  width: 28px !important;
+  height: 28px !important;
+}}
+/* Coluna do separador (2ª): só ocupa espaço */
+#omni-click-anchor + div [data-testid="column"]:nth-child(2) {{
+  width: 1px !important;
+}}
+</style>
+""", unsafe_allow_html=True)
