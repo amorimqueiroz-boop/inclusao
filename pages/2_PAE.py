@@ -3,9 +3,8 @@ from ui_nav import render_topbar_nav
 
 st.set_page_config(page_title="Omnisfera | PAEE", page_icon="🧩", layout="wide")
 
-# Menu superior (só páginas internas)
-render_topbar_nav(active="paee")
+render_topbar_nav("paee")  # <-- ATENÇÃO: aqui é sem "active="
 
-st.markdown("# PAEE — teste mínimo")
-st.success("Se você está vendo isso, o menu está rodando aqui ✅")
-st.write("Conteúdo do PAEE entra aqui depois.")
+st.title("PAEE — teste mínimo")
+st.success("Menu carregou aqui ✅")
+st.write("Se clicar nos itens acima, deve trocar de página.")
