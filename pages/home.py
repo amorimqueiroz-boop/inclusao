@@ -1,8 +1,7 @@
-import streamlit as st
 from ui_nav import boot_ui, ensure_auth_state
 
 ensure_auth_state()
-boot_ui(do_route=False)
+boot_ui()
 
 if not st.session_state.autenticado:
     st.query_params["go"] = "login"
