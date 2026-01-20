@@ -1031,45 +1031,238 @@ abas = [
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
 
 # ==============================================================================
-# 11. ABA INÍCIO
+# 11. ABA INÍCIO — CENTRAL (Gestão de Alunos + Backups)
 # ==============================================================================
 with tab0:
-    st.markdown("### 🏛️ Central de Fundamentos e Legislação")
-    if not st.session_state.get("selected_student_id"):
-        st.warning("📝 Você está em modo rascunho. Preencha o aluno e clique em **Sincronizar** na sidebar para salvar no banco.")
-    else:
-        st.success("✅ Aluno sincronizado. Salvar/Carregar liberados.")
+    st.markdown("### 🏛️ Central de Fundamentos e Gestão")
+    st.caption("Aqui você gerencia alunos (nuvem/backup) e acessa os fundamentos do PEI.")
 
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.markdown(
-            """
-            <div class="rich-box">
-                <div class="rb-title"><i class="ri-book-open-line"></i> O que é o PEI?</div>
-                <div class="rb-text">
-                    O <b>Plano de Ensino Individualizado (PEI)</b> não é apenas um documento burocrático,
-                    mas o mapa de navegação da inclusão escolar. Ele materializa o conceito de equidade,
-                    garantindo que o currículo seja acessível a todos. Baseado no <b>DUA</b>, o PEI foca em
-                    eliminar barreiras, não em "consertar" o estudante.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-    with col_b:
-        st.markdown(
-            """
-            <div class="rich-box">
-                <div class="rb-title"><i class="ri-government-line"></i> Base Legal</div>
-                <div class="rb-text">
-                    O PEI é respaldado pela <b>LBI (Lei 13.146/2015)</b> e pela LDB.
-                    Ele deve contemplar adaptações de <b>tempo, espaço, avaliação e acesso</b>,
-                    conforme o princípio da <b>adaptação razoável</b>.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+    # -------------------------
+    # Helpers locais (somente UI)
+    # -------------------------
+    def _coerce_dates_in_payload(d: dict):
+        """Converte campos de data salvos como string de volta para date."""
+        if not isinstance(d, dict):
+            return d
+
+        for k in ["nasc", "monitoramento_data"]:
+            try:
+                if k in d and isinstance(d[k], str) and d[k]:
+                    d[k] = date.fromisoformat(d[k])
+            except:
+                pass
+        return d
+
+    # -------------------------
+    # LAYOUT 2 COLUNAS
+    # -------------------------
+    col_left, col_right = st.columns([1.15, 0.85])
+
+    # =========================
+    # ESQUERDA: Fundamentos
+    # =========================
+    with col_left:
+        with st.container(border=True):
+            st.markdown("#### 📚 Fundamentos do PEI")
+            st.markdown(
+                """
+- O **PEI** organiza o planejamento individualizado com foco em **barreiras** e **apoios**.
+- A lógica é **equidade**: ajustar **acesso, ensino e avaliação**, sem baixar expectativas.
+- Base: **LBI (Lei 13.146/2015)**, LDB e diretrizes de Educação Especial na Perspectiva Inclusiva.
+                """
+            )
+
+        with st.container(border=True):
+            st.markdown("#### 🧭 Como usar a Omnisfera")
+            st.markdown(
+                """
+1) **Estudante**: identificação + contexto + laudo (opcional)  
+2) **Evidências**: o que foi observado e como aparece na rotina  
+3) **Mapeamento**: barreiras + nível de apoio + potências  
+4) **Plano de Ação**: acesso/ensino/avaliação  
+5) **Consultoria IA**: gerar o documento técnico (validação do educador)  
+6) **Dashboard**: KPIs + exportações + sincronização  
+                """
+            )
+
+    # =========================
+    # DIREITA: Gestão de alunos
+    # =========================
+    with col_right:
+        st.markdown("#### 👤 Gestão de Alunos")
+
+        # Status vínculo
+        student_id = st.session_state.get("selected_student_id")
+        if student_id:
+            st.success("✅ Aluno vinculado ao Supabase")
+            st.caption(f"student_id: {student_id[:8]}...")
+        else:
+            st.warning("📝 Modo rascunho (não salvo na nuvem)")
+
+        # ---------
+        # (1) Carregar JSON do PC
+        # ---------
+        with st.container(border=True):
+            st.markdown("##### 1) Carregar Backup (.JSON)")
+            up_json = st.file_uploader(
+                "Envie um arquivo .json",
+                type="json",
+                key="inicio_uploader_json"
+            )
+            if up_json:
+                try:
+                    d = json.load(up_json)
+                    d = _coerce_dates_in_payload(d)
+                    if "dados" in st.session_state and isinstance(st.session_state.dados, dict):
+                        st.session_state.dados.update(d)
+                    else:
+                        st.session_state.dados = d
+
+                    st.success("Backup carregado ✅")
+                    st.toast("Dados aplicados ao formulário.", icon="✅")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Erro ao ler JSON: {e}")
+
+            st.caption("Dica: use isso para migrar dados entre máquinas ou restaurar um PEI salvo.")
+
+        # ---------
+        # (2) Nuvem: listar / carregar / excluir
+        # ---------
+        with st.container(border=True):
+            st.markdown("##### 2) Nuvem (Supabase) — Alunos")
+            if not st.session_state.get("supabase_jwt") or not st.session_state.get("supabase_user_id"):
+                st.info("Faça login Supabase na Home para ver alunos salvos na nuvem.")
+            else:
+                # Buscar alunos
+                alunos = db_list_students()
+                if not alunos:
+                    st.info("Nenhum aluno salvo ainda.")
+                else:
+                    # Exibir select por nome + (turma/serie) como contexto
+                    opcoes = []
+                    mapa = {}
+                    for a in alunos:
+                        nome = a.get("name") or "Sem nome"
+                        serie = a.get("grade") or "-"
+                        turma = a.get("class_group") or "-"
+                        label = f"{nome} — {serie} / {turma}"
+                        opcoes.append(label)
+                        mapa[label] = a
+
+                    sel = st.selectbox(
+                        "Selecione um aluno",
+                        options=opcoes,
+                        index=None,
+                        placeholder="Escolha para carregar/excluir…",
+                        key="inicio_select_aluno"
+                    )
+
+                    cA, cB, cC = st.columns(3)
+                    # Carregar: puxa student + último PEI e aplica no estado
+                    with cA:
+                        if st.button("☁️ Carregar", use_container_width=True, disabled=(not sel), key="inicio_btn_carregar"):
+                            a = mapa.get(sel)
+                            if not a:
+                                st.error("Aluno inválido.")
+                            else:
+                                sid = a["id"]
+                                # vincula
+                                st.session_state["selected_student_id"] = sid
+                                st.session_state["selected_student_name"] = a.get("name") or ""
+
+                                # tenta carregar o último PEI salvo
+                                row = supa_load_latest_pei(sid)
+                                if row and row.get("payload"):
+                                    payload = row["payload"]
+                                    payload = _coerce_dates_in_payload(payload)
+                                    st.session_state.dados.update(payload)
+                                    st.session_state.pdf_text = row.get("pdf_text") or ""
+                                    st.success("Aluno + último PEI carregados ✅")
+                                else:
+                                    # se não houver PEI, preenche só cadastro básico
+                                    st.session_state.dados["nome"] = a.get("name") or ""
+                                    try:
+                                        bd = a.get("birth_date")
+                                        if isinstance(bd, str) and bd:
+                                            st.session_state.dados["nasc"] = date.fromisoformat(bd)
+                                    except:
+                                        pass
+                                    st.session_state.dados["serie"] = a.get("grade")
+                                    st.session_state.dados["turma"] = a.get("class_group") or ""
+                                    st.session_state.dados["diagnostico"] = a.get("diagnosis") or ""
+                                    st.info("Aluno carregado. Ainda não existe PEI salvo para este aluno.")
+
+                                st.rerun()
+
+                    # Excluir: remove o aluno (e por consequência PEIs via FK/cascade se configurado)
+                    with cB:
+                        if st.button("🗑️ Excluir", use_container_width=True, disabled=(not sel), type="primary", key="inicio_btn_excluir"):
+                            a = mapa.get(sel)
+                            if not a:
+                                st.error("Aluno inválido.")
+                            else:
+                                try:
+                                    db_delete_student(a["id"])
+                                    # se o aluno atual for o mesmo, limpa vínculo
+                                    if st.session_state.get("selected_student_id") == a["id"]:
+                                        st.session_state["selected_student_id"] = None
+                                        st.session_state["selected_student_name"] = ""
+                                    st.success("Aluno excluído ✅")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Erro ao excluir: {e}")
+
+                    # Limpar rascunho / desvincular
+                    with cC:
+                        if st.button("🧹 Novo (Rascunho)", use_container_width=True, key="inicio_btn_novo"):
+                            st.session_state["selected_student_id"] = None
+                            st.session_state["selected_student_name"] = ""
+                            # mantém seus defaults já existentes no app
+                            for k in list(st.session_state.dados.keys()):
+                                pass
+                            st.toast("Voltando para rascunho…", icon="📝")
+                            st.rerun()
+
+        # ---------
+        # Sincronizar aluno (criar na nuvem) — trazendo da sidebar
+        # ---------
+        with st.container(border=True):
+            st.markdown("##### 🔗 Sincronizar aluno (criar e vincular)")
+            st.caption("Cria o aluno na tabela **students** e libera Salvar/Carregar do PEI.")
+
+            if not st.session_state.get("supabase_jwt") or not st.session_state.get("supabase_user_id"):
+                st.info("Faça login Supabase na Home para habilitar.")
+            else:
+                if st.session_state.get("selected_student_id"):
+                    st.success("Este aluno já está sincronizado ✅")
+                else:
+                    btn_sync = st.button("🔗 Sincronizar agora", type="primary", use_container_width=True, key="inicio_btn_sync")
+                    if btn_sync:
+                        if not st.session_state.dados.get("nome"):
+                            st.warning("Preencha o NOME do estudante na aba Estudante antes de sincronizar.")
+                        elif not st.session_state.dados.get("serie"):
+                            st.warning("Selecione a SÉRIE/Ano na aba Estudante antes de sincronizar.")
+                        else:
+                            try:
+                                created = db_create_student({
+                                    "owner_id": OWNER_ID,
+                                    "name": st.session_state.dados.get("nome"),
+                                    "birth_date": st.session_state.dados.get("nasc").isoformat() if hasattr(st.session_state.dados.get("nasc"), "isoformat") else None,
+                                    "grade": st.session_state.dados.get("serie"),
+                                    "class_group": st.session_state.dados.get("turma") or None,
+                                    "diagnosis": st.session_state.dados.get("diagnostico") or None
+                                })
+                                if created and created.get("id"):
+                                    st.session_state["selected_student_id"] = created["id"]
+                                    st.session_state["selected_student_name"] = created.get("name") or ""
+                                    st.success("Sincronizado ✅ Agora você pode salvar/carregar PEI.")
+                                    st.rerun()
+                                else:
+                                    st.error("Falha ao criar aluno. Verifique RLS/policies no Supabase.")
+                            except Exception as e:
+                                st.error(f"Erro ao sincronizar: {e}")
+
 
     st.markdown(
         """
