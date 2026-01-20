@@ -1,36 +1,23 @@
 import streamlit as st
-# Importa o arquivo que acabamos de criar
-from ui_nav import render_topbar_nav 
+import os
+import json
+import base64
+from datetime import date
+import pandas as pd
+from openai import OpenAI
+from ui_nav import render_omnisfera_nav
+import streamlit as st
+from ui_nav import render_omnisfera_nav
 
-# 1. Renderiza a barra e pega a aba atual
-view_atual = render_topbar_nav()
+active = render_omnisfera_nav()
 
-# 2. Controlador de Navegação
-if view_atual == "home":
-    st.title("🏠 Home")
-    st.write("Bem-vindo à Omnisfera.")
-    # ... seu código da home ...
+# 🔒 garante que só renderiza quando a view é PAEE
+if active != "paee":
+    st.stop()
 
-elif view_atual == "pei":
-    st.title("🧩 Estratégias & PEI")
-    # ... código ou import da página PEI ...
+st.title("Plano de Ação – PAEE")
 
-elif view_atual == "paee":
-    st.title("🚀 Plano de Ação (PAEE)")
-    # ... código do PAEE ...
-
-elif view_atual == "hub":
-    st.title("💡 Hub de Recursos")
-    # ... código do Hub ...
-
-elif view_atual == "diario":
-    st.title("🧭 Diário de Bordo")
-    # ... código do Diário ...
-
-elif view_atual == "mon":
-    st.title("📈 Evolução & Dados")
-    # ... código do Monitoramento ...
-
+st.write("Conteúdo do PAEE aqui")
 
 # ==============================================================================
 # 1) CONFIG
