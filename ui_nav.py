@@ -25,53 +25,24 @@ COLORS = {
     "mon": "#8B5CF6",
 }
 
-# -------------------------------------------------------------------
-# ÍCONES — padrão fixo Omnisfera (Flaticon UIcons v3.0.0)
-# Regra:
-# - Home / Diário / Evolução&Dados / IA => bold-rounded
-# - Estratégias & PEI / Hub            => solid-rounded
-# - Plano de Ação (PAEE)              => solid-straight
-#
-# Observação: as classes abaixo (fi-br-*, fi-sr-*, fi-ss-*) são exemplos
-# e podem variar conforme o nome do ícone. Se algum não renderizar,
-# troque apenas o sufixo do ícone mantendo o prefixo da família.
-# -------------------------------------------------------------------
+# ÍCONES (classes Flaticon). Mantemos classes por módulo;
+# as FAMÍLIAS (bold-rounded / solid-rounded / solid-straight) são carregadas via <link>.
 ICONS = {
-    # Home (bold-rounded)
-    "home": "fi fi-br-house-chimney",
-
-    # Estudantes (você não listou família; deixei solid-rounded para ficar coerente)
-    "estudantes": "fi fi-sr-users-alt",
-
-    # Estratégias & PEI (solid-rounded)
-    "pei": "fi fi-sr-puzzle-alt",
-
-    # Plano de Ação / PAEE (solid-straight)
-    "paee": "fi fi-ss-route",
-
-    # Hub (solid-rounded)
-    "hub": "fi fi-sr-lightbulb-on",
-
-    # Diário (bold-rounded)
-    "diario": "fi fi-br-compass-alt",
-
-    # Evolução & Dados (bold-rounded)
-    "mon": "fi fi-br-chart-line-up",
-
-    # IA (bold-rounded) — se você quiser colocar no menu depois, já está pronto
-    "ia": "fi fi-br-brain",
-
-    # Logout (neutro)
-    "logout": "fi fi-sr-sign-out-alt",
+    "home": "fi fi-br-house-chimney",        # bold-rounded
+    "estudantes": "fi fi-sr-users-alt",      # solid-rounded
+    "pei": "fi fi-sr-puzzle-alt",            # solid-rounded
+    "paee": "fi fi-ss-route",                # solid-straight
+    "hub": "fi fi-sr-lightbulb-on",          # solid-rounded
+    "diario": "fi fi-br-compass-alt",        # bold-rounded
+    "mon": "fi fi-br-chart-line-up",         # bold-rounded
+    "logout": "fi fi-sr-sign-out-alt",       # solid-rounded neutro
 }
-
 
 def _b64(path: str) -> str:
     if not os.path.exists(path):
         return ""
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
-
 
 def _goto(page_key: str):
     """Navegação multipage real (sem query params)."""
@@ -80,17 +51,20 @@ def _goto(page_key: str):
         return
     st.switch_page(target)
 
-
 def _logout():
     st.session_state.autenticado = False
     st.rerun()
-
 
 def render_topbar_nav(active: str = "home", show_on_login: bool = False):
     """
     Topbar minimalista e fixa.
     - active: chave do módulo atual (home/estudantes/pei/paee/hub/diario/mon)
     - show_on_login: se False, não mostra a barra quando não autenticado
+
+    ✅ IMPORTANTE:
+    Aqui o clique funciona 100% porque:
+    - Os botões reais do Streamlit são posicionados FIXOS na topbar (mas invisíveis).
+    - Os ícones (HTML) ficam por cima (pointer-events:none) e o clique “passa” para os botões.
     """
 
     authed = bool(st.session_state.get("autenticado", False))
@@ -100,7 +74,7 @@ def render_topbar_nav(active: str = "home", show_on_login: bool = False):
     # assets
     icon_b64 = _b64("omni_icone.png")
 
-    # CSS + libs (Flaticon: families do padrão)
+    # CSS + libs (Flaticon: famílias padrão Omnisfera)
     st.markdown("""
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -171,13 +145,7 @@ header[data-testid="stHeader"]{display:none !important;}
   color:#0F172A;
 }
 
-/* direita (ícones) */
-.omni-right{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-}
-
+/* ===== camada VISUAL (ícones) ===== */
 .omni-btn{
   width: 38px;
   height: 38px;
@@ -218,6 +186,51 @@ header[data-testid="stHeader"]{display:none !important;}
   margin: 0 4px;
 }
 
+/* ===== camada de CLIQUE (botões Streamlit) =====
+   A âncora (#omni-nav-anchor) vem imediatamente antes do bloco de colunas com botões.
+   Então a gente move esse bloco FIXO pra topbar e deixa invisível (opacity:0).
+   Resultado: clique perfeito “colado” no ícone. Sem caixas brancas no corpo da página.
+*/
+#omni-nav-anchor + div[data-testid="stHorizontalBlock"]{
+  position: fixed !important;
+  top: 10px !important;
+  right: 18px !important;
+  width: auto !important;
+  z-index: 2147483646 !important; /* abaixo dos ícones visuais */
+  opacity: 0 !important;          /* invisível */
+  pointer-events: auto !important; /* recebe clique */
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* garante que os botões tenham exatamente o mesmo tamanho dos ícones */
+#omni-nav-anchor + div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button{
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 14px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+/* tira espaçamento extra do bloco de colunas */
+#omni-nav-anchor + div[data-testid="stHorizontalBlock"] > div{
+  gap: 10px !important;
+}
+
+/* ===== overlay de ícones (visual) ===== */
+.omni-right-overlay{
+  position: fixed;
+  top: 10px;
+  right: 18px;
+  height: 38px;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  z-index: 2147483647;
+  pointer-events: none; /* clique passa pra camada invisível dos botões */
+}
+
 @media (max-width: 900px){
   .omni-name{display:none;}
   .block-container{padding-top: 82px !important;}
@@ -240,35 +253,38 @@ header[data-testid="stHeader"]{display:none !important;}
 </div>
 """, unsafe_allow_html=True)
 
-    # Botões reais (capturam clique)
-    _l, _r = st.columns([6, 4])
+    # ------------------------------------------------------------------
+    # CAMADA DE CLIQUE (botões Streamlit) — ANCORADA e movida via CSS
+    # ------------------------------------------------------------------
+    st.markdown('<div id="omni-nav-anchor"></div>', unsafe_allow_html=True)
 
-    with _r:
-        cols = st.columns([1,1,1,1,1,1,0.2,1])  # 7 ícones + separador + sair
+    cols = st.columns([1,1,1,1,1,1,1,0.2,1])  # 7 ícones + separador + sair
 
-        items = [
-            ("home","Home"),
-            ("estudantes","Estudantes"),
-            ("pei","Estratégias & PEI"),
-            ("paee","Plano de Ação (PAEE)"),
-            ("hub","Hub de Recursos"),
-            ("diario","Diário de Bordo"),
-            ("mon","Evolução & Dados"),
-        ]
+    items = [
+        ("home", "Home"),
+        ("estudantes", "Estudantes"),
+        ("pei", "Estratégias & PEI"),
+        ("paee", "Plano de Ação (PAEE)"),
+        ("hub", "Hub de Recursos"),
+        ("diario", "Diário de Bordo"),
+        ("mon", "Evolução & Dados"),
+    ]
 
-        for i, (k, label) in enumerate(items):
-            with cols[i]:
-                if st.button(" ", key=f"nav_{k}", help=label, use_container_width=True):
-                    _goto(k)
+    for i, (k, label) in enumerate(items):
+        with cols[i]:
+            if st.button(" ", key=f"nav_{k}", help=label, use_container_width=True):
+                _goto(k)
 
-        with cols[6]:
-            st.markdown('<div class="omni-sep"></div>', unsafe_allow_html=True)
+    with cols[7]:
+        st.markdown('<div class="omni-sep"></div>', unsafe_allow_html=True)
 
-        with cols[7]:
-            if st.button(" ", key="nav_logout", help="Sair", use_container_width=True):
-                _logout()
+    with cols[8]:
+        if st.button(" ", key="nav_logout", help="Sair", use_container_width=True):
+            _logout()
 
-    # Camada visual por cima (HTML) — Ícones reais, cores, estado ativo
+    # ------------------------------------------------------------------
+    # CAMADA VISUAL (ícones HTML) — por cima, sem capturar clique
+    # ------------------------------------------------------------------
     icons_html = ""
     for k, label in [
         ("home","Home"),
@@ -295,21 +311,6 @@ header[data-testid="stHeader"]{display:none !important;}
 """
 
     st.markdown(f"""
-<style>
-/* camada visual do lado direito, posicionada em cima da topbar */
-.omni-right-overlay{{
-  position: fixed;
-  top: 10px;
-  right: 18px;
-  height: 38px;
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  z-index: 2147483647;
-  pointer-events: none; /* clique passa pros botões streamlit */
-}}
-</style>
-
 <div class="omni-right-overlay">
   {icons_html}
   <div class="omni-sep"></div>
