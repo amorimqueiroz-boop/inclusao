@@ -29,20 +29,29 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Pequenos ajustes visuais (opcional)
 st.markdown(
-    """
-    <style>
-      /* sidebar um pouco mais limpa */
-      section[data-testid="stSidebar"] { padding-top: 14px; }
-      .omni-title { font-size: 44px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
-      .omni-sub { color: rgba(0,0,0,.6); margin-top: 8px; font-size: 16px; }
-      .card { border: 1px solid rgba(0,0,0,.08); border-radius: 16px; padding: 18px; background: white; }
-      .muted { color: rgba(0,0,0,.55); }
-      .pill { display:inline-block; padding: 6px 10px; border-radius: 999px; background: rgba(0,0,0,.04); font-size: 12px; }
-    </style>
-    """,
-    unsafe_allow_html=True,
+    f"""
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:16px;">
+    <div>
+      <div class="muted">Escola</div>
+      <div style="font-size:22px; font-weight:800;">
+        {st.session_state.workspace_name}
+      </div>
+      <div class="muted" style="margin-top:6px;">
+        Acesso liberado via PIN • {datetime.now().strftime('%d/%m/%Y %H:%M')}
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div class="muted">Workspace</div>
+      <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px;">
+        {st.session_state.workspace_id}
+      </div>
+    </div>
+  </div>
+</div>
+""",
+    unsafe_allow_html=True
 )
 
 
