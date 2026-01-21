@@ -7,6 +7,43 @@ import time
 # Supabase
 from supabase import create_client
 
+# --- ESCONDE O MENU PADRÃO (Pages / streamlit_app / etc.) ---
+st.markdown("""
+<style>
+/* Esconde o menu de páginas padrão do Streamlit */
+[data-testid="stSidebarNav"] { display: none !important; }
+</style>
+""", unsafe_allow_html=True)
+
+with st.sidebar:
+    # Seu bloco atual de usuário/sair pode ficar, mas antes coloca o NAV custom
+    st.markdown("### 🧭 Navegação")
+
+    # HOME (aqui na home só dá rerun pra “voltar pro topo”)
+    if st.button("🏠 Home", use_container_width=True):
+        st.rerun()
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("📘 PEI", use_container_width=True):
+            st.switch_page("pages/1_PEI.py")
+    with col2:
+        if st.button("🧩 PAEE", use_container_width=True):
+            st.switch_page("pages/2_PAE.py")
+
+    if st.button("🚀 Hub", use_container_width=True):
+        st.switch_page("pages/3_Hub_Inclusao.py")
+
+    st.markdown("---")
+
+    # (depois disso, mantém seu bloco atual)
+    st.markdown(f"**👤 {st.session_state.get('usuario_nome', '')}**")
+    st.caption(st.session_state.get("usuario_cargo", ""))
+    if st.button("Sair", use_container_width=True):
+        st.session_state["autenticado"] = False
+        st.rerun()
+
+
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL E AMBIENTE
 # ==============================================================================
