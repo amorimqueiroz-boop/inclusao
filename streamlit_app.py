@@ -24,8 +24,6 @@ st.set_page_config(
 # Apenas respeita quem já liberou o acesso (PIN / Supabase)
 # ==============================================================================
 
-LOGIN_PAGE = "login_pin.py"  # <<< AJUSTE AQUI se o nome do arquivo for outro
-
 def acesso_bloqueado(msg: str):
     st.markdown(
         f"""
@@ -54,16 +52,18 @@ def acesso_bloqueado(msg: str):
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🔑 Voltar para a tela de login", use_container_width=True):
-            st.switch_page(LOGIN_PAGE)
+            # ✅ Não navega: só limpa e deixa o router mostrar o login
+            st.session_state.autenticado = False
+            st.session_state.workspace_id = None
+            st.session_state.workspace_name = None
+            st.rerun()
 
     st.stop()
 
 
-# 1) Não autenticado
 if not st.session_state.get("autenticado", False):
     acesso_bloqueado("Faça login para acessar o Omnisfera.")
 
-# 2) Sem escola / workspace
 if not st.session_state.get("workspace_id"):
     acesso_bloqueado("Nenhuma escola vinculada ao seu acesso.")
 
