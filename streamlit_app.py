@@ -16,6 +16,13 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 ensure_auth_state()
 boot_ui()
+# DEBUG (pode remover depois)
+try:
+    qp = dict(st.query_params)
+except Exception:
+    qp = {}
+st.caption(f"DEBUG → autenticado={st.session_state.get('autenticado')} | go={qp.get('go')} | user={type(st.session_state.get('user')).__name__}")
+
 
 
 # -----------------------------------------------------------------------------
