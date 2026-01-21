@@ -1,14 +1,30 @@
 import streamlit as st
-from ui_nav import boot_ui, ensure_auth_state
+from _client import get_supabase
 
-ensure_auth_state()
-boot_ui()
+supabase = get_supabase()
 
-if not st.session_state.get("autenticado"):
+st.title("Alunos")
+
+st.write("Supabase conectado:", supabase is not None)
+
+# workspace_id vem do login por PIN
+workspace_id = st.session_state.get("workspace_id")
+
+if not workspace_id:
+    st.warning("Workspace não definido.")
     st.stop()
 
-st.title("Título da Página")
+# Exemplo: listar alunos do workspace
+res = (
+    supabase
+    .table("students")
+    .select("*")
+    .eq("workspace_id", workspace_id)
+    .order("name")
+    .execute()
+)
 
-boot_ui(do_route=False)
-
-
+if res.data:
+    st.dataframe(res.data)
+else:
+    st.info("Nenhum aluno cadastrado.")
