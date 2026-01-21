@@ -1,427 +1,89 @@
-# streamlit_app.py
-# Omnisfera — Tela de Início (PIN) + Supabase RPC + Logo girando
-# - Sem sidebar
-# - Evita loops
-# - Mostra informações de controle (Workspace, ID, RPC usada, etc.)
-# - Esconde chrome do Streamlit por padrão (se ENV != "TESTE")
-
-import os
-import base64
-from datetime import datetime
-
 import streamlit as st
-from supabase import create_client
+from ui_nav import boot_ui, ensure_auth_state, nav_href
+from login import render_login  # <--- Importamos do novo arquivo
 
-
-# =============================================================================
-# 0) CONFIG
-# =============================================================================
+# -----------------------------------------------------------------------------
+# PAGE CONFIG
+# -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="Omnisfera",
-    page_icon="🍃",
+    page_icon="🌿",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-# =============================================================================
-# 0.1) NOME DA FUNÇÃO RPC (para seu controle)
-# =============================================================================
-RPC_NAME = "workspace_from_pin"   # <- controle explícito (não esquecer)
+# -----------------------------------------------------------------------------
+# BOOT UI
+# -----------------------------------------------------------------------------
+ensure_auth_state()
+boot_ui()
 
-
-# =============================================================================
-# 1) ENV + HIDE STREAMLIT CHROME (menu/toolbar/footer)
-# =============================================================================
-def _get_env_flag() -> str:
-    try:
-        v = st.secrets.get("ENV", None)
-        if v:
-            return str(v).strip().upper()
-    except Exception:
-        pass
-    return str(os.getenv("ENV", "")).strip().upper()
-
-
-def maybe_hide_streamlit_chrome():
-    env_flag = _get_env_flag()
-    if env_flag == "TESTE":
-        return  # modo teste: não esconder nada
-
-    st.markdown(
-        """
-        <style>
-          #MainMenu {visibility: hidden;}
-          header {visibility: hidden;}
-          footer {visibility: hidden;}
-          .block-container { padding-top: 1.2rem; }
-
-          [data-testid="stToolbar"] {visibility: hidden;}
-          [data-testid="stDecoration"] {visibility: hidden;}
-          [data-testid="stStatusWidget"] {visibility: hidden;}
-          [data-testid="stAppDeployButton"] {display:none;}
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-maybe_hide_streamlit_chrome()
-
-
-# =============================================================================
-# 2) CSS + LOGO GIRANDO
-# =============================================================================
-def _b64_logo_from_file() -> str | None:
-    for f in ["omni_icone.png", "logo.png", "iconeaba.png", "omni.png", "omnisfera.png"]:
-        if os.path.exists(f):
-            with open(f, "rb") as img:
-                return base64.b64encode(img.read()).decode("utf-8")
-    return None
-
-
-def inject_css():
-    st.markdown(
-        """
-        <style>
-          :root{
-            --muted:#6b7280;
-            --text:#111827;
-            --border:rgba(17,24,39,.08);
-            --shadow: 0 10px 30px rgba(17,24,39,.06);
-            --green:#16a34a;
-            --red:#ef4444;
-          }
-
-          .omni-wrap{ max-width: 980px; margin: 0 auto; padding: 24px 18px 64px; }
-
-          .top-chip{
-            display:inline-flex; align-items:center; gap:8px;
-            border:1px solid var(--border);
-            padding: 6px 10px; border-radius: 999px;
-            font-size: 13px; color: var(--muted);
-            background: rgba(17,24,39,.02);
-          }
-
-          .brand{ display:flex; align-items:center; gap:14px; margin-top: 18px; }
-
-          .logoSpin{
-            width:56px;height:56px; border-radius:16px;
-            display:inline-flex; align-items:center; justify-content:center;
-            background: rgba(22,163,74,.08);
-            border:1px solid rgba(22,163,74,.18);
-            box-shadow: 0 8px 22px rgba(17,24,39,.06);
-            overflow:hidden;
-          }
-          .logoSpin img{
-            width:34px;height:34px;
-            animation: spin 6.5s linear infinite;
-            transform-origin:center;
-          }
-          @keyframes spin{ 0%{transform: rotate(0deg);} 100%{transform: rotate(360deg);} }
-
-          .title{ font-size: 58px; line-height: 1.02; letter-spacing: -0.04em; margin: 0; color: var(--text); }
-          .subtitle{ margin-top: 10px; color: var(--muted); font-size: 16px; }
-
-          .card{
-            margin-top: 18px;
-            background: #fff;
-            border:1px solid var(--border);
-            box-shadow: var(--shadow);
-            border-radius: 18px;
-            padding: 18px;
-          }
-
-          .grid2{ display:grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
-
-          .fieldlabel{ font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-
-          .pill-ok{
-            display:flex; align-items:center; gap:10px;
-            padding: 12px 14px; border-radius: 12px;
-            border: 1px solid rgba(22,163,74,.18);
-            background: rgba(22,163,74,.08);
-            color: #166534; font-weight: 600;
-          }
-
-          .pill-bad{
-            display:flex; align-items:center; gap:10px;
-            padding: 12px 14px; border-radius: 12px;
-            border: 1px solid rgba(239,68,68,.22);
-            background: rgba(239,68,68,.08);
-            color: #991b1b; font-weight: 600;
-          }
-
-          .mono{
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-          }
-
-          .thinhr{ margin: 16px 0; height:1px; background: rgba(17,24,39,.08); border:0; }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-inject_css()
-
-
-# =============================================================================
-# 3) SUPABASE CLIENT + RPC
-# =============================================================================
-@st.cache_resource(show_spinner=False)
-def get_supabase():
-    url = None
-    key = None
-    try:
-        url = st.secrets.get("SUPABASE_URL", None)
-        key = st.secrets.get("SUPABASE_ANON_KEY", None)
-    except Exception:
-        pass
-    url = url or os.getenv("SUPABASE_URL")
-    key = key or os.getenv("SUPABASE_ANON_KEY")
-
-    if not url or not key:
-        raise RuntimeError(
-            "SUPABASE_URL / SUPABASE_ANON_KEY não encontrados. "
-            "Configure no Secrets (Streamlit Cloud) ou como variáveis de ambiente."
-        )
-    return create_client(url, key)
-
-
-def workspace_from_pin(pin: str) -> dict | None:
+# -----------------------------------------------------------------------------
+# HOME DASHBOARD (Só aparece se logado)
+# -----------------------------------------------------------------------------
+def _card(title: str, desc: str, go_key: str, ico_class: str, color: str, cta: str):
+    return f"""
+    <div class="omni-card">
+      <div class="omni-badge"><i class="{ico_class}" style="color:{color}"></i></div>
+      <div class="omni-card-title">{title}</div>
+      <div class="omni-card-desc">{desc}</div>
+      <a class="omni-cta" href="{nav_href(go_key)}">
+        {cta} <span>→</span>
+      </a>
+    </div>
     """
-    RPC esperado: public.workspace_from_pin(p_pin text) returns (id uuid, name text)
-    """
-    sb = get_supabase()
-    res = sb.rpc(RPC_NAME, {"p_pin": pin}).execute()
-    data = res.data
-    if not data:
-        return None
-    if isinstance(data, list):
-        return data[0] if len(data) else None
-    if isinstance(data, dict):
-        return data
-    return None
 
+def render_home():
+    # CSS da Home (Cards, KPIs)
+    st.markdown("""
+    <style>
+    .omni-wrap{ max-width: 1180px; margin: 0 auto; }
+    .omni-hero{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-top: 10px; margin-bottom: 14px; }
+    .omni-title{ font-size: 34px; font-weight: 900; color: rgba(0,0,0,0.78); }
+    .omni-sub{ margin-top: 8px; font-size: 13px; color: rgba(0,0,0,0.56); }
+    .omni-card{ padding: 18px; border-radius: 22px; background: rgba(255,255,255,0.82); border: 1px solid rgba(0,0,0,0.08); transition: all .12s ease; }
+    .omni-card:hover{ transform: translateY(-2px); box-shadow: 0 14px 34px rgba(0,0,0,0.10); }
+    .omni-badge{ width: 44px; height: 44px; border-radius: 16px; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.04); margin-bottom: 10px; }
+    .omni-badge i{ font-size: 18px; }
+    .omni-card-title{ font-size: 16px; font-weight: 900; color: rgba(0,0,0,0.78); margin-bottom: 6px; }
+    .omni-card-desc{ font-size: 13px; color: rgba(0,0,0,0.56); margin-bottom: 12px; }
+    .omni-cta{ display:inline-flex; align-items:center; justify-content:space-between; width: 100%; padding: 10px 12px; border-radius: 14px; background: rgba(0,0,0,0.03); text-decoration:none; font-weight: 800; color: rgba(0,0,0,0.72); }
+    .omni-cta:hover{ background: rgba(0,0,0,0.05); }
+    </style>
+    """, unsafe_allow_html=True)
 
-# =============================================================================
-# 4) STATE (sem loops)
-# =============================================================================
-def ensure_state():
-    if "session_ok" not in st.session_state:
-        st.session_state.session_ok = False
+    st.markdown("<div class='omni-wrap'>", unsafe_allow_html=True)
+    
+    user_email = st.session_state["user"].get("email") if st.session_state["user"] else "Visitante"
 
-    if "workspace_id" not in st.session_state:
-        st.session_state.workspace_id = None
-    if "workspace_name" not in st.session_state:
-        st.session_state.workspace_name = None
-
-    if "pin_debug" not in st.session_state:
-        st.session_state.pin_debug = None
-
-    if "connected" not in st.session_state:
-        st.session_state.connected = False
-
-    if "last_auth_ts" not in st.session_state:
-        st.session_state.last_auth_ts = None
-
-    if "rpc_used" not in st.session_state:
-        st.session_state.rpc_used = RPC_NAME
-
-
-def clear_session():
-    st.session_state.session_ok = False
-    st.session_state.workspace_id = None
-    st.session_state.workspace_name = None
-    st.session_state.pin_debug = None
-    st.session_state.connected = False
-    st.session_state.last_auth_ts = None
-    st.session_state.rpc_used = RPC_NAME
-
-
-ensure_state()
-
-
-# =============================================================================
-# 5) UI
-# =============================================================================
-def render_header():
-    logo_b64 = _b64_logo_from_file()
-    if logo_b64:
-        logo_html = f"<img src='data:image/png;base64,{logo_b64}'/>"
-    else:
-        logo_html = "<div style='width:34px;height:34px;border-radius:10px;background:rgba(22,163,74,.25);'></div>"
-
-    st.markdown(
-        f"""
-        <div class="omni-wrap">
-          <div class="top-chip">Sessão / PIN</div>
-
-          <div class="brand">
-            <div class="logoSpin">{logo_html}</div>
-            <div>
-              <h1 class="title">Omnisfera</h1>
-              <div class="subtitle">PIN validado e vinculado a um workspace via Supabase RPC.</div>
-            </div>
+    st.markdown(f"""
+        <div class="omni-hero">
+          <div>
+            <div class="omni-title">Central</div>
+            <div class="omni-sub">Logado como <b>{user_email}</b>.</div>
           </div>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    """, unsafe_allow_html=True)
 
-
-def render_login():
-    st.markdown('<div class="omni-wrap">', unsafe_allow_html=True)
-
-    st.markdown(
-        f"""
-        <div class="card">
-          <div style="font-weight:700; font-size:16px; margin-bottom:6px;">Validar PIN</div>
-          <div style="color:var(--muted); font-size:14px;">
-            Função (RPC) usada: <span class="mono">{RPC_NAME}(p_pin text)</span>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    c1, c2 = st.columns([2, 1], gap="large")
-    with c1:
-        pin = st.text_input(
-            "PIN do Workspace",
-            value="",
-            placeholder="Ex.: 3D6C-9718",
-            label_visibility="collapsed",
-        )
-        st.caption("Pode colar com ou sem hífen; o app normaliza.")
-
-    with c2:
-        do = st.button("Validar e entrar", use_container_width=True)
-
-    pin_norm = (pin or "").strip().upper().replace(" ", "")
-    if len(pin_norm) == 8 and "-" not in pin_norm:
-        pin_norm = pin_norm[:4] + "-" + pin_norm[4:]
-
-    if do:
-        if not pin_norm or len(pin_norm) < 6:
-            st.error("Digite um PIN válido.")
-        else:
-            with st.spinner("Validando PIN..."):
-                try:
-                    ws = workspace_from_pin(pin_norm)
-                except Exception as e:
-                    st.error("Falha ao consultar o Supabase. Verifique URL/KEY e o RPC.")
-                    st.caption(str(e))
-                    ws = None
-
-            if not ws:
-                st.error("PIN não encontrado ou inválido.")
-            else:
-                st.session_state.session_ok = True
-                st.session_state.workspace_id = ws.get("id")
-                st.session_state.workspace_name = ws.get("name")
-                st.session_state.pin_debug = pin_norm
-                st.session_state.connected = True
-                st.session_state.last_auth_ts = datetime.now().strftime("%d/%m/%Y %H:%M")
-                st.session_state.rpc_used = RPC_NAME
-                st.rerun()
+    # Grid de Cards
+    c1, c2, c3 = st.columns(3, gap="large")
+    with c1: st.markdown(_card("Alunos", "Gerencie cadastros e sincronização.", "alunos", "fi fi-br-users", "#2563EB", "Abrir"), unsafe_allow_html=True)
+    with c2: st.markdown(_card("PEI 360°", "Monte e acompanhe o Plano Educacional.", "pei", "fi fi-br-brain", "#7C3AED", "Abrir"), unsafe_allow_html=True)
+    with c3: st.markdown(_card("PAEE", "Plano de Apoio Educacional Especializado.", "paee", "fi fi-br-bullseye", "#F97316", "Abrir"), unsafe_allow_html=True)
+    
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+    
+    c4, c5, c6 = st.columns(3, gap="large")
+    with c4: st.markdown(_card("Hub de Inclusão", "Recursos e boas práticas.", "hub", "fi fi-br-book-open-cover", "#16A34A", "Abrir"), unsafe_allow_html=True)
+    with c5: st.markdown(_card("Diário de Bordo", "Registros e observações diárias.", "diario", "fi fi-br-notebook", "#0EA5E9", "Abrir"), unsafe_allow_html=True)
+    with c6: st.markdown(_card("Monitoramento", "Indicadores de evolução.", "dados", "fi fi-br-chart-histogram", "#111827", "Abrir"), unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-
-def render_status_card():
-    st.markdown('<div class="omni-wrap">', unsafe_allow_html=True)
-
-    ok = bool(st.session_state.connected and st.session_state.workspace_id)
-
-    if ok:
-        st.markdown('<div class="pill-ok">Conectado ✅</div>', unsafe_allow_html=True)
-    else:
-        st.markdown('<div class="pill-bad">Desconectado ❌</div>', unsafe_allow_html=True)
-
-    st.markdown("<hr class='thinhr'/>", unsafe_allow_html=True)
-
-    ws_name = st.session_state.workspace_name or "—"
-    ws_id = st.session_state.workspace_id or "—"
-    pin = st.session_state.pin_debug or "—"
-    ts = st.session_state.last_auth_ts or "—"
-    rpc_used = st.session_state.rpc_used or RPC_NAME
-
-    st.markdown(
-        f"""
-        <div class="card">
-          <div class="grid2">
-            <div>
-              <div class="fieldlabel">Workspace</div>
-              <div style="font-size:18px; font-weight:700;">{ws_name}</div>
-              <div style="margin-top:6px; color:var(--muted); font-size:13px;">
-                Ambiente liberado via PIN · {ts}
-              </div>
-
-              <div class="fieldlabel" style="margin-top:14px;">Função (RPC) usada</div>
-              <div class="mono" style="font-size:14px; padding:12px 14px; border:1px solid var(--border); border-radius:14px; background:rgba(17,24,39,.02); display:inline-block;">
-                {rpc_used}(p_pin text)
-              </div>
-            </div>
-
-            <div>
-              <div class="fieldlabel">Workspace ID</div>
-              <div class="mono" style="font-size:14px; padding:12px 14px; border:1px solid var(--border); border-radius:14px; background:rgba(17,24,39,.02);">
-                {ws_id}
-              </div>
-
-              <div class="fieldlabel" style="margin-top:12px;">PIN usado (somente depuração)</div>
-              <div class="mono" style="font-size:14px; padding:12px 14px; border:1px solid var(--border); border-radius:14px; background:rgba(17,24,39,.02); display:inline-block;">
-                {pin}
-              </div>
-            </div>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    colA, colB = st.columns([1, 1], gap="large")
-    with colA:
-        if st.button("Atualizar estado", use_container_width=True):
-            if st.session_state.pin_debug:
-                with st.spinner("Revalidando..."):
-                    ws = workspace_from_pin(st.session_state.pin_debug)
-                if ws:
-                    st.session_state.workspace_id = ws.get("id")
-                    st.session_state.workspace_name = ws.get("name")
-                    st.session_state.connected = True
-                    st.session_state.last_auth_ts = datetime.now().strftime("%d/%m/%Y %H:%M")
-                    st.toast("Estado atualizado.")
-                    st.rerun()
-                else:
-                    st.session_state.connected = False
-                    st.warning("Não foi possível revalidar o PIN. Troque o PIN.")
-            else:
-                st.warning("Sem PIN na sessão.")
-    with colB:
-        if st.button("Sair / Trocar PIN", use_container_width=True):
-            clear_session()
-            st.rerun()
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-# =============================================================================
-# 6) MAIN
-# =============================================================================
-def main():
-    render_header()
-
-    if not st.session_state.session_ok or not st.session_state.workspace_id:
-        # se entrou “meio quebrado”, limpa sem loop
-        if st.session_state.session_ok and not st.session_state.workspace_id:
-            clear_session()
-        render_login()
-        return
-
-    render_status_card()
-
-
-if __name__ == "__main__":
-    main()
+# -----------------------------------------------------------------------------
+# ROTEAMENTO PRINCIPAL
+# -----------------------------------------------------------------------------
+if not st.session_state.get("autenticado"):
+    render_login()  # Chama a função do novo arquivo login.py
+else:
+    render_home()
