@@ -13,25 +13,9 @@ if "workspace" not in st.session_state:
 # Supabase RPC
 # -----------------------------
 def workspace_from_pin(pin: str):
-    pin = (pin or "").strip()
-    if not pin:
-        return None
-
-    try:
-        res = supabase.schema("public").rpc(
-            "workspace_from_pin",
-            {"p_pin": pin}
-        ).execute()
-
-        if res.data and len(res.data) == 1:
-            return res.data[0]
-        return None
-
-    except Exception as e:
-        st.error("Falha ao validar PIN no Supabase. Abra Manage app → Logs para ver o detalhe.")
-        st.caption(f"Detalhe técnico: {type(e).__name__}")
-        return None
-
+    res = supabase.rpc("workspace_from_pin", {"p_pin": pin}).execute()
+    data = res.data or []
+    return data[0] if len(data) else None
 
 # -----------------------------
 # UI (leve + elegante)
