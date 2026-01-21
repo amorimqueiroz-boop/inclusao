@@ -18,17 +18,55 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+
 # ==============================================================================
-# 1) GATE DE ACESSO — HOME NÃO AUTENTICA (PIN/SUPABASE É EM OUTRO ARQUIVO)
+# GATE DE ACESSO — HOME NÃO AUTENTICA
+# Apenas respeita quem já liberou o acesso (PIN / Supabase)
 # ==============================================================================
-if not st.session_state.get("autenticado", False):
-    st.warning("🔐 Acesso restrito. Faça login (PIN) para continuar.")
+
+LOGIN_PAGE = "login_pin.py"  # <<< AJUSTE AQUI se o nome do arquivo for outro
+
+def acesso_bloqueado(msg: str):
+    st.markdown(
+        f"""
+        <div style="
+            max-width:520px;
+            margin: 120px auto;
+            padding: 28px;
+            background: white;
+            border-radius: 18px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 20px 40px rgba(15,82,186,0.12);
+            text-align: center;
+        ">
+            <div style="font-size:2.2rem; margin-bottom:10px;">🔐</div>
+            <div style="font-weight:900; font-size:1.1rem; margin-bottom:6px;">
+                Acesso restrito
+            </div>
+            <div style="color:#4A5568; font-weight:700; font-size:0.95rem; margin-bottom:18px;">
+                {msg}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🔑 Voltar para a tela de login", use_container_width=True):
+            st.switch_page(LOGIN_PAGE)
+
     st.stop()
 
-# Recomendado: Home exige escola/workspace válido
+
+# 1) Não autenticado
+if not st.session_state.get("autenticado", False):
+    acesso_bloqueado("Faça login para acessar o Omnisfera.")
+
+# 2) Sem escola / workspace
 if not st.session_state.get("workspace_id"):
-    st.error("⚠️ Nenhuma escola vinculada (workspace_id ausente). Verifique o login por PIN.")
-    st.stop()
+    acesso_bloqueado("Nenhuma escola vinculada ao seu acesso.")
+
 
 # ==============================================================================
 # 2) STATE BASE (compat)
