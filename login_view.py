@@ -18,10 +18,8 @@ def _get_env_flag() -> str:
 
 
 def maybe_hide_streamlit_chrome():
-    # regra: se ENV="TESTE", NÃO esconde o menu inferior
     if _get_env_flag() == "TESTE":
         return
-
     st.markdown(
         """
         <style>
@@ -102,7 +100,7 @@ def inject_css():
 
 
 def ensure_auth_state():
-    # 🔑 estado "oficial" que libera a home
+    # ✅ estado oficial do app
     if "autenticado" not in st.session_state:
         st.session_state.autenticado = False
 
@@ -111,7 +109,7 @@ def ensure_auth_state():
     if "workspace_name" not in st.session_state:
         st.session_state.workspace_name = None
 
-    # (opcionais)
+    # opcionais
     if "pin_debug" not in st.session_state:
         st.session_state.pin_debug = None
     if "connected" not in st.session_state:
@@ -121,7 +119,6 @@ def ensure_auth_state():
     if "rpc_used" not in st.session_state:
         st.session_state.rpc_used = RPC_NAME
 
-    # usuário (opcional)
     if "usuario_nome" not in st.session_state:
         st.session_state.usuario_nome = "Visitante"
     if "usuario_cargo" not in st.session_state:
@@ -196,7 +193,6 @@ def render_login():
             if not ws:
                 st.error("PIN não encontrado ou inválido.")
             else:
-                # ✅ libera o app
                 st.session_state.autenticado = True
                 st.session_state.workspace_id = ws.get("id")
                 st.session_state.workspace_name = ws.get("name")
@@ -206,7 +202,6 @@ def render_login():
                 st.session_state.last_auth_ts = datetime.now().strftime("%d/%m/%Y %H:%M")
                 st.session_state.rpc_used = RPC_NAME
 
-                # ⚠️ SEM switch_page: o router decide o que mostrar
                 st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
