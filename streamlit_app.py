@@ -1,142 +1,328 @@
 import streamlit as st
-from datetime import datetime
+from ui_nav import boot_ui, ensure_auth_state, nav_href
+from _client import supabase_login  # <--- IMPORTANTE: Importamos a função de login real
 
-# ajuste o import conforme seu projeto
-from _client import get_supabase
-
+# -----------------------------------------------------------------------------
+# PAGE CONFIG
+# -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Omnisfera • Início",
+    page_title="Omnisfera",
     page_icon="🌿",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-# ----------------------------
-# helpers
-# ----------------------------
-def clear_workspace():
-    for k in ["workspace_id", "workspace_name", "workspace_at"]:
-        st.session_state.pop(k, None)
+# -----------------------------------------------------------------------------
+# BOOT UI
+# -----------------------------------------------------------------------------
+ensure_auth_state()
+boot_ui()
 
-def has_workspace():
-    return bool(st.session_state.get("workspace_id")) and bool(st.session_state.get("workspace_name"))
+# -----------------------------------------------------------------------------
+# STYLES (HOME)
+# -----------------------------------------------------------------------------
+def _home_css():
+    st.markdown(
+        """
+<style>
+.omni-wrap{ max-width: 1180px; margin: 0 auto; }
 
-def validate_pin(pin: str):
-    """
-    Chama RPC workspace_from_pin(p_pin text) -> retorna tabela(id uuid, name text)
-    """
-    sb = get_supabase()
-    # no supabase-py, o retorno costuma vir em res.data
-    res = sb.rpc("workspace_from_pin", {"p_pin": pin}).execute()
-    data = getattr(res, "data", None) or []
-    return data
+.omni-hero{
+  display:flex; align-items:flex-end; justify-content:space-between;
+  gap:16px; margin-top: 10px; margin-bottom: 14px;
+}
+.omni-title{
+  font-size: 34px; line-height: 1.05; font-weight: 900;
+  letter-spacing: -0.02em; color: rgba(0,0,0,0.78);
+}
+.omni-sub{
+  margin-top: 8px; font-size: 13px; color: rgba(0,0,0,0.56);
+  max-width: 72ch;
+}
 
+.omni-kpis{
+  display:grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px; margin: 14px 0 18px 0;
+}
+.omni-kpi{
+  padding: 14px 16px; border-radius: 18px;
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(0,0,0,0.08);
+  backdrop-filter: blur(10px);
+}
+.omni-kpi-label{ font-size: 12px; color: rgba(0,0,0,0.52); }
+.omni-kpi-value{ margin-top: 6px; font-size: 22px; font-weight: 900; color: rgba(0,0,0,0.78); }
 
-# ----------------------------
-# UI - Header
-# ----------------------------
-st.markdown(
-    """
-    <div style="padding: 6px 0 18px 0;">
-      <div style="font-size: 44px; font-weight: 800; letter-spacing: -0.02em;">Omnisfera</div>
-      <div style="font-size: 16px; color: #6b7280; margin-top: 6px;">
-        Digite o PIN da escola para acessar o ambiente.
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+.omni-hint{ font-size: 12px; color: rgba(0,0,0,0.45); margin-top: 6px; }
 
-# ----------------------------
-# Status atual (sem redirecionar!)
-# ----------------------------
-c1, c2, c3 = st.columns([2, 2, 2])
-with c1:
-    st.markdown("**Status**")
-    st.write("Workspace definido:" , has_workspace())
+.omni-grid{
+  display:grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
 
-with c2:
-    st.markdown("**Workspace**")
-    st.write(st.session_state.get("workspace_name", "—"))
+.omni-card{
+  padding: 18px 18px 14px 18px; border-radius: 22px;
+  background: rgba(255,255,255,0.82);
+  border: 1px solid rgba(0,0,0,0.08);
+  backdrop-filter: blur(10px);
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.omni-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(0,0,0,0.10);
+  background: rgba(255,255,255,0.88);
+}
 
-with c3:
-    st.markdown("**Workspace ID**")
-    st.code(st.session_state.get("workspace_id", "—") or "—")
+.omni-badge{
+  width: 44px; height: 44px; border-radius: 16px;
+  display:flex; align-items:center; justify-content:center;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.08);
+  margin-bottom: 10px;
+}
+.omni-badge i{ font-size: 18px; line-height: 1; }
 
+.omni-card-title{ font-size: 16px; font-weight: 900; color: rgba(0,0,0,0.78); margin-bottom: 6px; }
+.omni-card-desc{ font-size: 13px; line-height: 1.45; color: rgba(0,0,0,0.56); margin-bottom: 12px; }
 
-st.divider()
+.omni-cta{
+  display:inline-flex; align-items:center; justify-content:space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.03);
+  border: 1px solid rgba(0,0,0,0.08);
+  text-decoration:none;
+  font-weight: 800;
+  color: rgba(0,0,0,0.72);
+}
+.omni-cta:hover{
+  background: rgba(0,0,0,0.05);
+}
 
-# ----------------------------
-# Form PIN
-# ----------------------------
-with st.container():
-    st.markdown("### Acesso por PIN")
-
-    pin = st.text_input(
-        "PIN da escola",
-        value=st.session_state.get("last_pin", "DEMO-2026"),
-        placeholder="ex.: DEMO-2026",
+@media (max-width: 1100px){
+  .omni-kpis{ grid-template-columns: repeat(2, 1fr); }
+  .omni-grid{ grid-template-columns: 1fr; }
+  .omni-title{ font-size: 30px; }
+}
+</style>
+        """,
+        unsafe_allow_html=True,
     )
 
-    b1, b2, b3 = st.columns([1, 1, 3])
-    with b1:
-        validar = st.button("✅ Validar PIN", use_container_width=True)
-    with b2:
-        limpar = st.button("🧹 Limpar sessão", use_container_width=True)
-    with b3:
-        st.caption("Dica: nesta fase NÃO vamos navegar para páginas — só validar e manter sessão estável.")
 
-    if limpar:
-        clear_workspace()
-        st.session_state.pop("last_pin", None)
-        st.success("Sessão limpa. Agora valide o PIN novamente.")
+# -----------------------------------------------------------------------------
+# LOGIN (REAL COM SUPABASE)
+# -----------------------------------------------------------------------------
+def render_login():
+    _home_css()
+    st.markdown("<div class='omni-wrap'>", unsafe_allow_html=True)
 
-    if validar:
-        pin_norm = (pin or "").strip()
-        st.session_state["last_pin"] = pin_norm
+    st.markdown(
+        """
+        <div class="omni-hero">
+          <div>
+            <div class="omni-title">Acesse o Omnisfera</div>
+            <div class="omni-sub">Entre com sua conta segura para gerenciar seus alunos.</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        if not pin_norm:
-            st.warning("Digite um PIN.")
+    with st.form("login", clear_on_submit=False):
+        email = st.text_input("E-mail", placeholder="seu@email.com")
+        senha = st.text_input("Senha", type="password", placeholder="••••••••")
+        ok = st.form_submit_button("Entrar")
+
+    if ok:
+        if not email.strip() or not senha.strip():
+            st.error("Preencha e-mail e senha.")
         else:
-            try:
-                rows = validate_pin(pin_norm)
-
-                if not rows:
-                    clear_workspace()
-                    st.error("PIN inválido (nenhum workspace encontrado).")
+            with st.spinner("Conectando ao banco de dados..."):
+                # AQUI ESTÁ A MÁGICA: Login real no Supabase
+                jwt, uid, err = supabase_login(email.strip(), senha.strip())
+                
+                if jwt and uid:
+                    st.session_state.autenticado = True
+                    st.session_state.user = {"email": email.strip()}
+                    
+                    # Salva as chaves que as outras páginas precisam
+                    st.session_state["supabase_jwt"] = jwt
+                    st.session_state["supabase_user_id"] = uid
+                    
+                    st.success("Login realizado com sucesso!")
+                    st.rerun()
                 else:
-                    ws = rows[0]
-                    # ws pode vir como dict: {"id": "...", "name": "..."}
-                    ws_id = ws.get("id") if isinstance(ws, dict) else None
-                    ws_name = ws.get("name") if isinstance(ws, dict) else None
+                    st.error(f"Falha no login: {err}")
 
-                    if not ws_id or not ws_name:
-                        clear_workspace()
-                        st.error("RPC retornou dados inesperados. Confira o retorno da função no Supabase.")
-                        st.write("Retorno bruto:", rows)
-                    else:
-                        st.session_state["workspace_id"] = ws_id
-                        st.session_state["workspace_name"] = ws_name
-                        st.session_state["workspace_at"] = datetime.now().strftime("%d/%m/%Y %H:%M")
-                        st.success(f"✅ Ambiente liberado: {ws_name}")
+    st.markdown("</div>", unsafe_allow_html=True)
 
-            except Exception as e:
-                clear_workspace()
-                st.error("Erro ao validar PIN (RPC).")
-                st.write("Detalhe técnico:")
-                st.exception(e)
 
-st.divider()
+# -----------------------------------------------------------------------------
+# HOME
+# -----------------------------------------------------------------------------
+def _card(title: str, desc: str, go_key: str, ico_class: str, color: str, cta: str):
+    return f"""
+<div class="omni-card">
+  <div class="omni-badge"><i class="{ico_class}" style="color:{color}"></i></div>
+  <div class="omni-card-title">{title}</div>
+  <div class="omni-card-desc">{desc}</div>
+  <a class="omni-cta" href="{nav_href(go_key)}">
+    {cta} <span>→</span>
+  </a>
+</div>
+"""
 
-# ----------------------------
-# Debug (opcional)
-# ----------------------------
-with st.expander("🔎 Debug da sessão"):
-    st.json(
-        {
-            "workspace_id": st.session_state.get("workspace_id"),
-            "workspace_name": st.session_state.get("workspace_name"),
-            "workspace_at": st.session_state.get("workspace_at"),
-            "last_pin": st.session_state.get("last_pin"),
-        }
+
+def render_home():
+    _home_css()
+    st.markdown("<div class='omni-wrap'>", unsafe_allow_html=True)
+
+    user_email = "—"
+    if isinstance(st.session_state.get("user"), dict):
+        user_email = st.session_state["user"].get("email", "—")
+
+    st.markdown(
+        f"""
+        <div class="omni-hero">
+          <div>
+            <div class="omni-title">Central</div>
+            <div class="omni-sub">
+              Logado como <b>{user_email}</b>. Acesso rápido aos módulos e visão geral do dia.
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
+
+    # KPIS (placeholder - futuramente conectaremos no banco)
+    st.markdown(
+        """
+        <div class="omni-kpis">
+          <div class="omni-kpi">
+            <div class="omni-kpi-label">Status do Banco</div>
+            <div class="omni-kpi-value" style="color:green">Conectado</div>
+          </div>
+          <div class="omni-kpi">
+            <div class="omni-kpi-label">PEIs ativos</div>
+            <div class="omni-kpi-value">—</div>
+          </div>
+          <div class="omni-kpi">
+            <div class="omni-kpi-label">Evidências</div>
+            <div class="omni-kpi-value">—</div>
+          </div>
+          <div class="omni-kpi">
+            <div class="omni-kpi-label">Atualizações hoje</div>
+            <div class="omni-kpi-value">—</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("<div class='omni-hint'>Dica: use os ícones do menu superior ou os cards abaixo.</div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+
+    # Grid 3x2 (cards)
+    c1, c2, c3 = st.columns(3, gap="large")
+    with c1:
+        st.markdown(
+            _card(
+                "Alunos",
+                "Gerencie alunos salvos, cadastros e sincronização com a nuvem.",
+                "alunos",
+                "fi fi-br-users",
+                "#2563EB",
+                "Abrir Alunos",
+            ),
+            unsafe_allow_html=True,
+        )
+    with c2:
+        st.markdown(
+            _card(
+                "PEI 360°",
+                "Monte e acompanhe o Plano Educacional Individual com evidências e rubricas.",
+                "pei",
+                "fi fi-br-brain",
+                "#7C3AED",
+                "Abrir PEI",
+            ),
+            unsafe_allow_html=True,
+        )
+    with c3:
+        st.markdown(
+            _card(
+                "PAE",
+                "Plano de Apoio Educacional e estratégias com foco no acompanhamento.",
+                "pae",
+                "fi fi-br-bullseye",
+                "#F97316",
+                "Abrir PAE",
+            ),
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+
+    c4, c5, c6 = st.columns(3, gap="large")
+    with c4:
+        st.markdown(
+            _card(
+                "Hub de Inclusão",
+                "Recursos, orientações, modelos e boas práticas para inclusão.",
+                "hub",
+                "fi fi-br-book-open-cover",
+                "#16A34A",
+                "Abrir Hub",
+            ),
+            unsafe_allow_html=True,
+        )
+    with c5:
+        st.markdown(
+            _card(
+                "Diário de Bordo",
+                "Registros, observações e linha do tempo de intervenções.",
+                "diario",
+                "fi fi-br-notebook",
+                "#0EA5E9",
+                "Abrir Diário",
+            ),
+            unsafe_allow_html=True,
+        )
+    with c6:
+        st.markdown(
+            _card(
+                "Monitoramento",
+                "Acompanhamento, avaliação e indicadores de evolução.",
+                "dados",
+                "fi fi-br-chart-histogram",
+                "#111827",
+                "Abrir Monitoramento",
+            ),
+            unsafe_allow_html=True,
+        )
+
+    st.divider()
+
+    left, right = st.columns([1, 5])
+    with left:
+        if st.button("Sair"):
+            # Limpa tudo ao sair
+            st.session_state.autenticado = False
+            st.session_state.user = None
+            st.session_state["supabase_jwt"] = None
+            st.session_state["supabase_user_id"] = None
+            st.rerun()
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+# -----------------------------------------------------------------------------
+# ROUTING
+# -----------------------------------------------------------------------------
+if not st.session_state.get("autenticado"):
+    render_login()
+else:
+    render_home()
