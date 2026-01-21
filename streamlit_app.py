@@ -8,7 +8,7 @@ import time
 # ==============================================================================
 # 0) CONFIGURAÇÃO DO APP
 # ==============================================================================
-APP_VERSION = "v132.0 (Home 6 Cards • Estudantes + Escola do PIN)"
+APP_VERSION = "v133.0 (Home High Design • 6 cards ricos • Escola do PIN)"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -26,43 +26,17 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 1) ESTADO BASE (mínimo) + AUTH
+# 1) STATE (mínimo) + compat
 # ==============================================================================
 if "autenticado" not in st.session_state:
     st.session_state["autenticado"] = False
-
 if "usuario_nome" not in st.session_state:
     st.session_state["usuario_nome"] = ""
-
 if "usuario_cargo" not in st.session_state:
     st.session_state["usuario_cargo"] = ""
 
-# Mantém dados para compatibilidade com suas páginas (Home NÃO usa como gate)
-default_state = {
-    "nome": "",
-    "nasc": date(2015, 1, 1),
-    "serie": None,
-    "turma": "",
-    "diagnostico": "",
-    "lista_medicamentos": [],
-    "composicao_familiar_tags": [],
-    "historico": "",
-    "familia": "",
-    "hiperfoco": "",
-    "potencias": [],
-    "rede_apoio": [],
-    "orientacoes_especialistas": "",
-    "checklist_evidencias": {},
-    "nivel_alfabetizacao": "Não se aplica (Educação Infantil)",
-    "barreiras_selecionadas": {},
-    "niveis_suporte": {},
-    "estrategias_acesso": [],
-    "estrategias_ensino": [],
-    "estrategias_avaliacao": [],
-    "ia_sugestao": "",
-    "checklist_hub": {},
-    "student_id": None,
-}
+# Mantém dados para compatibilidade com páginas (Home não usa como gate)
+default_state = {"nome": "", "nasc": date(2015, 1, 1), "serie": None, "turma": "", "diagnostico": "", "student_id": None}
 if "dados" not in st.session_state:
     st.session_state.dados = default_state.copy()
 
@@ -77,17 +51,13 @@ def get_base64_image(image_path: str) -> str:
 
 def get_escola_vinculada() -> str:
     """
-    Tentativa robusta de recuperar o nome da escola vinculada ao PIN.
-    Como o seu fluxo já "conseguiu trazer a informação do PIN", geralmente
-    ela fica em algo como:
-      - st.session_state["workspace_name"]
-      - st.session_state["escola_nome"]
-      - st.session_state["school_name"]
-      - st.session_state["workspace"]["name"]
-      - st.session_state["workspace"]["school_name"]
-    Esta função tenta todas sem quebrar.
+    Recupera o nome da escola vinculada ao PIN a partir do session_state.
+    Ajuste fino: basta você salvar o nome em alguma dessas chaves ao autenticar via PIN.
     """
-    keys_direct = ["escola", "escola_nome", "school_name", "workspace_name", "workspace_label", "workspace_display"]
+    keys_direct = [
+        "escola", "escola_nome", "school_name",
+        "workspace_name", "workspace_label", "workspace_display"
+    ]
     for k in keys_direct:
         v = st.session_state.get(k)
         if isinstance(v, str) and v.strip():
@@ -100,7 +70,6 @@ def get_escola_vinculada() -> str:
             if isinstance(v, str) and v.strip():
                 return v.strip()
 
-    # fallback: se só tiver workspace_id, mostramos uma forma curta
     wsid = st.session_state.get("workspace_id")
     if isinstance(wsid, str) and wsid.strip():
         return f"Workspace {wsid[:8]}…"
@@ -108,19 +77,19 @@ def get_escola_vinculada() -> str:
     return ""
 
 # ==============================================================================
-# 3) CSS GLOBAL (sempre) — evita “duas telas” sobrepondo
+# 3) CSS BASE (sempre)
 # ==============================================================================
 st.markdown(
     """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
-html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color:#2D3748; background:#F7FAFC; }
+html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color:#1A202C; background:#F7FAFC; }
 
-/* some com o menu padrão de páginas (onde aparece streamlit_app etc.) */
 [data-testid="stSidebarNav"] { display: none !important; }
-
-/* esconder header padrão */
 [data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
+
+/* remove aquele “respiro” feio acima em alguns temas */
+.block-container { padding-top: 128px !important; padding-bottom: 2rem !important; }
 </style>
 """,
     unsafe_allow_html=True,
@@ -130,24 +99,22 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color:#2D3748; b
 # 4) LOGIN (único) — sem sobreposição
 # ==============================================================================
 if not st.session_state["autenticado"]:
-    st.markdown(
-        """<style>section[data-testid="stSidebar"] { display: none !important; }</style>""",
-        unsafe_allow_html=True,
-    )
+    st.markdown("""<style>section[data-testid="stSidebar"] { display:none !important; }</style>""", unsafe_allow_html=True)
 
     st.markdown(
         """
 <style>
-.login-container {
-  background: white;
-  padding: 30px;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+.login-shell { max-width: 520px; margin: 50px auto; }
+.login-card {
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(226,232,240,0.9);
+  border-radius: 22px;
+  box-shadow: 0 18px 45px rgba(15,82,186,0.10);
+  padding: 28px;
   text-align: center;
-  border: 1px solid #E2E8F0;
-  max-width: 480px;
-  margin: 40px auto;
 }
+.login-title { font-family: Inter, sans-serif; font-weight: 900; letter-spacing: .6px; color:#0F52BA; margin: 12px 0 2px; }
+.login-sub { color:#718096; font-weight:700; margin-bottom: 16px; }
 @keyframes spin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
 </style>
 """,
@@ -156,15 +123,17 @@ if not st.session_state["autenticado"]:
 
     c1, c_login, c2 = st.columns([1, 2, 1])
     with c_login:
-        st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+        st.markdown("<div class='login-shell'><div class='login-card'>", unsafe_allow_html=True)
 
         img_icone = get_base64_image("omni_icone.png")
         if img_icone:
             st.markdown(
-                f"<img src='data:image/png;base64,{img_icone}' style='height:80px; animation: spin 45s linear infinite;'>",
+                f"<img src='data:image/png;base64,{img_icone}' style='height:84px; animation: spin 45s linear infinite;'>",
                 unsafe_allow_html=True,
             )
-        st.markdown("<h2 style='color:#0F52BA; margin:10px 0;'>OMNISFERA</h2>", unsafe_allow_html=True)
+
+        st.markdown("<div class='login-title'>OMNISFERA</div>", unsafe_allow_html=True)
+        st.markdown("<div class='login-sub'>Ecossistema de Inteligência Pedagógica</div>", unsafe_allow_html=True)
 
         if IS_TEST_ENV:
             if st.button("🚀 ENTRAR (MODO TESTE)", use_container_width=True):
@@ -188,12 +157,12 @@ if not st.session_state["autenticado"]:
                 else:
                     st.error("Dados incorretos.")
 
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div></div>", unsafe_allow_html=True)
 
     st.stop()
 
 # ==============================================================================
-# 5) TOPBAR + HOME CSS (somente após login)
+# 5) TOPBAR + HOME HIGH DESIGN
 # ==============================================================================
 if IS_TEST_ENV:
     card_bg, card_border, display_text, footer_visibility = (
@@ -220,137 +189,203 @@ st.markdown(
 @import url('https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-straight/css/uicons-solid-straight.css');
 @import url('https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css');
 
-/* conteúdo não fica atrás da barra */
-.block-container {{ padding-top: 130px !important; padding-bottom: 2rem !important; }}
-
-/* TOPBAR fixa */
-.logo-container {{
-  display:flex; align-items:center; justify-content:flex-start; gap:15px;
-  position: fixed; top:0; left:0; width:100%; height:90px;
-  background-color: rgba(247, 250, 252, 0.85);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+/* TOPBAR */
+.header-container {{
+  position: fixed; top: 0; left: 0; width: 100%; height: 88px;
+  background: rgba(255,255,255,0.78);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(226,232,240,0.85);
   z-index: 99999;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-  padding-left: 40px; padding-top: 5px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px;
+  box-shadow: 0 10px 30px rgba(15,82,186,0.06);
 }}
-.header-subtitle-text {{
-  font-weight: 600; font-size: 1rem; color: #718096;
-  border-left: 2px solid #CBD5E0; padding-left: 15px;
-  height: 40px; display: flex; align-items: center;
-}}
-.logo-icon-spin {{ height:75px; width:auto; animation: spin 45s linear infinite; }}
-.logo-text-static {{ height:45px; width:auto; }}
-
-.omni-badge {{
-  position: fixed; top: 15px; right: 15px;
-  background: {card_bg}; border: 1px solid {card_border};
-  backdrop-filter: blur(12px);
-  padding: 6px 14px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-  z-index: 999990;
-  display:flex; flex-direction:column; align-items:flex-end; justify-content:center;
+.header-left {{ display: flex; align-items: center; gap: 16px; }}
+.header-logo-spin {{ height: 54px; width: 54px; animation: spin 18s linear infinite; }}
+.header-logo-text {{ height: 38px; width: auto; }}
+.header-divider {{ height: 36px; width: 1px; background: rgba(203,213,224,0.9); margin: 0 6px; }}
+.header-slogan {{ font-weight: 800; color: #718096; letter-spacing: .2px; }}
+.header-badge {{
+  background: {card_bg};
+  border: 1px solid {card_border};
+  border-radius: 14px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
   gap: 2px;
-  pointer-events: none;
+  align-items: flex-end;
+  box-shadow: 0 10px 20px rgba(15,82,186,0.07);
 }}
-.omni-text {{
-  font-family:'Inter', sans-serif;
-  font-weight: 800; font-size: 0.6rem; color: #2D3748;
-  letter-spacing: 1.5px; text-transform: uppercase;
+.badge-top {{
+  font-family: Inter, sans-serif;
+  font-weight: 900;
+  font-size: 0.62rem;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #1A202C;
 }}
-.omni-school {{
-  font-family:'Nunito', sans-serif;
-  font-weight: 700;
-  font-size: 0.78rem;
+.badge-school {{
+  font-weight: 800;
+  font-size: 0.82rem;
   color: #2D3748;
-  opacity: 0.92;
-  max-width: 340px;
+  opacity: .92;
+  max-width: 420px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }}
-
 @keyframes spin {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
 
-/* Hero */
-.dash-hero {{
-  background: radial-gradient(circle at top right, #0F52BA, #062B61);
-  border-radius: 16px;
-  margin: 10px 0 20px 0;
-  box-shadow: 0 10px 25px -5px rgba(15, 82, 186, 0.3);
+/* HERO */
+.hero-shell {{
+  background:
+    radial-gradient(900px 250px at 15% 10%, rgba(15,82,186,0.22), transparent 65%),
+    radial-gradient(900px 250px at 85% 0%, rgba(56,178,172,0.18), transparent 60%),
+    radial-gradient(circle at top right, #0F52BA, #062B61);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 18px 50px rgba(15,82,186,0.24);
+  padding: 26px 28px;
   color: white;
-  padding: 25px 35px;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  border: 1px solid rgba(255,255,255,0.1);
-  min-height: 100px;
+  gap: 18px;
 }}
 .hero-title {{
-  font-family: 'Inter', sans-serif;
-  font-weight: 700;
-  font-size: 1.5rem;
+  font-family: Inter, sans-serif;
+  font-weight: 900;
+  font-size: 1.55rem;
   margin: 0;
 }}
 .hero-sub {{
   margin-top: 6px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.85);
+  font-weight: 800;
+  color: rgba(255,255,255,0.86);
+}}
+.hero-chips {{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}}
+.chip {{
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.14);
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.92);
+}}
+.hero-right {{
+  min-width: 230px;
+  display: flex;
+  justify-content: flex-end;
+}}
+.hero-pulse {{
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 18px;
+  padding: 12px 14px;
+  text-align: right;
+}}
+.hero-mini {{
+  font-weight: 900;
+  letter-spacing: .4px;
+}}
+.hero-mini-sub {{
+  margin-top: 4px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.86);
+  font-size: .82rem;
 }}
 
-/* HOME CARDS — 3 por linha (desktop), responsivo */
+/* CARDS (6) — high design */
 .home-grid {{
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+  margin-top: 10px;
 }}
 @media (max-width: 1100px) {{ .home-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }} }}
 @media (max-width: 700px)  {{ .home-grid {{ grid-template-columns: repeat(1, minmax(0, 1fr)); }} }}
 
 .home-card {{
-  background: white;
-  border-radius: 18px;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-  padding: 16px 16px;
+  position: relative;
+  background: rgba(255,255,255,0.92);
+  border-radius: 22px;
+  border: 1px solid rgba(226,232,240,0.95);
+  box-shadow: 0 12px 28px rgba(15,82,186,0.08);
+  padding: 18px 18px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
-  min-height: 92px;
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  min-height: 132px;
+  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+  overflow: hidden;
+}}
+.home-card:before {{
+  content: "";
+  position: absolute;
+  inset: -60px -60px auto auto;
+  width: 140px;
+  height: 140px;
+  border-radius: 999px;
+  background: rgba(15,82,186,0.08);
+  filter: blur(0px);
 }}
 .home-card:hover {{
-  transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(15,82,186,0.07);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 45px rgba(15,82,186,0.14);
   border-color: rgba(49,130,206,0.35);
 }}
-
 .home-ic {{
-  width: 44px; height: 44px;
-  border-radius: 14px;
-  display:flex; align-items:center; justify-content:center;
+  width: 48px; height: 48px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
   background: rgba(15,82,186,0.08);
   border: 1px solid rgba(15,82,186,0.12);
+  margin-top: 2px;
 }}
-.home-ic i {{
-  font-size: 22px;
-  line-height: 1;
-  color: #0F52BA;
-}}
+.home-ic i {{ font-size: 22px; color: #0F52BA; line-height: 1; }}
 
-.home-txt {{ display:flex; flex-direction:column; gap:3px; }}
+.home-txt {{ display:flex; flex-direction:column; gap:6px; }}
 .home-title {{
-  font-family:'Inter',sans-serif;
-  font-weight:800;
-  font-size:0.95rem;
-  color:#1A202C;
-  margin:0;
+  font-family: Inter, sans-serif;
+  font-weight: 900;
+  font-size: 1.02rem;
+  color: #1A202C;
+  margin: 0;
 }}
 .home-sub {{
-  font-size:0.78rem;
-  color:#718096;
-  margin:0;
-  font-weight:600;
+  font-size: 0.82rem;
+  color: #718096;
+  margin: 0;
+  font-weight: 800;
+  line-height: 1.25rem;
+}}
+.home-tags {{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}}
+.tag {{
+  background: rgba(226,232,240,0.55);
+  border: 1px solid rgba(226,232,240,0.9);
+  color: #2D3748;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 0.68rem;
+  letter-spacing: .3px;
+}}
+.home-cta {{
+  margin-top: 2px;
+  font-weight: 900;
+  color: #0F52BA;
+  font-size: 0.78rem;
 }}
 
 /* botão invisível cobrindo o card */
@@ -366,11 +401,11 @@ st.markdown(
 .home-btn-wrap [data-testid="stButton"] > button {{ padding: 0 !important; }}
 .home-btn-wrap [data-testid="stButton"] > button:focus {{ outline: none !important; box-shadow: none !important; }}
 
-/* borda por módulo (sutil) */
-.b-blue {{ border-bottom: 4px solid #3182CE; }}
-.b-purple {{ border-bottom: 4px solid #805AD5; }}
-.b-teal {{ border-bottom: 4px solid #38B2AC; }}
+/* acentos por módulo */
 .b-slate {{ border-bottom: 4px solid #4A5568; }}
+.b-blue  {{ border-bottom: 4px solid #3182CE; }}
+.b-purple{{ border-bottom: 4px solid #805AD5; }}
+.b-teal  {{ border-bottom: 4px solid #38B2AC; }}
 
 /* footer */
 footer {{ visibility: {footer_visibility} !important; }}
@@ -379,43 +414,45 @@ footer {{ visibility: {footer_visibility} !important; }}
     unsafe_allow_html=True,
 )
 
-# Render topbar
+# TOPBAR render
 icone_b64 = get_base64_image("omni_icone.png")
 texto_b64 = get_base64_image("omni_texto.png")
 
 logo_icon_html = (
-    f'<img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">'
+    f'<img src="data:image/png;base64,{icone_b64}" class="header-logo-spin">'
     if icone_b64
-    else '<div style="width:75px;height:75px;border-radius:20px;display:flex;align-items:center;justify-content:center;background:white;border:1px solid #E2E8F0;">🌐</div>'
+    else '<div style="width:54px;height:54px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:white;border:1px solid #E2E8F0;">🌐</div>'
 )
 logo_text_html = (
-    f'<img src="data:image/png;base64,{texto_b64}" class="logo-text-static">'
+    f'<img src="data:image/png;base64,{texto_b64}" class="header-logo-text">'
     if texto_b64
-    else '<div style="font-family:Inter,sans-serif;font-weight:800;font-size:1.2rem;color:#0F52BA;">OMNISFERA</div>'
+    else '<div style="font-family:Inter,sans-serif;font-weight:900;font-size:1.15rem;color:#0F52BA;">OMNISFERA</div>'
 )
 
 st.markdown(
     f"""
-<div class="logo-container">
-  {logo_icon_html}
-  {logo_text_html}
-  <div class="header-subtitle-text">Ecossistema de Inteligência Pedagógica</div>
-</div>
-<div class="omni-badge">
-  <span class="omni-text">{display_text}</span>
-  {"<span class='omni-school'>"+escola_vinculada+"</span>" if escola_vinculada else ""}
+<div class="header-container">
+  <div class="header-left">
+    {logo_icon_html}
+    {logo_text_html}
+    <div class="header-divider"></div>
+    <div class="header-slogan">Ecossistema de Inteligência Pedagógica</div>
+  </div>
+  <div class="header-badge">
+    <div class="badge-top">{display_text}</div>
+    {"<div class='badge-school'>🏫 "+escola_vinculada+"</div>" if escola_vinculada else ""}
+  </div>
 </div>
 """,
     unsafe_allow_html=True,
 )
 
 # ==============================================================================
-# 6) SIDEBAR (NAV PRÓPRIA + USUÁRIO)
+# 6) SIDEBAR (NAV + usuário) — destinos estáveis
 # ==============================================================================
 with st.sidebar:
     st.markdown("### 🧭 Navegação")
 
-    # Estudantes (nova pasta/arquivo)
     if st.button("👥 Estudantes", use_container_width=True):
         st.switch_page("pages/0_Alunos.py")
 
@@ -431,8 +468,6 @@ with st.sidebar:
         st.switch_page("pages/3_Hub_Inclusao.py")
 
     st.markdown("---")
-
-    # Escola do PIN (também na sidebar)
     if escola_vinculada:
         st.caption("🏫 Escola vinculada")
         st.markdown(f"**{escola_vinculada}**")
@@ -454,12 +489,28 @@ try:
 except Exception:
     primeiro_nome = ""
 
+# HERO
+chips = [
+    "BNCC + DUA",
+    "PEI / PAEE",
+    "Rubricas",
+    "Inclusão",
+]
+chips_html = "".join([f"<span class='chip'>{c}</span>" for c in chips])
+
 st.markdown(
     f"""
-<div class="dash-hero">
+<div class="hero-shell">
   <div>
     <div class="hero-title">Olá, {primeiro_nome}!</div>
-    {"<div class='hero-sub'>🏫 "+escola_vinculada+"</div>" if escola_vinculada else ""}
+    <div class="hero-sub">{("🏫 " + escola_vinculada) if escola_vinculada else "Bem-vindo(a) ao Omnisfera."}</div>
+    <div class="hero-chips">{chips_html}</div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-pulse">
+      <div class="hero-mini">Acesso rápido</div>
+      <div class="hero-mini-sub">Seus módulos em 1 clique</div>
+    </div>
   </div>
 </div>
 """,
@@ -467,11 +518,9 @@ st.markdown(
 )
 
 # ==============================================================================
-# 7.1) HOME — 6 CARDS (3 por linha)
-# - removemos o card HOME
-# - adicionamos ESTUDANTES -> pages/0_Alunos.py
+# 7.1) HOME — 6 CARDS (ricos) — sem “Home”, com “Estudantes”
 # ==============================================================================
-st.markdown("### 🚀 Acesso Rápido")
+st.markdown("### 🚀 Módulos")
 
 def _handle(dest: str):
     if dest == "ALUNOS":
@@ -493,18 +542,30 @@ def _handle(dest: str):
         time.sleep(0.2)
 
 cards = [
-    # label, subtitle, icon_class, dest, border_class
-    ("Estudantes", "Gestão e seleção de alunos", "fi fi-br-users", "ALUNOS", "b-slate"),
-    ("Estratégias & PEI", "Plano Educacional Individualizado", "fi fi-sr-book-open-cover", "PEI", "b-blue"),
-    ("Plano de Ação / PAEE", "Sala de Recursos e intervenções", "fi fi-ss-puzzle", "PAEE", "b-purple"),
-    ("Hub de Recursos", "Materiais, adaptações e apoio", "fi fi-sr-rocket", "HUB", "b-teal"),
-    ("Diário de Bordo", "Registros e acompanhamentos", "fi fi-br-notebook", "DIARIO", "b-slate"),
-    ("Evolução & Dados", "Dashboards e indicadores", "fi fi-br-chart-histogram", "DADOS", "b-slate"),
+    # title, subtitle, icon_class, dest, border, tags(list), cta
+    ("Estudantes", "Gestão, seleção e histórico do aluno.", "fi fi-br-users", "ALUNOS", "b-slate",
+     ["Cadastro", "Turmas", "Ativos"], "Abrir gestão →"),
+
+    ("Estratégias & PEI", "Plano Educacional Individualizado com rubricas.", "fi fi-sr-book-open-cover", "PEI", "b-blue",
+     ["PEI 360°", "DUA", "BNCC"], "Abrir PEI →"),
+
+    ("Plano de Ação / PAEE", "Intervenções, sala de recursos e execução.", "fi fi-ss-puzzle", "PAEE", "b-purple",
+     ["Rotinas", "AEE", "Ações"], "Abrir PAEE →"),
+
+    ("Hub de Recursos", "Modelos, adaptações e ferramentas pedagógicas.", "fi fi-sr-rocket", "HUB", "b-teal",
+     ["Materiais", "Provas", "Planos"], "Abrir Hub →"),
+
+    ("Diário de Bordo", "Registro contínuo, evidências e acompanhamento.", "fi fi-br-notebook", "DIARIO", "b-slate",
+     ["Observações", "Evidências", "Notas"], "Em breve →"),
+
+    ("Evolução & Dados", "Indicadores, visão longitudinal e dashboards.", "fi fi-br-chart-histogram", "DADOS", "b-slate",
+     ["KPIs", "Radar", "Progresso"], "Em breve →"),
 ]
 
 st.markdown("<div class='home-grid'>", unsafe_allow_html=True)
 
-for idx, (title, sub, icon_class, dest, border) in enumerate(cards):
+for idx, (title, sub, icon_class, dest, border, tags, cta) in enumerate(cards):
+    tags_html = "".join([f"<span class='tag'>{t}</span>" for t in (tags or [])])
     st.markdown(
         f"""
 <div class="home-btn-wrap">
@@ -513,6 +574,8 @@ for idx, (title, sub, icon_class, dest, border) in enumerate(cards):
     <div class="home-txt">
       <div class="home-title">{title}</div>
       <div class="home-sub">{sub}</div>
+      <div class="home-tags">{tags_html}</div>
+      <div class="home-cta">{cta}</div>
     </div>
   </div>
 </div>
@@ -528,6 +591,6 @@ st.markdown("</div>", unsafe_allow_html=True)
 # 8) FOOTER
 # ==============================================================================
 st.markdown(
-    "<div style='text-align: center; color: #CBD5E0; font-size: 0.7rem; margin-top: 40px;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>",
+    "<div style='text-align: center; color: #A0AEC0; font-weight:800; font-size: 0.72rem; margin-top: 44px;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>",
     unsafe_allow_html=True,
 )
