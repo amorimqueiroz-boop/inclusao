@@ -8,10 +8,14 @@ import streamlit as st
 # PUBLIC API
 # -----------------------------
 def ensure_auth_state():
+    """
+    Estado mínimo.
+    IMPORTANTE: começa deslogado por padrão.
+    """
     if "autenticado" not in st.session_state:
-        st.session_state.autenticado = True  # você pode voltar isso pra False quando reativar login
+        st.session_state.autenticado = False
     if "user" not in st.session_state:
-        st.session_state.user = {"email": "demo@omnisfera.net"}
+        st.session_state.user = None
 
 
 def boot_ui(do_route: bool = True):
