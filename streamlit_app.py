@@ -1,328 +1,414 @@
+# streamlit_app.py
+# Omnisfera — Login por PIN + Supabase (sem auth do Supabase) + Sidebar simples
+#
+# ✅ Requisitos no Supabase (resumo):
+# 1) Ter uma tabela workspaces (id uuid, name text, pin_hash text)
+# 2) Ter as funções RPC:
+#    - public.create_workspace(p_name text, p_pin text) returns uuid
+#    - public.workspace_from_pin(p_pin text) returns table(id uuid, name text)
+#
+# ⚠️ Importante sobre o pgcrypto no Supabase:
+# Em muitos projetos Supabase, as funções do pgcrypto ficam no schema "extensions".
+# Então sua function deve usar extensions.crypt e extensions.gen_salt (e não crypt puro).
+#
+# Exemplo (SQL) — cole TUDO DE UMA VEZ no SQL Editor:
+# ----------------------------------------------------
+# create extension if not exists pgcrypto with schema extensions;
+#
+# create table if not exists public.workspaces (
+#   id uuid primary key default gen_random_uuid(),
+#   name text not null,
+#   pin_hash text not null,
+#   created_at timestamptz not null default now()
+# );
+#
+# create or replace function public.create_workspace(p_name text, p_pin text)
+# returns uuid
+# language plpgsql
+# security definer
+# set search_path = public, extensions
+# as $$
+# declare
+#   v_id uuid;
+# begin
+#   insert into public.workspaces(name, pin_hash)
+#   values (p_name, extensions.crypt(p_pin, extensions.gen_salt('bf')))
+#   returning id into v_id;
+#   return v_id;
+# end;
+# $$;
+#
+# create or replace function public.workspace_from_pin(p_pin text)
+# returns table (id uuid, name text)
+# language sql
+# security definer
+# set search_path = public, extensions
+# as $$
+#   select w.id, w.name
+#   from public.workspaces w
+#   where w.pin_hash = extensions.crypt(p_pin, w.pin_hash)
+#   limit 1;
+# $$;
+#
+# grant execute on function public.create_workspace(text, text) to anon, authenticated;
+# grant execute on function public.workspace_from_pin(text) to anon, authenticated;
+# ----------------------------------------------------
+
 import streamlit as st
-from ui_nav import boot_ui, ensure_auth_state, nav_href
-from _client import supabase_login  # <--- IMPORTANTE: Importamos a função de login real
+from datetime import datetime
+from typing import Optional, Dict, Any
+
+# Supabase python client
+from supabase import create_client
+from postgrest.exceptions import APIError
 
 # -----------------------------------------------------------------------------
-# PAGE CONFIG
+# CONFIG
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="Omnisfera",
     page_icon="🌿",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 # -----------------------------------------------------------------------------
-# BOOT UI
+# SUPABASE CLIENT
 # -----------------------------------------------------------------------------
-ensure_auth_state()
-boot_ui()
+@st.cache_resource
+def get_supabase():
+    """
+    Usa APENAS anon key (public).
+    No Streamlit Cloud, configure em Secrets:
+      SUPABASE_URL
+      SUPABASE_ANON_KEY
+    """
+    url = st.secrets.get("SUPABASE_URL")
+    key = st.secrets.get("SUPABASE_ANON_KEY")
+    if not url or not key:
+        return None
+    return create_client(url, key)
+
+supabase = get_supabase()
+
+def supabase_ok() -> bool:
+    return supabase is not None
 
 # -----------------------------------------------------------------------------
-# STYLES (HOME)
+# SESSION STATE
 # -----------------------------------------------------------------------------
-def _home_css():
+def ensure_state():
+    if "workspace_id" not in st.session_state:
+        st.session_state.workspace_id = None
+    if "workspace_name" not in st.session_state:
+        st.session_state.workspace_name = None
+    if "autenticado" not in st.session_state:
+        st.session_state.autenticado = False
+
+ensure_state()
+
+# -----------------------------------------------------------------------------
+# RPC HELPERS
+# -----------------------------------------------------------------------------
+def rpc_workspace_from_pin(pin: str) -> Optional[Dict[str, Any]]:
+    """
+    Chama RPC public.workspace_from_pin(p_pin text)
+    Retorna {"id": ..., "name": ...} ou None
+    """
+    if not supabase_ok():
+        st.error("Supabase não configurado. Verifique Secrets (SUPABASE_URL / SUPABASE_ANON_KEY).")
+        return None
+
+    try:
+        res = supabase.rpc("workspace_from_pin", {"p_pin": pin}).execute()
+        data = res.data
+        # Dependendo do client, pode vir dict ou lista
+        if isinstance(data, list) and len(data) > 0:
+            return data[0]
+        if isinstance(data, dict) and data.get("id"):
+            return data
+        return None
+    except APIError as e:
+        # Streamlit Cloud pode redigir detalhes; ainda assim exibimos algo útil
+        st.error("Erro ao validar PIN via RPC (workspace_from_pin).")
+        st.caption("Dica: confira se a função existe, se tem GRANT para anon, e se usa extensions.crypt.")
+        st.exception(e)
+        return None
+    except Exception as e:
+        st.error("Erro inesperado ao acessar Supabase.")
+        st.exception(e)
+        return None
+
+# -----------------------------------------------------------------------------
+# UI HELPERS (CSS)
+# -----------------------------------------------------------------------------
+def inject_css():
     st.markdown(
         """
 <style>
-.omni-wrap{ max-width: 1180px; margin: 0 auto; }
+/* Layout clean */
+.block-container { padding-top: 2.0rem; padding-bottom: 3rem; max-width: 1100px; }
 
-.omni-hero{
-  display:flex; align-items:flex-end; justify-content:space-between;
-  gap:16px; margin-top: 10px; margin-bottom: 14px;
-}
-.omni-title{
-  font-size: 34px; line-height: 1.05; font-weight: 900;
-  letter-spacing: -0.02em; color: rgba(0,0,0,0.78);
-}
-.omni-sub{
-  margin-top: 8px; font-size: 13px; color: rgba(0,0,0,0.56);
-  max-width: 72ch;
+/* Card */
+.card {
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 18px;
+  padding: 18px 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
 }
 
-.omni-kpis{
-  display:grid; grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px; margin: 14px 0 18px 0;
+/* Hero title */
+.h1 {
+  font-size: 54px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin: 0;
+  line-height: 1.0;
 }
-.omni-kpi{
-  padding: 14px 16px; border-radius: 18px;
-  background: rgba(255,255,255,0.78);
-  border: 1px solid rgba(0,0,0,0.08);
-  backdrop-filter: blur(10px);
-}
-.omni-kpi-label{ font-size: 12px; color: rgba(0,0,0,0.52); }
-.omni-kpi-value{ margin-top: 6px; font-size: 22px; font-weight: 900; color: rgba(0,0,0,0.78); }
-
-.omni-hint{ font-size: 12px; color: rgba(0,0,0,0.45); margin-top: 6px; }
-
-.omni-grid{
-  display:grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+.sub {
+  color: rgba(0,0,0,0.60);
+  font-size: 18px;
+  margin-top: 10px;
 }
 
-.omni-card{
-  padding: 18px 18px 14px 18px; border-radius: 22px;
-  background: rgba(255,255,255,0.82);
-  border: 1px solid rgba(0,0,0,0.08);
-  backdrop-filter: blur(10px);
-  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
-}
-.omni-card:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 14px 34px rgba(0,0,0,0.10);
-  background: rgba(255,255,255,0.88);
-}
+/* Muted label */
+.muted { color: rgba(0,0,0,0.55); font-size: 13px; }
 
-.omni-badge{
-  width: 44px; height: 44px; border-radius: 16px;
-  display:flex; align-items:center; justify-content:center;
-  background: rgba(0,0,0,0.04);
-  border: 1px solid rgba(0,0,0,0.08);
-  margin-bottom: 10px;
-}
-.omni-badge i{ font-size: 18px; line-height: 1; }
-
-.omni-card-title{ font-size: 16px; font-weight: 900; color: rgba(0,0,0,0.78); margin-bottom: 6px; }
-.omni-card-desc{ font-size: 13px; line-height: 1.45; color: rgba(0,0,0,0.56); margin-bottom: 12px; }
-
-.omni-cta{
-  display:inline-flex; align-items:center; justify-content:space-between;
-  width: 100%;
-  padding: 10px 12px;
+/* Button */
+div.stButton > button {
   border-radius: 14px;
-  background: rgba(0,0,0,0.03);
-  border: 1px solid rgba(0,0,0,0.08);
-  text-decoration:none;
+  padding: 12px 16px;
   font-weight: 800;
-  color: rgba(0,0,0,0.72);
-}
-.omni-cta:hover{
-  background: rgba(0,0,0,0.05);
-}
-
-@media (max-width: 1100px){
-  .omni-kpis{ grid-template-columns: repeat(2, 1fr); }
-  .omni-grid{ grid-template-columns: 1fr; }
-  .omni-title{ font-size: 30px; }
 }
 </style>
         """,
         unsafe_allow_html=True,
     )
 
+inject_css()
 
 # -----------------------------------------------------------------------------
-# LOGIN (REAL COM SUPABASE)
+# LOGIN (PIN)
 # -----------------------------------------------------------------------------
-def render_login():
-    _home_css()
-    st.markdown("<div class='omni-wrap'>", unsafe_allow_html=True)
-
+def render_pin_login():
     st.markdown(
         """
-        <div class="omni-hero">
-          <div>
-            <div class="omni-title">Acesse o Omnisfera</div>
-            <div class="omni-sub">Entre com sua conta segura para gerenciar seus alunos.</div>
-          </div>
-        </div>
+<div style="height:14px"></div>
+<div class="card" style="padding:26px 26px;">
+  <div class="muted" style="margin-bottom:12px;">Acesso por PIN</div>
+  <div class="h1">Omnisfera</div>
+  <div class="sub">Digite o PIN da escola para acessar o ambiente.</div>
+</div>
+<div style="height:18px"></div>
         """,
         unsafe_allow_html=True,
     )
 
-    with st.form("login", clear_on_submit=False):
-        email = st.text_input("E-mail", placeholder="seu@email.com")
-        senha = st.text_input("Senha", type="password", placeholder="••••••••")
-        ok = st.form_submit_button("Entrar")
+    colL, colC, colR = st.columns([1, 2, 1])
+    with colC:
+        with st.form("pin_form", clear_on_submit=False):
+            pin = st.text_input("PIN da escola", placeholder="Ex.: DEMO-2026")
+            entrar = st.form_submit_button("Validar e entrar")
+            if entrar:
+                pin = (pin or "").strip()
+                if len(pin) < 3:
+                    st.error("Digite um PIN válido.")
+                    return
 
-    if ok:
-        if not email.strip() or not senha.strip():
-            st.error("Preencha e-mail e senha.")
-        else:
-            with st.spinner("Conectando ao banco de dados..."):
-                # AQUI ESTÁ A MÁGICA: Login real no Supabase
-                jwt, uid, err = supabase_login(email.strip(), senha.strip())
-                
-                if jwt and uid:
+                ws = rpc_workspace_from_pin(pin)
+                if ws:
+                    st.session_state.workspace_id = ws["id"]
+                    st.session_state.workspace_name = ws.get("name") or "Workspace"
                     st.session_state.autenticado = True
-                    st.session_state.user = {"email": email.strip()}
-                    
-                    # Salva as chaves que as outras páginas precisam
-                    st.session_state["supabase_jwt"] = jwt
-                    st.session_state["supabase_user_id"] = uid
-                    
-                    st.success("Login realizado com sucesso!")
                     st.rerun()
                 else:
-                    st.error(f"Falha no login: {err}")
+                    st.error("PIN inválido ou workspace não encontrado.")
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
+    st.caption("Se estiver em desenvolvimento, valide primeiro se o Supabase está conectado.")
+    st.write("Supabase conectado:", supabase_ok())
 
 # -----------------------------------------------------------------------------
-# HOME
+# APP SHELL (SIDEBAR)
 # -----------------------------------------------------------------------------
-def _card(title: str, desc: str, go_key: str, ico_class: str, color: str, cta: str):
-    return f"""
-<div class="omni-card">
-  <div class="omni-badge"><i class="{ico_class}" style="color:{color}"></i></div>
-  <div class="omni-card-title">{title}</div>
-  <div class="omni-card-desc">{desc}</div>
-  <a class="omni-cta" href="{nav_href(go_key)}">
-    {cta} <span>→</span>
-  </a>
+def render_sidebar_nav():
+    with st.sidebar:
+        st.markdown("## 🌿 Omnisfera")
+        st.caption("Ambiente por PIN")
+
+        if st.session_state.workspace_name:
+            st.markdown(
+                f"""
+<div class="card" style="padding:12px 14px;">
+  <div class="muted">Escola</div>
+  <div style="font-size:18px; font-weight:900; margin-top:2px;">
+    {st.session_state.workspace_name}
+  </div>
+  <div class="muted" style="margin-top:6px;">
+    {datetime.now().strftime('%d/%m/%Y %H:%M')}
+  </div>
 </div>
-"""
+                """,
+                unsafe_allow_html=True,
+            )
 
+        st.divider()
 
-def render_home():
-    _home_css()
-    st.markdown("<div class='omni-wrap'>", unsafe_allow_html=True)
+        # Menu (ajuste conforme suas páginas existentes)
+        choice = st.radio(
+            "Navegação",
+            options=[
+                "Início",
+                "Alunos",
+                "PEI",
+                "PAE",
+                "Hub Inclusão",
+                "Diário de Bordo",
+                "Monitoramento & Avaliação",
+            ],
+            index=0,
+            label_visibility="collapsed",
+        )
 
-    user_email = "—"
-    if isinstance(st.session_state.get("user"), dict):
-        user_email = st.session_state["user"].get("email", "—")
+        st.divider()
 
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Sair"):
+                st.session_state.workspace_id = None
+                st.session_state.workspace_name = None
+                st.session_state.autenticado = False
+                st.rerun()
+        with col2:
+            st.write("")  # espaçador
+
+    return choice
+
+# -----------------------------------------------------------------------------
+# ROUTING PARA MULTIPAGE (st.switch_page)
+# -----------------------------------------------------------------------------
+def go_to(choice: str):
+    """
+    Mapeie para suas páginas reais.
+    Seu repositório (print) sugere:
+      pages/0_Alunos.py
+      pages/1_PEI.py
+      pages/2_PAE.py
+      pages/3_Hub_Inclusao.py
+      pages/4_Diario_de_Bordo.py
+      pages/5_Monitoramento_Avaliacao.py
+      pages/home.py (se existir) OU uma home interna aqui
+    """
+    mapping = {
+        "Início": None,  # renderiza home aqui
+        "Alunos": "pages/0_Alunos.py",
+        "PEI": "pages/1_PEI.py",
+        "PAE": "pages/2_PAE.py",
+        "Hub Inclusão": "pages/3_Hub_Inclusao.py",
+        "Diário de Bordo": "pages/4_Diario_de_Bordo.py",
+        "Monitoramento & Avaliação": "pages/5_Monitoramento_Avaliacao.py",
+    }
+    target = mapping.get(choice)
+    if target:
+        try:
+            st.switch_page(target)
+        except Exception:
+            st.warning(f"Não consegui abrir {target}. Confirme o nome/arquivo em /pages.")
+    # Se for Início, não faz nada (fica no streamlit_app.py)
+
+# -----------------------------------------------------------------------------
+# HOME (quando autenticado)
+# -----------------------------------------------------------------------------
+def render_home_authenticated():
     st.markdown(
         f"""
-        <div class="omni-hero">
-          <div>
-            <div class="omni-title">Central</div>
-            <div class="omni-sub">
-              Logado como <b>{user_email}</b>. Acesso rápido aos módulos e visão geral do dia.
-            </div>
-          </div>
-        </div>
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:16px;">
+    <div>
+      <div class="muted">Escola</div>
+      <div style="font-size:28px; font-weight:900; letter-spacing:-0.02em;">
+        {st.session_state.workspace_name}
+      </div>
+      <div class="muted" style="margin-top:6px;">
+        Ambiente liberado via PIN • {datetime.now().strftime('%d/%m/%Y %H:%M')}
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div class="muted">Workspace ID</div>
+      <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px;">
+        {st.session_state.workspace_id}
+      </div>
+    </div>
+  </div>
+</div>
+<div style="height:14px"></div>
         """,
         unsafe_allow_html=True,
     )
 
-    # KPIS (placeholder - futuramente conectaremos no banco)
-    st.markdown(
-        """
-        <div class="omni-kpis">
-          <div class="omni-kpi">
-            <div class="omni-kpi-label">Status do Banco</div>
-            <div class="omni-kpi-value" style="color:green">Conectado</div>
-          </div>
-          <div class="omni-kpi">
-            <div class="omni-kpi-label">PEIs ativos</div>
-            <div class="omni-kpi-value">—</div>
-          </div>
-          <div class="omni-kpi">
-            <div class="omni-kpi-label">Evidências</div>
-            <div class="omni-kpi-value">—</div>
-          </div>
-          <div class="omni-kpi">
-            <div class="omni-kpi-label">Atualizações hoje</div>
-            <div class="omni-kpi-value">—</div>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("<div class='omni-hint'>Dica: use os ícones do menu superior ou os cards abaixo.</div>", unsafe_allow_html=True)
-    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
-
-    # Grid 3x2 (cards)
-    c1, c2, c3 = st.columns(3, gap="large")
+    # Cards rápidos
+    c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown(
-            _card(
-                "Alunos",
-                "Gerencie alunos salvos, cadastros e sincronização com a nuvem.",
-                "alunos",
-                "fi fi-br-users",
-                "#2563EB",
-                "Abrir Alunos",
-            ),
+            """
+<div class="card">
+  <div class="muted">Atalho</div>
+  <div style="font-size:18px; font-weight:900; margin-top:2px;">Cadastrar aluno</div>
+  <div class="muted" style="margin-top:8px;">Abra a aba Alunos para criar e gerenciar estudantes.</div>
+</div>
+            """,
             unsafe_allow_html=True,
         )
+        if st.button("Ir para Alunos"):
+            go_to("Alunos")
+
     with c2:
         st.markdown(
-            _card(
-                "PEI 360°",
-                "Monte e acompanhe o Plano Educacional Individual com evidências e rubricas.",
-                "pei",
-                "fi fi-br-brain",
-                "#7C3AED",
-                "Abrir PEI",
-            ),
+            """
+<div class="card">
+  <div class="muted">Atalho</div>
+  <div style="font-size:18px; font-weight:900; margin-top:2px;">Abrir PEI</div>
+  <div class="muted" style="margin-top:8px;">Monte o plano individual e vincule ao aluno.</div>
+</div>
+            """,
             unsafe_allow_html=True,
         )
+        if st.button("Ir para PEI"):
+            go_to("PEI")
+
     with c3:
         st.markdown(
-            _card(
-                "PAE",
-                "Plano de Apoio Educacional e estratégias com foco no acompanhamento.",
-                "pae",
-                "fi fi-br-bullseye",
-                "#F97316",
-                "Abrir PAE",
-            ),
+            """
+<div class="card">
+  <div class="muted">Status</div>
+  <div style="font-size:18px; font-weight:900; margin-top:2px;">Supabase</div>
+  <div class="muted" style="margin-top:8px;">Conectividade do backend e RPC por PIN.</div>
+</div>
+            """,
             unsafe_allow_html=True,
         )
-
-    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
-
-    c4, c5, c6 = st.columns(3, gap="large")
-    with c4:
-        st.markdown(
-            _card(
-                "Hub de Inclusão",
-                "Recursos, orientações, modelos e boas práticas para inclusão.",
-                "hub",
-                "fi fi-br-book-open-cover",
-                "#16A34A",
-                "Abrir Hub",
-            ),
-            unsafe_allow_html=True,
-        )
-    with c5:
-        st.markdown(
-            _card(
-                "Diário de Bordo",
-                "Registros, observações e linha do tempo de intervenções.",
-                "diario",
-                "fi fi-br-notebook",
-                "#0EA5E9",
-                "Abrir Diário",
-            ),
-            unsafe_allow_html=True,
-        )
-    with c6:
-        st.markdown(
-            _card(
-                "Monitoramento",
-                "Acompanhamento, avaliação e indicadores de evolução.",
-                "dados",
-                "fi fi-br-chart-histogram",
-                "#111827",
-                "Abrir Monitoramento",
-            ),
-            unsafe_allow_html=True,
-        )
+        st.write("Conectado:", supabase_ok())
 
     st.divider()
-
-    left, right = st.columns([1, 5])
-    with left:
-        if st.button("Sair"):
-            # Limpa tudo ao sair
-            st.session_state.autenticado = False
-            st.session_state.user = None
-            st.session_state["supabase_jwt"] = None
-            st.session_state["supabase_user_id"] = None
-            st.rerun()
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
+    st.subheader("Próximos passos")
+    st.write(
+        "- Confirmar que todas as páginas em `/pages` usam `st.session_state.workspace_id` para filtrar dados.\n"
+        "- Criar tabelas (students, peis, pae etc.) com coluna `workspace_id`.\n"
+        "- Criar políticas/RPCs para inserir/ler por workspace."
+    )
 
 # -----------------------------------------------------------------------------
-# ROUTING
+# MAIN
 # -----------------------------------------------------------------------------
-if not st.session_state.get("autenticado"):
-    render_login()
+if not st.session_state.autenticado:
+    render_pin_login()
 else:
-    render_home()
+    choice = render_sidebar_nav()
+
+    # Se escolher algo diferente de Início, tenta abrir a page correspondente
+    if choice != "Início":
+        go_to(choice)
+        st.stop()
+
+    # Início
+    render_home_authenticated()
