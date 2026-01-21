@@ -1,42 +1,71 @@
 import streamlit as st
+from datetime import date
 
-def require_workspace():
-    """
-    Guard padrão: impede abrir qualquer página sem workspace válido.
-    E oferece retorno ao Início.
-    """
-    ws_id = st.session_state.get("workspace_id")
-    ws_name = st.session_state.get("workspace_name")
-
-    if not ws_id or not ws_name:
-        st.error("Workspace não definido. Volte ao Início e valide o PIN novamente.")
-
-        c1, c2 = st.columns([1, 1])
-        with c1:
-            if st.button("⬅️ Voltar ao Início"):
-                # tenta mandar o usuário para o início
-                try:
-                    st.switch_page("streamlit_app.py")
-                except Exception:
-                    # fallback (caso switch_page falhe)
-                    st.session_state["__go_home__"] = True
-                    st.rerun()
-
-        with c2:
-            if st.button("🧹 Limpar sessão"):
-                for k in ["workspace_id", "workspace_name", "workspace_at"]:
-                    st.session_state.pop(k, None)
-                try:
-                    st.switch_page("streamlit_app.py")
-                except Exception:
-                    st.session_state["__go_home__"] = True
-                    st.rerun()
-
-        st.stop()
-
-    return ws_id, ws_name
+# =============================================================================
+# ESTADO GLOBAL
+# =============================================================================
+def ensure_state():
+    if "autenticado" not in st.session_state:
+        st.session_state.autenticado = False
+    if "user" not in st.session_state:
+        st.session_state.user = None
 
 
-def clear_workspace():
-    for k in ["workspace_id", "workspace_name", "workspace_at"]:
-        st.session_state.pop(k, None)
+# =============================================================================
+# LOGIN
+# =============================================================================
+def verificar_acesso():
+    ensure_state()
+
+    if st.session_state.autenticado:
+        return True
+
+    st.markdown("## 🔐 Acesso ao Omnisfera")
+
+    with st.form("login"):
+        nome = st.text_input("Nome")
+        cargo = st.text_input("Cargo")
+        senha = st.text_input("Senha", type="password")
+        ok = st.form_submit_button("Entrar")
+
+    if ok:
+        senha_ok = "OMNI2026"
+        if not nome or not cargo:
+            st.warning("Preencha todos os campos.")
+        elif senha != senha_ok:
+            st.error("Senha incorreta.")
+        else:
+            st.session_state.autenticado = True
+            st.session_state.user = {
+                "nome": nome,
+                "cargo": cargo
+            }
+            st.rerun()
+
+    st.stop()
+
+
+# =============================================================================
+# SIDEBAR
+# =============================================================================
+def render_sidebar():
+    user = st.session_state.user
+
+    with st.sidebar:
+        st.markdown("## 🌿 Omnisfera")
+        st.caption(f"{user['nome']} · {user['cargo']}")
+        st.markdown("---")
+
+        st.page_link("streamlit_app.py", label="🏠 Home")
+        st.page_link("pages/0_Alunos.py", label="👥 Alunos")
+        st.page_link("pages/1_PEI.py", label="🧠 PEI 360º")
+        st.page_link("pages/2_PAE.py", label="🎯 PAE")
+        st.page_link("pages/3_Hub_Inclusao.py", label="🚀 Hub Inclusão")
+        st.page_link("pages/4_Diario.py", label="📓 Diário")
+        st.page_link("pages/5_Dados.py", label="📊 Dados")
+
+        st.markdown("---")
+        if st.button("🔒 Sair"):
+            st.session_state.autenticado = False
+            st.session_state.user = None
+            st.rerun()
