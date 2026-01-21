@@ -9,8 +9,10 @@ from datetime import date
 APP_VERSION = "v116.0"
 
 def verificar_ambiente():
-    try: return st.secrets.get("ENV") == "TESTE"
-    except: return False
+    try: 
+        return st.secrets.get("ENV") == "TESTE"
+    except: 
+        return False
 
 IS_TEST_ENV = verificar_ambiente()
 
@@ -18,7 +20,8 @@ IS_TEST_ENV = verificar_ambiente()
 # 2. UTILITÁRIOS (IMAGENS)
 # ==============================================================================
 def get_base64_image(image_path):
-    if not image_path or not os.path.exists(image_path): return ""
+    if not image_path or not os.path.exists(image_path): 
+        return ""
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
@@ -31,20 +34,19 @@ def aplicar_estilo_global(logo_pagina=None):
     1. Fontes Padrão (Nunito/Inter).
     2. Sidebar com fundo branco.
     3. Constrói o menu lateral personalizado.
+    
+    OBS: Na versão atual da Omnisfera (topbar via ui_nav.py),
+    a sidebar pode ficar oculta via CSS. Use com cuidado.
     """
     
-    # Define fonte e cores básicas
     st.markdown("""
     <style>
-        /* Importação das Fontes */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
-        
-        /* Aplicação Global da Fonte */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
+
         html, body, [class*="css"] { 
             font-family: 'Nunito', sans-serif; 
         }
         
-        /* Forçar Sidebar Branca */
         section[data-testid="stSidebar"] {
             background-color: #FFFFFF !important;
             border-right: 1px solid #E2E8F0;
@@ -52,7 +54,6 @@ def aplicar_estilo_global(logo_pagina=None):
     </style>
     """, unsafe_allow_html=True)
 
-    # Constrói a Sidebar (Logo + Navegação)
     logo_para_usar = logo_pagina if logo_pagina else "omni_icone.png"
     construir_sidebar_manual(get_base64_image(logo_para_usar))
 
@@ -61,10 +62,8 @@ def aplicar_estilo_global(logo_pagina=None):
 # ==============================================================================
 def construir_sidebar_manual(img_b64):
     with st.sidebar:
-        # Espaço no topo
         st.write("") 
         
-        # Logo da Página (Se houver)
         if img_b64: 
             st.markdown(f"""
             <div style="text-align: center; margin-bottom: 20px;">
@@ -74,8 +73,16 @@ def construir_sidebar_manual(img_b64):
 
         # Dados do Usuário (Se logado)
         if st.session_state.get("autenticado"):
-            nome = st.session_state["usuario_nome"].split()[0]
-            cargo = st.session_state["usuario_cargo"]
+            user = st.session_state.get("user") or {}
+            nome = (user.get("nome") or "").strip()
+            cargo = (user.get("cargo") or "").strip()
+
+            # fallback legado
+            if not nome:
+                nome = (st.session_state.get("usuario_nome") or "Usuário").split()[0]
+            if not cargo:
+                cargo = st.session_state.get("usuario_cargo") or "Sem cargo"
+
             st.markdown(f"""
             <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
                 <small style="color: #718096; font-weight: bold;">USUÁRIO</small><br>
@@ -84,28 +91,28 @@ def construir_sidebar_manual(img_b64):
             </div>
             """, unsafe_allow_html=True)
 
-        # Links de Navegação
         st.markdown("---")
         st.caption("NAVEGAÇÃO")
-        
-        st.page_link("Home.py", label="Dashboard", icon="🏠")
+        st.page_link("streamlit_app.py", label="Home", icon="🏠")
         st.page_link("pages/1_PEI.py", label="PEI 360º", icon="📘")
         st.page_link("pages/2_PAE.py", label="PAEE & T.A.", icon="🧩")
         st.page_link("pages/3_Hub_Inclusao.py", label="Hub Inclusão", icon="🚀")
         
-        # Botão Sair
         st.markdown("---")
         if st.button("🔒 Sair", use_container_width=True):
             st.session_state["autenticado"] = False
+            st.session_state["user"] = {"email": None, "nome": None, "cargo": None}
+            st.session_state["usuario_nome"] = None
+            st.session_state["usuario_cargo"] = None
             st.rerun()
 
 # ==============================================================================
-# 5. SISTEMA DE LOGIN
+# 5. LOGIN LEGADO (COMPATÍVEL)
 # ==============================================================================
 def verificar_acesso():
-    if st.session_state.get("autenticado", False): return True
+    if st.session_state.get("autenticado", False): 
+        return True
     
-    # Layout de Login Limpo
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -119,7 +126,12 @@ def verificar_acesso():
 
         if IS_TEST_ENV:
             if st.button("🚀 ENTRAR (RÁPIDO)", use_container_width=True, type="primary"):
-                st.session_state.update({"autenticado": True, "usuario_nome": "Tester", "usuario_cargo": "Dev"})
+                st.session_state.update({
+                    "autenticado": True,
+                    "user": {"email": "tester@teste.com", "nome": "Tester", "cargo": "Dev"},
+                    "usuario_nome": "Tester",
+                    "usuario_cargo": "Dev"
+                })
                 st.rerun()
         else:
             nome = st.text_input("Nome")
@@ -135,7 +147,12 @@ def verificar_acesso():
                 elif senha != senha_ok: 
                     st.error("Senha incorreta.")
                 else:
-                    st.session_state.update({"autenticado": True, "usuario_nome": nome, "usuario_cargo": cargo})
+                    st.session_state.update({
+                        "autenticado": True,
+                        "user": {"email": "", "nome": nome, "cargo": cargo},
+                        "usuario_nome": nome,
+                        "usuario_cargo": cargo
+                    })
                     st.rerun()
     
     return False
