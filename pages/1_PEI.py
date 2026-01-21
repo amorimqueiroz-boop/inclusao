@@ -10,7 +10,14 @@ import json
 import os
 import re
 
-from _client import get_supabase_user
+from _client import get_supabase
+
+sb = get_supabase()
+
+ws_id = st.session_state.get("workspace_id")
+if not ws_id:
+    st.error("Workspace não definido. Volte ao Início e valide o PIN.")
+    st.stop()
 
 # ==============================================================================
 # 0. CONFIGURAÇÃO DE PÁGINA
