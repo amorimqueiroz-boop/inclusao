@@ -49,6 +49,7 @@ def acesso_bloqueado(msg: str):
         """,
         unsafe_allow_html=True,
     )
+
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🔑 Ir para Login", use_container_width=True, type="primary"):
@@ -98,22 +99,20 @@ def escola_vinculada() -> str:
     return "Workspace"
 
 # ==============================================================================
-# 4) CSS — “excelência” (grid real + botão overlay sem sobras)
+# 4) CSS — premium (grid real + overlay click sem “open”)
 # ==============================================================================
 st.markdown(
     """
 <style>
-/* Fonts + Icons */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&family=Nunito:wght@400;600;700;800;900&display=swap');
 @import url("https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css");
 
 :root{
-  --bg: #F7FAFC;
+  --bg:#F7FAFC;
   --text:#0f172a;
   --muted:#64748B;
   --border:#E2E8F0;
   --card:#ffffff;
-  --shadow: 0 18px 44px rgba(15,23,42,.08);
 
   --blue:#0F52BA;
   --deep:#062B61;
@@ -121,23 +120,20 @@ st.markdown(
   --purple:#805AD5;
   --indigo:#4F46E5;
 
-  --r18: 18px;
-  --r20: 20px;
+  --r18:18px;
+  --r20:20px;
 }
 
-/* Base */
 html, body, [class*="css"]{
   font-family:'Nunito', sans-serif;
   background: var(--bg);
   color: var(--text);
 }
 
-/* Streamlit cleanup */
 [data-testid="stSidebarNav"] { display:none !important; }
 [data-testid="stHeader"] { visibility:hidden !important; height:0px !important; }
 .block-container { padding-top: 120px !important; padding-bottom: 3rem !important; max-width: 1200px; }
 
-/* Anim */
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* TOPBAR */
@@ -247,7 +243,7 @@ html, body, [class*="css"]{
   color: #0f172a;
 }
 
-/* CARD PREMIUM (compacto, 3 por linha) */
+/* CARD (compacto) */
 .module-card{
   position: relative;
   background: rgba(255,255,255,0.94);
@@ -325,13 +321,7 @@ html, body, [class*="css"]{
 .t-teal  { background: rgba(56,178,172,0.10); color: #319795; border-color: rgba(56,178,172,0.14) !important; }
 .t-gray  { background: rgba(148,163,184,0.15); color: #64748B; border-color: rgba(148,163,184,0.22) !important; }
 
-/* ---- CLICK OVERLAY (sem “open”, sem sobras) ----
-   Estratégia: marcamos o bloco com um span .mk-<key>.
-   Depois usamos :has() para tornar o bloco relativo e posicionar o botão absoluto.
-*/
-.block-rel { position: relative !important; }
-
-/* O botão do Streamlit (container) vira overlay, sem ocupar layout */
+/* Overlay click (sem “open”) */
 div[data-testid="stVerticalBlock"]:has(.mk-card) { position: relative; }
 div[data-testid="stVerticalBlock"]:has(.mk-card) div[data-testid="stButton"] { position: absolute; inset: 0; margin: 0; }
 div[data-testid="stVerticalBlock"]:has(.mk-card) div[data-testid="stButton"] button{
@@ -345,7 +335,7 @@ div[data-testid="stVerticalBlock"]:has(.mk-card) div[data-testid="stButton"] but
 }
 div[data-testid="stVerticalBlock"]:has(.mk-card) div[data-testid="stButton"] button:focus { outline: none !important; }
 
-/* Sidebar (leve) */
+/* Sidebar leve */
 section[data-testid="stSidebar"]{
   background: rgba(255,255,255,0.86) !important;
   border-right: 1px solid rgba(226,232,240,0.9);
@@ -442,6 +432,67 @@ st.markdown(
 )
 
 # ==============================================================================
-# 8) MÓDULOS — grid 3 por linha (premium)
+# 8) MÓDULOS (3 por linha)
 # ==============================================================================
-st.markdown("<div class='section-title'>🚀
+st.markdown("<div class='section-title'>🚀 Módulos</div>", unsafe_allow_html=True)
+
+def _go(target: str):
+    if target == "ALUNOS":
+        st.switch_page("pages/0_Alunos.py")
+    elif target == "PEI":
+        st.switch_page("pages/1_PEI.py")
+    elif target == "PAEE":
+        st.switch_page("pages/2_PAE.py")
+    elif target == "HUB":
+        st.switch_page("pages/3_Hub_Inclusao.py")
+    else:
+        st.toast("🚧 Módulo em desenvolvimento", icon="🔨")
+    time.sleep(0.08)
+
+CARDS = [
+    dict(title="Estudantes", desc="Gestão, seleção e histórico do aluno.", icon="ri-group-line", theme="t-indigo", tags=["Cadastro", "Turmas"], cta="Abrir →", target="ALUNOS"),
+    dict(title="Estratégias & PEI", desc="Plano Educacional Individualizado com rubricas.", icon="ri-book-open-line", theme="t-blue", tags=["PEI 360°", "DUA"], cta="Abrir →", target="PEI"),
+    dict(title="Plano de Ação / PAEE", desc="Intervenções e sala de recursos.", icon="ri-puzzle-2-line", theme="t-purple", tags=["AEE", "Ações"], cta="Abrir →", target="PAEE"),
+    dict(title="Hub de Recursos", desc="Modelos, adaptações e ferramentas.", icon="ri-rocket-2-line", theme="t-teal", tags=["Materiais", "Provas"], cta="Abrir →", target="HUB"),
+    dict(title="Diário de Bordo", desc="Registro contínuo e evidências.", icon="ri-file-list-3-line", theme="t-gray", tags=["Notas", "Evidências"], cta="Em breve →", target=None),
+    dict(title="Evolução & Dados", desc="Indicadores e visão longitudinal.", icon="ri-bar-chart-box-line", theme="t-gray", tags=["KPIs", "Radar"], cta="Em breve →", target=None),
+]
+
+for r in range(0, len(CARDS), 3):
+    row = CARDS[r:r+3]
+    cols = st.columns(3)
+    for i, card in enumerate(row):
+        with cols[i]:
+            tags_html = "".join([f"<span class='tag'>{t}</span>" for t in (card.get("tags") or [])[:2]])
+
+            st.markdown(
+                f"""
+                <div class="module-card mk-card">
+                  <div class="mc-top">
+                    <div class="mc-ic {card['theme']}"><i class="{card['icon']}"></i></div>
+                    <div style="min-width:0;">
+                      <div class="mc-title">{card['title']}</div>
+                      <div class="mc-desc">{card['desc']}</div>
+                      <div class="mc-tags">{tags_html}</div>
+                      <div class="mc-cta">{card['cta']} <i class="ri-arrow-right-line"></i></div>
+                    </div>
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            # botão invisível (overlay), SEM texto “open”
+            if st.button(" ", key=f"card_{r+i}", use_container_width=True):
+                if card.get("target"):
+                    _go(card["target"])
+                else:
+                    _go(None)
+
+# ==============================================================================
+# 9) FOOTER
+# ==============================================================================
+st.markdown(
+    "<div style='text-align: center; color: #94A3B8; font-weight:900; font-size: 0.72rem; margin-top: 44px;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>",
+    unsafe_allow_html=True,
+)
