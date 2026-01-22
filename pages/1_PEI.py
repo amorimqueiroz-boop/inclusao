@@ -2635,54 +2635,27 @@ with tab8:
             sync_fn = globals().get("supa_sync_student_from_dados") or globals().get("salvar_aluno_integrado") or globals().get("db_create_student")
 
             if st.button("🔗 Sincronizar (Omnisfera)", type="primary", use_container_width=True):
-    try:
-        # 0) Guard: precisa estar logado e com supabase pronto
-        if not _cloud_ready():
-            st.error("Nuvem indisponível: verifique login/PIN (workspace) e Supabase.")
-            st.stop()
-
-        # 1) Garantir student_id (vínculo)
-        sid = st.session_state.get("selected_student_id")
-
-        if not sid:
-            # cria aluno no Supabase a partir do rascunho do PEI
-            created = db_create_student({
-                "name": d.get("nome"),
-                "birth_date": d.get("nasc").isoformat() if hasattr(d.get("nasc"), "isoformat") else None,
-                "grade": d.get("serie"),
-                "class_group": d.get("turma") or None,
-                "diagnosis": d.get("diagnostico") or None,
-            })
-
-            if not created or not created.get("id"):
-                st.error("Falha ao criar aluno no Supabase. Verifique RLS/policies.")
-                st.stop()
-
-            sid = created["id"]
-            st.session_state["selected_student_id"] = sid
-            st.session_state["selected_student_name"] = created.get("name") or ""
-
-        # 2) Atualizar students com dados básicos (mantém coerência)
-        try:
-            supa_sync_student_from_dados(sid, d)
-        except Exception:
-            # não precisa travar tudo se essa parte falhar, mas eu prefiro avisar
-            st.warning("Não consegui atualizar o cadastro do aluno (students), mas vou tentar salvar o PEI mesmo.")
-
-        # 3) Salvar PEI em pei_documents (payload + pdf_text)
-        supa_save_pei(
-            sid,
-            d,
-            st.session_state.get("pdf_text", "") or ""
-        )
-
-        st.success("✅ Sincronizado: aluno vinculado + PEI salvo na nuvem.")
-        st.toast("PEI salvo no Supabase ✅", icon="✅")
-        st.rerun()
-
-    except Exception as e:
-        st.error(f"Erro ao sincronizar e salvar PEI: {e}")
-
+                try:
+                    if "salvar_aluno_integrado" in globals():
+                        ok, msg = salvar_aluno_integrado(d)
+                        if ok:
+                            st.toast(msg, icon="✅")
+                        else:
+                            st.error(msg)
+                    elif "supa_sync_student_from_dados" in globals():
+                        # se você já usa selected_student_id
+                        sid = st.session_state.get("selected_student_id")
+                        if not sid:
+                            st.warning("Aluno ainda não está vinculado (sem selected_student_id).")
+                        else:
+                            supa_sync_student_from_dados(sid, d)
+                            st.toast("Sincronizado ✅", icon="✅")
+                    elif "db_create_student" in globals():
+                        st.warning("Existe db_create_student, mas não achei a rotina completa de vínculo aqui.")
+                    else:
+                        st.warning("Não encontrei função de sincronização nesta versão do app.")
+                except Exception as e:
+                    st.error(f"Erro ao sincronizar: {e}")
 
 # ==============================================================================
 # ABA — JORNADA GAMIFICADA (BLOCO COMPLETO)
