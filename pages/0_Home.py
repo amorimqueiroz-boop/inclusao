@@ -8,7 +8,7 @@ import time
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v145.0 (Horizontal Pro)"
+APP_VERSION = "v146.0 (Grid 3x2 Full Width)"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -23,7 +23,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 2. CSS & DESIGN SYSTEM (FUNDAMENTAL)
+# 2. CSS & DESIGN SYSTEM (AJUSTADO PARA TELA TODA)
 # ==============================================================================
 st.markdown("""
 <style>
@@ -39,10 +39,14 @@ html, body, [class*="css"] {
 
 /* Limpeza Geral */
 [data-testid="stSidebarNav"], [data-testid="stHeader"] { display: none !important; }
+
+/* LAYOUT FULL WIDTH */
 .block-container { 
     padding-top: 80px !important; 
     padding-bottom: 4rem !important; 
-    max-width: 1280px !important; 
+    max-width: 95% !important; /* Ocupa a tela toda */
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
 }
 
 /* --- HEADER --- */
@@ -63,101 +67,96 @@ html, body, [class*="css"] {
 
 /* --- HERO SECTION --- */
 .hero-wrapper {
-    background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
-    border-radius: 24px; padding: 48px; color: white;
-    margin-bottom: 50px; position: relative; overflow: hidden;
-    box-shadow: 0 20px 40px -10px rgba(30, 58, 138, 0.3);
+    background: linear-gradient(120deg, #1E3A8A 0%, #2563EB 100%);
+    border-radius: 20px; padding: 40px; color: white;
+    margin-bottom: 40px; position: relative; overflow: hidden;
+    box-shadow: 0 15px 30px -10px rgba(30, 58, 138, 0.3);
+    display: flex; align-items: center; justify-content: space-between;
 }
 .hero-wrapper::after {
     content: ""; position: absolute; right: -50px; top: -50px;
     width: 300px; height: 300px; background: rgba(255,255,255,0.1);
     border-radius: 50%; pointer-events: none;
 }
-.hero-greet { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
-.hero-text { font-size: 1.1rem; opacity: 0.9; max-width: 700px; line-height: 1.6; }
+.hero-content { z-index: 1; }
+.hero-greet { font-size: 2rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
+.hero-text { font-size: 1.05rem; opacity: 0.95; max-width: 800px; }
 
-/* --- CARDS DE MÓDULO (RETANGULARES & HORIZONTAIS) --- */
-/* Esta classe define o layout do card: Ícone na esquerda, Texto no meio */
+/* --- CARDS DE MÓDULO (RETANGULARES 3 COLUNAS) --- */
 .mod-card-rect {
     background: white;
-    border-radius: 20px;
-    padding: 0; /* Padding controlado internamente */
+    border-radius: 16px;
+    padding: 0;
     border: 1px solid #E2E8F0;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-    display: flex; flex-direction: row; /* Horizontal */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.01);
+    display: flex; flex-direction: row;
     align-items: center;
-    height: 120px; /* Altura fixa para uniformidade */
+    height: 110px; /* Altura controlada */
     position: relative;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
 }
 
-/* Efeito Hover no Card Inteiro */
 .mod-card-rect:hover {
     transform: translateY(-4px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.06);
     border-color: #CBD5E1;
 }
 
-/* Barra lateral colorida de destaque */
-.mod-bar { width: 6px; height: 100%; flex-shrink: 0; }
+.mod-bar { width: 5px; height: 100%; flex-shrink: 0; }
 
-/* Área do Ícone */
 .mod-icon-area {
-    width: 90px; height: 100%;
+    width: 80px; height: 100%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 2rem; flex-shrink: 0;
+    font-size: 1.8rem; flex-shrink: 0;
     background: #FAFAFA;
+    border-right: 1px solid #F1F5F9;
 }
 
-/* Área de Texto */
 .mod-content {
     flex-grow: 1; padding: 0 20px;
     display: flex; flex-direction: column; justify-content: center;
 }
-.mod-title { font-weight: 800; font-size: 1.1rem; color: #1E293B; margin-bottom: 4px; }
-.mod-desc { font-size: 0.85rem; color: #64748B; line-height: 1.3; }
+.mod-title { font-weight: 800; font-size: 1rem; color: #1E293B; margin-bottom: 3px; }
+.mod-desc { font-size: 0.8rem; color: #64748B; line-height: 1.3; }
 
-/* Botão de Ação (Seta) */
 .mod-action {
-    width: 60px; height: 100%;
+    width: 50px; height: 100%;
     display: flex; align-items: center; justify-content: center;
-    color: #CBD5E1; font-size: 1.5rem;
+    color: #CBD5E1; font-size: 1.4rem;
     transition: color 0.2s;
 }
 .mod-card-rect:hover .mod-action { color: #3B82F6; }
 
-/* BOTÃO INVISÍVEL (O TRUQUE PARA CLIQUE TOTAL) */
-/* Posiciona o st.button EXATAMENTE sobre o card HTML */
+/* BOTÃO INVISÍVEL (OVERLAY) */
 .ghost-btn-container {
     position: relative;
-    height: 120px; /* Mesma altura do card */
-    margin-top: -120px; /* Puxa para cima para cobrir o HTML */
+    height: 110px; /* Igual ao card */
+    margin-top: -110px; /* Puxa para cima */
     z-index: 10;
 }
 .ghost-btn-container button {
     width: 100%; height: 100%;
-    opacity: 0; /* Invisível */
-    border: none; cursor: pointer;
+    opacity: 0; border: none; cursor: pointer;
 }
 
-/* --- ESTILOS DE LINK (RECURSOS) --- */
+/* --- RECURSOS --- */
 .res-card-link { text-decoration: none !important; display: block; height: 100%; }
 .res-card {
-    background: white; border-radius: 16px; padding: 20px;
-    border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 15px;
+    background: white; border-radius: 14px; padding: 18px;
+    border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 14px;
     transition: all 0.2s; height: 100%;
 }
-.res-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.06); }
+.res-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.05); }
 .res-icon { 
-    width: 45px; height: 45px; border-radius: 12px; 
-    display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+    width: 42px; height: 42px; border-radius: 10px; 
+    display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
 }
 .res-info { display: flex; flex-direction: column; }
-.res-name { font-weight: 700; color: #1E293B; font-size: 0.95rem; }
+.res-name { font-weight: 700; color: #1E293B; font-size: 0.9rem; }
 .res-meta { font-size: 0.75rem; font-weight: 600; opacity: 0.8; }
 
-/* CORES */
+/* CORES TEMÁTICAS */
 .c-blue { background: #3B82F6; color: #3B82F6; }
 .bg-blue-soft { background: #EFF6FF; color: #2563EB; }
 .c-purple { background: #8B5CF6; color: #8B5CF6; }
@@ -169,7 +168,7 @@ html, body, [class*="css"] {
 .c-slate { background: #64748B; color: #64748B; }
 .bg-slate-soft { background: #F8FAFC; color: #475569; }
 
-/* Cores para Recursos */
+/* Cores Recursos */
 .rc-green { background: #F0FDF4; color: #16A34A; border-color: #DCFCE7; }
 .rc-orange { background: #FFF7ED; color: #EA580C; border-color: #FFEDD5; }
 .rc-rose { background: #FFF1F2; color: #E11D48; border-color: #FECDD3; }
@@ -180,11 +179,11 @@ html, body, [class*="css"] {
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. GATE & HELPERS
+# 3. HELPERS
 # ==============================================================================
 def acesso_bloqueado(msg):
     st.markdown(f"<div style='text-align:center; padding:50px; color:#64748B;'><h3>🔐 Acesso Restrito</h3><p>{msg}</p></div>", unsafe_allow_html=True)
-    if st.button("Ir para Login", key="btn_login_gate"):
+    if st.button("Ir para Login"):
         st.session_state.autenticado = False; st.session_state.workspace_id = None; st.rerun()
     st.stop()
 
@@ -237,20 +236,23 @@ saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else 
 
 st.markdown(f"""
 <div class="hero-wrapper">
-    <div class="hero-greet">{saudacao}, {nome_user}!</div>
-    <div class="hero-text">"A inclusão acontece quando aprendemos com as diferenças e não com as igualdades."<br>Seu painel pedagógico está pronto.</div>
+    <div class="hero-content">
+        <div class="hero-greet">{saudacao}, {nome_user}!</div>
+        <div class="hero-text">"A inclusão acontece quando aprendemos com as diferenças e não com as igualdades."</div>
+    </div>
+    <div style="opacity:0.8; font-size:4rem;"><i class="ri-heart-pulse-fill"></i></div>
 </div>
 """, unsafe_allow_html=True)
 
-# MÓDULOS (2 COLUNAS - RETANGULAR - BOTÃO INTEGRADO)
+# MÓDULOS (3 COLUNAS - 2 POR LINHA - BOTÃO INTEGRADO)
 st.markdown("### 🚀 Seus Módulos")
 
-def render_rect_module(title, desc, icon, color_cls, icon_cls, page_path, key):
-    # 1. Renderiza o Card Visual (HTML)
+def render_rect_module(title, desc, icon, color_cls, bg_cls, page_path, key):
+    # 1. Card Visual
     st.markdown(f"""
     <div class="mod-card-rect">
         <div class="mod-bar {color_cls}"></div>
-        <div class="mod-icon-area">
+        <div class="mod-icon-area {bg_cls}">
             <i class="{icon} {color_cls}" style="background:transparent; -webkit-background-clip: text; color: transparent; filter: brightness(0.9);"></i>
             <i class="{icon}" style="color: inherit;"></i> 
         </div>
@@ -263,7 +265,7 @@ def render_rect_module(title, desc, icon, color_cls, icon_cls, page_path, key):
     <style>.{color_cls} {{ background-color: currentColor; }}</style>
     """, unsafe_allow_html=True)
     
-    # 2. Renderiza o Botão Invisível por Cima (Overlay Perfeito)
+    # 2. Botão Overlay
     st.markdown('<div class="ghost-btn-container">', unsafe_allow_html=True)
     if st.button(f"btn_{key}", key=key):
         if "Alunos" in title or st.session_state.dados.get("nome"):
@@ -274,24 +276,28 @@ def render_rect_module(title, desc, icon, color_cls, icon_cls, page_path, key):
             st.switch_page("pages/0_Alunos.py")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# GRID 2x3 (Horizontal Rectangular)
-c1, c2 = st.columns(2, gap="medium")
+# GRID 3 COLUNAS (3x2)
+c1, c2, c3 = st.columns(3, gap="medium")
 
+# Coluna 1: Base & Apoio
 with c1:
-    render_rect_module("Estudantes", "Gestão de cadastro e histórico.", "ri-group-fill", "c-indigo", "bg-indigo-soft", "pages/0_Alunos.py", "m_aluno")
-    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-    render_rect_module("Plano de Ação / PAEE", "Sala de recursos e intervenções.", "ri-puzzle-2-fill", "c-purple", "bg-purple-soft", "pages/2_PAE.py", "m_pae")
-    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-    render_rect_module("Diário de Bordo", "Registro diário de evidências.", "ri-file-list-3-fill", "c-slate", "bg-slate-soft", "pages/4_Diario_de_Bordo.py", "m_diario")
-
-with c2:
-    render_rect_module("Estratégias & PEI", "Plano Educacional Individualizado.", "ri-book-open-fill", "c-blue", "bg-blue-soft", "pages/1_PEI.py", "m_pei")
+    render_rect_module("Estudantes", "Gestão e histórico.", "ri-group-fill", "c-indigo", "bg-indigo-soft", "pages/0_Alunos.py", "m_aluno")
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
     render_rect_module("Hub de Recursos", "Banco de materiais e IA.", "ri-rocket-2-fill", "c-teal", "bg-teal-soft", "pages/3_Hub_Inclusao.py", "m_hub")
+
+# Coluna 2: Planejamento
+with c2:
+    render_rect_module("Estratégias & PEI", "Plano Individualizado.", "ri-book-open-fill", "c-blue", "bg-blue-soft", "pages/1_PEI.py", "m_pei")
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+    render_rect_module("Plano de Ação / PAEE", "Sala de recursos.", "ri-puzzle-2-fill", "c-purple", "bg-purple-soft", "pages/2_PAE.py", "m_pae")
+
+# Coluna 3: Acompanhamento
+with c3:
+    render_rect_module("Diário de Bordo", "Registro de evidências.", "ri-file-list-3-fill", "c-slate", "bg-slate-soft", "pages/4_Diario_de_Bordo.py", "m_diario")
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
     render_rect_module("Evolução & Dados", "Indicadores e progresso.", "ri-bar-chart-box-fill", "c-slate", "bg-slate-soft", "pages/5_Monitoramento_Avaliacao.py", "m_dados")
 
-# RECURSOS EXTERNOS (LINKS CLICÁVEIS COLORIDOS)
+# RECURSOS EXTERNOS
 st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
 st.markdown("### 📚 Recursos Externos")
 
