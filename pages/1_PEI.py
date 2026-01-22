@@ -1204,7 +1204,6 @@ abas = [
 ]
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
 
-
 # ==============================================================================
 # 11. ABA INÍCIO — CENTRAL (Gestão de Alunos + Backups)
 # ==============================================================================
@@ -1232,7 +1231,6 @@ with tab0:
         Nuvem só deve aparecer quando:
         - sb (cliente supabase) está OK
         - OWNER_ID e ws_id existem
-        Observação: se seu projeto usa JWT/user_id, isso normalmente já chega pela Home/Login.
         """
         try:
             return (sb is not None) and bool(OWNER_ID) and bool(ws_id)
@@ -1297,6 +1295,8 @@ with tab0:
                 st.session_state["local_json_pending"] = None
             if "local_json_name" not in st.session_state:
                 st.session_state["local_json_name"] = ""
+            if "local_json_last_sig" not in st.session_state:
+                st.session_state["local_json_last_sig"] = None
 
             up_json = st.file_uploader(
                 "Envie um arquivo .json",
@@ -1306,19 +1306,30 @@ with tab0:
 
             # 1) Ao enviar: só guardar em memória (não aplicar)
             if up_json is not None:
-                try:
-                    payload = json.load(up_json)
-                    payload = _coerce_dates_in_payload(payload)
+                # assinatura simples pra não reprocessar o mesmo arquivo em reruns
+                sig = f"{getattr(up_json, 'name', '')}|{getattr(up_json, 'size', '')}"
 
-                    st.session_state["local_json_pending"] = payload
-                    st.session_state["local_json_name"] = getattr(up_json, "name", "") or "backup.json"
+                if st.session_state["local_json_last_sig"] != sig:
+                    try:
+                        payload = json.load(up_json)
+                        payload = _coerce_dates_in_payload(payload)
 
-                    st.success(f"Arquivo pronto ✅ ({st.session_state['local_json_name']})")
-                    st.caption("Agora clique no botão abaixo para aplicar os dados no formulário.")
-                except Exception as e:
-                    st.session_state["local_json_pending"] = None
-                    st.session_state["local_json_name"] = ""
-                    st.error(f"Erro ao ler JSON: {e}")
+                        st.session_state["local_json_pending"] = payload
+                        st.session_state["local_json_name"] = getattr(up_json, "name", "") or "backup.json"
+                        st.session_state["local_json_last_sig"] = sig
+
+                        st.success(f"Arquivo pronto ✅ ({st.session_state['local_json_name']})")
+                        st.caption("Agora clique no botão abaixo para aplicar os dados no formulário.")
+                    except Exception as e:
+                        st.session_state["local_json_pending"] = None
+                        st.session_state["local_json_name"] = ""
+                        st.session_state["local_json_last_sig"] = None
+                        st.error(f"Erro ao ler JSON: {e}")
+                else:
+                    # já está em memória, não reprocessa
+                    if st.session_state.get("local_json_pending") is not None:
+                        st.info(f"Arquivo em memória: {st.session_state.get('local_json_name')}")
+                        st.caption("Clique em **Carregar no formulário** para aplicar.")
 
             pending = st.session_state.get("local_json_pending")
 
@@ -1357,6 +1368,7 @@ with tab0:
                     # limpa pendência pra não reaplicar
                     st.session_state["local_json_pending"] = None
                     st.session_state["local_json_name"] = ""
+                    st.session_state["local_json_last_sig"] = None
 
                     st.success("Backup aplicado ao formulário ✅")
                     st.toast("Dados aplicados.", icon="✅")
@@ -1370,10 +1382,12 @@ with tab0:
                 ):
                     st.session_state["local_json_pending"] = None
                     st.session_state["local_json_name"] = ""
+                    st.session_state["local_json_last_sig"] = None
                     st.rerun()
 
         # ------------------------------------------------------------------
-        # (2) (Opcional) OUTROS CONTROLES LOCAIS AQUI
+        # (2) (Opcional) Aqui você pode pôr lista de alunos na nuvem / excluir
+        #     (vou manter vazio para não mexer em cloud agora)
         # ------------------------------------------------------------------
 
         # ------------------------------------------------------------------
