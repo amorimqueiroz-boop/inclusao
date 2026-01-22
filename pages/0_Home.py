@@ -8,9 +8,8 @@ import time
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v136.1 (Wide Dashboard + Fix)"
+APP_VERSION = "v137.0 (Fixed Dashboard)"
 
-# Detecção de Ambiente
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
 except Exception:
@@ -24,22 +23,14 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 2. GATE DE ACESSO (PROTEÇÃO)
+# 2. GATE DE ACESSO
 # ==============================================================================
 def acesso_bloqueado(msg: str):
     st.markdown(f"""
-    <div style="
-        max-width: 500px; margin: 15vh auto; text-align: center; 
-        padding: 40px; background: white; border-radius: 20px; 
-        border: 1px solid #E2E8F0; box-shadow: 0 20px 50px rgba(0,0,0,0.05);
-    ">
-        <div style="font-size: 4rem; margin-bottom: 20px;">🔐</div>
-        <div style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 1.5rem; color: #1A202C; margin-bottom: 10px;">
-            Acesso Restrito
-        </div>
-        <div style="color: #718096; margin-bottom: 30px; font-size: 1rem;">
-            {msg}
-        </div>
+    <div style="max-width:500px; margin:100px auto; text-align:center; padding:30px; background:white; border-radius:16px; border:1px solid #E2E8F0; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+        <div style="font-size:3rem; margin-bottom:15px;">🔐</div>
+        <div style="font-weight:800; font-size:1.2rem; color:#2D3748; margin-bottom:8px;">Acesso Restrito</div>
+        <div style="color:#718096; margin-bottom:20px;">{msg}</div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -52,10 +43,10 @@ def acesso_bloqueado(msg: str):
     st.stop()
 
 if not st.session_state.get("autenticado", False):
-    acesso_bloqueado("Sua sessão expirou ou não foi iniciada.")
+    acesso_bloqueado("Sessão expirada ou não iniciada.")
 
 if not st.session_state.get("workspace_id"):
-    acesso_bloqueado("Nenhum workspace vinculado ao seu PIN.")
+    acesso_bloqueado("Nenhum workspace vinculado.")
 
 # ==============================================================================
 # 3. HELPERS & STATE
@@ -72,161 +63,124 @@ def escola_vinculada() -> str:
     return st.session_state.get("workspace_name") or st.session_state.get("workspace_id", "")[:8]
 
 # ==============================================================================
-# 4. CSS (DESIGN WIDE & FLUIDO)
+# 4. CSS (DESIGN SYSTEM)
 # ==============================================================================
 st.markdown("""
 <style>
-/* Fontes & Ícones */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Nunito:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
 @import url("https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css");
 
-/* Reset e Base */
 html, body, [class*="css"] {
     font-family: 'Nunito', sans-serif;
     color: #1A202C;
-    background-color: #F8FAFC; /* Fundo levemente azulado/cinza */
+    background-color: #F8FAFC;
 }
 
-/* Limpeza do Streamlit */
 [data-testid="stSidebarNav"] { display: none !important; }
 [data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
 
-/* LAYOUT WIDE (95% DA TELA) */
+/* LAYOUT CONTROLADO (1200px) */
 .block-container { 
     padding-top: 100px !important; 
     padding-bottom: 3rem !important; 
-    max-width: 95% !important; 
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
+    max-width: 1200px !important; /* Limite para não esticar demais */
 }
 
-/* --- TOPBAR FLUTUANTE --- */
+/* TOPBAR */
 .header-container {
-    position: fixed; top: 0; left: 0; width: 100%; height: 75px;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    position: fixed; top: 0; left: 0; width: 100%; height: 70px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid #E2E8F0;
     z-index: 99999;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 40px;
+    padding: 0 30px;
 }
-
-.logo-spin { height: 42px; width: auto; animation: spin 30s linear infinite; }
-.logo-text { height: 28px; width: auto; margin-left: 12px; }
-.header-div { width: 1px; height: 24px; background: #CBD5E0; margin: 0 20px; }
-.header-slogan { font-weight: 600; color: #64748B; font-size: 0.9rem; letter-spacing: 0.2px; }
-
+.logo-spin { height: 38px; width: auto; animation: spin 30s linear infinite; }
+.logo-text { height: 26px; width: auto; margin-left: 10px; }
+.header-div { width: 1px; height: 24px; background: #CBD5E0; margin: 0 15px; }
+.header-slogan { font-weight: 600; color: #64748B; font-size: 0.85rem; }
 .header-badge {
     display: flex; flex-direction: column; align-items: flex-end;
 }
-.badge-label { font-size: 0.65rem; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; }
-.badge-val { font-size: 0.9rem; font-weight: 800; color: #1E293B; }
+.badge-label { font-size: 0.6rem; font-weight: 800; color: #94A3B8; text-transform: uppercase; }
+.badge-val { font-size: 0.85rem; font-weight: 800; color: #1E293B; }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
-/* --- HERO SECTION (WIDE) --- */
-.hero-wide {
-    background: linear-gradient(120deg, #1E40AF 0%, #3B82F6 100%);
-    border-radius: 24px;
-    padding: 40px 50px;
+/* HERO COMPACTO */
+.hero-box {
+    background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+    border-radius: 16px;
+    padding: 30px 40px;
     color: white;
-    box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.3);
-    margin-bottom: 50px;
-    display: flex; 
-    align-items: center; 
-    justify-content: space-between;
+    box-shadow: 0 10px 30px -5px rgba(37, 99, 235, 0.3);
+    margin-bottom: 30px;
+    display: flex; align-items: center; justify-content: space-between;
     position: relative;
     overflow: hidden;
 }
-
-.hero-wide::before {
-    content: "";
-    position: absolute;
-    top: -50%; left: -10%; width: 50%; height: 200%;
+.hero-box::before {
+    content: ""; position: absolute; top: -50%; left: -10%; width: 50%; height: 200%;
     background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
-    transform: rotate(30deg);
-    pointer-events: none;
+    transform: rotate(30deg); pointer-events: none;
 }
-
 .hero-content { position: relative; z-index: 1; }
-.hero-welcome { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 2.2rem; margin-bottom: 8px; letter-spacing: -1px; }
-.hero-sub { opacity: 0.9; font-size: 1.1rem; font-weight: 500; max-width: 600px; line-height: 1.5; }
+.hero-welcome { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 1.8rem; margin-bottom: 5px; }
+.hero-sub { opacity: 0.9; font-size: 1rem; font-weight: 500; }
 
 .hero-stats {
-    display: flex; gap: 30px;
+    display: flex; gap: 20px;
     background: rgba(255,255,255,0.1);
-    padding: 15px 30px;
-    border-radius: 16px;
-    backdrop-filter: blur(5px);
+    padding: 10px 20px;
+    border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.2);
 }
-.stat-item { text-align: center; }
-.stat-val { font-weight: 900; font-size: 1.4rem; line-height: 1; }
-.stat-lbl { font-size: 0.75rem; opacity: 0.8; text-transform: uppercase; margin-top: 4px; font-weight: 600; }
+.stat-val { font-weight: 800; font-size: 1.2rem; line-height: 1; text-align: center; }
+.stat-lbl { font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; margin-top: 4px; text-align: center; }
 
-/* --- CARDS (WIDE GRID) --- */
+/* CARDS MENORES E ELEGANTES */
 .flat-card {
     background: white;
-    border-radius: 20px;
-    padding: 30px;
-    border: 1px solid #F1F5F9;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    height: 100%;
-    min-height: 200px;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+    height: 160px; /* Altura controlada */
     position: relative;
     display: flex; flex-direction: column; 
-    justify-content: flex-start;
+    justify-content: space-between;
 }
-
 .flat-card:hover {
-    transform: translateY(-5px) scale(1.01);
-    box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.08);
-    border-color: #E2E8F0;
-    z-index: 10;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+    border-color: #CBD5E0;
 }
-
 .icon-box {
-    width: 60px; height: 60px;
-    border-radius: 16px;
+    width: 44px; height: 44px;
+    border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 28px;
-    margin-bottom: 20px;
+    font-size: 20px;
+    margin-bottom: 12px;
 }
-
 .card-title { 
-    font-family: 'Inter', sans-serif; 
-    font-weight: 800; 
-    font-size: 1.25rem; 
-    color: #1A202C; 
-    margin-bottom: 10px; 
+    font-family: 'Inter', sans-serif; font-weight: 700; 
+    font-size: 1.05rem; color: #1A202C; margin-bottom: 4px; 
 }
-.card-desc { 
-    font-size: 0.95rem; 
-    color: #64748B; 
-    line-height: 1.6; 
-    flex-grow: 1; 
-}
+.card-desc { font-size: 0.85rem; color: #718096; line-height: 1.4; }
 .card-footer {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #F1F5F9;
-    font-size: 0.85rem; 
-    font-weight: 700; 
-    display: flex; align-items: center; gap: 8px;
-    color: #475569;
-    transition: color 0.2s;
+    font-size: 0.8rem; font-weight: 700; color: #475569;
+    display: flex; align-items: center; gap: 6px;
 }
 .flat-card:hover .card-footer { color: #2563EB; }
 
-/* Temas de Cor */
-.theme-blue { background: #EFF6FF; color: #2563EB; }
-.theme-purple { background: #FAF5FF; color: #9333EA; }
-.theme-teal { background: #F0FDFA; color: #0D9488; }
+.theme-blue { background: #EBF8FF; color: #3182CE; }
+.theme-purple { background: #FAF5FF; color: #805AD5; }
+.theme-teal { background: #E6FFFA; color: #319795; }
 .theme-indigo { background: #EEF2FF; color: #4F46E5; }
-.theme-gray { background: #F8FAFC; color: #64748B; }
+.theme-gray { background: #F7FAFC; color: #718096; }
 
-/* Botão Fantasma */
 .ghost-btn button {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     opacity: 0; z-index: 20; cursor: pointer;
@@ -235,7 +189,7 @@ html, body, [class*="css"] {
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 5. TOPBAR RENDER
+# 5. TOPBAR
 # ==============================================================================
 icone_b64 = get_base64_image("omni_icone.png")
 texto_b64 = get_base64_image("omni_texto.png")
@@ -253,7 +207,7 @@ st.markdown(f"""
         <div class="header-slogan">Inteligência Pedagógica</div>
     </div>
     <div class="header-badge">
-        <div class="badge-label">WORKSPACE ATIVO</div>
+        <div class="badge-label">WORKSPACE</div>
         <div class="badge-val">{esc if esc else "Não vinculado"}</div>
     </div>
 </div>
@@ -283,63 +237,60 @@ with st.sidebar:
         st.rerun()
 
 # ==============================================================================
-# 7. HERO SECTION (WIDE & STATS)
+# 7. HERO SECTION (CORRIGIDA)
 # ==============================================================================
 nome_usuario = st.session_state.get('usuario_nome', 'Visitante').split()[0]
-
-# Estatísticas Visuais
 total_alunos = len(st.session_state.get("banco_estudantes", []))
-aluno_ativo = st.session_state.dados.get("nome", "Nenhum")
+aluno_ativo = st.session_state.dados.get("nome", "")
 
-# Correção do Erro de Split: Verifica se existe e não está vazio
-display_aluno = "-"
-if aluno_ativo and aluno_ativo != "Nenhum" and aluno_ativo.strip():
+# Correção robusta para evitar erro de split em string vazia
+display_aluno = "Nenhum"
+if aluno_ativo and isinstance(aluno_ativo, str) and aluno_ativo.strip():
     display_aluno = aluno_ativo.split()[0]
 
 st.markdown(f"""
-<div class="hero-wide">
+<div class="hero-box">
     <div class="hero-content">
         <div class="hero-welcome">Olá, {nome_usuario}!</div>
-        <div class="hero-sub">
-            Seu painel de controle está pronto. <br>
-            Acesse seus módulos de inclusão com um clique.
-        </div>
+        <div class="hero-sub">Seu painel de controle está pronto.</div>
     </div>
     
     <div class="hero-stats">
-        <div class="stat-item">
+        <div style="text-align:center">
             <div class="stat-val">{total_alunos}</div>
             <div class="stat-lbl">Alunos</div>
         </div>
-        <div style="width:1px; background:rgba(255,255,255,0.3);"></div>
-        <div class="stat-item">
-            <div class="stat-val">Ativo</div>
-            <div class="stat-lbl">{display_aluno}</div>
+        <div style="width:1px; background:rgba(255,255,255,0.3); margin:0 5px;"></div>
+        <div style="text-align:center">
+            <div class="stat-val">{display_aluno}</div>
+            <div class="stat-lbl">Ativo</div>
         </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 8. MÓDULOS (GRID REDEFINIDO)
+# 8. MÓDULOS (CARDS CORRIGIDOS)
 # ==============================================================================
-st.markdown("### 🚀 Módulos da Omnisfera")
+st.markdown("### 🚀 Módulos")
 
 def render_module_card(title, desc, icon_class, theme_class, target_page, key, cta_text="Acessar"):
-    st.markdown(f"""
-    <div class="flat-card">
-        <div class="icon-box {theme_class}">
-            <i class="{icon_class}"></i>
-        </div>
-        <div>
-            <div class="card-title">{title}</div>
-            <div class="card-desc">{desc}</div>
-        </div>
-        <div class="card-footer">
-            {cta_text} <i class="ri-arrow-right-line"></i>
-        </div>
+    # HTML sem indentação para não quebrar o markdown
+    html_card = f"""
+<div class="flat-card">
+    <div class="icon-box {theme_class}">
+        <i class="{icon_class}"></i>
     </div>
-    """, unsafe_allow_html=True)
+    <div>
+        <div class="card-title">{title}</div>
+        <div class="card-desc">{desc}</div>
+    </div>
+    <div class="card-footer">
+        {cta_text} <i class="ri-arrow-right-line"></i>
+    </div>
+</div>
+"""
+    st.markdown(html_card, unsafe_allow_html=True)
     
     st.markdown(f'<div class="ghost-btn">', unsafe_allow_html=True)
     if st.button(f"btn_{key}", key=key):
@@ -347,54 +298,29 @@ def render_module_card(title, desc, icon_class, theme_class, target_page, key, c
             if "Alunos" in title or st.session_state.dados.get("nome"):
                 st.switch_page(target_page)
             else:
-                st.toast("⚠️ Selecione um aluno no módulo 'Estudantes' primeiro!", icon="👇")
-                time.sleep(1.5)
+                st.toast("⚠️ Selecione um aluno primeiro!", icon="👇")
+                time.sleep(1)
                 st.switch_page("pages/0_Alunos.py")
         else:
             st.toast("🚧 Em desenvolvimento", icon="🔨")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# GRID DE 3 COLUNAS
-c1, c2, c3 = st.columns(3, gap="large")
+# Grid
+c1, c2, c3 = st.columns(3, gap="medium")
 
 with c1:
-    render_module_card(
-        "Estudantes", 
-        "Gestão centralizada, histórico clínico e seleção do aluno ativo.", 
-        "ri-group-line", "theme-indigo", "pages/0_Alunos.py", "mod_alunos"
-    )
-    st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
-    render_module_card(
-        "Hub de Recursos", 
-        "Banco de adaptações, materiais pedagógicos e ferramentas de IA.", 
-        "ri-rocket-2-line", "theme-teal", "pages/3_Hub_Inclusao.py", "mod_hub"
-    )
+    render_module_card("Estudantes", "Gestão e histórico.", "ri-group-line", "theme-indigo", "pages/0_Alunos.py", "m_aluno")
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+    render_module_card("Hub de Recursos", "Banco de materiais e IA.", "ri-rocket-2-line", "theme-teal", "pages/3_Hub_Inclusao.py", "m_hub")
 
 with c2:
-    render_module_card(
-        "Estratégias & PEI", 
-        "Criação e gestão do Plano Educacional Individualizado (PEI 360).", 
-        "ri-book-open-line", "theme-blue", "pages/1_PEI.py", "mod_pei"
-    )
-    st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
-    render_module_card(
-        "Diário de Bordo", 
-        "Registro contínuo de evidências e anotações diárias.", 
-        "ri-file-list-3-line", "theme-gray", "pages/4_Diario_de_Bordo.py", "mod_diario", "Em breve"
-    )
+    render_module_card("Estratégias & PEI", "Plano Individualizado.", "ri-book-open-line", "theme-blue", "pages/1_PEI.py", "m_pei")
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+    render_module_card("Diário de Bordo", "Registro de evidências.", "ri-file-list-3-line", "theme-gray", "pages/4_Diario_de_Bordo.py", "m_diario", "Em breve")
 
 with c3:
-    render_module_card(
-        "Plano de Ação / PAEE", 
-        "Organização do AEE, intervenções e sala de recursos multifuncionais.", 
-        "ri-puzzle-2-line", "theme-purple", "pages/2_PAE.py", "mod_pae"
-    )
-    st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
-    render_module_card(
-        "Evolução & Dados", 
-        "Indicadores, KPIs e visão longitudinal do progresso do aluno.", 
-        "ri-bar-chart-box-line", "theme-gray", "pages/5_Monitoramento_Avaliacao.py", "mod_dados", "Em breve"
-    )
+    render_module_card("Plano de Ação / PAEE", "Sala de recursos.", "ri-puzzle-2-line", "theme-purple", "pages/2_PAE.py", "m_pae")
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+    render_module_card("Evolução & Dados", "Indicadores e KPIs.", "ri-bar-chart-box-line", "theme-gray", "pages/5_Monitoramento_Avaliacao.py", "m_dados", "Em breve")
 
-# Footer
-st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.75rem; margin-top: 60px;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.75rem; margin-top: 40px;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>", unsafe_allow_html=True)
