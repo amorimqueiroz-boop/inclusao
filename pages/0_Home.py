@@ -436,7 +436,7 @@ def create_module_with_button(title, desc, icon, color_cls, bg_cls, btn_class, p
             else:
                 st.toast("Selecione um aluno primeiro!", icon="⚠️")
                 time.sleep(1)
-                st.switch_page("pages/0_Alunos.py")
+                st.switch_page("pages/Alunos.py")
         
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -481,7 +481,7 @@ with st.sidebar:
     
     # Criar botões na sidebar com ícones
     sidebar_options = [
-        ("👥 Alunos", "pages/0_Alunos.py", "#4F46E5"),
+        ("👥 Alunos", "pages/Alunos.py", "#4F46E5"),
         ("📘 PEI", "pages/1_PEI.py", "#3B82F6"),
         ("🧩 PAEE", "pages/2_PAE.py", "#8B5CF6"),
         ("🚀 Hub", "pages/3_Hub_Inclusao.py", "#14B8A6"),
@@ -531,7 +531,7 @@ modules = [
         "color_cls": "c-indigo",
         "bg_cls": "bg-indigo-soft",
         "btn_class": "btn-indigo",
-        "page": "pages/0_Alunos.py",
+        "page": "pages/Alunos.py",
         "key": "m_aluno"
     },
     {
