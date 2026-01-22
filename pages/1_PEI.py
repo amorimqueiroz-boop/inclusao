@@ -1285,89 +1285,92 @@ with tab0:
         else:
             st.warning("📝 Modo rascunho (sem vínculo na nuvem)")
 
-        # ------------------------------------------------------------------
-        # (1) BACKUP LOCAL: carregar JSON do computador (NÃO chama Supabase)
+       # ------------------------------------------------------------------
+        # (1) BACKUP LOCAL: upload JSON NÃO aplica sozinho (evita loop)
         # ------------------------------------------------------------------
         with st.container(border=True):
-    st.markdown("##### 1) Carregar Backup Local (.JSON)")
-    st.caption("✅ Isso **não** comunica com o Supabase. Primeiro você envia o arquivo; depois clica em **Carregar no formulário**.")
+            st.markdown("##### 1) Carregar Backup Local (.JSON)")
+            st.caption("✅ Não comunica com Supabase. Envie o arquivo e clique em **Carregar no formulário**.")
 
-    # estados do fluxo local
-    st.session_state.setdefault("local_json_pending", None)   # payload aguardando aplicar
-    st.session_state.setdefault("local_json_name", "")        # nome do arquivo (opcional)
+            # estados do fluxo local (cache em memória)
+            if "local_json_pending" not in st.session_state:
+                st.session_state["local_json_pending"] = None
+            if "local_json_name" not in st.session_state:
+                st.session_state["local_json_name"] = ""
 
-    up_json = st.file_uploader(
-        "Envie um arquivo .json",
-        type="json",
-        key="inicio_uploader_json",
-    )
+            up_json = st.file_uploader(
+                "Envie um arquivo .json",
+                type="json",
+                key="inicio_uploader_json",
+            )
 
-    # 1) Ao enviar: apenas guardar em memória (NÃO aplicar)
-    if up_json is not None:
-        try:
-            payload = json.load(up_json)
-            payload = _coerce_dates_in_payload(payload)
+            # 1) Ao enviar: só guardar em memória (não aplicar)
+            if up_json is not None:
+                try:
+                    payload = json.load(up_json)
+                    payload = _coerce_dates_in_payload(payload)
 
-            st.session_state["local_json_pending"] = payload
-            st.session_state["local_json_name"] = getattr(up_json, "name", "") or "backup.json"
+                    st.session_state["local_json_pending"] = payload
+                    st.session_state["local_json_name"] = getattr(up_json, "name", "") or "backup.json"
 
-            st.success(f"Arquivo pronto ✅ ({st.session_state['local_json_name']})")
-            st.caption("Agora clique em **Carregar no formulário** para aplicar os dados.")
-        except Exception as e:
-            st.session_state["local_json_pending"] = None
-            st.session_state["local_json_name"] = ""
-            st.error(f"Erro ao ler JSON: {e}")
+                    st.success(f"Arquivo pronto ✅ ({st.session_state['local_json_name']})")
+                    st.caption("Agora clique no botão abaixo para aplicar os dados no formulário.")
+                except Exception as e:
+                    st.session_state["local_json_pending"] = None
+                    st.session_state["local_json_name"] = ""
+                    st.error(f"Erro ao ler JSON: {e}")
 
-    pending = st.session_state.get("local_json_pending")
+            pending = st.session_state.get("local_json_pending")
 
-    # 2) Prévia rápida (opcional, mas ajuda)
-    if isinstance(pending, dict) and pending:
-        with st.expander("👀 Prévia do backup", expanded=False):
-            st.write({
-                "nome": pending.get("nome"),
-                "serie": pending.get("serie"),
-                "turma": pending.get("turma"),
-                "diagnostico": pending.get("diagnostico"),
-                "tem_ia_sugestao": bool(pending.get("ia_sugestao")),
-            })
+            # 2) Prévia (opcional)
+            if isinstance(pending, dict) and pending:
+                with st.expander("👀 Prévia do backup", expanded=False):
+                    st.write({
+                        "nome": pending.get("nome"),
+                        "serie": pending.get("serie"),
+                        "turma": pending.get("turma"),
+                        "diagnostico": pending.get("diagnostico"),
+                        "tem_ia_sugestao": bool(pending.get("ia_sugestao")),
+                    })
 
-    # 3) Botões de ação
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button(
-            "📥 Carregar no formulário",
-            type="primary",
-            use_container_width=True,
-            disabled=not isinstance(pending, dict),
-            key="btn_aplicar_json_local",
-        ):
-            # aplica no estado do formulário
-            if "dados" in st.session_state and isinstance(st.session_state.dados, dict):
-                st.session_state.dados.update(pending)
-            else:
-                st.session_state.dados = pending
+            # 3) Botões
+            b1, b2 = st.columns(2)
 
-            # importante: JSON local NÃO cria vínculo com nuvem
-            st.session_state["selected_student_id"] = None
-            st.session_state["selected_student_name"] = ""
+            with b1:
+                if st.button(
+                    "📥 Carregar no formulário",
+                    type="primary",
+                    use_container_width=True,
+                    disabled=not isinstance(pending, dict),
+                    key="inicio_btn_aplicar_json_local",
+                ):
+                    # aplica no estado do formulário
+                    if "dados" in st.session_state and isinstance(st.session_state.dados, dict):
+                        st.session_state.dados.update(pending)
+                    else:
+                        st.session_state.dados = pending
 
-            # limpa pendência para não reaplicar
-            st.session_state["local_json_pending"] = None
-            st.session_state["local_json_name"] = ""
+                    # JSON local NÃO cria vínculo com nuvem
+                    st.session_state["selected_student_id"] = None
+                    st.session_state["selected_student_name"] = ""
 
-            st.success("Backup aplicado ao formulário ✅")
-            st.toast("Dados aplicados.", icon="✅")
-            st.rerun()
+                    # limpa pendência pra não reaplicar
+                    st.session_state["local_json_pending"] = None
+                    st.session_state["local_json_name"] = ""
 
-    with c2:
-        if st.button(
-            "🧹 Limpar upload/pendência",
-            use_container_width=True,
-            key="btn_limpar_json_local",
-        ):
-            st.session_state["local_json_pending"] = None
-            st.session_state["local_json_name"] = ""
-            st.rerun()
+                    st.success("Backup aplicado ao formulário ✅")
+                    st.toast("Dados aplicados.", icon="✅")
+                    st.rerun()
+
+            with b2:
+                if st.button(
+                    "🧹 Limpar pendência",
+                    use_container_width=True,
+                    key="inicio_btn_limpar_json_local",
+                ):
+                    st.session_state["local_json_pending"] = None
+                    st.session_state["local_json_name"] = ""
+                    st.rerun()
         # ------------------------------------------------------------------
         # (3) SINCRONIZAR: criar aluno na nuvem (somente quando você quiser)
         # ------------------------------------------------------------------
