@@ -1,6 +1,6 @@
 # pages/0_Home.py
 import streamlit as st
-from datetime import datetime, date
+from datetime import date, datetime
 import base64
 import os
 import time
@@ -8,7 +8,7 @@ import time
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v155.0 (Final Pro)"
+APP_VERSION = "v156.0 (Botão Visible Fix)"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -23,275 +23,324 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 2. CSS & DESIGN SYSTEM (O SEGREDO DO VISUAL)
+# 2. CSS & DESIGN SYSTEM
 # ==============================================================================
 st.markdown("""
 <style>
-/* Fontes Modernas */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import url("https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css");
 
 html, body, [class*="css"] {
-    font-family: 'DM Sans', sans-serif;
-    color: #2B3674;
-    background-color: #F4F7FE; /* Fundo Cinza/Azul Claro */
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #1E293B;
+    background-color: #F8FAFC;
 }
 
-/* Limpeza do Streamlit */
+/* Limpeza Geral */
 [data-testid="stSidebarNav"], [data-testid="stHeader"] { display: none !important; }
-.block-container {
-    padding-top: 100px !important; /* Espaço para o Header maior */
-    padding-bottom: 4rem !important;
-    max-width: 98% !important;
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
+.block-container { 
+    padding-top: 100px !important; 
+    padding-bottom: 4rem !important; 
+    max-width: 95% !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
 }
 
-/* --- TOPBAR (HEADER) --- */
+/* --- HEADER --- */
 .topbar {
-    position: fixed; top: 0; left: 0; right: 0; height: 90px; /* Mais alta */
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid #E2E8F0;
-    z-index: 9999;
+    position: fixed; top: 0; left: 0; right: 0; height: 80px;
+    background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+    border-bottom: 1px solid #E2E8F0; z-index: 9999;
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 40px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
 }
-.brand-area { display: flex; align-items: center; gap: 15px; }
-.logo-spin { height: 55px; width: auto; animation: spin 45s linear infinite; }
-.logo-text-img { height: 35px; width: auto; } /* Imagem do Texto */
-
-.user-area { display: flex; align-items: center; gap: 15px; }
-.workspace-badge {
-    background: #F4F7FE; padding: 6px 14px; border-radius: 30px;
-    font-size: 0.8rem; font-weight: 700; color: #A3AED0; border: 1px solid #E2E8F0;
-}
-.user-avatar {
-    width: 40px; height: 40px; background: #4318FF; color: white;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 1rem;
+.brand-box { display: flex; align-items: center; gap: 12px; }
+.brand-logo { height: 45px; width: auto; animation: spin 45s linear infinite; }
+.brand-img-text { height: 30px; width: auto; margin-left: 10px; } 
+.user-badge { 
+    background: #F1F5F9; border: 1px solid #E2E8F0; 
+    padding: 6px 14px; border-radius: 99px; font-size: 0.8rem; font-weight: 700; color: #64748B;
 }
 
 /* --- HERO SECTION --- */
-.hero-banner {
-    background: linear-gradient(135deg, #4318FF 0%, #2B3674 100%);
-    border-radius: 20px; padding: 40px 50px; color: white;
-    margin-bottom: 40px; display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 20px 40px -10px rgba(67, 24, 255, 0.25);
-    position: relative; overflow: hidden;
+.hero-wrapper {
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+    border-radius: 20px; padding: 40px; color: white;
+    margin-bottom: 40px; position: relative; overflow: hidden;
+    box-shadow: 0 15px 30px -10px rgba(30, 58, 138, 0.3);
+    display: flex; align-items: center; justify-content: space-between;
 }
-/* Efeito de fundo */
-.hero-banner::before {
-    content: ""; position: absolute; right: -50px; top: -100px; width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+.hero-wrapper::after {
+    content: ""; position: absolute; right: -50px; top: -50px;
+    width: 300px; height: 300px; background: rgba(255,255,255,0.1);
     border-radius: 50%; pointer-events: none;
 }
-.hero-content h1 { font-size: 2.2rem; font-weight: 700; margin: 0; letter-spacing: -1px; }
-.hero-content p { opacity: 0.9; font-size: 1.1rem; margin-top: 5px; max-width: 600px; }
+.hero-content { z-index: 1; }
+.hero-greet { font-size: 2rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
+.hero-text { font-size: 1.05rem; opacity: 0.95; max-width: 800px; }
 
-/* --- CARDS DE MÓDULO (DESIGN SAAS) --- */
-.saas-card {
+/* --- CARDS DE MÓDULO (COM BOTÃO VISUAL) --- */
+.mod-card-rect {
     background: white;
-    border-radius: 20px;
-    padding: 24px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-    display: flex; align-items: center; gap: 18px;
+    border-radius: 16px;
+    padding: 0;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.01);
+    display: flex; flex-direction: row;
+    align-items: center;
     height: 120px; /* Altura fixa */
     position: relative;
     overflow: hidden;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid transparent;
+    transition: all 0.25s ease;
 }
 
-/* Barra lateral colorida */
-.saas-card::after {
-    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
-    background: currentColor; /* Herda a cor do texto definida inline */
+.mod-card-rect:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+    border-color: #CBD5E1;
 }
 
-.saas-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-    border-color: #E2E8F0;
-}
+.mod-bar { width: 6px; height: 100%; flex-shrink: 0; }
 
-.icon-circle {
-    width: 56px; height: 56px; border-radius: 50%;
+.mod-icon-area {
+    width: 80px; height: 100%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.6rem; flex-shrink: 0;
+    font-size: 1.8rem; flex-shrink: 0;
+    background: #FAFAFA;
+    border-right: 1px solid #F1F5F9;
 }
 
-.card-text h3 { margin: 0; font-size: 1.15rem; font-weight: 700; color: #2B3674; }
-.card-text p { margin: 4px 0 0 0; font-size: 0.85rem; color: #A3AED0; line-height: 1.3; }
-
-.arrow-action { 
-    margin-left: auto; color: #CBD5E0; font-size: 1.5rem; transition: 0.2s; 
+.mod-content {
+    flex-grow: 1; padding: 0 20px;
+    display: flex; flex-direction: column; justify-content: center;
 }
-.saas-card:hover .arrow-action { color: #4318FF; transform: translateX(5px); }
+.mod-title { font-weight: 800; font-size: 1rem; color: #1E293B; margin-bottom: 4px; }
+.mod-desc { font-size: 0.75rem; color: #64748B; line-height: 1.3; }
 
-/* --- BOTÃO FANTASMA (CORREÇÃO TOTAL) --- */
-/* Este container puxa o botão do Streamlit para cima do HTML */
-.ghost-btn-wrapper {
+/* O NOVO BOTÃO VISUAL DENTRO DO HTML */
+.mod-btn-visual {
+    background-color: #4318FF;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 6px;
+    margin-right: 20px;
+    white-space: nowrap;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+}
+
+.mod-card-rect:hover .mod-btn-visual {
+    background-color: #2B3674;
+    transform: scale(1.05);
+}
+
+/* BOTÃO INVISÍVEL (O FUNCIONAL) */
+.ghost-btn-container {
     position: relative;
     height: 120px;
-    margin-top: -120px; /* Puxa para cima exatamente a altura do card */
+    margin-top: -120px; /* Sobe para cobrir o card */
     z-index: 10;
 }
-.ghost-btn-wrapper button {
-    width: 100% !important;
-    height: 100% !important;
-    opacity: 0 !important; /* Invisível */
-    border: none !important;
-    cursor: pointer !important;
-    padding: 0 !important;
+.ghost-btn-container button {
+    width: 100%; height: 100%;
+    opacity: 0; border: none; cursor: pointer;
 }
 
-/* --- TEMAS DE COR --- */
-.bg-purple { background: #F4F7FE; color: #4318FF; }
-.bg-green { background: #F0FDF4; color: #05CD99; }
-.bg-orange { background: #FFF7ED; color: #FFB547; }
-.bg-pink { background: #FDF2F8; color: #FF0080; }
-.bg-navy { background: #F4F7FE; color: #2B3674; }
+/* --- RECURSOS --- */
+.res-card-link { text-decoration: none !important; display: block; height: 100%; }
+.res-card {
+    background: white; border-radius: 14px; padding: 18px;
+    border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 14px;
+    transition: all 0.2s; height: 100%;
+}
+.res-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.05); }
+.res-icon { 
+    width: 42px; height: 42px; border-radius: 10px; 
+    display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+}
+.res-info { display: flex; flex-direction: column; }
+.res-name { font-weight: 700; color: #1E293B; font-size: 0.9rem; }
+.res-meta { font-size: 0.75rem; font-weight: 600; opacity: 0.8; }
+
+/* CORES TEMÁTICAS */
+.c-blue { background: #3B82F6; color: #3B82F6; }
+.bg-blue-soft { background: #EFF6FF; color: #2563EB; }
+.c-purple { background: #8B5CF6; color: #8B5CF6; }
+.bg-purple-soft { background: #F5F3FF; color: #7C3AED; }
+.c-teal { background: #14B8A6; color: #14B8A6; }
+.bg-teal-soft { background: #F0FDFA; color: #0D9488; }
+.c-indigo { background: #6366F1; color: #6366F1; }
+.bg-indigo-soft { background: #EEF2FF; color: #4F46E5; }
+.c-slate { background: #64748B; color: #64748B; }
+.bg-slate-soft { background: #F8FAFC; color: #475569; }
+
+/* Cores Recursos */
+.rc-green { background: #F0FDF4; color: #16A34A; border-color: #DCFCE7; }
+.rc-orange { background: #FFF7ED; color: #EA580C; border-color: #FFEDD5; }
+.rc-rose { background: #FFF1F2; color: #E11D48; border-color: #FECDD3; }
+.rc-sky { background: #F0F9FF; color: #0284C7; border-color: #E0F2FE; }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. HELPERS & STATE
+# 3. HELPERS
 # ==============================================================================
-if "autenticado" not in st.session_state: st.session_state["autenticado"] = False
-if "dados" not in st.session_state: st.session_state.dados = {"nome": "", "nasc": date(2015,1,1), "serie": None}
-
-def get_base64(path):
-    if os.path.exists(path):
-        with open(path, "rb") as f: return base64.b64encode(f.read()).decode()
-    return ""
-
-def escola_vinculada():
-    return st.session_state.get("workspace_name") or st.session_state.get("workspace_id", "")[:12]
-
-# Gate de Segurança
-if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
-    st.warning("🔒 Acesso negado. Por favor, faça login.")
-    if st.button("Ir para Login"): st.rerun()
+def acesso_bloqueado(msg):
+    st.markdown(f"<div style='text-align:center; padding:50px; color:#64748B;'><h3>🔐 Acesso Restrito</h3><p>{msg}</p></div>", unsafe_allow_html=True)
+    if st.button("Ir para Login"):
+        st.session_state.autenticado = False; st.session_state.workspace_id = None; st.rerun()
     st.stop()
 
+if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
+    acesso_bloqueado("Sessão inválida.")
+
+if "dados" not in st.session_state: st.session_state.dados = {"nome": "", "nasc": date(2015,1,1), "serie": None}
+
+def get_base64_image(image_path):
+    if not os.path.exists(image_path): return ""
+    with open(image_path, "rb") as f: return base64.b64encode(f.read()).decode()
+
+def escola_vinculada():
+    return st.session_state.get("workspace_name") or st.session_state.get("workspace_id", "")[:8]
+
 # ==============================================================================
-# 4. HEADER & HERO
+# 4. RENDERIZAÇÃO
 # ==============================================================================
 
-# Carregar Imagens
-icone_b64 = get_base64("omni_icone.png")
-texto_b64 = get_base64("omni_texto.png")
-
-logo_html = f'<img src="data:image/png;base64,{icone_b64}" class="logo-spin">' if icone_b64 else "🌐"
-# Se não tiver a imagem do texto, usa texto puro como fallback
-text_html = f'<img src="data:image/png;base64,{texto_b64}" class="logo-text-img">' if texto_b64 else "<span style='font-weight:800; font-size:1.5rem; color:#2B3674;'>OMNISFERA</span>"
-
-user_name = st.session_state.get('usuario_nome', 'Visitante').split()[0]
-user_initials = user_name[:2].upper()
+# TOPBAR
+icone_b64 = get_base64_image("omni_icone.png")
+texto_b64 = get_base64_image("omni_texto.png") # Carregando o texto
 workspace = escola_vinculada()
+nome_user = st.session_state.get('usuario_nome', 'Visitante').split()[0]
 
-# Render Header
+img_logo = f'<img src="data:image/png;base64,{icone_b64}" class="brand-logo">' if icone_b64 else "🌐"
+# Se existir a imagem do texto, usa ela, senão usa texto puro
+img_text = f'<img src="data:image/png;base64,{texto_b64}" class="brand-img-text">' if texto_b64 else "<span style='font-weight:800; font-size:1.2rem; color:#2B3674;'>OMNISFERA</span>"
+
 st.markdown(f"""
 <div class="topbar">
-    <div class="brand-area">
-        {logo_html}
-        {text_html}
+    <div class="brand-box">
+        {img_logo} 
+        {img_text}
     </div>
-    <div class="user-area">
-        <div class="workspace-badge">{workspace}</div>
-        <div class="user-avatar">{user_initials}</div>
+    <div class="brand-box">
+        <div class="user-badge">{workspace}</div>
+        <div style="font-weight:700; color:#334155;">{nome_user}</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Render Hero
+# SIDEBAR (Correção do Erro de Imagem)
+with st.sidebar:
+    # AQUI ESTAVA O ERRO: Usamos o arquivo direto se existir, ou placeholder
+    img_source = "omni_icone.png" if os.path.exists("omni_icone.png") else "https://via.placeholder.com/150"
+    st.image(img_source, width=60)
+    
+    st.markdown("### Navegação")
+    if st.button("👥 Alunos", use_container_width=True): st.switch_page("pages/0_Alunos.py")
+    if st.button("📘 PEI", use_container_width=True): st.switch_page("pages/1_PEI.py")
+    if st.button("🧩 PAEE", use_container_width=True): st.switch_page("pages/2_PAE.py")
+    if st.button("🚀 Hub", use_container_width=True): st.switch_page("pages/3_Hub_Inclusao.py")
+    st.markdown("---")
+    if st.button("Sair", use_container_width=True):
+        st.session_state.autenticado = False; st.rerun()
+
+# HERO
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
 
 st.markdown(f"""
-<div class="hero-banner">
+<div class="hero-wrapper">
     <div class="hero-content">
-        <h1>{saudacao}, {user_name}!</h1>
-        <p>"A inclusão acontece quando aprendemos com as diferenças e não com as igualdades."</p>
+        <div class="hero-greet">{saudacao}, {nome_user}!</div>
+        <div class="hero-text">"A inclusão acontece quando aprendemos com as diferenças e não com as igualdades."</div>
     </div>
-    <div style="font-size:3rem; opacity:0.8;">🚀</div>
+    <div style="opacity:0.8; font-size:4rem;"><i class="ri-heart-pulse-fill"></i></div>
 </div>
 """, unsafe_allow_html=True)
 
-# ==============================================================================
-# 5. MÓDULOS (FUNCIONALIDADE CORRIGIDA)
-# ==============================================================================
-st.markdown("### ⚡ Acesso Rápido")
+# MÓDULOS (3 COLUNAS - BOTÃO VISUAL)
+st.markdown("### 🚀 Seus Módulos")
 
-def render_saas_card(title, desc, icon, bg_class, color_hex, page_path, key):
-    # 1. HTML Visual (Design Lindo)
+def render_rect_module(title, desc, icon, color_cls, bg_cls, page_path, key):
+    # 1. Card Visual com Botão "Clique Aqui"
     st.markdown(f"""
-    <div class="saas-card" style="color: {color_hex};">
-        <div class="icon-circle {bg_class}">
-            <i class="{icon}"></i>
+    <div class="mod-card-rect">
+        <div class="mod-bar {color_cls}"></div>
+        <div class="mod-icon-area {bg_cls}">
+            <i class="{icon} {color_cls}" style="background:transparent; -webkit-background-clip: text; color: transparent; filter: brightness(0.9);"></i>
+            <i class="{icon}" style="color: inherit;"></i> 
         </div>
-        <div class="card-text">
-            <h3>{title}</h3>
-            <p>{desc}</p>
+        <div class="mod-content">
+            <div class="mod-title">{title}</div>
+            <div class="mod-desc">{desc}</div>
         </div>
-        <div class="arrow-action"><i class="ri-arrow-right-s-line"></i></div>
+        <div class="mod-btn-visual">CLIQUE AQUI</div>
     </div>
+    <style>.{color_cls} {{ background-color: currentColor; }}</style>
     """, unsafe_allow_html=True)
     
-    # 2. Botão Funcional (Invisível por cima)
-    st.markdown('<div class="ghost-btn-wrapper">', unsafe_allow_html=True)
+    # 2. Botão Overlay (Faz o clique funcionar)
+    st.markdown('<div class="ghost-btn-container">', unsafe_allow_html=True)
     if st.button(f"btn_{key}", key=key):
-        # Lógica de Redirecionamento
-        if "Alunos" in title:
-            # Verifica se o arquivo é pages/Alunos.py ou Alunos.py (ajuste conforme seu arquivo real)
-            st.switch_page("pages/Alunos.py" if os.path.exists("pages/Alunos.py") else "Alunos.py")
-        elif "Estudantes" in title: # Caso use sinonimos
-             st.switch_page("pages/Alunos.py")
-        elif st.session_state.dados.get("nome"):
+        if "Alunos" in title or st.session_state.dados.get("nome"):
             st.switch_page(page_path)
         else:
-            st.toast("⚠️ Selecione um aluno em 'Estudantes' primeiro!", icon="👇")
+            st.toast("Selecione um aluno primeiro!", icon="⚠️")
             time.sleep(1)
-            st.switch_page("pages/Alunos.py")
+            st.switch_page("pages/0_Alunos.py")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Grid 3 Colunas x 2 Linhas
+# GRID 3 COLUNAS (3x2)
 c1, c2, c3 = st.columns(3, gap="medium")
 
+# Coluna 1
 with c1:
-    # 1. Alunos
-    render_saas_card("Estudantes", "Gestão e histórico.", "ri-group-line", "bg-purple", "#4318FF", "pages/Alunos.py", "m_aluno")
+    render_rect_module("Estudantes", "Gestão e histórico.", "ri-group-fill", "c-indigo", "bg-indigo-soft", "pages/0_Alunos.py", "m_aluno")
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-    # 4. Hub
-    render_saas_card("Hub de Recursos", "Banco de materiais e IA.", "ri-rocket-2-line", "bg-green", "#05CD99", "pages/3_Hub_Inclusao.py", "m_hub")
+    render_rect_module("Hub de Recursos", "Materiais e IA.", "ri-rocket-2-fill", "c-teal", "bg-teal-soft", "pages/3_Hub_Inclusao.py", "m_hub")
 
+# Coluna 2
 with c2:
-    # 2. PEI
-    render_saas_card("Estratégias & PEI", "Plano Individualizado.", "ri-book-open-line", "bg-purple", "#4318FF", "pages/1_PEI.py", "m_pei")
+    render_rect_module("Estratégias & PEI", "Plano Individualizado.", "ri-book-open-fill", "c-blue", "bg-blue-soft", "pages/1_PEI.py", "m_pei")
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-    # 5. Diário
-    render_saas_card("Diário de Bordo", "Registro de evidências.", "ri-file-list-3-line", "bg-orange", "#FFB547", "pages/4_Diario_de_Bordo.py", "m_diario")
+    render_rect_module("Plano de Ação / PAEE", "Sala de recursos.", "ri-puzzle-2-fill", "c-purple", "bg-purple-soft", "pages/2_PAE.py", "m_pae")
 
+# Coluna 3
 with c3:
-    # 3. PAEE
-    render_saas_card("Plano de Ação / PAEE", "Sala de recursos.", "ri-puzzle-2-line", "bg-pink", "#FF0080", "pages/2_PAE.py", "m_pae")
+    render_rect_module("Diário de Bordo", "Registro de evidências.", "ri-file-list-3-fill", "c-slate", "bg-slate-soft", "pages/4_Diario_de_Bordo.py", "m_diario")
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-    # 6. Dados
-    render_saas_card("Evolução & Dados", "Indicadores e progresso.", "ri-bar-chart-box-line", "bg-navy", "#2B3674", "pages/5_Monitoramento_Avaliacao.py", "m_dados")
+    render_rect_module("Evolução & Dados", "Indicadores e progresso.", "ri-bar-chart-box-fill", "c-slate", "bg-slate-soft", "pages/5_Monitoramento_Avaliacao.py", "m_dados")
 
-# ==============================================================================
-# 6. SIDEBAR
-# ==============================================================================
-with st.sidebar:
-    st.image(icone_b64 if os.path.exists("omni_icone.png") else "https://via.placeholder.com/150", width=60)
-    st.markdown("### Navegação")
-    if st.button("Sair", use_container_width=True):
-        st.session_state.autenticado = False
-        st.rerun()
+# RECURSOS EXTERNOS
+st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
+st.markdown("### 📚 Recursos Externos")
 
-st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
-st.markdown("<div style='text-align: center; color: #A3AED0; font-size: 0.75rem;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>", unsafe_allow_html=True)
+def render_resource(col, title, desc, icon, theme, link):
+    with col:
+        st.markdown(f"""
+        <a href="{link}" target="_blank" class="res-card-link">
+            <div class="res-card {theme}">
+                <div class="res-icon {theme}"><i class="{icon}"></i></div>
+                <div class="res-info">
+                    <div class="res-name">{title}</div>
+                    <div class="res-meta">{desc}</div>
+                </div>
+            </div>
+        </a>
+        """, unsafe_allow_html=True)
+
+r1, r2, r3, r4 = st.columns(4, gap="medium")
+
+render_resource(r1, "Lei da Inclusão", "LBI e diretrizes", "ri-government-fill", "rc-sky", "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm")
+render_resource(r2, "Base Nacional", "Competências BNCC", "ri-compass-3-fill", "rc-green", "http://basenacionalcomum.mec.gov.br/")
+render_resource(r3, "Neurociência", "Artigos e estudos", "ri-brain-fill", "rc-rose", "https://institutoneurosaber.com.br/")
+render_resource(r4, "Ajuda Omnisfera", "Tutoriais e suporte", "ri-question-fill", "rc-orange", "#")
+
+st.markdown("<div style='height: 60px;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.75rem;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>", unsafe_allow_html=True)
