@@ -8,7 +8,7 @@ import time
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v140.0 (Pro Dashboard)"
+APP_VERSION = "v141.0 (Navegação Livre)"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -19,14 +19,13 @@ st.set_page_config(
     page_title="Omnisfera",
     page_icon="omni_icone.png" if os.path.exists("omni_icone.png") else "🌐",
     layout="wide",
-    initial_sidebar_state="collapsed" # Vamos esconder a sidebar nativa e usar a nossa
+    initial_sidebar_state="collapsed"
 )
 
 # ==============================================================================
 # 2. GATE DE ACESSO
 # ==============================================================================
 def acesso_bloqueado(msg: str):
-    # HTML sem indentação para evitar erro de renderização
     html_error = f"""
 <div style="display:flex; justify-content:center; align-items:center; height:80vh;">
 <div style="text-align:center; padding:40px; background:white; border-radius:24px; box-shadow:0 20px 60px rgba(0,0,0,0.08); max-width:480px; border:1px solid #E2E8F0;">
@@ -77,10 +76,9 @@ st.markdown("""
 html, body, [class*="css"] {
     font-family: 'Plus Jakarta Sans', sans-serif;
     color: #1E293B;
-    background-color: #F1F5F9; /* Fundo levemente mais contrastante */
+    background-color: #F1F5F9;
 }
 
-/* Limpeza UI Streamlit */
 [data-testid="stSidebarNav"] { display: none !important; }
 [data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
 .block-container { 
@@ -91,7 +89,7 @@ html, body, [class*="css"] {
     padding-right: 2rem !important;
 }
 
-/* --- HEADER FLUTUANTE --- */
+/* TOPBAR */
 .topbar {
     position: fixed; top: 0; left: 0; right: 0; height: 64px;
     background: rgba(255, 255, 255, 0.8);
@@ -114,7 +112,7 @@ html, body, [class*="css"] {
     display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;
 }
 
-/* --- HERO SECTION MODERNA --- */
+/* HERO SECTION */
 .welcome-card {
     background: white;
     border-radius: 20px;
@@ -135,7 +133,7 @@ html, body, [class*="css"] {
 }
 .action-btn-mock:hover { background: #DBEAFE; transform: translateY(-1px); }
 
-/* --- CARDS DE MÓDULO (Grid Principal) --- */
+/* CARDS */
 .module-card {
     background: white;
     border-radius: 16px;
@@ -165,7 +163,7 @@ html, body, [class*="css"] {
 }
 .module-card:hover .mod-arrow { color: #3B82F6; transform: translateX(2px); }
 
-/* --- SIDEBAR DIREITA (WIDGETS) --- */
+/* WIDGETS */
 .widget-card {
     background: white; border-radius: 16px; padding: 20px;
     border: 1px solid #E2E8F0; margin-bottom: 20px;
@@ -174,9 +172,7 @@ html, body, [class*="css"] {
     font-size: 0.85rem; font-weight: 700; color: #94A3B8; 
     text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;
 }
-.timeline-item {
-    display: flex; gap: 12px; margin-bottom: 16px;
-}
+.timeline-item { display: flex; gap: 12px; margin-bottom: 16px; }
 .tl-dot {
     width: 8px; height: 8px; border-radius: 50%; background: #CBD5E1;
     margin-top: 6px; flex-shrink: 0;
@@ -184,14 +180,12 @@ html, body, [class*="css"] {
 .tl-content { font-size: 0.85rem; color: #475569; }
 .tl-time { font-size: 0.75rem; color: #94A3B8; margin-top: 2px; }
 
-/* CORES TEMÁTICAS */
 .bg-indigo { background: #EEF2FF; color: #4F46E5; }
 .bg-blue { background: #EFF6FF; color: #2563EB; }
 .bg-purple { background: #FAF5FF; color: #9333EA; }
 .bg-teal { background: #F0FDFA; color: #0D9488; }
 .bg-slate { background: #F8FAFC; color: #64748B; }
 
-/* GHOST BUTTON OVERLAY */
 .ghost-btn button {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     opacity: 0; z-index: 10; cursor: pointer;
@@ -225,7 +219,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 6. CONTEÚDO PRINCIPAL (LAYOUT ASSIMÉTRICO)
+# 6. CONTEÚDO PRINCIPAL
 # ==============================================================================
 
 # Hero Section
@@ -240,21 +234,20 @@ st.markdown(f"""
     </div>
     <div class="quick-actions">
         <div class="action-btn-mock"><i class="ri-add-circle-line"></i> Novo Aluno</div>
-        <div class="action-btn-mock"><i class="ri-file-edit-line"></i> Anotação Rápida</div>
+        <div class="action-btn-mock"><i class="ri-file-edit-line"></i> Anotação</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# --- DIVISÃO PRINCIPAL: 70% ESQUERDA (MÓDULOS) | 30% DIREITA (WIDGETS) ---
+# Layout: 70% Módulos | 30% Sidebar Widgets
 col_main, col_side = st.columns([2.5, 1], gap="medium")
 
-# --- COLUNA ESQUERDA: GRID DE MÓDULOS ---
+# --- ESQUERDA: MÓDULOS ---
 with col_main:
     st.markdown("### 🚀 Seus Módulos", unsafe_allow_html=True)
     
-    # Função para desenhar o card
-    def draw_module(title, desc, icon, color_cls, page_path, key, cta="Acessar"):
-        # HTML PURO E SEM INDENTAÇÃO INTERNA
+    def draw_module(title, desc, icon, color_cls, page_path, key):
+        # HTML do Card
         html = f"""
 <div class="module-card">
 <div class="mod-icon {color_cls}"><i class="{icon}"></i></div>
@@ -267,18 +260,14 @@ with col_main:
 """
         st.markdown(html, unsafe_allow_html=True)
         
-        # Botão Fantasma
+        # Botão Fantasma (AGORA SEM RESTRIÇÃO)
         st.markdown(f'<div class="ghost-btn">', unsafe_allow_html=True)
         if st.button(f"btn_{key}", key=key):
-            if "Alunos" in title or st.session_state.dados.get("nome"):
-                st.switch_page(page_path)
-            else:
-                st.toast("⚠️ Selecione um aluno no módulo 'Estudantes' primeiro!", icon="👇")
-                time.sleep(1)
-                st.switch_page("pages/0_Alunos.py")
+            # AQUI ESTÁ A MUDANÇA: Navegação direta, sem verificar aluno
+            st.switch_page(page_path)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # Grid 2x3 (Duas colunas dentro da coluna principal)
+    # Grid de Módulos
     g1, g2 = st.columns(2, gap="medium")
     
     with g1:
@@ -295,11 +284,10 @@ with col_main:
         st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
         draw_module("Evolução & Dados", "Indicadores de progresso.", "ri-bar-chart-box-line", "bg-slate", "pages/5_Monitoramento_Avaliacao.py", "m_dados")
 
-# --- COLUNA DIREITA: TIMELINE & STATUS ---
+# --- DIREITA: STATUS ---
 with col_side:
     st.markdown("### 📌 Status", unsafe_allow_html=True)
     
-    # Card Aluno Ativo
     aluno_ativo = st.session_state.dados.get("nome")
     display_aluno = aluno_ativo if aluno_ativo else "Nenhum aluno selecionado"
     cor_status = "#10B981" if aluno_ativo else "#94A3B8"
@@ -312,47 +300,34 @@ with col_side:
             <div style="font-weight:700; color:#334155;">{display_aluno}</div>
         </div>
         <div style="margin-top:10px; font-size:0.8rem; color:#64748B;">
-            {f"Série: {st.session_state.dados.get('serie','-')}" if aluno_ativo else "Selecione um aluno para editar o PEI."}
+            {f"Série: {st.session_state.dados.get('serie','-')}" if aluno_ativo else "Vá em Estudantes para selecionar."}
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Card Atividade Recente (Mockup Visual)
     st.markdown(f"""
     <div class="widget-card">
         <div class="widget-title">Atividade Recente</div>
-        
         <div class="timeline-item">
             <div class="tl-dot" style="background:#3B82F6"></div>
             <div>
-                <div class="tl-content">Login realizado com sucesso</div>
+                <div class="tl-content">Login realizado</div>
                 <div class="tl-time">Agora mesmo</div>
             </div>
         </div>
-        
         <div class="timeline-item">
             <div class="tl-dot"></div>
             <div>
-                <div class="tl-content">Atualização do sistema</div>
-                <div class="tl-time">Ontem, 18:30</div>
-            </div>
-        </div>
-        
-        <div class="timeline-item">
-            <div class="tl-dot"></div>
-            <div>
-                <div class="tl-content">Novo recurso no Hub</div>
-                <div class="tl-time">20 Jan</div>
+                <div class="tl-content">Sistema atualizado</div>
+                <div class="tl-time">v141.0</div>
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
     
-    # Botão de Sair Discreto
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
     if st.button("Sair do Sistema", use_container_width=True):
         st.session_state.autenticado = False
         st.rerun()
 
-# Footer Invisível (apenas padding)
 st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
