@@ -8,7 +8,7 @@ import time
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v158.0 (Botões Coloridos Abaixo dos Cards)"
+APP_VERSION = "v159.0 (Correções: Botão + Ícone + Verificação)"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -400,10 +400,10 @@ def escola_vinculada():
     return st.session_state.get("workspace_name") or st.session_state.get("workspace_id", "")[:8]
 
 # ==============================================================================
-# 4. FUNÇÃO PARA CRIAR CARDS COM BOTÕES COLORIDOS
+# 4. FUNÇÃO PARA CRIAR CARDS COM BOTÕES COLORIDOS (SEM VERIFICAÇÃO DE ALUNO)
 # ==============================================================================
 def create_module_with_button(title, desc, icon, color_cls, bg_cls, btn_class, page_path, key):
-    """Cria um card com botão colorido abaixo"""
+    """Cria um card com botão colorido abaixo - SEM verificação de aluno"""
     
     # Container principal
     with st.container():
@@ -426,17 +426,12 @@ def create_module_with_button(title, desc, icon, color_cls, bg_cls, btn_class, p
         if st.button(
             f"📂 ACESSAR {title.split()[0].upper()}",  # Pega a primeira palavra do título
             key=f"btn_{key}",
-            type="primary" if "indigo" in btn_class else "secondary",
+            # REMOVIDO: type="primary" if "indigo" in btn_class else "secondary" (isso causava cor vermelha)
             use_container_width=True,
             help=f"Clique para acessar {title}"
         ):
-            # Lógica de navegação
-            if "Alunos" in title or st.session_state.dados.get("nome"):
-                st.switch_page(page_path)
-            else:
-                st.toast("Selecione um aluno primeiro!", icon="⚠️")
-                time.sleep(1)
-                st.switch_page("pages/Alunos.py")
+            # Lógica de navegação SIMPLIFICADA - SEM verificação de aluno
+            st.switch_page(page_path)
         
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -522,22 +517,22 @@ st.markdown(f"""
 # MÓDULOS COM BOTÕES COLORIDOS
 st.markdown("### 🚀 Módulos da Plataforma")
 
-# Definir módulos com suas cores específicas
+# Definir módulos com suas cores específicas (CORRIGIDO: Ícone do PAEE)
 modules = [
     {
         "title": "Estudantes",
         "desc": "Gestão completa de alunos, histórico e acompanhamento individualizado.",
-        "icon": "ri-group-fill",
+        "icon": "ri-group-fill",  # ✅ Ícone correto
         "color_cls": "c-indigo",
         "bg_cls": "bg-indigo-soft",
-        "btn_class": "btn-indigo",
+        "btn_class": "btn-indigo",  # ✅ Cor indigo como os outros
         "page": "pages/Alunos.py",
         "key": "m_aluno"
     },
     {
         "title": "Hub de Recursos",
         "desc": "Biblioteca de materiais, modelos e inteligência artificial para apoio.",
-        "icon": "ri-rocket-2-fill",
+        "icon": "ri-rocket-2-fill",  # ✅ Ícone correto
         "color_cls": "c-teal",
         "bg_cls": "bg-teal-soft",
         "btn_class": "btn-teal",
@@ -547,7 +542,7 @@ modules = [
     {
         "title": "Estratégias & PEI",
         "desc": "Plano Educacional Individual com objetivos, avaliações e acompanhamento.",
-        "icon": "ri-book-open-fill",
+        "icon": "ri-book-open-fill",  # ✅ Ícone correto
         "color_cls": "c-blue",
         "bg_cls": "bg-blue-soft",
         "btn_class": "btn-blue",
@@ -557,7 +552,7 @@ modules = [
     {
         "title": "Plano de Ação / PAEE",
         "desc": "Plano de Atendimento Educacional Especializado e sala de recursos.",
-        "icon": "ri-puzzle-2-fill",
+        "icon": "ri-puzzle-fill",  # ✅ CORRIGIDO: Ícone correto (puzzle-fill ao invés de puzzle-2-fill)
         "color_cls": "c-purple",
         "bg_cls": "bg-purple-soft",
         "btn_class": "btn-purple",
@@ -567,7 +562,7 @@ modules = [
     {
         "title": "Diário de Bordo",
         "desc": "Registro diário de observações, evidências e intervenções.",
-        "icon": "ri-file-list-3-fill",
+        "icon": "ri-file-list-3-fill",  # ✅ Ícone correto
         "color_cls": "c-slate",
         "bg_cls": "bg-slate-soft",
         "btn_class": "btn-slate",
@@ -577,7 +572,7 @@ modules = [
     {
         "title": "Evolução & Dados",
         "desc": "Indicadores, gráficos e relatórios de progresso dos alunos.",
-        "icon": "ri-bar-chart-box-fill",
+        "icon": "ri-bar-chart-box-fill",  # ✅ Ícone correto
         "color_cls": "c-slate",
         "bg_cls": "bg-slate-soft",
         "btn_class": "btn-slate",
@@ -617,21 +612,27 @@ r1, r2, r3, r4 = st.columns(4, gap="medium")
 def create_resource(col, title, desc, icon, theme, link):
     with col:
         if link != "#":
-            target = "_blank"
-            onclick = f"window.open('{link}', '_blank')"
+            st.markdown(f"""
+            <a href="{link}" target="_blank" class="res-card-link">
+                <div class="res-card {theme}">
+                    <div class="res-icon {theme}"><i class="{icon}"></i></div>
+                    <div class="res-info">
+                        <div class="res-name">{title}</div>
+                        <div class="res-meta">{desc}</div>
+                    </div>
+                </div>
+            </a>
+            """, unsafe_allow_html=True)
         else:
-            target = "_self"
-            onclick = "st.alert('Em breve!')"
-        
-        st.markdown(f"""
-        <div class="res-card {theme}" onclick="{onclick}" style="cursor: pointer;">
-            <div class="res-icon {theme}"><i class="{icon}"></i></div>
-            <div class="res-info">
-                <div class="res-name">{title}</div>
-                <div class="res-meta">{desc}</div>
+            st.markdown(f"""
+            <div class="res-card {theme}" style="cursor: pointer;">
+                <div class="res-icon {theme}"><i class="{icon}"></i></div>
+                <div class="res-info">
+                    <div class="res-name">{title}</div>
+                    <div class="res-meta">{desc}</div>
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
 # Adicionar recursos
 create_resource(r1, "Lei da Inclusão", "LBI e diretrizes", "ri-government-fill", "rc-sky", "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm")
@@ -668,4 +669,47 @@ st.markdown(f"""
     Desenvolvido por RODRIGO A. QUEIROZ • 
     {datetime.now().strftime("%d/%m/%Y %H:%M")}
 </div>
+""", unsafe_allow_html=True)
+
+# CSS ADICIONAL para corrigir cor do botão Estudantes
+st.markdown("""
+<style>
+/* CSS para corrigir a cor do botão Estudantes */
+.stButton > button {
+    background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
+    color: white !important;
+    border: none !important;
+}
+
+/* Cor específica para cada botão baseado no texto */
+.stButton > button:contains("ACESSAR ESTUDANTES") {
+    background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
+}
+
+.stButton > button:contains("ACESSAR HUB") {
+    background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%) !important;
+}
+
+.stButton > button:contains("ACESSAR ESTRATÉGIAS") {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
+}
+
+.stButton > button:contains("ACESSAR PLANO") {
+    background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%) !important;
+}
+
+.stButton > button:contains("ACESSAR DIÁRIO") {
+    background: linear-gradient(135deg, #64748B 0%, #475569 100%) !important;
+}
+
+.stButton > button:contains("ACESSAR EVOLUÇÃO") {
+    background: linear-gradient(135deg, #64748B 0%, #475569 100%) !important;
+}
+
+/* Hover states */
+.stButton > button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+</style>
 """, unsafe_allow_html=True)
