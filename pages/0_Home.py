@@ -1,27 +1,366 @@
+# pages/0_Home.py
 import streamlit as st
 from datetime import date
 import base64
 import os
 import time
 
-# Supabase
-from supabase import create_client
+APP_VERSION = "v134.1 (Home High Design • sem login aqui)"
 
-# --- ESCONDE O MENU PADRÃO (Pages / streamlit_app / etc.) ---
-st.markdown("""
+# ==============================================================================
+# GATE DE ACESSO — HOME NÃO AUTENTICA
+# ==============================================================================
+
+def acesso_bloqueado(msg: str):
+    st.markdown(
+        f"""
+        <div style="
+            max-width:520px;
+            margin: 120px auto;
+            padding: 28px;
+            background: white;
+            border-radius: 18px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 20px 40px rgba(15,82,186,0.12);
+            text-align: center;
+        ">
+            <div style="font-size:2.2rem; margin-bottom:10px;">🔐</div>
+            <div style="font-weight:900; font-size:1.1rem; margin-bottom:6px;">
+                Acesso restrito
+            </div>
+            <div style="color:#4A5568; font-weight:700; font-size:0.95rem; margin-bottom:18px;">
+                {msg}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🔑 Voltar para a tela de login", use_container_width=True):
+            st.session_state.autenticado = False
+            st.session_state.workspace_id = None
+            st.session_state.workspace_name = None
+            st.rerun()
+
+    st.stop()
+
+
+if not st.session_state.get("autenticado", False):
+    acesso_bloqueado("Faça login para acessar o Omnisfera.")
+
+if not st.session_state.get("workspace_id"):
+    acesso_bloqueado("Nenhuma escola vinculada ao seu acesso.")
+
+
+# ==============================================================================
+# 2) STATE BASE (compat)
+# ==============================================================================
+if "workspace_name" not in st.session_state:
+    st.session_state["workspace_name"] = ""
+
+if "usuario_nome" not in st.session_state:
+    st.session_state["usuario_nome"] = "Visitante"
+
+if "usuario_cargo" not in st.session_state:
+    st.session_state["usuario_cargo"] = ""
+
+default_state = {"nome": "", "nasc": date(2015, 1, 1), "serie": None, "turma": "", "diagnostico": "", "student_id": None}
+if "dados" not in st.session_state:
+    st.session_state.dados = default_state.copy()
+
+# ==============================================================================
+# 3) HELPERS
+# ==============================================================================
+def get_base64_image(image_path: str) -> str:
+    if not image_path or not os.path.exists(image_path):
+        return ""
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
+
+def escola_vinculada() -> str:
+    v = st.session_state.get("workspace_name")
+    if isinstance(v, str) and v.strip():
+        return v.strip()
+
+    for k in ["escola_nome", "escola", "school_name", "workspace_label", "workspace_display"]:
+        vv = st.session_state.get(k)
+        if isinstance(vv, str) and vv.strip():
+            return vv.strip()
+
+    wsid = st.session_state.get("workspace_id")
+    if isinstance(wsid, str) and wsid.strip():
+        return f"Workspace {wsid[:8]}…"
+
+    return ""
+
+# ==============================================================================
+# 4) CSS BASE + VISUAL HOME
+# ==============================================================================
+st.markdown(
+    """
 <style>
-/* Esconde o menu de páginas padrão do Streamlit */
-[data-testid="stSidebarNav"] { display: none !important; }
-</style>
-""", unsafe_allow_html=True)
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Nunito:wght@400;600;700;800&display=swap');
 
+html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color:#1A202C; background:#F7FAFC; }
+
+[data-testid="stSidebarNav"] { display: none !important; }
+[data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
+
+.block-container { padding-top: 128px !important; padding-bottom: 2rem !important; }
+
+@keyframes spin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
+
+/* Flaticon UIcons */
+@import url('https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css');
+@import url('https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-straight/css/uicons-solid-straight.css');
+@import url('https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css');
+
+/* TOPBAR */
+.header-container {
+  position: fixed; top: 0; left: 0; width: 100%; height: 88px;
+  background: rgba(255,255,255,0.78);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(226,232,240,0.85);
+  z-index: 99999;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px;
+  box-shadow: 0 10px 30px rgba(15,82,186,0.06);
+}
+.header-left { display: flex; align-items: center; gap: 16px; }
+.header-logo-spin { height: 54px; width: 54px; animation: spin 18s linear infinite; }
+.header-logo-text { height: 38px; width: auto; }
+.header-divider { height: 36px; width: 1px; background: rgba(203,213,224,0.9); margin: 0 6px; }
+.header-slogan { font-weight: 900; color: #718096; letter-spacing: .2px; }
+.header-badge {
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 14px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-end;
+  box-shadow: 0 10px 20px rgba(15,82,186,0.07);
+}
+.badge-top {
+  font-family: Inter, sans-serif;
+  font-weight: 900;
+  font-size: 0.62rem;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #1A202C;
+}
+.badge-school {
+  font-weight: 900;
+  font-size: 0.80rem;
+  color: #2D3748;
+  opacity: .92;
+  max-width: 420px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* HERO */
+.hero-shell {
+  background:
+    radial-gradient(900px 240px at 15% 10%, rgba(15,82,186,0.22), transparent 65%),
+    radial-gradient(900px 240px at 85% 0%, rgba(56,178,172,0.18), transparent 60%),
+    radial-gradient(circle at top right, #0F52BA, #062B61);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 18px 50px rgba(15,82,186,0.24);
+  padding: 22px 24px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+.hero-title {
+  font-family: Inter, sans-serif;
+  font-weight: 900;
+  font-size: 1.45rem;
+  margin: 0;
+}
+.hero-sub {
+  margin-top: 6px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.86);
+}
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.chip {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.14);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.92);
+}
+.hero-right { min-width: 220px; display: flex; justify-content: flex-end; }
+.hero-pulse {
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 18px;
+  padding: 10px 12px;
+  text-align: right;
+}
+.hero-mini { font-weight: 900; letter-spacing: .3px; }
+.hero-mini-sub { margin-top: 3px; font-weight: 900; color: rgba(255,255,255,0.86); font-size: .80rem; }
+
+/* CARD compacto */
+.home-card {
+  position: relative;
+  background: rgba(255,255,255,0.92);
+  border-radius: 20px;
+  border: 1px solid rgba(226,232,240,0.95);
+  box-shadow: 0 10px 22px rgba(15,82,186,0.07);
+  padding: 14px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 104px;
+  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+  overflow: hidden;
+}
+.home-card:before {
+  content: "";
+  position: absolute;
+  inset: -60px -60px auto auto;
+  width: 130px;
+  height: 130px;
+  border-radius: 999px;
+  background: rgba(15,82,186,0.07);
+}
+.home-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 38px rgba(15,82,186,0.12);
+  border-color: rgba(49,130,206,0.35);
+}
+.home-ic {
+  width: 44px; height: 44px;
+  border-radius: 15px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(15,82,186,0.08);
+  border: 1px solid rgba(15,82,186,0.12);
+  margin-top: 1px;
+}
+.home-ic i { font-size: 21px; color: #0F52BA; line-height: 1; }
+.home-txt { display:flex; flex-direction:column; gap:5px; min-width: 0; }
+.home-title {
+  font-family: Inter, sans-serif;
+  font-weight: 900;
+  font-size: 0.98rem;
+  color: #1A202C;
+  margin: 0;
+}
+.home-sub {
+  font-size: 0.80rem;
+  color: #718096;
+  margin: 0;
+  font-weight: 900;
+  line-height: 1.22rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.home-tags {
+  display:flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  margin-top: 2px;
+  overflow: hidden;
+}
+.tag {
+  background: rgba(226,232,240,0.55);
+  border: 1px solid rgba(226,232,240,0.9);
+  color: #2D3748;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 0.66rem;
+  letter-spacing: .2px;
+  white-space: nowrap;
+}
+.home-cta {
+  margin-top: 0px;
+  font-weight: 900;
+  color: #0F52BA;
+  font-size: 0.76rem;
+}
+
+.b-slate { border-bottom: 4px solid #4A5568; }
+.b-blue  { border-bottom: 4px solid #3182CE; }
+.b-purple{ border-bottom: 4px solid #805AD5; }
+.b-teal  { border-bottom: 4px solid #38B2AC; }
+
+/* Botão invisível */
+.ghost-btn [data-testid="stButton"] > button {
+  height: 1px !important;
+  min-height: 1px !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  border: 0 !important;
+  margin: 0 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# ==============================================================================
+# 5) TOPBAR
+# ==============================================================================
+esc = escola_vinculada()
+icone_b64 = get_base64_image("omni_icone.png")
+texto_b64 = get_base64_image("omni_texto.png")
+
+logo_icon_html = (
+    f'<img src="data:image/png;base64,{icone_b64}" class="header-logo-spin">'
+    if icone_b64
+    else '<div style="width:54px;height:54px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:white;border:1px solid #E2E8F0;">🌐</div>'
+)
+logo_text_html = (
+    f'<img src="data:image/png;base64,{texto_b64}" class="header-logo-text">'
+    if texto_b64
+    else '<div style="font-family:Inter,sans-serif;font-weight:900;font-size:1.15rem;color:#0F52BA;">OMNISFERA</div>'
+)
+
+st.markdown(
+    f"""
+<div class="header-container">
+  <div class="header-left">
+    {logo_icon_html}
+    {logo_text_html}
+    <div class="header-divider"></div>
+    <div class="header-slogan">Ecossistema de Inteligência Pedagógica</div>
+  </div>
+  <div class="header-badge">
+    <div class="badge-top">OMNISFERA {APP_VERSION}</div>
+    {"<div class='badge-school'>🏫 "+esc+"</div>" if esc else ""}
+  </div>
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
+# ==============================================================================
+# 6) SIDEBAR
+# ==============================================================================
 with st.sidebar:
-    # Seu bloco atual de usuário/sair pode ficar, mas antes coloca o NAV custom
     st.markdown("### 🧭 Navegação")
 
-    # HOME (aqui na home só dá rerun pra “voltar pro topo”)
-    if st.button("🏠 Home", use_container_width=True):
-        st.rerun()
+    if st.button("👥 Estudantes", use_container_width=True):
+        st.switch_page("pages/0_Alunos.py")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -35,504 +374,102 @@ with st.sidebar:
         st.switch_page("pages/3_Hub_Inclusao.py")
 
     st.markdown("---")
+    if esc:
+        st.caption("🏫 Escola vinculada")
+        st.markdown(f"**{esc}**")
 
-    # (depois disso, mantém seu bloco atual)
+    st.markdown("---")
     st.markdown(f"**👤 {st.session_state.get('usuario_nome', '')}**")
     st.caption(st.session_state.get("usuario_cargo", ""))
+
     if st.button("Sair", use_container_width=True):
         st.session_state["autenticado"] = False
+        st.session_state["workspace_id"] = None
+        st.session_state["workspace_name"] = ""
         st.rerun()
 
-
 # ==============================================================================
-# 1. CONFIGURAÇÃO INICIAL E AMBIENTE
+# 7) HOME
 # ==============================================================================
-APP_VERSION = "v128.0 (Leitura Blindada)"
+primeiro_nome = (st.session_state.get("usuario_nome") or "Visitante").split()[0]
 
-try:
-    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
-except Exception:
-    IS_TEST_ENV = False
+chips = ["BNCC + DUA", "PEI / PAEE", "Rubricas", "Inclusão"]
+chips_html = "".join([f"<span class='chip'>{c}</span>" for c in chips])
 
-titulo_pag = "[TESTE] Omnisfera" if IS_TEST_ENV else "Omnisfera | Ecossistema"
-icone_pag = "omni_icone.png" if os.path.exists("omni_icone.png") else "🌐"
-
-st.set_page_config(
-    page_title=titulo_pag,
-    page_icon=icone_pag,
-    layout="wide",
-    initial_sidebar_state="expanded"
+st.markdown(
+    f"""
+<div class="hero-shell">
+  <div>
+    <div class="hero-title">Olá, {primeiro_nome}!</div>
+    <div class="hero-sub">{("🏫 " + esc) if esc else "Bem-vindo(a) ao Omnisfera."}</div>
+    <div class="hero-chips">{chips_html}</div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-pulse">
+      <div class="hero-mini">Acesso rápido</div>
+      <div class="hero-mini-sub">Seus módulos em 1 clique</div>
+    </div>
+  </div>
+</div>
+""",
+    unsafe_allow_html=True,
 )
 
-# ==============================================================================
-# 1.1. ESTADO BASE (ALUNO) — mantém compatível com suas páginas
-# ==============================================================================
-default_state = {
-    "nome": "",
-    "nasc": date(2015, 1, 1),
-    "serie": None,
-    "turma": "",
-    "diagnostico": "",
-    "lista_medicamentos": [],
-    "composicao_familiar_tags": [],
-    "historico": "",
-    "familia": "",
-    "hiperfoco": "",
-    "potencias": [],
-    "rede_apoio": [],
-    "orientacoes_especialistas": "",
-    "checklist_evidencias": {},
-    "nivel_alfabetizacao": "Não se aplica (Educação Infantil)",
-    "barreiras_selecionadas": {},
-    "niveis_suporte": {},
-    "estrategias_acesso": [],
-    "estrategias_ensino": [],
-    "estrategias_avaliacao": [],
-    "ia_sugestao": "",
-    "checklist_hub": {},
-    # útil para navegação/CRUD
-    "student_id": None,
-}
+st.markdown("### 🚀 Módulos")
 
-if "dados" not in st.session_state:
-    st.session_state.dados = default_state.copy()
+def go(dest: str):
+    if dest == "ALUNOS":
+        st.switch_page("pages/0_Alunos.py")
+    elif dest == "PEI":
+        st.switch_page("pages/1_PEI.py")
+    elif dest == "PAEE":
+        st.switch_page("pages/2_PAE.py")
+    elif dest == "HUB":
+        st.switch_page("pages/3_Hub_Inclusao.py")
+    elif dest == "DIARIO":
+        st.toast("🛠️ Diário de Bordo — em breve neste build.", icon="✨")
+    elif dest == "DADOS":
+        st.toast("🛠️ Evolução & Dados — em breve neste build.", icon="✨")
+    time.sleep(0.10)
 
-# ==============================================================================
-# 1.2. SUPABASE (somente) — client + helpers
-# ==============================================================================
-@st.cache_resource
-def get_sb():
-    url = st.secrets.get("SUPABASE_URL", "")
-    key = st.secrets.get("SUPABASE_ANON_KEY", "")
-    if not url or not key:
-        return None
-    return create_client(url, key)
+cards = [
+    ("Estudantes", "Gestão, seleção e histórico do aluno.", "fi fi-br-users", "ALUNOS", "b-slate", ["Cadastro", "Turmas"], "Abrir →"),
+    ("Estratégias & PEI", "Plano Educacional Individualizado com rubricas.", "fi fi-sr-book-open-cover", "PEI", "b-blue", ["PEI 360°", "DUA"], "Abrir →"),
+    ("Plano de Ação / PAEE", "Intervenções e sala de recursos.", "fi fi-ss-puzzle", "PAEE", "b-purple", ["AEE", "Ações"], "Abrir →"),
+    ("Hub de Recursos", "Modelos, adaptações e ferramentas.", "fi fi-sr-rocket", "HUB", "b-teal", ["Materiais", "Provas"], "Abrir →"),
+    ("Diário de Bordo", "Registro contínuo e evidências.", "fi fi-br-notebook", "DIARIO", "b-slate", ["Notas", "Evidências"], "Em breve →"),
+    ("Evolução & Dados", "Indicadores e visão longitudinal.", "fi fi-br-chart-histogram", "DADOS", "b-slate", ["KPIs", "Radar"], "Em breve →"),
+]
 
-sb = get_sb()
+for r in range(0, len(cards), 3):
+    row = cards[r:r+3]
+    cols = st.columns(3)
+    for i, item in enumerate(row):
+        title, sub, icon_class, dest, border, tags, cta = item
+        tags = (tags or [])[:2]
+        tags_html = "".join([f"<span class='tag'>{t}</span>" for t in tags])
 
-def get_workspace_id():
-    """
-    Se você já usa PIN/RPC no streamlit_app.py, normalmente workspace_id está no session_state.
-    Aqui só lemos, sem criar guard/redirect pra não dar loop.
-    """
-    return st.session_state.get("workspace_id")  # <- ajuste se o seu nome for outro
-
-def sb_list_students():
-    if not sb:
-        return []
-    ws = get_workspace_id()
-    q = sb.table("students").select("id,name,birth_date,grade,class_group,diagnosis,created_at")
-    if ws:
-        q = q.eq("workspace_id", ws)
-    res = q.order("created_at", desc=True).execute()
-    return res.data or []
-
-def sb_delete_student(student_id: str):
-    if not sb:
-        return False, "Supabase não configurado."
-    ws = get_workspace_id()
-    q = sb.table("students").delete().eq("id", student_id)
-    if ws:
-        q = q.eq("workspace_id", ws)
-    q.execute()
-    return True, "Aluno removido."
-
-def load_student_to_session(row: dict):
-    st.session_state.dados["student_id"] = row.get("id")
-    st.session_state.dados["nome"] = row.get("name", "") or ""
-    st.session_state.dados["serie"] = row.get("grade", None)
-    st.session_state.dados["turma"] = row.get("class_group", "") or ""
-    st.session_state.dados["diagnostico"] = row.get("diagnosis", "") or ""
-
-    bd = row.get("birth_date")
-    if isinstance(bd, str):
-        try:
-            st.session_state.dados["nasc"] = date.fromisoformat(bd)
-        except Exception:
-            pass
-
-# cache leve em session_state para UX (sem bater no banco a cada rerun)
-if "banco_estudantes" not in st.session_state:
-    st.session_state.banco_estudantes = sb_list_students() if sb else []
-
-# ==============================================================================
-# 2. UTILITÁRIOS (imagens base64)
-# ==============================================================================
-def get_base64_image(image_path: str) -> str:
-    if not os.path.exists(image_path):
-        return ""
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode()
-
-# ==============================================================================
-# 3. SISTEMA DE SEGURANÇA (mantém seu gate)
-# ==============================================================================
-if "autenticado" not in st.session_state:
-    st.session_state["autenticado"] = False
-
-if not st.session_state["autenticado"]:
-    st.markdown(
-        """<style>section[data-testid="stSidebar"] { display: none !important; }</style>""",
-        unsafe_allow_html=True,
-    )
-    c1, c_login, c2 = st.columns([1, 2, 1])
-    with c_login:
-        st.markdown(
-            """
-            <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Nunito:wght@400;600;700&display=swap');
-            html, body, [class*="css"] { font-family: 'Nunito', sans-serif; background:#F7FAFC; }
-            .login-container {
-                background: white; padding: 30px; border-radius: 20px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-                text-align: center; border: 1px solid #E2E8F0;
-                max-width: 480px; margin: 40px auto;
-            }
-            @keyframes spin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-        img_icone = get_base64_image("omni_icone.png")
-        if img_icone:
+        with cols[i]:
             st.markdown(
-                f"<img src='data:image/png;base64,{img_icone}' style='height:80px; animation: spin 45s linear infinite;'>",
+                f"""
+<div class="home-card {border}">
+  <div class="home-ic"><i class="{icon_class}"></i></div>
+  <div class="home-txt">
+    <div class="home-title">{title}</div>
+    <div class="home-sub">{sub}</div>
+    <div class="home-tags">{tags_html}</div>
+    <div class="home-cta">{cta}</div>
+  </div>
+</div>
+""",
                 unsafe_allow_html=True,
             )
-        st.markdown("<h2 style='color:#0F52BA; margin:10px 0;'>OMNISFERA</h2>", unsafe_allow_html=True)
-
-        if IS_TEST_ENV:
-            if st.button("🚀 ENTRAR (MODO TESTE)", use_container_width=True):
-                st.session_state["autenticado"] = True
-                st.session_state["usuario_nome"] = "Visitante Teste"
-                st.rerun()
-        else:
-            nome = st.text_input("Nome", placeholder="Seu Nome")
-            cargo = st.text_input("Cargo", placeholder="Seu Cargo")
-            senha = st.text_input("Senha", type="password", placeholder="Senha de Acesso")
-
-            if st.button("ACESSAR", use_container_width=True):
-                hoje = date.today()
-                senha_mestra = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
-
-                if senha == senha_mestra and nome:
-                    st.session_state["autenticado"] = True
-                    st.session_state["usuario_nome"] = nome
-                    st.session_state["usuario_cargo"] = cargo
-                    st.rerun()
-                else:
-                    st.error("Dados incorretos.")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-    st.stop()
-
-# ==============================================================================
-# 4. TOPBAR OMNISFERA (SÓ HOME) — logo girando + badge + CSS seguro
-# ==============================================================================
-if IS_TEST_ENV:
-    card_bg, card_border, display_text, footer_visibility = (
-        "rgba(255, 220, 50, 0.95)",
-        "rgba(200, 160, 0, 0.5)",
-        "OMNISFERA | TESTE",
-        "visible",
-    )
-else:
-    card_bg, card_border, display_text, footer_visibility = (
-        "rgba(255, 255, 255, 0.85)",
-        "rgba(255, 255, 255, 0.6)",
-        f"OMNISFERA {APP_VERSION}",
-        "hidden",
-    )
+            st.markdown("<div class='ghost-btn'>", unsafe_allow_html=True)
+            if st.button("open", key=f"card_{r+i}", use_container_width=True):
+                go(dest)
+            st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown(
-    f"""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;600;700&display=swap');
-
-html, body, [class*="css"] {{
-  font-family: 'Nunito', sans-serif;
-  color: #2D3748;
-  background-color: #F7FAFC;
-}}
-
-.block-container {{
-  padding-top: 130px !important;
-  padding-bottom: 2rem !important;
-}}
-
-.logo-container {{
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 15px;
-
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%;
-  height: 90px;
-
-  background-color: rgba(247, 250, 252, 0.85);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-
-  z-index: 99999;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-  padding-left: 40px;
-  padding-top: 5px;
-}}
-
-.header-subtitle-text {{
-  font-family: 'Nunito', sans-serif;
-  font-weight: 600;
-  font-size: 1rem;
-  color: #718096;
-
-  border-left: 2px solid #CBD5E0;
-  padding-left: 15px;
-
-  height: 40px;
-  display: flex;
-  align-items: center;
-}}
-
-.logo-icon-spin {{
-  height: 75px;
-  width: auto;
-  animation: spin 45s linear infinite;
-}}
-.logo-text-static {{
-  height: 45px;
-  width: auto;
-}}
-
-.omni-badge {{
-  position: fixed;
-  top: 15px;
-  right: 15px;
-
-  background: {card_bg};
-  border: 1px solid {card_border};
-  backdrop-filter: blur(12px);
-
-  padding: 5px 15px;
-  min-width: 150px;
-  border-radius: 12px;
-
-  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-  z-index: 999990;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}}
-
-.omni-text {{
-  font-family: 'Inter', sans-serif;
-  font-weight: 800;
-  font-size: 0.6rem;
-  color: #2D3748;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-}}
-
-@keyframes spin {{
-  from {{ transform: rotate(0deg); }}
-  to {{ transform: rotate(360deg); }}
-}}
-
-/* Home visual */
-.dash-hero {{
-  background: radial-gradient(circle at top right, #0F52BA, #062B61);
-  border-radius: 16px;
-  margin: 10px 0 20px 0;
-  box-shadow: 0 10px 25px -5px rgba(15, 82, 186, 0.3);
-  color: white;
-  padding: 25px 35px;
-  display: flex;
-  align-items: center;
-  border: 1px solid rgba(255,255,255,0.1);
-  min-height: 100px;
-}}
-.hero-title {{
-  font-family: 'Inter', sans-serif;
-  font-weight: 700;
-  font-size: 1.5rem;
-  margin: 0;
-}}
-
-.nav-btn-card {{
-  background: white;
-  border-radius: 16px;
-  padding: 15px;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 130px;
-  position: relative;
-}}
-.nav-icon {{ height: 45px; width: auto; object-fit: contain; margin-bottom: 10px; }}
-.nav-desc {{ font-size: 0.75rem; color: #718096; font-weight: 500; }}
-
-.b-blue {{ border-bottom: 4px solid #3182CE; }}
-.b-purple {{ border-bottom: 4px solid #805AD5; }}
-.b-teal {{ border-bottom: 4px solid #38B2AC; }}
-
-[data-testid="stHeader"] {{
-  visibility: hidden !important;
-  height: 0px !important;
-}}
-footer {{
-  visibility: {footer_visibility} !important;
-}}
-</style>
-""",
-    unsafe_allow_html=True,
-)
-
-icone_b64 = get_base64_image("omni_icone.png")
-texto_b64 = get_base64_image("omni_texto.png")
-
-logo_icon_html = (
-    f'<img src="data:image/png;base64,{icone_b64}" class="logo-icon-spin">'
-    if icone_b64
-    else '<div style="width:75px;height:75px;border-radius:20px;display:flex;align-items:center;justify-content:center;background:white;border:1px solid #E2E8F0;">🌐</div>'
-)
-logo_text_html = (
-    f'<img src="data:image/png;base64,{texto_b64}" class="logo-text-static">'
-    if texto_b64
-    else '<div style="font-family:Inter,sans-serif;font-weight:800;font-size:1.2rem;color:#0F52BA;">OMNISFERA</div>'
-)
-
-st.markdown(
-    f"""
-<div class="logo-container">
-  {logo_icon_html}
-  {logo_text_html}
-  <div class="header-subtitle-text">Ecossistema de Inteligência Pedagógica</div>
-</div>
-<div class="omni-badge"><span class="omni-text">{display_text}</span></div>
-""",
-    unsafe_allow_html=True,
-)
-
-# ==============================================================================
-# 5. HOME (conteúdo)
-# ==============================================================================
-
-# Sidebar
-with st.sidebar:
-    st.markdown(f"**👤 {st.session_state.get('usuario_nome', '')}**")
-    st.caption(st.session_state.get("usuario_cargo", ""))
-    st.markdown("---")
-    if st.button("Sair"):
-        st.session_state["autenticado"] = False
-        st.rerun()
-
-# Hero
-primeiro_nome = ""
-try:
-    primeiro_nome = st.session_state.get("usuario_nome", "").split()[0]
-except Exception:
-    primeiro_nome = ""
-
-st.markdown(
-    f"""<div class="dash-hero"><div class="hero-title">Olá, {primeiro_nome}!</div></div>""",
-    unsafe_allow_html=True,
-)
-
-# Ferramentas (Cards)
-st.markdown("### 🚀 Acesso Rápido")
-c1, c2, c3 = st.columns(3)
-
-def render_card_func(col, img_b64, desc, key, path, border):
-    with col:
-        img_html = (
-            f'<img src="data:image/png;base64,{img_b64}" class="nav-icon">'
-            if img_b64
-            else '<div style="font-size:2.2rem; line-height:1;">🌐</div>'
-        )
-        st.markdown(
-            f"""<div class="nav-btn-card {border}">{img_html}<div class="nav-desc">{desc}</div></div>""",
-            unsafe_allow_html=True,
-        )
-        if st.button("Acessar", key=key, use_container_width=True):
-            if st.session_state.dados.get("nome"):
-                st.switch_page(path)
-            else:
-                st.toast("⚠️ Selecione um aluno abaixo primeiro!", icon="👇")
-                time.sleep(0.3)
-
-render_card_func(c1, get_base64_image("360.png"), "Plano de Ensino (PEI)", "btn_pei", "pages/1_PEI.py", "b-blue")
-render_card_func(c2, get_base64_image("pae.png"), "Sala de Recursos (PAEE)", "btn_paee", "pages/2_PAE.py", "b-purple")
-render_card_func(c3, get_base64_image("hub.png"), "Hub de Inclusão", "btn_hub", "pages/3_Hub_Inclusao.py", "b-teal")
-
-# --- LISTA DE ALUNOS (SUPABASE) ---
-st.markdown("---")
-st.markdown("### 🗄️ Banco de Estudantes (Supabase)")
-
-if st.session_state.dados.get("nome"):
-    st.success(f"✅ Aluno Ativo: **{st.session_state.dados['nome']}**")
-else:
-    st.info("👇 Selecione um aluno para começar ou vá ao PEI para criar um novo.")
-
-if not sb:
-    st.error("❌ Supabase não configurado. Verifique SUPABASE_URL e SUPABASE_ANON_KEY em st.secrets.")
-else:
-    colA, colB = st.columns([1, 3])
-    with colA:
-        if st.button("🔄 Recarregar lista", use_container_width=True):
-            st.session_state.banco_estudantes = sb_list_students()
-            st.rerun()
-    with colB:
-        ws = get_workspace_id()
-        if ws:
-            st.caption(f"Workspace ativo: {ws}")
-        else:
-            st.caption("Workspace_id não encontrado no session_state. Listando sem filtro de workspace.")
-
-    alunos = st.session_state.banco_estudantes or []
-    if not alunos:
-        st.warning("Nenhum aluno encontrado.")
-    else:
-        for i, aluno in enumerate(alunos):
-            nome = aluno.get("name", "")
-            if not nome:
-                continue
-
-            with st.container():
-                c_info, c_act = st.columns([4, 1])
-
-                with c_info:
-                    st.markdown(f"**{nome}** | {aluno.get('grade', '-')}")
-                    st.caption(f"Diagnóstico: {aluno.get('diagnosis', '---')}")
-
-                with c_act:
-                    if st.button("📂 Carregar", key=f"load_{i}", use_container_width=True):
-                        load_student_to_session(aluno)
-                        st.toast(f"Carregado: {nome}", icon="✅")
-                        time.sleep(0.2)
-                        st.rerun()
-
-                    if st.button("🗑️", key=f"del_{i}", type="secondary", use_container_width=True):
-                        ok, msg = sb_delete_student(aluno.get("id"))
-                        if ok:
-                            st.success(msg)
-                            st.session_state.banco_estudantes = sb_list_students()
-                            st.rerun()
-                        else:
-                            st.error(msg)
-
-                st.markdown("<hr style='margin:5px 0;'>", unsafe_allow_html=True)
-
-# Footer
-st.markdown(
-    "<div style='text-align: center; color: #CBD5E0; font-size: 0.7rem; margin-top: 40px;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>",
+    "<div style='text-align: center; color: #A0AEC0; font-weight:900; font-size: 0.72rem; margin-top: 44px;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>",
     unsafe_allow_html=True,
 )
