@@ -1,41 +1,36 @@
 # pages/Alunos.py
 import streamlit as st
-from datetime import date, datetime
+from datetime import datetime
+
 from supabase_client import get_supabase
 
 # ==============================================================================
-# 1) CONFIG
+# CONFIG
 # ==============================================================================
-APP_VERSION = "v1.1 (Estudantes • Gestão only)"
+st.set_page_config(page_title="Omnisfera • Estudantes", page_icon="👥", layout="wide")
 
-st.set_page_config(
-    page_title="Omnisfera • Estudantes",
-    page_icon="👥",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 
 # ==============================================================================
-# 2) GATE — NÃO AUTENTICA, SÓ BLOQUEIA SE NÃO HOUVER SESSÃO
+# GATE (SEM LOGIN AQUI) — só redireciona para o começo do app
 # ==============================================================================
 def acesso_bloqueado(msg: str):
     st.markdown(
         f"""
         <div style="
             max-width:520px;
-            margin: 120px auto;
-            padding: 28px;
+            margin: 110px auto 18px auto;
+            padding: 26px;
             background: white;
             border-radius: 18px;
             border: 1px solid #E2E8F0;
-            box-shadow: 0 20px 40px rgba(15,82,186,0.12);
+            box-shadow: 0 20px 40px rgba(15,82,186,0.10);
             text-align: center;
         ">
-            <div style="font-size:2.2rem; margin-bottom:10px;">🔐</div>
+            <div style="font-size:2.1rem; margin-bottom:10px;">🔐</div>
             <div style="font-weight:900; font-size:1.1rem; margin-bottom:6px; color:#0f172a;">
                 Acesso restrito
             </div>
-            <div style="color:#4A5568; font-weight:700; font-size:0.95rem; margin-bottom:18px;">
+            <div style="color:#4A5568; font-weight:700; font-size:0.95rem; margin-bottom:10px;">
                 {msg}
             </div>
         </div>
@@ -43,13 +38,31 @@ def acesso_bloqueado(msg: str):
         unsafe_allow_html=True,
     )
 
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
         if st.button("🔑 Voltar para o Login", use_container_width=True, type="primary"):
-            st.session_state.autenticado = False
-            st.session_state.workspace_id = None
-            st.session_state.workspace_name = None
-            st.rerun()
+            # limpa sessão essencial
+            for k in ["autenticado", "workspace_id", "workspace_name", "usuario_nome", "usuario_cargo"]:
+                st.session_state.pop(k, None)
+
+            # tenta voltar para o início (onde o router chama login_view)
+            try:
+                st.switch_page("streamlit_app.py")
+            except Exception:
+                # fallback super confiável: raiz do app
+                st.markdown(
+                    """
+                    <div style="text-align:center; margin-top:10px;">
+                      <a href="/" target="_self"
+                         style="display:inline-block; padding:10px 14px; border-radius:12px;
+                                background:#0F52BA; color:white; font-weight:900; text-decoration:none;">
+                        Clique aqui para voltar ao Login
+                      </a>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                st.stop()
     st.stop()
 
 
@@ -59,29 +72,16 @@ if not st.session_state.get("autenticado", False):
 if not st.session_state.get("workspace_id"):
     acesso_bloqueado("Nenhum workspace vinculado ao seu acesso (PIN).")
 
+
 WORKSPACE_ID = st.session_state.get("workspace_id")
-WORKSPACE_NAME = st.session_state.get("workspace_name", "")
+WORKSPACE_NAME = st.session_state.get("workspace_name") or f"{str(WORKSPACE_ID)[:8]}…"
+
 
 # ==============================================================================
-# 3) HELPERS
+# DATA
 # ==============================================================================
-def _parse_date(value):
-    if value is None:
-        return None
-    if isinstance(value, date) and not isinstance(value, datetime):
-        return value
-    if isinstance(value, datetime):
-        return value.date()
-    if isinstance(value, str):
-        try:
-            return date.fromisoformat(value[:10])
-        except:
-            return None
-    return None
-
-
-@st.cache_data(show_spinner=False, ttl=15)
-def supa_list_students(workspace_id: str):
+@st.cache_data(ttl=20, show_spinner=False)
+def list_students(workspace_id: str):
     sb = get_supabase()
     res = (
         sb.table("students")
@@ -93,140 +93,105 @@ def supa_list_students(workspace_id: str):
     return res.data or []
 
 
-def supa_delete_student(student_id: str):
+def delete_student(student_id: str):
     sb = get_supabase()
     sb.table("students").delete().eq("id", student_id).execute()
-    return True
+
+
+def _fmt_date(s):
+    if not s:
+        return "—"
+    # pode vir como "YYYY-MM-DD" ou ISO
+    try:
+        if isinstance(s, str) and "T" in s:
+            return s.split("T")[0]
+        if isinstance(s, str):
+            return s[:10]
+    except Exception:
+        pass
+    return "—"
 
 
 # ==============================================================================
-# 4) UI — HEADER
+# UI
 # ==============================================================================
-st.markdown(
-    f"""
-    <div style="
-        display:flex;
-        align-items:flex-start;
-        justify-content:space-between;
-        gap:16px;
-        padding: 18px 18px;
-        background: white;
-        border: 1px solid #E2E8F0;
-        border-radius: 18px;
-        box-shadow: 0 14px 30px rgba(15,82,186,0.06);
-        margin-bottom: 16px;
-    ">
-        <div>
-            <div style="font-family:Inter, sans-serif; font-weight:900; font-size:1.35rem; color:#0f172a;">
-                👥 Estudantes
-            </div>
-            <div style="margin-top:4px; font-weight:800; color:#64748B;">
-                Gestão do workspace (PIN) — {WORKSPACE_NAME if WORKSPACE_NAME else f"{str(WORKSPACE_ID)[:8]}…"}
-            </div>
-            <div style="margin-top:10px; font-weight:800; color:#94A3B8; font-size:.88rem;">
-                Aqui você apenas visualiza todos os estudantes criados no PEI deste workspace e pode apagar quando necessário.
-            </div>
-        </div>
-
-        <div style="min-width:220px; text-align:right;">
-            <div style="font-weight:900; font-size:.70rem; letter-spacing:1.2px; text-transform:uppercase; color:#94A3B8;">
-                Ações
-            </div>
-            <div style="margin-top:8px;">
-            </div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+st.title("👥 Estudantes")
+st.caption(f"Gestão do workspace (PIN) — **{WORKSPACE_NAME}**")
+st.write("Aqui você apenas visualiza os estudantes criados no PEI deste workspace e pode apagar quando necessário.")
 
 top_l, top_r = st.columns([3, 1])
+with top_l:
+    q = st.text_input("Buscar por nome", placeholder="Digite para filtrar…", label_visibility="visible")
 with top_r:
+    st.markdown("#### Ações")
     if st.button("🔄 Atualizar", use_container_width=True):
-        supa_list_students.clear()
+        list_students.clear()
         st.rerun()
 
-# ==============================================================================
-# 5) LISTA — TODOS DO WORKSPACE
-# ==============================================================================
 with st.spinner("Carregando estudantes..."):
-    alunos = supa_list_students(WORKSPACE_ID)
+    alunos = list_students(WORKSPACE_ID)
+
+# filtro
+if q and q.strip():
+    qq = q.strip().lower()
+    alunos = [a for a in alunos if (a.get("name") or "").lower().find(qq) >= 0]
+
+st.divider()
 
 if not alunos:
     st.info("Nenhum estudante encontrado neste workspace ainda. Crie um PEI para começar.")
     st.stop()
 
-# Filtro (opcional, ajuda muito na gestão)
-q = st.text_input("Buscar por nome", placeholder="Digite para filtrar…")
-q_norm = (q or "").strip().lower()
-if q_norm:
-    alunos = [a for a in alunos if (a.get("name") or "").lower().find(q_norm) >= 0]
+st.caption(f"**{len(alunos)}** estudante(s) exibido(s).")
 
-st.caption(f"{len(alunos)} estudante(s) exibido(s).")
-
-# Cabeçalho tabela
-h = st.columns([3, 1.2, 1.2, 2.6, 1.2])
+# Cabeçalho
+h = st.columns([3.2, 1.1, 1.1, 2.6, 1.1])
 h[0].markdown("**Nome**")
 h[1].markdown("**Série**")
 h[2].markdown("**Turma**")
 h[3].markdown("**Diagnóstico**")
 h[4].markdown("**Ações**")
-st.markdown("<hr style='margin:6px 0 10px 0; border:none; border-top:1px solid #E2E8F0;'>", unsafe_allow_html=True)
+st.divider()
 
-# Lista
-for row in alunos:
-    sid = row.get("id")
-    nome = row.get("name") or "—"
-    serie = row.get("grade") or "—"
-    turma = row.get("class_group") or "—"
-    diag = row.get("diagnosis") or "—"
+for a in alunos:
+    sid = a.get("id")
+    nome = a.get("name") or "—"
+    serie = a.get("grade") or "—"
+    turma = a.get("class_group") or "—"
+    diag = a.get("diagnosis") or "—"
 
-    cols = st.columns([3, 1.2, 1.2, 2.6, 1.2])
-    with cols[0]:
-        st.markdown(f"**{nome}**")
-    with cols[1]:
-        st.write(serie)
-    with cols[2]:
-        st.write(turma)
-    with cols[3]:
-        st.write(diag)
+    row = st.columns([3.2, 1.1, 1.1, 2.6, 1.1])
+    row[0].markdown(f"**{nome}**")
+    row[1].write(serie)
+    row[2].write(turma)
+    row[3].write(diag)
 
-    with cols[4]:
-        confirm_key = f"confirm_del_{sid}"
-        if confirm_key not in st.session_state:
-            st.session_state[confirm_key] = False
+    confirm_key = f"confirm_del_{sid}"
+    if confirm_key not in st.session_state:
+        st.session_state[confirm_key] = False
 
+    with row[4]:
         if not st.session_state[confirm_key]:
-            if st.button("🗑️ Apagar", key=f"del_{sid}", use_container_width=True):
+            if st.button("🗑️", key=f"del_{sid}", use_container_width=True, help="Apagar estudante"):
                 st.session_state[confirm_key] = True
                 st.rerun()
         else:
             st.warning("Confirmar?")
-            c_ok, c_no = st.columns(2)
-            with c_ok:
-                if st.button("✅", key=f"del_yes_{sid}", use_container_width=True):
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("✅", key=f"yes_{sid}", use_container_width=True):
                     try:
-                        supa_delete_student(sid)
-                        st.toast(f"Removido: {nome}", icon="🗑️")
-                        supa_list_students.clear()
+                        delete_student(sid)
+                        list_students.clear()
                         st.session_state[confirm_key] = False
+                        st.toast(f"Removido: {nome}", icon="🗑️")
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Erro ao apagar: {e}")
                         st.session_state[confirm_key] = False
-            with c_no:
-                if st.button("↩️", key=f"del_no_{sid}", use_container_width=True):
+                        st.error(f"Erro ao apagar: {e}")
+            with c2:
+                if st.button("↩️", key=f"no_{sid}", use_container_width=True):
                     st.session_state[confirm_key] = False
                     st.rerun()
 
-    st.markdown("<hr style='margin:8px 0; border:none; border-top:1px solid #F1F5F9;'>", unsafe_allow_html=True)
-
-# ==============================================================================
-# 6) FOOTER
-# ==============================================================================
-st.markdown(
-    "<div style='text-align:center; color:#94A3B8; font-weight:800; font-size:0.75rem; margin-top:30px;'>"
-    "Estudantes exibidos são sempre do workspace do PIN atual."
-    "</div>",
-    unsafe_allow_html=True,
-)
+    st.markdown("<hr style='margin:8px 0; border:none; border-top:1px solid #EEF2F7;'>", unsafe_allow_html=True)
