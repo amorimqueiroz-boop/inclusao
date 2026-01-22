@@ -35,16 +35,15 @@ def b64(path):
     return ""
 
 ICON = next((b64(f) for f in ["omni_icone.png","omni.png","logo.png"] if b64(f)), "")
-# TEXT asset não será mais o foco principal no topo, usaremos texto elegante no card
+TEXT = b64("omni_texto.png")
 
 # ==============================================================================
-# CSS GLOBAL (Nunito + Playfair Display)
+# CSS GLOBAL (Nunito)
 # ==============================================================================
 def inject_css():
     st.markdown("""
     <style>
-    /* Importando Nunito (Interface) e Playfair Display (Elegante) */
-    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Nunito', sans-serif;
@@ -56,102 +55,84 @@ def inject_css():
     .wrap { 
         max-width: 480px; 
         margin: auto; 
-        padding-top: 60px; 
+        padding-top: 40px; 
         padding-bottom: 60px;
     }
 
-    /* Logo (Ícone apenas, girando) */
-    .brand-icon {
+    /* Logo Centralizada */
+    .brand {
         display:flex;
-        justify-content: center;
-        margin-bottom: 30px;
+        align-items:center;
+        justify-content: center; /* Centraliza horizontalmente */
+        gap:16px;
+        margin-bottom: 24px;
     }
 
     .logoSpin img {
-        width: 70px; /* Um pouco maior */
-        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-        animation: spin 20s linear infinite;
+        width:58px;
+        animation: spin 12s linear infinite;
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Subtítulo discreto fora do card */
-    .subtitle-outsider {
-        text-align: center;
+    .logoText img {
+        height: 42px;
+    }
+
+    .subtitle {
+        text-align: center; /* Texto centralizado */
         margin-bottom: 20px;
-        font-weight: 600;
-        color: #94A3B8;
-        font-size: 14px;
-        letter-spacing: 0.5px;
+        font-weight:700;
+        color:#64748B;
+        font-size:15px;
     }
 
     /* Cartão de Login */
     .card {
-        background: white;
-        border-radius: 24px;
-        border: 1px solid #F1F5F9;
-        padding: 40px 30px;
-        box-shadow: 0 20px 50px -10px rgba(15, 23, 42, 0.08);
+        background:white;
+        border-radius:20px;
+        border:1px solid #E2E8F0;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(15,23,42,.06);
     }
 
-    /* Título Elegante (Omnisfera) */
-    .card-title-elegant {
-        font-family: 'Playfair Display', serif; /* Fonte Elegante */
-        font-weight: 700;
-        font-size: 32px;
-        color: #1E293B;
+    .card-h {
+        font-weight:900;
+        font-size:18px;
+        color:#062B61;
+        margin-bottom: 20px;
         text-align: center;
-        margin-bottom: 8px;
-        letter-spacing: -0.5px;
-    }
-    
-    .card-sub-elegant {
-        text-align: center;
-        color: #64748B;
-        font-size: 14px;
-        margin-bottom: 30px;
     }
 
-    /* Termo de Confidencialidade (Caixa Sutil) */
+    /* Termo de Confidencialidade (Caixa de Rolagem) */
     .termo-box {
         background-color: #F8FAFC; 
         padding: 15px; 
-        border-radius: 12px;
+        border-radius: 10px;
         height: 120px; 
         overflow-y: auto; 
-        font-size: 12.5px;
+        font-size: 13px;
         border: 1px solid #E2E8F0; 
-        margin: 20px 0 15px 0;
+        margin: 15px 0;
         text-align: justify; 
         color: #475569;
-        line-height: 1.6;
+        line-height: 1.5;
     }
-
-    /* Scrollbar fina para o termo */
-    .termo-box::-webkit-scrollbar { width: 4px; }
-    .termo-box::-webkit-scrollbar-thumb { background: #CBD5E0; border-radius: 4px; }
 
     .err {
         margin-top:12px;
         padding:12px;
-        border-radius:12px;
-        background:#FEF2F2;
-        border:1px solid #FECACA;
-        color:#991B1B;
-        font-weight:700;
-        font-size: 14px;
+        border-radius:14px;
+        background:#FEE2E2;
+        border:1px solid #FCA5A5;
+        color:#7F1D1D;
+        font-weight:900;
         text-align: center;
     }
     
-    /* Inputs mais limpos */
+    /* Ajuste inputs */
     div[data-testid="stTextInput"] input {
         border-radius: 10px;
-        border: 1px solid #E2E8F0;
-        padding-left: 12px;
-    }
-    div[data-testid="stTextInput"] input:focus {
-        border-color: #94A3B8;
-        box-shadow: none;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -163,31 +144,27 @@ def render_login():
     hide_streamlit()
     inject_css()
 
-    # Container Principal
+    # Container Principal Centralizado
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
-    # 1. Apenas o Ícone Girando fora (Centralizado)
+    # 1. Logo Centralizada
     st.markdown(f"""
-    <div class="brand-icon">
+    <div class="brand">
         <div class="logoSpin"><img src="data:image/png;base64,{ICON}"></div>
+        <div class="logoText"><img src="data:image/png;base64,{TEXT}"></div>
     </div>
+    <div class="subtitle">Identifique-se para acessar seu workspace</div>
     """, unsafe_allow_html=True)
 
     # 2. Cartão de Login
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    
-    # Título Elegante "Omnisfera" (Sem caixa, fonte serifada)
-    st.markdown("""
-    <div class="card-title-elegant">Omnisfera</div>
-    <div class="card-sub-elegant">Acesso seguro ao workspace</div>
-    """, unsafe_allow_html=True)
     
     # Inputs
     nome = st.text_input("Seu nome")
     cargo = st.text_input("Sua função")
     pin = st.text_input("PIN do Workspace", type="password")
 
-    # 3. Termo de Confidencialidade
+    # 3. Termo de Confidencialidade (Caixa Restaurada)
     st.markdown("""
     <div class="termo-box">
         <strong>1. Confidencialidade:</strong> O usuário compromete-se a não inserir dados reais sensíveis (nomes completos, documentos) que identifiquem estudantes, exceto em ambiente seguro autorizado pela instituição.<br><br>
@@ -210,11 +187,13 @@ def render_login():
         if len(pin) == 8 and "-" not in pin:
             pin = pin[:4] + "-" + pin[4:]
 
+        # Validação via RPC
         ws = rpc_workspace_from_pin(pin)
         
         if not ws:
             st.markdown("<div class='err'>PIN inválido ou workspace não encontrado.</div>", unsafe_allow_html=True)
         else:
+            # Sucesso
             st.session_state.usuario_nome = nome
             st.session_state.usuario_cargo = cargo
             st.session_state.autenticado = True
@@ -224,10 +203,10 @@ def render_login():
 
     st.markdown('</div>', unsafe_allow_html=True) # Fim Card
     
-    # Rodapé discreto
+    # Info técnica discreta
     st.markdown(f"""
-    <div style="text-align:center; margin-top:20px; color:#CBD5E1; font-size:11px; font-weight:500;">
-        SECURE LOGIN • RPC: {RPC_NAME}
+    <div style="text-align:center; margin-top:20px; color:#94A3B8; font-size:12px;">
+        RPC: <code>{RPC_NAME}</code>
     </div>
     """, unsafe_allow_html=True)
 
