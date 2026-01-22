@@ -59,80 +59,90 @@ def inject_css():
         padding-bottom: 60px;
     }
 
-    /* Logo Centralizada */
+    /* Logo Centralizada (Ícone EM CIMA do Texto) */
     .brand {
         display:flex;
+        flex-direction: column; /* Ícone acima, texto abaixo */
         align-items:center;
-        justify-content: center; /* Centraliza horizontalmente */
-        gap:16px;
+        justify-content: center;
+        gap: 12px;
         margin-bottom: 24px;
     }
 
     .logoSpin img {
-        width:58px;
+        width: 70px; /* Proporção Aumentada */
         animation: spin 12s linear infinite;
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .logoText img {
-        height: 42px;
+        height: 38px; /* Texto equilibrado */
     }
 
     .subtitle {
-        text-align: center; /* Texto centralizado */
+        text-align: center;
         margin-bottom: 20px;
-        font-weight:700;
-        color:#64748B;
-        font-size:15px;
+        font-weight: 700;
+        color: #64748B;
+        font-size: 15px;
     }
 
     /* Cartão de Login */
     .card {
-        background:white;
-        border-radius:20px;
-        border:1px solid #E2E8F0;
+        background: white;
+        border-radius: 20px;
+        border: 1px solid #E2E8F0;
         padding: 30px;
         box-shadow: 0 10px 40px rgba(15,23,42,.06);
     }
 
-    .card-h {
-        font-weight:900;
-        font-size:18px;
-        color:#062B61;
-        margin-bottom: 20px;
-        text-align: center;
+    /* Inputs Elegantes */
+    div[data-testid="stTextInput"] input {
+        border-radius: 12px;
+        border: 1px solid #CBD5E1;
+        background-color: #F8FAFC;
+        color: #334155;
+        padding: 10px 12px;
+    }
+    div[data-testid="stTextInput"] input:focus {
+        border-color: #94A3B8;
+        background-color: #FFFFFF;
+        box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.2);
     }
 
-    /* Termo de Confidencialidade (Caixa de Rolagem) */
+    /* Termo de Confidencialidade */
     .termo-box {
         background-color: #F8FAFC; 
         padding: 15px; 
-        border-radius: 10px;
+        border-radius: 12px;
         height: 120px; 
         overflow-y: auto; 
         font-size: 13px;
         border: 1px solid #E2E8F0; 
-        margin: 15px 0;
+        margin: 20px 0 15px 0;
         text-align: justify; 
         color: #475569;
         line-height: 1.5;
     }
 
     .err {
-        margin-top:12px;
-        padding:12px;
-        border-radius:14px;
-        background:#FEE2E2;
-        border:1px solid #FCA5A5;
-        color:#7F1D1D;
-        font-weight:900;
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 14px;
+        background: #FEE2E2;
+        border: 1px solid #FCA5A5;
+        color: #7F1D1D;
+        font-weight: 900;
         text-align: center;
     }
     
-    /* Ajuste inputs */
-    div[data-testid="stTextInput"] input {
-        border-radius: 10px;
+    /* Botão */
+    div[data-testid="stButton"] button {
+        width: 100%;
+        border-radius: 12px;
+        font-weight: 800;
+        padding: 0.5rem 1rem;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -144,10 +154,10 @@ def render_login():
     hide_streamlit()
     inject_css()
 
-    # Container Principal Centralizado
+    # Container Principal
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
-    # 1. Logo Centralizada
+    # 1. Logo Centralizada (Ícone acima do Texto)
     st.markdown(f"""
     <div class="brand">
         <div class="logoSpin"><img src="data:image/png;base64,{ICON}"></div>
@@ -159,12 +169,12 @@ def render_login():
     # 2. Cartão de Login
     st.markdown('<div class="card">', unsafe_allow_html=True)
     
-    # Inputs
-    nome = st.text_input("Seu nome")
-    cargo = st.text_input("Sua função")
-    pin = st.text_input("PIN do Workspace", type="password")
+    # Inputs (Sem labels visíveis, usando placeholder para limpeza se preferir, ou label discreto)
+    nome = st.text_input("Seu nome", placeholder="Nome completo")
+    cargo = st.text_input("Sua função", placeholder="Ex: Professor, Coordenador")
+    pin = st.text_input("PIN do Workspace", type="password", placeholder="****")
 
-    # 3. Termo de Confidencialidade (Caixa Restaurada)
+    # 3. Termo de Confidencialidade
     st.markdown("""
     <div class="termo-box">
         <strong>1. Confidencialidade:</strong> O usuário compromete-se a não inserir dados reais sensíveis (nomes completos, documentos) que identifiquem estudantes, exceto em ambiente seguro autorizado pela instituição.<br><br>
@@ -205,8 +215,8 @@ def render_login():
     
     # Info técnica discreta
     st.markdown(f"""
-    <div style="text-align:center; margin-top:20px; color:#94A3B8; font-size:12px;">
-        RPC: <code>{RPC_NAME}</code>
+    <div style="text-align:center; margin-top:20px; color:#CBD5E1; font-size:11px; font-weight:500;">
+        SECURE LOGIN • RPC: {RPC_NAME}
     </div>
     """, unsafe_allow_html=True)
 
