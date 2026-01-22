@@ -18,18 +18,17 @@ def _get_secret(name: str) -> str | None:
 
 
 @st.cache_resource(show_spinner=False)
-def get_supabase():
+def _create_supabase_client():
     """
-    Cria e mantém UM cliente Supabase para o app inteiro.
-    BLINDADO contra import error e secrets faltando.
+    Cria um client Supabase (cacheado no app).
+    NÃO depende de session_state.
     """
     try:
         from supabase import create_client  # type: ignore
     except Exception as e:
-        # Erro comum: pacote não instalado no Streamlit Cloud
         raise RuntimeError(
             "Pacote 'supabase' não encontrado.\n"
-            "➡️ Adicione no requirements.txt: supabase==2.* (ou supabase-py compatível)\n"
+            "➡️ requirements.txt precisa ter: supabase==2.*\n"
             f"Detalhe: {e}"
         )
 
@@ -45,22 +44,20 @@ def get_supabase():
     return create_client(url, key)
 
 
-def ensure_supabase_in_session() -> object:
+def get_sb():
     """
-    GARANTE que o client Supabase exista também em st.session_state["sb"].
-
-    Por quê:
-    - Você usa get_supabase() (cache_resource), mas o seu _cloud_ready() checa
-      especificamente st.session_state.get("sb").
-    - Então precisamos sincronizar cache -> session_state.
-
-    Use:
-    - Após login bem sucedido (autenticado=True)
-    - Antes de qualquer ação de nuvem (sync/save)
+    Garante que o client Supabase exista e fique acessível em:
+    st.session_state["sb"]
     """
-    if st.session_state.get("sb") is None:
-        st.session_state["sb"] = get_supabase()
-    return st.session_state["sb"]
+    try:
+        sb = _create_supabase_client()
+        st.session_state["sb"] = sb
+        st.session_state.pop("sb_error", None)
+        return sb
+    except Exception as e:
+        st.session_state["sb"] = None
+        st.session_state["sb_error"] = str(e)
+        raise
 
 
 def rpc_workspace_from_pin(pin: str) -> dict | None:
@@ -69,7 +66,7 @@ def rpc_workspace_from_pin(pin: str) -> dict | None:
     public.workspace_from_pin(p_pin text)
     Retorna: { id, name } ou None
     """
-    sb = get_supabase()
+    sb = _create_supabase_client()
     res = sb.rpc(RPC_NAME, {"p_pin": pin}).execute()
 
     data = res.data
