@@ -8,7 +8,7 @@ import time
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v141.0 (Navegação Livre)"
+APP_VERSION = "v142.0 (Portal Omnisfera)"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -26,12 +26,13 @@ st.set_page_config(
 # 2. GATE DE ACESSO
 # ==============================================================================
 def acesso_bloqueado(msg: str):
+    # HTML Flush (sem indentação) para evitar bug de renderização
     html_error = f"""
-<div style="display:flex; justify-content:center; align-items:center; height:80vh;">
-<div style="text-align:center; padding:40px; background:white; border-radius:24px; box-shadow:0 20px 60px rgba(0,0,0,0.08); max-width:480px; border:1px solid #E2E8F0;">
-<div style="font-size:4rem; margin-bottom:10px;">🔒</div>
-<h2 style="color:#1E293B; margin-bottom:10px; font-family:'Inter',sans-serif;">Acesso Restrito</h2>
-<p style="color:#64748B; margin-bottom:30px;">{msg}</p>
+<div style="display:flex; justify-content:center; align-items:center; height:70vh;">
+<div style="text-align:center; padding:40px; background:white; border-radius:24px; box-shadow:0 10px 40px rgba(0,0,0,0.08); max-width:480px; border:1px solid #E2E8F0;">
+<div style="font-size:3rem; margin-bottom:15px;">🔐</div>
+<h3 style="color:#1E293B; margin-bottom:10px; font-family:'Inter',sans-serif;">Acesso Restrito</h3>
+<p style="color:#64748B; margin-bottom:25px;">{msg}</p>
 </div>
 </div>
 """
@@ -39,20 +40,20 @@ def acesso_bloqueado(msg: str):
     
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
-        if st.button("🔑 Voltar para Login", type="primary", use_container_width=True):
+        if st.button("Ir para Login", type="primary", use_container_width=True):
             st.session_state.autenticado = False
             st.session_state.workspace_id = None
             st.rerun()
     st.stop()
 
 if not st.session_state.get("autenticado", False):
-    acesso_bloqueado("Sessão finalizada. Por favor, faça login novamente.")
+    acesso_bloqueado("Sua sessão expirou.")
 
 if not st.session_state.get("workspace_id"):
     acesso_bloqueado("Workspace não identificado.")
 
 # ==============================================================================
-# 3. HELPERS & STATE
+# 3. HELPERS
 # ==============================================================================
 if "dados" not in st.session_state:
     st.session_state.dados = {"nome": "", "nasc": date(2015, 1, 1), "serie": None, "turma": "", "diagnostico": "", "student_id": None}
@@ -66,7 +67,7 @@ def escola_vinculada() -> str:
     return st.session_state.get("workspace_name") or st.session_state.get("workspace_id", "")[:8]
 
 # ==============================================================================
-# 4. CSS (DESIGN SYSTEM PRO)
+# 4. CSS (DESIGN SYSTEM PORTAL)
 # ==============================================================================
 st.markdown("""
 <style>
@@ -76,25 +77,24 @@ st.markdown("""
 html, body, [class*="css"] {
     font-family: 'Plus Jakarta Sans', sans-serif;
     color: #1E293B;
-    background-color: #F1F5F9;
+    background-color: #F8FAFC;
 }
 
+/* Limpeza UI Streamlit */
 [data-testid="stSidebarNav"] { display: none !important; }
 [data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
 .block-container { 
     padding-top: 80px !important; 
-    padding-bottom: 2rem !important; 
-    max-width: 1400px !important; 
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
+    padding-bottom: 3rem !important; 
+    max-width: 1300px !important; 
 }
 
 /* TOPBAR */
 .topbar {
     position: fixed; top: 0; left: 0; right: 0; height: 64px;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    border-bottom: 1px solid #E2E8F0;
     z-index: 9999;
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 32px;
@@ -105,92 +105,78 @@ html, body, [class*="css"] {
 .user-area { display: flex; align-items: center; gap: 16px; }
 .workspace-badge { 
     background: #F1F5F9; padding: 4px 10px; border-radius: 6px; 
-    font-size: 0.75rem; font-weight: 600; color: #475569; border: 1px solid #E2E8F0;
-}
-.user-avatar {
-    width: 32px; height: 32px; border-radius: 50%; background: #3B82F6; color: white;
-    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;
+    font-size: 0.75rem; font-weight: 700; color: #64748B; border: 1px solid #E2E8F0; text-transform: uppercase;
 }
 
-/* HERO SECTION */
-.welcome-card {
-    background: white;
+/* HERO */
+.hero-portal {
+    background: linear-gradient(120deg, #1E40AF 0%, #2563EB 100%);
     border-radius: 20px;
-    padding: 32px;
-    border: 1px solid #E2E8F0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-    margin-bottom: 32px;
-    display: flex; justify-content: space-between; align-items: center;
+    padding: 36px 40px;
+    color: white;
+    box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.4);
+    margin-bottom: 40px;
+    display: flex; flex-direction: column; gap: 8px;
+    position: relative; overflow: hidden;
 }
-.welcome-text h1 { margin: 0; font-size: 1.8rem; font-weight: 800; color: #0F172A; letter-spacing: -0.02em; }
-.welcome-text p { margin: 4px 0 0 0; color: #64748B; font-size: 0.95rem; }
-
-.quick-actions { display: flex; gap: 12px; }
-.action-btn-mock {
-    background: #EFF6FF; color: #2563EB; border: 1px solid #DBEAFE;
-    padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; font-weight: 600;
-    display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;
+.hero-portal::before {
+    content: ""; position: absolute; top: -50px; right: -50px; width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    border-radius: 50%; pointer-events: none;
 }
-.action-btn-mock:hover { background: #DBEAFE; transform: translateY(-1px); }
+.hero-title { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 1.8rem; margin: 0; }
+.hero-quote { font-size: 1.05rem; opacity: 0.9; font-style: italic; max-width: 800px; line-height: 1.6; }
 
-/* CARDS */
-.module-card {
-    background: white;
-    border-radius: 16px;
-    padding: 24px;
-    border: 1px solid #E2E8F0;
-    height: 100%; min-height: 160px;
-    position: relative;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+/* MODULE CARDS */
+.mod-card {
+    background: white; border-radius: 16px; padding: 24px;
+    border: 1px solid #E2E8F0; height: 100%; min-height: 150px;
+    position: relative; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex; flex-direction: column; justify-content: space-between;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
 }
-.module-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
-    border-color: #CBD5E1;
+.mod-card:hover {
+    transform: translateY(-4px); box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08); border-color: #CBD5E1;
 }
 .mod-icon {
-    width: 48px; height: 48px; border-radius: 12px;
+    width: 44px; height: 44px; border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 24px; margin-bottom: 16px;
+    font-size: 22px; margin-bottom: 16px;
 }
-.mod-title { font-weight: 700; font-size: 1.1rem; color: #1E293B; margin-bottom: 4px; }
+.mod-title { font-weight: 700; font-size: 1.05rem; color: #1E293B; margin-bottom: 4px; }
 .mod-desc { font-size: 0.85rem; color: #64748B; line-height: 1.4; }
-.mod-arrow { 
-    position: absolute; top: 24px; right: 24px; 
-    color: #CBD5E1; transition: all 0.2s; 
-}
-.module-card:hover .mod-arrow { color: #3B82F6; transform: translateX(2px); }
-
-/* WIDGETS */
-.widget-card {
-    background: white; border-radius: 16px; padding: 20px;
-    border: 1px solid #E2E8F0; margin-bottom: 20px;
-}
-.widget-title {
-    font-size: 0.85rem; font-weight: 700; color: #94A3B8; 
-    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;
-}
-.timeline-item { display: flex; gap: 12px; margin-bottom: 16px; }
-.tl-dot {
-    width: 8px; height: 8px; border-radius: 50%; background: #CBD5E1;
-    margin-top: 6px; flex-shrink: 0;
-}
-.tl-content { font-size: 0.85rem; color: #475569; }
-.tl-time { font-size: 0.75rem; color: #94A3B8; margin-top: 2px; }
-
-.bg-indigo { background: #EEF2FF; color: #4F46E5; }
-.bg-blue { background: #EFF6FF; color: #2563EB; }
-.bg-purple { background: #FAF5FF; color: #9333EA; }
-.bg-teal { background: #F0FDFA; color: #0D9488; }
-.bg-slate { background: #F8FAFC; color: #64748B; }
-
-.ghost-btn button {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    opacity: 0; z-index: 10; cursor: pointer;
+.mod-cta {
+    font-size: 0.8rem; font-weight: 700; margin-top: 15px; display: flex; align-items: center; gap: 5px;
+    padding-top: 15px; border-top: 1px solid #F1F5F9;
 }
 
+/* INFO CARDS (FUNDAMENTOS) */
+.info-section { margin-top: 40px; margin-bottom: 20px; }
+.info-header { font-size: 1.2rem; font-weight: 800; color: #1E293B; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+.info-box {
+    background: white; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0;
+    margin-bottom: 15px;
+}
+.info-title { font-weight: 700; color: #0F172A; margin-bottom: 8px; font-size: 1rem; }
+.info-text { font-size: 0.9rem; color: #475569; line-height: 1.6; }
+.highlight { color: #2563EB; font-weight: 600; }
+
+/* RESOURCE LINKS */
+.res-card {
+    background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px;
+    display: flex; align-items: center; gap: 12px; transition: all 0.2s;
+}
+.res-card:hover { background: white; border-color: #CBD5E1; transform: translateY(-2px); }
+.res-icon { font-size: 1.5rem; color: #64748B; }
+.res-text { font-weight: 600; color: #1E293B; font-size: 0.9rem; }
+
+/* THEMES */
+.t-indigo { background: #EEF2FF; color: #4F46E5; }
+.t-blue { background: #EFF6FF; color: #2563EB; }
+.t-purple { background: #FAF5FF; color: #9333EA; }
+.t-teal { background: #F0FDFA; color: #0D9488; }
+.t-slate { background: #F8FAFC; color: #64748B; }
+
+.ghost-btn button { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; z-index: 10; cursor: pointer; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
 </style>
 """, unsafe_allow_html=True)
@@ -213,121 +199,176 @@ st.markdown(f"""
     </div>
     <div class="user-area">
         <div class="workspace-badge">{workspace_name}</div>
-        <div class="user-avatar">{iniciais}</div>
+        <div style="font-weight:600; color:#1E293B; font-size:0.9rem;">{usuario_nome.split()[0]}</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 6. CONTEÚDO PRINCIPAL
+# 6. SIDEBAR (Navegação Auxiliar)
+# ==============================================================================
+with st.sidebar:
+    st.markdown("### 🧭 Navegação")
+    # Nota: Usando 'pages/0_Alunos.py' baseado na lista de arquivos. Ajuste se necessário.
+    if st.button("👥 Alunos", use_container_width=True): st.switch_page("pages/0_Alunos.py")
+    
+    c1, c2 = st.columns(2)
+    with c1: 
+        if st.button("📘 PEI", use_container_width=True): st.switch_page("pages/1_PEI.py")
+    with c2: 
+        if st.button("🧩 PAEE", use_container_width=True): st.switch_page("pages/2_PAE.py")
+    
+    if st.button("🚀 Hub", use_container_width=True): st.switch_page("pages/3_Hub_Inclusao.py")
+    
+    st.markdown("---")
+    if st.button("Sair", use_container_width=True):
+        st.session_state.autenticado = False
+        st.rerun()
+
+# ==============================================================================
+# 7. CONTEÚDO PRINCIPAL
 # ==============================================================================
 
-# Hero Section
-dt_now = datetime.now()
-saudacao = "Bom dia" if 5 <= dt_now.hour < 12 else "Boa tarde" if 12 <= dt_now.hour < 18 else "Boa noite"
+# HERO (Inspiracional)
+frase_inclusao = "A inclusão não é sobre inserir pessoas em moldes pré-existentes, mas sobre transformar o ambiente para que todos possam pertencer."
 
 st.markdown(f"""
-<div class="welcome-card">
-    <div class="welcome-text">
-        <h1>{saudacao}, {usuario_nome.split()[0]}!</h1>
-        <p>Aqui está o resumo das suas atividades de inclusão hoje.</p>
-    </div>
-    <div class="quick-actions">
-        <div class="action-btn-mock"><i class="ri-add-circle-line"></i> Novo Aluno</div>
-        <div class="action-btn-mock"><i class="ri-file-edit-line"></i> Anotação</div>
-    </div>
+<div class="hero-portal">
+    <div class="hero-title">Olá, {usuario_nome.split()[0]}!</div>
+    <div class="hero-quote">"{frase_inclusao}"</div>
 </div>
 """, unsafe_allow_html=True)
 
-# Layout: 70% Módulos | 30% Sidebar Widgets
-col_main, col_side = st.columns([2.5, 1], gap="medium")
+# MÓDULOS (Grid Principal)
+st.markdown("### 🚀 Acesso aos Módulos")
 
-# --- ESQUERDA: MÓDULOS ---
-with col_main:
-    st.markdown("### 🚀 Seus Módulos", unsafe_allow_html=True)
-    
-    def draw_module(title, desc, icon, color_cls, page_path, key):
-        # HTML do Card
-        html = f"""
-<div class="module-card">
-<div class="mod-icon {color_cls}"><i class="{icon}"></i></div>
-<div class="mod-arrow"><i class="ri-arrow-right-up-line"></i></div>
+def render_module(title, desc, icon, theme, page_path, key):
+    # HTML SEM indentação interna para evitar bugs
+    html = f"""
+<div class="mod-card">
+<div class="mod-icon {theme}"><i class="{icon}"></i></div>
 <div>
 <div class="mod-title">{title}</div>
 <div class="mod-desc">{desc}</div>
 </div>
+<div class="mod-cta" style="color:inherit">Acessar <i class="ri-arrow-right-line"></i></div>
 </div>
 """
-        st.markdown(html, unsafe_allow_html=True)
-        
-        # Botão Fantasma (AGORA SEM RESTRIÇÃO)
-        st.markdown(f'<div class="ghost-btn">', unsafe_allow_html=True)
-        if st.button(f"btn_{key}", key=key):
-            # AQUI ESTÁ A MUDANÇA: Navegação direta, sem verificar aluno
-            st.switch_page(page_path)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    # Grid de Módulos
-    g1, g2 = st.columns(2, gap="medium")
+    st.markdown(html, unsafe_allow_html=True)
     
-    with g1:
-        draw_module("Estudantes", "Gestão de cadastro e histórico clínico.", "ri-group-line", "bg-indigo", "pages/0_Alunos.py", "m_alunos")
-        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-        draw_module("Plano de Ação (PAEE)", "Sala de recursos e intervenções.", "ri-puzzle-2-line", "bg-purple", "pages/2_PAE.py", "m_pae")
-        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-        draw_module("Diário de Bordo", "Registro diário de evidências.", "ri-file-list-3-line", "bg-slate", "pages/4_Diario_de_Bordo.py", "m_diario")
+    st.markdown(f'<div class="ghost-btn">', unsafe_allow_html=True)
+    if st.button(f"btn_{key}", key=key):
+        st.switch_page(page_path)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    with g2:
-        draw_module("Estratégias & PEI", "Plano Educacional Individualizado.", "ri-book-open-line", "bg-blue", "pages/1_PEI.py", "m_pei")
-        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-        draw_module("Hub de Recursos", "Banco de materiais e adaptações.", "ri-rocket-2-line", "bg-teal", "pages/3_Hub_Inclusao.py", "m_hub")
-        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-        draw_module("Evolução & Dados", "Indicadores de progresso.", "ri-bar-chart-box-line", "bg-slate", "pages/5_Monitoramento_Avaliacao.py", "m_dados")
+c1, c2, c3, c4 = st.columns(4, gap="medium")
 
-# --- DIREITA: STATUS ---
-with col_side:
-    st.markdown("### 📌 Status", unsafe_allow_html=True)
-    
-    aluno_ativo = st.session_state.dados.get("nome")
-    display_aluno = aluno_ativo if aluno_ativo else "Nenhum aluno selecionado"
-    cor_status = "#10B981" if aluno_ativo else "#94A3B8"
-    
-    st.markdown(f"""
-    <div class="widget-card">
-        <div class="widget-title">Aluno em Foco</div>
-        <div style="display:flex; align-items:center; gap:10px;">
-            <div style="width:10px; height:10px; border-radius:50%; background:{cor_status};"></div>
-            <div style="font-weight:700; color:#334155;">{display_aluno}</div>
-        </div>
-        <div style="margin-top:10px; font-size:0.8rem; color:#64748B;">
-            {f"Série: {st.session_state.dados.get('serie','-')}" if aluno_ativo else "Vá em Estudantes para selecionar."}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+with c1:
+    render_module("Estudantes", "Gestão e histórico.", "ri-group-line", "t-indigo", "pages/0_Alunos.py", "m_aluno")
+with c2:
+    render_module("PEI 360°", "Estratégias e Plano.", "ri-book-open-line", "t-blue", "pages/1_PEI.py", "m_pei")
+with c3:
+    render_module("PAEE", "Sala de Recursos.", "ri-puzzle-2-line", "t-purple", "pages/2_PAE.py", "m_pae")
+with c4:
+    render_module("Hub Inclusão", "Materiais e IA.", "ri-rocket-2-line", "t-teal", "pages/3_Hub_Inclusao.py", "m_hub")
 
-    st.markdown(f"""
-    <div class="widget-card">
-        <div class="widget-title">Atividade Recente</div>
-        <div class="timeline-item">
-            <div class="tl-dot" style="background:#3B82F6"></div>
-            <div>
-                <div class="tl-content">Login realizado</div>
-                <div class="tl-time">Agora mesmo</div>
+# SEÇÃO DE FUNDAMENTOS (Conteúdo Rico em Abas)
+st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
+st.markdown('<div class="info-header"><i class="ri-book-mark-fill" style="color:#2563EB;"></i> Fundamentos da Inclusão</div>', unsafe_allow_html=True)
+
+tab1, tab2, tab3 = st.tabs(["🏛️ Cultura Inclusiva", "🚫 Combate ao Capacitismo", "🏫 A Escola Necessária"])
+
+with tab1:
+    col_a, col_b = st.columns([1, 1])
+    with col_a:
+        st.markdown("""
+        <div class="info-box">
+            <div class="info-title">Foco: A filosofia do acolhimento real</div>
+            <div class="info-text">
+                <span class="highlight">Conceito de "Outrar-se":</span> A inclusão exige a capacidade de "fazer-se outro", sentir o mundo do outro numa relação empática, sem confundir os sentimentos.
             </div>
         </div>
-        <div class="timeline-item">
-            <div class="tl-dot"></div>
-            <div>
-                <div class="tl-content">Sistema atualizado</div>
-                <div class="tl-time">v141.0</div>
+        <div class="info-box">
+            <div class="info-title">Pertencimento vs. Retórica</div>
+            <div class="info-text">
+                Receber o aluno é diferente de incluí-lo. É necessário criar uma cultura onde a presença física venha acompanhada de participação efetiva. Não basta falar sobre inclusão, é preciso vivê-la.
             </div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_b:
+        st.markdown("""
+        <div class="info-box" style="border-left: 4px solid #2563EB;">
+            <div class="info-title">Justiça Curricular</div>
+            <div class="info-text">
+                O currículo deve representar e respeitar todos os grupos sociais, oferecendo condições igualitárias de desenvolvimento. Adaptação não é favor, é direito e justiça.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+with tab2:
+    st.markdown("""
+    <div class="info-box">
+        <div class="info-title">O que é Capacitismo?</div>
+        <div class="info-text">
+            É qualquer discriminação que prejudique a pessoa com deficiência (PCD), baseada na premissa de que a deficiência a torna "menos capaz" ou "inferior".
         </div>
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-    if st.button("Sair do Sistema", use_container_width=True):
-        st.session_state.autenticado = False
-        st.rerun()
+    t2_c1, t2_c2 = st.columns(2)
+    with t2_c1:
+        st.markdown("""
+        <div class="info-box">
+            <div class="info-title">⚠️ Atenção à Linguagem</div>
+            <div class="info-text">
+                Evite metáforas que reforçam estigmas (ex: "dar uma de joão-sem-braço", "fingir demência"). A linguagem constrói realidade.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    with t2_c2:
+        st.markdown("""
+        <div class="info-box">
+            <div class="info-title">👁️ Visão de Potência</div>
+            <div class="info-text">
+                Abandonar a visão de "limitação" e focar nas habilidades que podem ser desenvolvidas. Todo aluno aprende, mas não no mesmo tempo nem do mesmo jeito.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+with tab3:
+    st.markdown("""
+    <div class="info-box">
+        <div class="info-title">Características de um ambiente sensibilizado</div>
+        <ul style="margin:0; padding-left:20px; color:#475569; font-size:0.9rem;">
+            <li style="margin-bottom:10px;"><b>Equipe Engajada:</b> Educadores interessados nos direitos de TODOS, não apenas dos que se encaixam no padrão.</li>
+            <li style="margin-bottom:10px;"><b>Eventos Acessíveis:</b> Festas e atividades extracurriculares planejadas para que todos participem plenamente.</li>
+            <li style="margin-bottom:10px;"><b>Formação Contínua:</b> Busca constante por práticas anticapacitistas e diversidade.</li>
+            <li><b>Parceria com Famílias:</b> Uma relação de confiança e troca, fundamental para o sucesso do PEI.</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+# RODAPÉ DE RECURSOS (LINKS ÚTEIS)
+st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
+st.markdown('<div class="info-header"><i class="ri-links-line" style="color:#64748B;"></i> Recursos Externos</div>', unsafe_allow_html=True)
+
+r1, r2, r3, r4 = st.columns(4)
+
+def render_resource(col, icon, text, link):
+    with col:
+        st.markdown(f"""
+        <a href="{link}" target="_blank" style="text-decoration:none;">
+            <div class="res-card">
+                <i class="{icon} res-icon"></i>
+                <div class="res-text">{text}</div>
+            </div>
+        </a>
+        """, unsafe_allow_html=True)
+
+render_resource(r1, "ri-file-text-line", "Lei da Inclusão", "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm")
+render_resource(r2, "ri-compass-3-line", "Base Nacional (BNCC)", "http://basenacionalcomum.mec.gov.br/")
+render_resource(r3, "ri-brain-line", "Neurociência", "https://institutoneurosaber.com.br/")
+render_resource(r4, "ri-question-line", "Ajuda Omnisfera", "#")
 
 st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.75rem;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>", unsafe_allow_html=True)
