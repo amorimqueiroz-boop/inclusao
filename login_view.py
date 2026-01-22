@@ -18,12 +18,12 @@ def hide_streamlit():
     if _env() == "TESTE":
         return
     st.markdown("""
-<style>
-    #MainMenu, footer, header { visibility: hidden; }
-    [data-testid="stToolbar"] { visibility: hidden; }
-    .block-container { padding-top: 1.2rem; }
-</style>
-""", unsafe_allow_html=True)
+    <style>
+        #MainMenu, footer, header { visibility: hidden; }
+        [data-testid="stToolbar"] { visibility: hidden; }
+        .block-container { padding-top: 1.2rem; }
+    </style>
+    """, unsafe_allow_html=True)
 
 # ==============================================================================
 # Assets
@@ -42,137 +42,100 @@ TEXT = b64("omni_texto.png")
 # ==============================================================================
 def inject_css():
     st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
 
-html, body, [class*="css"] {
-    font-family: 'Nunito', sans-serif;
-    background: #F7FAFC;
-    color: #0f172a;
-}
+    html, body, [class*="css"] {
+        font-family: 'Nunito', sans-serif;
+        background: #F7FAFC;
+        color: #0f172a;
+    }
 
-.wrap { max-width: 1080px; margin: auto; padding: 22px 18px 64px; }
+    /* Container Centralizado */
+    .wrap { 
+        max-width: 480px; 
+        margin: auto; 
+        padding-top: 40px; 
+        padding-bottom: 60px;
+    }
 
-.top-chip {
-    display:inline-block;
-    padding:6px 12px;
-    border-radius:999px;
-    font-size:13px;
-    font-weight:800;
-    color:#475569;
-    background:#EDF2F7;
-    border:1px solid #E2E8F0;
-}
+    /* Logo Centralizada */
+    .brand {
+        display:flex;
+        align-items:center;
+        justify-content: center; /* Centraliza horizontalmente */
+        gap:16px;
+        margin-bottom: 24px;
+    }
 
-.brand {
-    display:flex;
-    align-items:center;
-    gap:16px;
-    margin-top:18px;
-}
+    .logoSpin img {
+        width:58px;
+        animation: spin 12s linear infinite;
+    }
 
-.logoSpin img {
-    width:58px;
-    animation: spin 12s linear infinite;
-}
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+    .logoText img {
+        height: 42px;
+    }
 
-.logoText img {
-    height:42px;
-}
+    .subtitle {
+        text-align: center; /* Texto centralizado */
+        margin-bottom: 20px;
+        font-weight:700;
+        color:#64748B;
+        font-size:15px;
+    }
 
-.subtitle {
-    margin-top:12px;
-    font-weight:700;
-    color:#64748B;
-    font-size:16px;
-}
+    /* Cartão de Login */
+    .card {
+        background:white;
+        border-radius:20px;
+        border:1px solid #E2E8F0;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(15,23,42,.06);
+    }
 
-.grid {
-    display:grid;
-    grid-template-columns: 1.1fr .9fr;
-    gap:14px;
-    margin-top:18px;
-}
+    .card-h {
+        font-weight:900;
+        font-size:18px;
+        color:#062B61;
+        margin-bottom: 20px;
+        text-align: center;
+    }
 
-@media(max-width:980px){
-    .grid { grid-template-columns:1fr; }
-}
+    /* Termo de Confidencialidade (Caixa de Rolagem) */
+    .termo-box {
+        background-color: #F8FAFC; 
+        padding: 15px; 
+        border-radius: 10px;
+        height: 120px; 
+        overflow-y: auto; 
+        font-size: 13px;
+        border: 1px solid #E2E8F0; 
+        margin: 15px 0;
+        text-align: justify; 
+        color: #475569;
+        line-height: 1.5;
+    }
 
-.card {
-    background:white;
-    border-radius:20px;
-    border:1px solid #E2E8F0;
-    padding:16px;
-    box-shadow:0 18px 40px rgba(15,23,42,.08);
-}
-
-.card-h {
-    font-weight:900;
-    font-size:15px;
-    color:#062B61;
-}
-
-.manifesto {
-    background: radial-gradient(circle at top right, #E6F0FF, #FFFFFF);
-    border-radius:20px;
-    padding:16px;
-    border:1px solid #DBEAFE;
-    box-shadow:0 18px 44px rgba(15,82,186,.12);
-}
-
-.manifesto p {
-    font-weight:700;
-    font-size:14px;
-    line-height:1.4rem;
-    color:#1E293B;
-    margin:0;
-}
-
-.pill {
-    display:inline-block;
-    margin-top:10px;
-    margin-right:6px;
-    padding:6px 12px;
-    border-radius:999px;
-    background:#EDF2F7;
-    border:1px solid #E2E8F0;
-    font-weight:900;
-    font-size:12px;
-}
-
-.err {
-    margin-top:12px;
-    padding:12px;
-    border-radius:14px;
-    background:#FEE2E2;
-    border:1px solid #FCA5A5;
-    color:#7F1D1D;
-    font-weight:900;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ==============================================================================
-# Manifesto (SEM INDENTAÇÃO INTERNA)
-# ==============================================================================
-MANIFESTO_HTML = """
-<div class="manifesto">
-  <p>
-    A <b>Omnisfera</b> foi desenvolvida com carinho e cuidado — como um sonho que virou ferramenta.
-    Acreditamos que <b>a educação é, de fato, um direito de todos</b> e que a inclusão precisa ser o padrão,
-    não a exceção. Aqui, tecnologia e inteligência pedagógica existem para reduzir barreiras,
-    fortalecer o professor e ampliar possibilidades para cada estudante.
-  </p>
-  <div>
-    <span class="pill">BNCC</span>
-    <span class="pill">DUA</span>
-    <span class="pill">LBI</span>
-    <span class="pill">PEI/PAEE</span>
-  </div>
-</div>
-"""
+    .err {
+        margin-top:12px;
+        padding:12px;
+        border-radius:14px;
+        background:#FEE2E2;
+        border:1px solid #FCA5A5;
+        color:#7F1D1D;
+        font-weight:900;
+        text-align: center;
+    }
+    
+    /* Ajuste inputs */
+    div[data-testid="stTextInput"] input {
+        border-radius: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # ==============================================================================
 # Render
@@ -181,42 +144,41 @@ def render_login():
     hide_streamlit()
     inject_css()
 
-    # ---------- TOPO (HTML PURO - SEM INDENTAÇÃO) ----------
-    st.markdown(f"""
-<div class="wrap">
-  <span class="top-chip">Acesso por PIN • Supabase Workspace</span>
-
-  <div class="brand">
-    <div class="logoSpin"><img src="data:image/png;base64,{ICON}"></div>
-    <div class="logoText"><img src="data:image/png;base64,{TEXT}"></div>
-  </div>
-
-  <div class="subtitle">
-    Identifique-se, aceite o termo e valide seu PIN para entrar no workspace.
-  </div>
-
-  <div class="grid">
-    <div class="card">
-      <div class="card-h">Identificação & Acesso</div>
-      <div style="font-size:13px;color:#64748B;font-weight:800;">
-        RPC: <code>{RPC_NAME}(p_pin text)</code>
-      </div>
-    </div>
-
-    {MANIFESTO_HTML}
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
-    # ---------- FORMULÁRIO ----------
+    # Container Principal Centralizado
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
+    # 1. Logo Centralizada
+    st.markdown(f"""
+    <div class="brand">
+        <div class="logoSpin"><img src="data:image/png;base64,{ICON}"></div>
+        <div class="logoText"><img src="data:image/png;base64,{TEXT}"></div>
+    </div>
+    <div class="subtitle">Identifique-se para acessar seu workspace</div>
+    """, unsafe_allow_html=True)
+
+    # 2. Cartão de Login
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    
+    # Inputs
     nome = st.text_input("Seu nome")
     cargo = st.text_input("Sua função")
-    pin = st.text_input("PIN do Workspace")
+    pin = st.text_input("PIN do Workspace", type="password")
+
+    # 3. Termo de Confidencialidade (Caixa Restaurada)
+    st.markdown("""
+    <div class="termo-box">
+        <strong>1. Confidencialidade:</strong> O usuário compromete-se a não inserir dados reais sensíveis (nomes completos, documentos) que identifiquem estudantes, exceto em ambiente seguro autorizado pela instituição.<br><br>
+        <strong>2. Natureza Beta:</strong> O sistema está em evolução constante. Algumas funcionalidades podem sofrer alterações.<br><br>
+        <strong>3. Responsabilidade:</strong> As sugestões geradas pela IA servem como apoio pedagógico e devem ser sempre validadas por um profissional humano qualificado.<br><br>
+        <strong>4. Acesso:</strong> O PIN de acesso é pessoal e intransferível dentro da organização.
+    </div>
+    """, unsafe_allow_html=True)
+
     aceitar = st.checkbox("Li e aceito o Termo de Confidencialidade")
 
-    if st.button("Validar e entrar", use_container_width=True):
+    st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
+
+    if st.button("Validar e entrar", use_container_width=True, type="primary"):
         if not (nome and cargo and aceitar and pin):
             st.markdown("<div class='err'>Preencha todos os campos e aceite o termo.</div>", unsafe_allow_html=True)
             st.stop()
@@ -225,10 +187,13 @@ def render_login():
         if len(pin) == 8 and "-" not in pin:
             pin = pin[:4] + "-" + pin[4:]
 
+        # Validação via RPC
         ws = rpc_workspace_from_pin(pin)
+        
         if not ws:
-            st.markdown("<div class='err'>PIN inválido.</div>", unsafe_allow_html=True)
+            st.markdown("<div class='err'>PIN inválido ou workspace não encontrado.</div>", unsafe_allow_html=True)
         else:
+            # Sucesso
             st.session_state.usuario_nome = nome
             st.session_state.usuario_cargo = cargo
             st.session_state.autenticado = True
@@ -236,4 +201,13 @@ def render_login():
             st.session_state.workspace_name = ws["name"]
             st.rerun()
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True) # Fim Card
+    
+    # Info técnica discreta
+    st.markdown(f"""
+    <div style="text-align:center; margin-top:20px; color:#94A3B8; font-size:12px;">
+        RPC: <code>{RPC_NAME}</code>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True) # Fim Wrap
