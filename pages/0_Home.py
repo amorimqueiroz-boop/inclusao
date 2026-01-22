@@ -8,7 +8,7 @@ import time
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v137.0 (Fixed Dashboard)"
+APP_VERSION = "v138.0 (Fix HTML Rendering)"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -26,13 +26,15 @@ st.set_page_config(
 # 2. GATE DE ACESSO
 # ==============================================================================
 def acesso_bloqueado(msg: str):
-    st.markdown(f"""
-    <div style="max-width:500px; margin:100px auto; text-align:center; padding:30px; background:white; border-radius:16px; border:1px solid #E2E8F0; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
-        <div style="font-size:3rem; margin-bottom:15px;">🔐</div>
-        <div style="font-weight:800; font-size:1.2rem; color:#2D3748; margin-bottom:8px;">Acesso Restrito</div>
-        <div style="color:#718096; margin-bottom:20px;">{msg}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # HTML sem indentação para não quebrar
+    html_alert = f"""
+<div style="max-width:500px; margin:100px auto; text-align:center; padding:30px; background:white; border-radius:16px; border:1px solid #E2E8F0; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+<div style="font-size:3rem; margin-bottom:15px;">🔐</div>
+<div style="font-weight:800; font-size:1.2rem; color:#2D3748; margin-bottom:8px;">Acesso Restrito</div>
+<div style="color:#718096; margin-bottom:20px;">{msg}</div>
+</div>
+"""
+    st.markdown(html_alert, unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
@@ -79,11 +81,11 @@ html, body, [class*="css"] {
 [data-testid="stSidebarNav"] { display: none !important; }
 [data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
 
-/* LAYOUT CONTROLADO (1200px) */
+/* CONTROLE DE LARGURA */
 .block-container { 
-    padding-top: 100px !important; 
+    padding-top: 90px !important; 
     padding-bottom: 3rem !important; 
-    max-width: 1200px !important; /* Limite para não esticar demais */
+    max-width: 1200px !important;
 }
 
 /* TOPBAR */
@@ -108,7 +110,7 @@ html, body, [class*="css"] {
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
-/* HERO COMPACTO */
+/* HERO */
 .hero-box {
     background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
     border-radius: 16px;
@@ -139,7 +141,7 @@ html, body, [class*="css"] {
 .stat-val { font-weight: 800; font-size: 1.2rem; line-height: 1; text-align: center; }
 .stat-lbl { font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; margin-top: 4px; text-align: center; }
 
-/* CARDS MENORES E ELEGANTES */
+/* CARDS */
 .flat-card {
     background: white;
     border-radius: 16px;
@@ -147,10 +149,11 @@ html, body, [class*="css"] {
     border: 1px solid #E2E8F0;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     transition: all 0.2s ease;
-    height: 160px; /* Altura controlada */
+    height: 160px;
     position: relative;
     display: flex; flex-direction: column; 
     justify-content: space-between;
+    overflow: hidden;
 }
 .flat-card:hover {
     transform: translateY(-3px);
@@ -172,6 +175,9 @@ html, body, [class*="css"] {
 .card-footer {
     font-size: 0.8rem; font-weight: 700; color: #475569;
     display: flex; align-items: center; gap: 6px;
+    border-top: 1px solid #F1F5F9;
+    padding-top: 10px;
+    margin-top: 10px;
 }
 .flat-card:hover .card-footer { color: #2563EB; }
 
@@ -181,15 +187,19 @@ html, body, [class*="css"] {
 .theme-indigo { background: #EEF2FF; color: #4F46E5; }
 .theme-gray { background: #F7FAFC; color: #718096; }
 
+/* Botão fantasma para clique total */
+.ghost-btn {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
+}
 .ghost-btn button {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    opacity: 0; z-index: 20; cursor: pointer;
+    width: 100% !important; height: 100% !important;
+    opacity: 0 !important; cursor: pointer !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 5. TOPBAR
+# 5. TOPBAR RENDER
 # ==============================================================================
 icone_b64 = get_base64_image("omni_icone.png")
 texto_b64 = get_base64_image("omni_texto.png")
@@ -200,16 +210,16 @@ nome_html = f'<img src="data:image/png;base64,{texto_b64}" class="logo-text">' i
 
 st.markdown(f"""
 <div class="header-container">
-    <div style="display:flex; align-items:center;">
-        {logo_html}
-        {nome_html}
-        <div class="header-div"></div>
-        <div class="header-slogan">Inteligência Pedagógica</div>
-    </div>
-    <div class="header-badge">
-        <div class="badge-label">WORKSPACE</div>
-        <div class="badge-val">{esc if esc else "Não vinculado"}</div>
-    </div>
+<div style="display:flex; align-items:center;">
+{logo_html}
+{nome_html}
+<div class="header-div"></div>
+<div class="header-slogan">Inteligência Pedagógica</div>
+</div>
+<div class="header-badge">
+<div class="badge-label">WORKSPACE</div>
+<div class="badge-val">{esc if esc else "Não vinculado"}</div>
+</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -237,61 +247,57 @@ with st.sidebar:
         st.rerun()
 
 # ==============================================================================
-# 7. HERO SECTION (CORRIGIDA)
+# 7. HERO SECTION
 # ==============================================================================
 nome_usuario = st.session_state.get('usuario_nome', 'Visitante').split()[0]
 total_alunos = len(st.session_state.get("banco_estudantes", []))
 aluno_ativo = st.session_state.dados.get("nome", "")
 
-# Correção robusta para evitar erro de split em string vazia
+# Correção segura para nome do aluno
 display_aluno = "Nenhum"
 if aluno_ativo and isinstance(aluno_ativo, str) and aluno_ativo.strip():
     display_aluno = aluno_ativo.split()[0]
 
 st.markdown(f"""
 <div class="hero-box">
-    <div class="hero-content">
-        <div class="hero-welcome">Olá, {nome_usuario}!</div>
-        <div class="hero-sub">Seu painel de controle está pronto.</div>
-    </div>
-    
-    <div class="hero-stats">
-        <div style="text-align:center">
-            <div class="stat-val">{total_alunos}</div>
-            <div class="stat-lbl">Alunos</div>
-        </div>
-        <div style="width:1px; background:rgba(255,255,255,0.3); margin:0 5px;"></div>
-        <div style="text-align:center">
-            <div class="stat-val">{display_aluno}</div>
-            <div class="stat-lbl">Ativo</div>
-        </div>
-    </div>
+<div class="hero-content">
+<div class="hero-welcome">Olá, {nome_usuario}!</div>
+<div class="hero-sub">Seu painel de controle está pronto.</div>
+</div>
+<div class="hero-stats">
+<div style="text-align:center">
+<div class="stat-val">{total_alunos}</div>
+<div class="stat-lbl">Alunos</div>
+</div>
+<div style="width:1px; background:rgba(255,255,255,0.3); margin:0 5px;"></div>
+<div style="text-align:center">
+<div class="stat-val">{display_aluno}</div>
+<div class="stat-lbl">Ativo</div>
+</div>
+</div>
 </div>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 8. MÓDULOS (CARDS CORRIGIDOS)
+# 8. MÓDULOS (CARDS)
 # ==============================================================================
 st.markdown("### 🚀 Módulos")
 
 def render_module_card(title, desc, icon_class, theme_class, target_page, key, cta_text="Acessar"):
-    # HTML sem indentação para não quebrar o markdown
-    html_card = f"""
+    # Renderiza o Card HTML SEM IDENTAÇÃO para evitar bug de renderização
+    html_content = f"""
 <div class="flat-card">
-    <div class="icon-box {theme_class}">
-        <i class="{icon_class}"></i>
-    </div>
-    <div>
-        <div class="card-title">{title}</div>
-        <div class="card-desc">{desc}</div>
-    </div>
-    <div class="card-footer">
-        {cta_text} <i class="ri-arrow-right-line"></i>
-    </div>
+<div class="icon-box {theme_class}"><i class="{icon_class}"></i></div>
+<div>
+<div class="card-title">{title}</div>
+<div class="card-desc">{desc}</div>
+</div>
+<div class="card-footer">{cta_text} <i class="ri-arrow-right-line"></i></div>
 </div>
 """
-    st.markdown(html_card, unsafe_allow_html=True)
+    st.markdown(html_content, unsafe_allow_html=True)
     
+    # Botão invisível do Streamlit por cima
     st.markdown(f'<div class="ghost-btn">', unsafe_allow_html=True)
     if st.button(f"btn_{key}", key=key):
         if target_page:
