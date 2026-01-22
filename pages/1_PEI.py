@@ -1271,13 +1271,10 @@ with tab0:
     with col_right:
         st.markdown("#### 👤 Gestão de Alunos")
 
-        # -------------------------
-        # Status do vínculo
-        # -------------------------
         student_id = st.session_state.get("selected_student_id")
         if student_id:
             st.success("✅ Aluno vinculado à nuvem (Supabase)")
-            st.caption(f"student_id: {student_id[:8]}…")
+            st.caption(f"student_id: {str(student_id)[:8]}…")
         else:
             st.warning("📝 Modo rascunho (sem vínculo com a nuvem)")
 
@@ -1297,6 +1294,7 @@ with tab0:
                 key="inicio_uploader_json",
             )
 
+            # Ao enviar: só guarda na memória (não aplica automaticamente)
             if up_json is not None and st.session_state["local_json_pending"] is None:
                 try:
                     payload = json.load(up_json)
@@ -1304,18 +1302,21 @@ with tab0:
                     st.session_state["local_json_pending"] = payload
                     st.success("Arquivo carregado. Pronto para aplicar.")
                 except Exception as e:
+                    st.session_state["local_json_pending"] = None
                     st.error(f"Erro ao ler JSON: {e}")
 
             pending = st.session_state.get("local_json_pending")
 
-            if isinstance(pending, dict):
+            if isinstance(pending, dict) and pending:
                 with st.expander("👀 Prévia do backup", expanded=False):
-                    st.write({
-                        "nome": pending.get("nome"),
-                        "serie": pending.get("serie"),
-                        "turma": pending.get("turma"),
-                        "diagnostico": pending.get("diagnostico"),
-                    })
+                    st.write(
+                        {
+                            "nome": pending.get("nome"),
+                            "serie": pending.get("serie"),
+                            "turma": pending.get("turma"),
+                            "diagnostico": pending.get("diagnostico"),
+                        }
+                    )
 
             b1, b2 = st.columns(2)
 
@@ -1325,21 +1326,29 @@ with tab0:
                     type="primary",
                     use_container_width=True,
                     disabled=not isinstance(pending, dict),
+                    key="inicio_btn_aplicar_json_local",
                 ):
                     if "dados" in st.session_state and isinstance(st.session_state.dados, dict):
                         st.session_state.dados.update(pending)
                     else:
                         st.session_state.dados = pending
 
+                    # não cria vínculo com nuvem
                     st.session_state["selected_student_id"] = None
                     st.session_state["selected_student_name"] = ""
+
+                    # limpa pendência para não reaplicar
                     st.session_state["local_json_pending"] = None
 
                     st.success("Backup aplicado ao formulário ✅")
                     st.rerun()
 
             with b2:
-                if st.button("🧹 Limpar", use_container_width=True):
+                if st.button(
+                    "🧹 Limpar",
+                    use_container_width=True,
+                    key="inicio_btn_limpar_json_local",
+                ):
                     st.session_state["local_json_pending"] = None
                     st.rerun()
 
@@ -1355,35 +1364,40 @@ with tab0:
             elif st.session_state.get("selected_student_id"):
                 st.success("Aluno já sincronizado ✅")
             else:
-                if st.button("🔗 Sincronizar agora", type="primary", use_container_width=True):
+                if st.button(
+                    "🔗 Sincronizar agora",
+                    type="primary",
+                    use_container_width=True,
+                    key="inicio_btn_sync_nuvem",
+                ):
                     if not st.session_state.dados.get("nome"):
                         st.warning("Preencha o nome do estudante.")
                     elif not st.session_state.dados.get("serie"):
                         st.warning("Preencha a série/ano.")
                     else:
                         try:
-                            created = db_create_student({
-                                "name": st.session_state.dados.get("nome"),
-                                "birth_date": (
-                                    st.session_state.dados.get("nasc").isoformat()
-                                    if hasattr(st.session_state.dados.get("nasc"), "isoformat")
-                                    else None
-                                ),
-                                "grade": st.session_state.dados.get("serie"),
-                                "class_group": st.session_state.dados.get("turma"),
-                                "diagnosis": st.session_state.dados.get("diagnostico"),
-                            })
+                            created = db_create_student(
+                                {
+                                    "name": st.session_state.dados.get("nome"),
+                                    "birth_date": (
+                                        st.session_state.dados.get("nasc").isoformat()
+                                        if hasattr(st.session_state.dados.get("nasc"), "isoformat")
+                                        else None
+                                    ),
+                                    "grade": st.session_state.dados.get("serie"),
+                                    "class_group": st.session_state.dados.get("turma"),
+                                    "diagnosis": st.session_state.dados.get("diagnostico"),
+                                }
+                            )
                             if created and created.get("id"):
                                 st.session_state["selected_student_id"] = created["id"]
-                                st.session_state["selected_student_name"] = created.get("name")
+                                st.session_state["selected_student_name"] = created.get("name") or ""
                                 st.success("Aluno sincronizado com sucesso ✅")
                                 st.rerun()
                             else:
                                 st.error("Falha ao criar aluno no Supabase.")
                         except Exception as e:
                             st.error(f"Erro ao sincronizar: {e}")
-
-
 
 # ==============================================================================
 # 12. ABA ESTUDANTE
