@@ -1,6 +1,6 @@
 # pages/0_Home.py
 import streamlit as st
-from datetime import datetime, date
+from datetime import date
 import base64
 import os
 import time
@@ -8,7 +8,7 @@ import time
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v143.0 (Recursos Coloridos)"
+APP_VERSION = "v144.0 (Dashboard Pro + Links Coloridos)"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -66,7 +66,7 @@ def escola_vinculada() -> str:
     return st.session_state.get("workspace_name") or st.session_state.get("workspace_id", "")[:8]
 
 # ==============================================================================
-# 4. CSS (DESIGN SYSTEM)
+# 4. CSS (DESIGN SYSTEM COMPLETO)
 # ==============================================================================
 st.markdown("""
 <style>
@@ -125,7 +125,7 @@ html, body, [class*="css"] {
 .hero-title { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 1.8rem; margin: 0; }
 .hero-quote { font-size: 1.05rem; opacity: 0.9; font-style: italic; max-width: 800px; line-height: 1.6; }
 
-/* MODULE CARDS (Main Grid) */
+/* MODULE CARDS */
 .mod-card {
     background: white; border-radius: 16px; padding: 24px;
     border: 1px solid #E2E8F0; height: 100%; min-height: 150px;
@@ -157,44 +157,84 @@ html, body, [class*="css"] {
 .info-text { font-size: 0.9rem; color: #475569; line-height: 1.6; }
 .highlight { color: #2563EB; font-weight: 600; }
 
-/* RECURSOS EXTERNOS (COLORIDOS) */
-.resource-btn {
-    display: flex; align-items: center; gap: 15px;
-    padding: 16px 20px;
-    border-radius: 14px;
-    border: 1px solid transparent;
-    transition: all 0.2s ease;
+/* --- RECURSOS COLORIDOS (EFEITO CLICÁVEL) --- */
+.res-card-link {
     text-decoration: none !important;
+    display: block;
     height: 100%;
 }
-.resource-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0,0,0,0.06);
+
+.res-card {
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+    height: 100%;
 }
+
+.res-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05);
+}
+
 .res-icon-box {
-    width: 40px; height: 40px; border-radius: 10px;
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.8);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem; flex-shrink: 0;
+    font-size: 1.5rem;
+    flex-shrink: 0;
 }
+
 .res-content {
     display: flex; flex-direction: column;
 }
-.res-label { font-weight: 700; font-size: 0.95rem; color: #1E293B; }
-.res-sub { font-size: 0.75rem; opacity: 0.8; font-weight: 500; }
 
-/* Cores de Fundo Específicas */
-.bg-light-blue { background-color: #EFF6FF; border-color: #DBEAFE; }
-.bg-light-green { background-color: #F0FDF4; border-color: #DCFCE7; }
-.bg-light-pink { background-color: #FDF2F8; border-color: #FCE7F3; }
-.bg-light-orange { background-color: #FFF7ED; border-color: #FFEDD5; }
+.res-title {
+    font-weight: 800;
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
 
-/* Cores de Ícone */
-.txt-blue { color: #2563EB; }
-.txt-green { color: #16A34A; }
-.txt-pink { color: #DB2777; }
-.txt-orange { color: #EA580C; }
+.res-desc {
+    font-size: 0.8rem;
+    font-weight: 600;
+    opacity: 0.8;
+}
 
-/* THEMES */
+/* TEMAS DE COR DOS RECURSOS */
+/* Azul */
+.rc-blue { background-color: #EFF6FF; border-color: #DBEAFE; }
+.rc-blue:hover { border-color: #2563EB; }
+.rc-blue .res-title { color: #1E40AF; }
+.rc-blue .res-desc { color: #3B82F6; }
+.rc-blue .res-icon-box { color: #2563EB; }
+
+/* Verde */
+.rc-green { background-color: #F0FDF4; border-color: #DCFCE7; }
+.rc-green:hover { border-color: #16A34A; }
+.rc-green .res-title { color: #166534; }
+.rc-green .res-desc { color: #22C55E; }
+.rc-green .res-icon-box { color: #16A34A; }
+
+/* Rosa */
+.rc-pink { background-color: #FDF2F8; border-color: #FCE7F3; }
+.rc-pink:hover { border-color: #DB2777; }
+.rc-pink .res-title { color: #9D174D; }
+.rc-pink .res-desc { color: #EC4899; }
+.rc-pink .res-icon-box { color: #DB2777; }
+
+/* Laranja */
+.rc-orange { background-color: #FFF7ED; border-color: #FFEDD5; }
+.rc-orange:hover { border-color: #EA580C; }
+.rc-orange .res-title { color: #9A3412; }
+.rc-orange .res-desc { color: #F97316; }
+.rc-orange .res-icon-box { color: #EA580C; }
+
+/* THEMES MODULOS */
 .t-indigo { background: #EEF2FF; color: #4F46E5; }
 .t-blue { background: #EFF6FF; color: #2563EB; }
 .t-purple { background: #FAF5FF; color: #9333EA; }
@@ -362,31 +402,36 @@ with tab3:
     </div>
     """, unsafe_allow_html=True)
 
-# RECURSOS EXTERNOS (COLORIDOS E RETANGULARES)
-st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
+# -----------------------------------------------------------
+# RECURSOS EXTERNOS (COLORIDOS, CLICÁVEIS E ANIMADOS)
+# -----------------------------------------------------------
+st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
 st.markdown('<div class="info-header"><i class="ri-links-line" style="color:#64748B;"></i> Recursos Externos</div>', unsafe_allow_html=True)
+
+def render_resource_card(col, icon, title, desc, link, theme_class):
+    with col:
+        # AQUI ESTÁ A MÁGICA: O card inteiro é um link (<a>)
+        html = f"""
+        <a href="{link}" target="_blank" class="res-card-link">
+            <div class="res-card {theme_class}">
+                <div class="res-icon-box">
+                    <i class="{icon}"></i>
+                </div>
+                <div class="res-content">
+                    <div class="res-title">{title}</div>
+                    <div class="res-desc">{desc}</div>
+                </div>
+            </div>
+        </a>
+        """
+        st.markdown(html, unsafe_allow_html=True)
 
 r1, r2, r3, r4 = st.columns(4)
 
-def render_colored_resource(col, icon, text, sub, link, bg_class, txt_class):
-    with col:
-        # Link externo seguro
-        st.markdown(f"""
-        <a href="{link}" target="_blank" class="resource-btn {bg_class}">
-            <div class="res-icon-box" style="background:rgba(255,255,255,0.6); color: inherit;">
-                <i class="{icon} {txt_class}"></i>
-            </div>
-            <div class="res-content">
-                <div class="res-label {txt_class}">{text}</div>
-                <div class="res-sub {txt_class}">{sub}</div>
-            </div>
-        </a>
-        """, unsafe_allow_html=True)
+render_resource_card(r1, "ri-file-text-line", "Lei da Inclusão", "LBI e diretrizes", "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm", "rc-blue")
+render_resource_card(r2, "ri-compass-3-line", "Base Nacional", "Competências BNCC", "http://basenacionalcomum.mec.gov.br/", "rc-green")
+render_resource_card(r3, "ri-brain-line", "Neurociência", "Artigos e estudos", "https://institutoneurosaber.com.br/", "rc-pink")
+render_resource_card(r4, "ri-question-line", "Ajuda Omnisfera", "Suporte e tutoriais", "#", "rc-orange")
 
-render_colored_resource(r1, "ri-file-text-line", "Lei da Inclusão", "LBI e diretrizes", "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm", "bg-light-blue", "txt-blue")
-render_colored_resource(r2, "ri-compass-3-line", "Base Nacional", "Competências BNCC", "http://basenacionalcomum.mec.gov.br/", "bg-light-green", "txt-green")
-render_colored_resource(r3, "ri-brain-line", "Neurociência", "Artigos e estudos", "https://institutoneurosaber.com.br/", "bg-light-pink", "txt-pink")
-render_colored_resource(r4, "ri-question-line", "Ajuda Omnisfera", "Suporte e tutoriais", "#", "bg-light-orange", "txt-orange")
-
-st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height: 60px;'></div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.75rem;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>", unsafe_allow_html=True)
