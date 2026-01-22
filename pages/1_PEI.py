@@ -11,6 +11,8 @@ import json
 import os
 import time
 import re
+from datetime import date, datetime
+
 
 # ✅ 1) set_page_config (UMA VEZ SÓ e sempre no topo)
 st.set_page_config(
@@ -113,17 +115,6 @@ with st.sidebar:
 
     st.markdown("---")
 
-
-# ==============================================================================
-# 0. CONFIGURAÇÃO DE PÁGINA
-# ==============================================================================
-st.set_page_config(
-    page_title="Omnisfera | PEI",
-    page_icon="📘",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
 # ==============================================================================
 # 1. GUARDAS (LOGIN + SUPABASE)
 # ==============================================================================
@@ -142,11 +133,6 @@ def verificar_login_supabase():
 
 verificar_login_app()
 verificar_login_supabase()
-
-def sb():
-    return get_supabase_user(st.session_state["supabase_jwt"])
-
-OWNER_ID = st.session_state.get("supabase_user_id", "")
 
 # ==============================================================================
 # 2. SUPABASE: STUDENTS (criar/atualizar/listar/excluir) — com workspace_id
@@ -393,6 +379,53 @@ def supa_save_pei(student_id: str, payload: dict, pdf_text: str):
         }).execute()
 
 def supa_sync_student_from_dados(student_id: str, d: dict):
+    def sincronizar_e_salvar_pei():
+    """
+    1) Se ainda não tiver student_id: cria o aluno em students e vincula
+    2) Atualiza students com dados básicos do formulário
+    3) Salva o PEI em pei_documents (payload + pdf_text)
+    """
+    if not _cloud_ready():
+        raise RuntimeError("Nuvem indisponível: faça login e valide workspace.")
+
+    d = st.session_state.dados
+
+    if not d.get("nome"):
+        raise RuntimeError("Preencha o NOME do estudante antes de sincronizar.")
+    if not d.get("serie"):
+        raise RuntimeError("Selecione a SÉRIE/Ano antes de sincronizar.")
+
+    # 1) garantir vínculo
+    sid = st.session_state.get("selected_student_id")
+
+    if not sid:
+        created = db_create_student({
+            "name": d.get("nome"),
+            "birth_date": (d.get("nasc").isoformat() if hasattr(d.get("nasc"), "isoformat") else None),
+            "grade": d.get("serie"),
+            "class_group": d.get("turma") or None,
+            "diagnosis": d.get("diagnostico") or None,
+        })
+        if not created or not created.get("id"):
+            raise RuntimeError("Falha ao criar aluno. Verifique RLS/policies no Supabase.")
+
+        sid = created["id"]
+        st.session_state["selected_student_id"] = sid
+        st.session_state["selected_student_name"] = created.get("name") or ""
+
+    # 2) atualizar tabela students
+    try:
+        supa_sync_student_from_dados(sid, d)
+    except Exception:
+        pass
+
+    # 3) salvar PEI
+    pdf_text = st.session_state.get("pdf_text", "") or ""
+    supa_save_pei(sid, d, pdf_text)
+
+    return sid
+
+    
     # mantém students atualizado com dados básicos do PEI
     db_update_student(student_id, {
         "name": d.get("nome") or None,
@@ -2632,16 +2665,23 @@ with tab8:
             )
 
             # Botão de sincronizar (tenta achar função do seu projeto novo; se não, avisa)
-            sync_fn = globals().get("supa_sync_student_from_dados") or globals().get("salvar_aluno_integrado") or globals().get("db_create_student")
+           with col_sys:
+    st.caption("🌐 Omnisfera")
+    st.markdown(
+        "<div style='font-size:.85rem; color:#4A5568; margin-bottom:8px;'>"
+        "Clique para <b>vincular o aluno</b> e <b>salvar o PEI</b> na nuvem (Supabase)."
+        "</div>",
+        unsafe_allow_html=True
+    )
 
-           if st.button("🔗 Sincronizar (Omnisfera)", type="primary", use_container_width=True):
-    try:
-        sid = sincronizar_e_salvar_pei(st.session_state.dados)
-        st.success("✅ Sincronizado: aluno vinculado + PEI salvo na nuvem.")
-        st.caption(f"student_id: {sid[:8]}...")
-        st.rerun()
-    except Exception as e:
-        st.error(f"Erro ao sincronizar/salvar: {e}")
+    if st.button("🔗 Sincronizar (Omnisfera)", type="primary", use_container_width=True, key="btn_sync_omnisfera_tab8"):
+        try:
+            sid = sincronizar_e_salvar_pei()
+            st.success("✅ Aluno vinculado + PEI salvo no Supabase.")
+            st.caption(f"student_id: {sid[:8]}...")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Erro ao sincronizar/salvar: {e}")
 
 
 # ==============================================================================
