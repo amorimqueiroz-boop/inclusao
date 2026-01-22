@@ -2298,36 +2298,15 @@ with tab8:
     st.markdown("### <i class='ri-file-pdf-line'></i> Dashboard e Exportação", unsafe_allow_html=True)
 
     # --------------------------------------------------------------------------
-    # 0) GARANTIR CSS DO DASH (se o seu projeto novo não estiver carregando)
+    # 0) CSS DO DASH
     # --------------------------------------------------------------------------
     def _ensure_dashboard_css():
         css = """
         <style>
-            .dash-hero { background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); border-radius: 16px; padding: 25px; color: white; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(15, 82, 186, 0.15); }
-            .apple-avatar { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4); color: white; font-weight: 800; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; }
-            .metric-card { background: white; border-radius: 16px; padding: 15px; border: 1px solid #E2E8F0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 140px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-            .css-donut { --p: 0; --fill: #e5e7eb; width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(var(--fill) var(--p), #F3F4F6 0); position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
-            .css-donut:after { content: ""; position: absolute; width: 60px; height: 60px; border-radius: 50%; background: white; }
-            .d-val { position: relative; z-index: 10; font-weight: 800; font-size: 1.2rem; color: #2D3748; }
-            .d-lbl { font-size: 0.75rem; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; text-align:center; }
-            .comp-icon-box { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
-            .soft-card { border-radius: 12px; padding: 20px; min-height: 220px; height: 100%; display: flex; flex-direction: column; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); border-left: 5px solid; position: relative; overflow: hidden; }
-            .sc-orange { background-color: #FFF5F5; border-left-color: #DD6B20; }
-            .sc-blue { background-color: #EBF8FF; border-left-color: #3182CE; }
-            .sc-yellow { background-color: #FFFFF0; border-left-color: #D69E2E; }
-            .sc-cyan { background-color: #E6FFFA; border-left-color: #0BC5EA; }
-            .sc-green { background-color: #F0FFF4; border-left-color: #38A169; }
-            .sc-head { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.95rem; margin-bottom: 15px; color: #2D3748; }
-            .sc-body { font-size: 0.85rem; color: #4A5568; line-height: 1.5; flex-grow: 1; }
-            .bg-icon { position: absolute; bottom: -10px; right: -10px; font-size: 5rem; opacity: 0.08; pointer-events: none; }
-            .meta-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 5px; }
-            .dna-bar-container { margin-bottom: 15px; }
-            .dna-bar-flex { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px; font-weight: 600; color: #4A5568; }
-            .dna-bar-bg { width: 100%; height: 8px; background-color: #E2E8F0; border-radius: 4px; overflow: hidden; }
-            .dna-bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
-            .rede-chip { display: inline-flex; align-items: center; gap: 5px; background: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #2D3748; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin: 0 5px 5px 0; }
-            .pulse-alert { animation: pulse 2s infinite; color: #E53E3E; font-weight: bold; }
-            @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+            .dash-hero { background: linear-gradient(135deg, #0F52BA 0%, #062B61 100%); border-radius: 16px; padding: 25px; color: white; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+            .apple-avatar { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,.15); border: 2px solid rgba(255,255,255,.4); display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:800; }
+            .metric-card { background:white; border-radius:16px; padding:15px; border:1px solid #E2E8F0; height:140px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+            .soft-card { border-radius:12px; padding:20px; border-left:5px solid; background:#FFF; }
         </style>
         """
         st.markdown(css, unsafe_allow_html=True)
@@ -2335,55 +2314,51 @@ with tab8:
     _ensure_dashboard_css()
 
     # --------------------------------------------------------------------------
-    # 1) HELPERS (fallbacks caso alguma função não exista na versão nova)
+    # 1) HELPERS
     # --------------------------------------------------------------------------
     d = st.session_state.dados
 
-    def _safe(fn_name, default=None):
-        return globals().get(fn_name, default)
+    def _safe(fn, default):
+        return globals().get(fn, default)
 
     calcular_idade_fn = _safe("calcular_idade", lambda x: "")
-    get_hiperfoco_emoji_fn = _safe("get_hiperfoco_emoji", lambda x: "🚀")
-    calcular_complexidade_pei_fn = _safe("calcular_complexidade_pei", lambda _d: ("ATENÇÃO", "#FFFFF0", "#D69E2E"))
-    extrair_metas_estruturadas_fn = _safe("extrair_metas_estruturadas", lambda _t: {"Curto": "Definir...", "Medio": "Definir...", "Longo": "Definir..."})
-    inferir_componentes_impactados_fn = _safe("inferir_componentes_impactados", lambda _d: [])
-    get_pro_icon_fn = _safe("get_pro_icon", lambda _p: "👨‍⚕️")
+    extrair_metas_fn = _safe(
+        "extrair_metas_estruturadas",
+        lambda t: {"Curto": "—", "Medio": "—", "Longo": "—"}
+    )
 
     # --------------------------------------------------------------------------
     # 2) GUARD
     # --------------------------------------------------------------------------
     if not d.get("nome"):
-        st.info("Preencha o estudante na aba **Estudante** para visualizar o dashboard.")
+        st.info("Preencha o estudante na aba **Estudante**.")
         st.stop()
 
     # --------------------------------------------------------------------------
     # 3) HERO
     # --------------------------------------------------------------------------
-    init_avatar = d.get("nome", "?")[0].upper() if d.get("nome") else "?"
-    idade_str = calcular_idade_fn(d.get("nasc"))
-    serie_txt = d.get("serie") or "-"
-    turma_txt = d.get("turma") or "-"
-    matricula_txt = d.get("matricula") or d.get("ra") or "-"
-
+    init_avatar = d["nome"][0].upper()
+    idade = calcular_idade_fn(d.get("nasc"))
     student_id = st.session_state.get("selected_student_id")
-    vinculo_txt = "Vinculado ao Supabase ✅" if student_id else "Rascunho (não sincronizado)"
 
     st.markdown(
         f"""
         <div class="dash-hero">
-            <div style="display:flex; align-items:center; gap:20px;">
+            <div style="display:flex; gap:16px; align-items:center;">
                 <div class="apple-avatar">{init_avatar}</div>
-                <div style="color:white;">
-                    <h1 style="margin:0; line-height:1.1;">{d.get("nome","")}</h1>
-                    <p style="margin:6px 0 0 0; opacity:.9;">
-                        {serie_txt} • Turma {turma_txt} • Matrícula/RA: {matricula_txt}
-                    </p>
-                    <p style="margin:6px 0 0 0; opacity:.8; font-size:.85rem;">{vinculo_txt}</p>
+                <div>
+                    <h2 style="margin:0;">{d.get("nome")}</h2>
+                    <div style="opacity:.85; font-size:.9rem;">
+                        {d.get("serie","-")} • {d.get("turma","-")}
+                    </div>
+                    <div style="font-size:.8rem; opacity:.7;">
+                        {"Vinculado ao Supabase" if student_id else "Rascunho local"}
+                    </div>
                 </div>
             </div>
             <div style="text-align:right;">
-                <div style="font-size:0.8rem; opacity:.85;">IDADE</div>
-                <div style="font-size:1.2rem; font-weight:800;">{idade_str}</div>
+                <div style="font-size:.75rem;">IDADE</div>
+                <div style="font-size:1.2rem; font-weight:800;">{idade}</div>
             </div>
         </div>
         """,
@@ -2391,328 +2366,139 @@ with tab8:
     )
 
     # --------------------------------------------------------------------------
-    # 4) KPIs
+    # 4) KPIs (simples)
     # --------------------------------------------------------------------------
-    c_kpi1, c_kpi2, c_kpi3, c_kpi4 = st.columns(4)
+    c1, c2, c3 = st.columns(3)
 
-    with c_kpi1:
-        n_pot = len(d.get("potencias", []) or [])
-        color_p = "#38A169" if n_pot > 0 else "#CBD5E0"
-        st.markdown(
-            f"""<div class="metric-card">
-                <div class="css-donut" style="--p: {min(n_pot*10,100)}%; --fill: {color_p};">
-                    <div class="d-val">{n_pot}</div>
-                </div>
-                <div class="d-lbl">Potencialidades</div>
-            </div>""",
-            unsafe_allow_html=True
+    with c1:
+        st.metric("Potencialidades", len(d.get("potencias", []) or []))
+    with c2:
+        st.metric(
+            "Barreiras",
+            sum(len(v) for v in (d.get("barreiras_selecionadas", {}) or {}).values())
         )
-
-    with c_kpi2:
-        barreiras = d.get("barreiras_selecionadas", {}) or {}
-        n_bar = sum(len(v) for v in barreiras.values()) if isinstance(barreiras, dict) else 0
-        color_b = "#E53E3E" if n_bar > 5 else "#DD6B20"
-        st.markdown(
-            f"""<div class="metric-card">
-                <div class="css-donut" style="--p: {min(n_bar*5,100)}%; --fill: {color_b};">
-                    <div class="d-val">{n_bar}</div>
-                </div>
-                <div class="d-lbl">Barreiras</div>
-            </div>""",
-            unsafe_allow_html=True
-        )
-
-    with c_kpi3:
-        hf = d.get("hiperfoco") or "-"
-        hf_emoji = get_hiperfoco_emoji_fn(hf)
-        st.markdown(
-            f"""<div class="metric-card">
-                <div style="font-size:2.5rem;">{hf_emoji}</div>
-                <div style="font-weight:800; font-size:1.1rem; color:#2D3748; margin:10px 0;">{hf}</div>
-                <div class="d-lbl">Hiperfoco</div>
-            </div>""",
-            unsafe_allow_html=True
-        )
-
-    with c_kpi4:
-        txt_comp, bg_c, txt_c = calcular_complexidade_pei_fn(d)
-        st.markdown(
-            f"""<div class="metric-card" style="background-color:{bg_c}; border-color:{txt_c};">
-                <div class="comp-icon-box">
-                    <i class="ri-error-warning-line" style="color:{txt_c}; font-size: 2rem;"></i>
-                </div>
-                <div style="font-weight:800; font-size:1.1rem; color:{txt_c}; margin:5px 0;">{txt_comp}</div>
-                <div class="d-lbl" style="color:{txt_c};">Nível de Atenção (Execução)</div>
-            </div>""",
-            unsafe_allow_html=True
-        )
+    with c3:
+        st.metric("Rede de Apoio", len(d.get("rede_apoio", []) or []))
 
     # --------------------------------------------------------------------------
-    # 5) CARDS PRINCIPAIS (2 colunas)
+    # 5) METAS
     # --------------------------------------------------------------------------
-    st.write("")
-    c_r1, c_r2 = st.columns(2)
-
-    with c_r1:
-        lista_meds = d.get("lista_medicamentos", []) or []
-        if len(lista_meds) > 0:
-            nomes_meds = ", ".join([m.get("nome", "").strip() for m in lista_meds if m.get("nome")])
-            alerta_escola = any(bool(m.get("escola")) for m in lista_meds)
-
-            icon_alerta = '<i class="ri-alarm-warning-fill pulse-alert" style="font-size:1.2rem; margin-left:10px;"></i>' if alerta_escola else ""
-            msg_escola = '<div style="margin-top:5px; color:#C53030; font-weight:bold; font-size:0.8rem;">🚨 ATENÇÃO: ADMINISTRAÇÃO NA ESCOLA NECESSÁRIA</div>' if alerta_escola else ""
-
-            st.markdown(
-                f"""<div class="soft-card sc-orange">
-                    <div class="sc-head"><i class="ri-medicine-bottle-fill" style="color:#DD6B20;"></i> Atenção Farmacológica {icon_alerta}</div>
-                    <div class="sc-body"><b>Uso Contínuo:</b> {nomes_meds if nomes_meds else "Medicação cadastrada."} {msg_escola}</div>
-                    <div class="bg-icon">💊</div>
-                </div>""",
-                unsafe_allow_html=True
-            )
-        else:
-            st.markdown(
-                """<div class="soft-card sc-green">
-                    <div class="sc-head"><i class="ri-checkbox-circle-fill" style="color:#38A169;"></i> Medicação</div>
-                    <div class="sc-body">Nenhuma medicação informada.</div>
-                    <div class="bg-icon">✅</div>
-                </div>""",
-                unsafe_allow_html=True
-            )
-
-        st.write("")
-        metas = extrair_metas_estruturadas_fn(d.get("ia_sugestao", ""))
-        html_metas = (
-            f"""<div class="meta-row"><span style="font-size:1.2rem;">🏁</span> <b>Curto:</b> {metas.get('Curto','Definir...')}</div>
-                <div class="meta-row"><span style="font-size:1.2rem;">🧗</span> <b>Médio:</b> {metas.get('Medio','Definir...')}</div>
-                <div class="meta-row"><span style="font-size:1.2rem;">🏔️</span> <b>Longo:</b> {metas.get('Longo','Definir...')}</div>"""
-        )
-        st.markdown(
-            f"""<div class="soft-card sc-yellow">
-                <div class="sc-head"><i class="ri-flag-2-fill" style="color:#D69E2E;"></i> Cronograma de Metas</div>
-                <div class="sc-body">{html_metas}</div>
-                <div class="bg-icon">🏁</div>
-            </div>""",
-            unsafe_allow_html=True
-        )
-
-    with c_r2:
-        comps_inferidos = inferir_componentes_impactados_fn(d) or []
-        if comps_inferidos:
-            html_comps = "".join([f'<span class="rede-chip" style="border-color:#FC8181; color:#C53030;">{c}</span> ' for c in comps_inferidos])
-            st.markdown(
-                f"""<div class="soft-card sc-orange" style="border-left-color: #FC8181; background-color: #FFF5F5;">
-                    <div class="sc-head"><i class="ri-radar-fill" style="color:#C53030;"></i> Radar Curricular (Automático)</div>
-                    <div class="sc-body" style="margin-bottom:10px;">Componentes que exigem maior flexibilização (baseado nas barreiras):</div>
-                    <div>{html_comps}</div>
-                    <div class="bg-icon">🎯</div>
-                </div>""",
-                unsafe_allow_html=True
-            )
-        else:
-            st.markdown(
-                """<div class="soft-card sc-blue">
-                    <div class="sc-head"><i class="ri-radar-line" style="color:#3182CE;"></i> Radar Curricular</div>
-                    <div class="sc-body">Nenhum componente específico marcado como crítico.</div>
-                    <div class="bg-icon">🎯</div>
-                </div>""",
-                unsafe_allow_html=True
-            )
-
-        st.write("")
-        rede = d.get("rede_apoio", []) or []
-        rede_html = "".join([f'<span class="rede-chip">{get_pro_icon_fn(p)} {p}</span> ' for p in rede]) if rede else "<span style='opacity:0.6;'>Sem rede.</span>"
-        st.markdown(
-            f"""<div class="soft-card sc-cyan">
-                <div class="sc-head"><i class="ri-team-fill" style="color:#0BC5EA;"></i> Rede de Apoio</div>
-                <div class="sc-body">{rede_html}</div>
-                <div class="bg-icon">🤝</div>
-            </div>""",
-            unsafe_allow_html=True
-        )
+    metas = extrair_metas_fn(d.get("ia_sugestao", ""))
+    st.markdown(
+        f"""
+        <div class="soft-card" style="border-left-color:#D69E2E;">
+            <b>🏁 Metas</b><br><br>
+            <b>Curto:</b> {metas.get("Curto")}<br>
+            <b>Médio:</b> {metas.get("Medio")}<br>
+            <b>Longo:</b> {metas.get("Longo")}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     # --------------------------------------------------------------------------
-    # 6) DNA de Suporte
-    # --------------------------------------------------------------------------
-    st.write("")
-    st.markdown("##### 🧬 DNA de Suporte")
-    dna_c1, dna_c2 = st.columns(2)
-
-    LISTAS_BARREIRAS_LOCAL = globals().get("LISTAS_BARREIRAS", {}) or {}
-    areas = list(LISTAS_BARREIRAS_LOCAL.keys()) if isinstance(LISTAS_BARREIRAS_LOCAL, dict) else []
-
-    for i, area in enumerate(areas):
-        qtd = len((d.get("barreiras_selecionadas", {}) or {}).get(area, []) or [])
-        val = min(qtd * 20, 100)
-        target = dna_c1 if i < 3 else dna_c2
-
-        color = "#3182CE"
-        if val > 40:
-            color = "#DD6B20"
-        if val > 70:
-            color = "#E53E3E"
-
-        target.markdown(
-            f"""<div class="dna-bar-container">
-                <div class="dna-bar-flex"><span>{area}</span><span>{qtd} barreiras</span></div>
-                <div class="dna-bar-bg"><div class="dna-bar-fill" style="width:{val}%; background:{color};"></div></div>
-            </div>""",
-            unsafe_allow_html=True
-        )
-
-    # --------------------------------------------------------------------------
-    # 7) EXPORTAÇÃO + SINCRONIZAÇÃO (com correções)
+    # 6) EXPORTAÇÃO + SINCRONIZAÇÃO
     # --------------------------------------------------------------------------
     st.divider()
     st.markdown("#### 📤 Exportação e Sincronização")
 
-    # ✅ Adaptador: evita TypeError se _cloud_ready não retornar (ok, details)
-    def _cloud_ready_debug_adapter():
-        # Se existir um _cloud_ready no seu projeto, tenta usar (com debug=True),
-        # mas aceita também versões que retornam só bool.
-        if "_cloud_ready" in globals() and callable(globals().get("_cloud_ready")):
-            try:
-                res = globals()["_cloud_ready"](debug=True)
-            except TypeError:
-                # versão antiga sem parâmetro debug
-                res = globals()["_cloud_ready"]()
-
-            if isinstance(res, tuple) and len(res) == 2:
-                ok, details = res
-                return bool(ok), (details or {})
-            if isinstance(res, bool):
-                return res, {"note": "_cloud_ready retornou bool (sem details)", "has_cloud": res}
-            return bool(res), {"note": "retorno inesperado de _cloud_ready", "type": str(type(res))}
-
-        # Fallback: checagens mínimas pelo estado do app
-        details = {}
-        sb = st.session_state.get("sb") or st.session_state.get("supabase") or globals().get("sb") or globals().get("supabase")
-        ws_id = st.session_state.get("workspace_id")
-        auth = bool(st.session_state.get("autenticado", False))
-        owner_id = st.session_state.get("OWNER_ID") or st.session_state.get("owner_id")
-
-        details["has_sb"] = bool(sb)
-        details["has_workspace_id"] = bool(ws_id)
-        details["autenticado"] = bool(auth)
-        details["has_owner_id"] = bool(owner_id)
-
-        ok = all([details["has_sb"], details["has_workspace_id"], details["autenticado"]])
-        details["missing"] = [k for k, v in details.items() if v is False]
-        return ok, details
-
     if not d.get("ia_sugestao"):
-        st.info("Gere o Plano na aba **Consultoria IA** para liberar PDF e Word.")
-    else:
-        col_docs, col_backup, col_sys = st.columns(3)
+        st.info("Gere o Plano na aba **Consultoria IA** para liberar exportações.")
+        st.stop()
 
-        with col_docs:
-            st.caption("📄 Documentos")
+    col_docs, col_backup, col_sys = st.columns(3)
 
-            pdf_bytes = None
-            try:
-                pdf_bytes = gerar_pdf_final(d, len(st.session_state.get("pdf_text", "")) > 0)
-            except TypeError:
-                try:
-                    pdf_bytes = gerar_pdf_final(d)
-                except Exception as e:
-                    st.error(f"Não foi possível gerar PDF: {e}")
+    # ---------------- DOCS ----------------
+    with col_docs:
+        st.caption("📄 Documentos")
 
-            if pdf_bytes:
-                st.download_button(
-                    "Baixar PDF Oficial",
-                    pdf_bytes,
-                    f"PEI_{d.get('nome','Aluno')}.pdf",
-                    "application/pdf",
-                    use_container_width=True
-                )
-
-            try:
-                docx = gerar_docx_final(d)
-                st.download_button(
-                    "Baixar Word Editável",
-                    docx,
-                    f"PEI_{d.get('nome','Aluno')}.docx",
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True
-                )
-            except Exception as e:
-                st.error(f"Não foi possível gerar Word: {e}")
-
-        with col_backup:
-            st.caption("💾 Backup (JSON)")
-            st.markdown(
-                "<div style='font-size:.85rem; color:#4A5568; margin-bottom:8px;'>"
-                "<b>O que é o JSON?</b> É um backup completo do PEI (campos, seleções e textos). "
-                "Use para reabrir depois ou transferir para outra versão do app."
-                "</div>",
-                unsafe_allow_html=True
-            )
+        try:
+            pdf = gerar_pdf_final(d)
             st.download_button(
-                "Salvar Arquivo .JSON",
-                json.dumps(d, default=str, ensure_ascii=False),
-                f"PEI_{d.get('nome','Aluno')}.json",
-                "application/json",
+                "Baixar PDF",
+                pdf,
+                f"PEI_{d.get('nome')}.pdf",
+                "application/pdf",
                 use_container_width=True
             )
+        except Exception as e:
+            st.error(f"Erro PDF: {e}")
 
-        with col_sys:
-            st.caption("🌐 Omnisfera")
-            st.markdown(
-                "<div style='font-size:.85rem; color:#4A5568; margin-bottom:8px;'>"
-                "Clique para <b>vincular o aluno</b> e <b>salvar o PEI</b> na nuvem (Supabase)."
-                "</div>",
-                unsafe_allow_html=True
+        try:
+            docx = gerar_docx_final(d)
+            st.download_button(
+                "Baixar Word",
+                docx,
+                f"PEI_{d.get('nome')}.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                use_container_width=True
             )
+        except Exception as e:
+            st.error(f"Erro Word: {e}")
 
-            if st.button(
-                "🔗 Sincronizar (Omnisfera)",
-                type="primary",
-                use_container_width=True,
-                key="btn_sync_omnisfera_tab8"
-            ):
-                ok, details = _cloud_ready_debug_adapter()
-                if not ok:
-                    st.error("Nuvem indisponível: falta configurar algum item da sessão/cliente.")
-                    st.json(details)
-                    st.stop()
+    # ---------------- BACKUP ----------------
+    with col_backup:
+        st.caption("💾 Backup (JSON)")
+        st.download_button(
+            "Salvar JSON",
+            json.dumps(d, default=str, ensure_ascii=False),
+            f"PEI_{d.get('nome')}.json",
+            "application/json",
+            use_container_width=True
+        )
 
-                if "db_create_student" not in globals():
-                    st.error("Função db_create_student() não encontrada no projeto.")
-                    st.stop()
+    # ---------------- CLOUD ----------------
+    with col_sys:
+        st.caption("🌐 Omnisfera")
 
-                try:
-                    sid = st.session_state.get("selected_student_id")
+        def _cloud_ready_debug_adapter():
+            details = {}
 
-                    if not sid:
-                        created = db_create_student({
-                            "name": d.get("nome"),
-                            "birth_date": d.get("nasc").isoformat() if hasattr(d.get("nasc"), "isoformat") else None,
-                            "grade": d.get("serie"),
-                            "class_group": d.get("turma") or None,
-                            "diagnosis": d.get("diagnostico") or None,
-                        })
-                        sid = (created or {}).get("id")
+            sb = st.session_state.get("sb") or globals().get("sb")
+            ws = st.session_state.get("workspace_id")
+            auth = st.session_state.get("autenticado", False)
 
-                        if not sid:
-                            raise RuntimeError("Falha ao criar aluno no Supabase (students). Verifique RLS/policies.")
+            details["has_sb"] = bool(sb)
+            details["has_workspace_id"] = bool(ws)
+            details["autenticado"] = bool(auth)
 
-                        st.session_state["selected_student_id"] = sid
-                        st.session_state["selected_student_name"] = (created or {}).get("name") or ""
+            ok = all(details.values())
+            details["missing"] = [k for k, v in details.items() if not v]
+            return ok, details
 
-                    if "supa_sync_student_from_dados" in globals():
-                        supa_sync_student_from_dados(sid, d)
+        if st.button(
+            "🔗 Sincronizar (Omnisfera)",
+            type="primary",
+            use_container_width=True
+        ):
+            ok, details = _cloud_ready_debug_adapter()
+            if not ok:
+                st.error("Nuvem indisponível.")
+                st.json(details)
+                st.stop()
 
-                    if "supa_save_pei" in globals():
-                        supa_save_pei(sid, d, st.session_state.get("pdf_text", ""))
+            try:
+                sid = st.session_state.get("selected_student_id")
 
-                    st.success("✅ Sincronizado: aluno vinculado + PEI salvo na nuvem.")
-                    st.caption(f"student_id: {sid[:8]}...")
-                    st.rerun()
+                if not sid:
+                    created = db_create_student({
+                        "name": d.get("nome"),
+                        "birth_date": d.get("nasc"),
+                        "grade": d.get("serie"),
+                        "class_group": d.get("turma"),
+                        "diagnosis": d.get("diagnostico"),
+                    })
+                    sid = created.get("id")
+                    st.session_state["selected_student_id"] = sid
 
-                except Exception as e:
-                    st.error(f"Erro ao sincronizar/salvar: {e}")
+                if "supa_save_pei" in globals():
+                    supa_save_pei(sid, d, st.session_state.get("pdf_text", ""))
 
+                st.success("✅ PEI salvo na nuvem com sucesso.")
+                st.rerun()
 
+            except Exception as e:
+                st.error(f"Erro ao salvar na nuvem: {e}")
 
 # ==============================================================================
 # ABA — JORNADA GAMIFICADA (BLOCO COMPLETO)
