@@ -45,6 +45,24 @@ def get_supabase():
     return create_client(url, key)
 
 
+def ensure_supabase_in_session() -> object:
+    """
+    GARANTE que o client Supabase exista também em st.session_state["sb"].
+
+    Por quê:
+    - Você usa get_supabase() (cache_resource), mas o seu _cloud_ready() checa
+      especificamente st.session_state.get("sb").
+    - Então precisamos sincronizar cache -> session_state.
+
+    Use:
+    - Após login bem sucedido (autenticado=True)
+    - Antes de qualquer ação de nuvem (sync/save)
+    """
+    if st.session_state.get("sb") is None:
+        st.session_state["sb"] = get_supabase()
+    return st.session_state["sb"]
+
+
 def rpc_workspace_from_pin(pin: str) -> dict | None:
     """
     Chama a função:
