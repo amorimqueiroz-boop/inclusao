@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 2. CSS (ESTILOS VISUAIS)
+# 2. CSS & DESIGN SYSTEM (CORREÇÃO DE BOTÃO E LAYOUT)
 # ==============================================================================
 st.markdown("""
 <style>
@@ -32,7 +32,11 @@ html, body, [class*="css"] {
 
 /* Limpeza */
 [data-testid="stHeader"], [data-testid="stSidebarNav"] { display: none !important; }
-.block-container { padding-top: 100px !important; max-width: 95% !important; }
+.block-container { 
+    padding-top: 100px !important; 
+    padding-bottom: 4rem !important;
+    max-width: 95% !important;
+}
 
 /* HEADER */
 .topbar {
@@ -46,9 +50,9 @@ html, body, [class*="css"] {
 .brand-logo { height: 45px; animation: spin 60s linear infinite; }
 .brand-text { font-weight: 800; color: #1E293B; font-size: 1.2rem; }
 
-/* HERO */
+/* HERO SECTION */
 .hero {
-    background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, #2563EB 0%, #1E40AF 100%);
     border-radius: 20px; padding: 40px 50px; color: white;
     margin-bottom: 40px; position: relative; overflow: hidden;
     box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.4);
@@ -56,77 +60,96 @@ html, body, [class*="css"] {
 .hero h1 { font-weight: 800; font-size: 2.2rem; margin: 0 0 10px 0; }
 .hero p { opacity: 0.9; font-size: 1.1rem; max-width: 700px; margin: 0; }
 
-/* CARD (Fundo Visual) */
+/* --- CARD VISUAL (HTML) --- */
 .card-box {
-    background: white; border-radius: 16px;
+    background: white; 
+    border-radius: 16px;
     border: 1px solid #E2E8F0;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-    height: 140px; /* Altura fixa para alinhar */
+    height: 120px; /* Altura fixa */
     position: relative;
-    display: flex; align-items: center;
-    padding-left: 100px; /* Espaço para o ícone */
-    padding-right: 150px; /* Espaço para o botão */
-    overflow: visible;
+    display: flex; 
+    align-items: center;
+    padding-left: 100px; /* Espaço para ícone */
+    padding-right: 140px; /* Espaço para botão */
+    transition: transform 0.2s;
+    overflow: hidden;
+}
+.card-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1);
+    border-color: #CBD5E1;
 }
 
-/* Barra Lateral Colorida */
+/* Faixa lateral colorida */
 .card-edge {
-    position: absolute; left: 0; top: 0; bottom: 0; width: 8px;
-    border-radius: 16px 0 0 16px;
+    position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
 }
 
 /* Ícone */
 .card-icon {
     position: absolute; left: 25px; top: 50%; transform: translateY(-50%);
     font-size: 2rem;
+    width: 50px; height: 50px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 12px;
+    background: #F8FAFC;
 }
 
 /* Texto */
+.card-content { width: 100%; }
 .card-content h3 { margin: 0; font-size: 1.1rem; font-weight: 700; color: #0F172A; }
-.card-content p { margin: 4px 0 0 0; font-size: 0.85rem; color: #64748B; }
+.card-content p { margin: 4px 0 0 0; font-size: 0.8rem; color: #64748B; line-height: 1.3; }
 
-/* POSICIONAMENTO DO BOTÃO STREAMLIT (O TRUQUE) */
-/* Isso pega o botão que vem LOGO DEPOIS do HTML e o move para dentro do card */
-div.element-container:has(div.card-box) + div.element-container button {
-    position: absolute !important;
-    top: -95px !important; /* Sobe para dentro do card */
-    right: 25px !important; /* Alinha à direita */
-    width: auto !important;
-    background-color: #4F46E5 !important; /* Roxo bonito */
-    color: white !important;
-    border: none !important;
-    border-radius: 8px !important;
-    padding: 8px 20px !important;
-    font-weight: 700 !important;
-    font-size: 0.8rem !important;
-    text-transform: uppercase !important;
-    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2) !important;
-    z-index: 10 !important;
-    transition: transform 0.2s !important;
+/* --- BOTÃO STREAMLIT (CSS HACK) --- */
+/* Esta classe puxa o botão st.button para dentro do card visual acima dele */
+div[data-testid="stVerticalBlock"] > div > div[data-testid="stButton"] {
+    margin-top: -85px; /* Puxa para cima */
+    text-align: right;
+    padding-right: 25px;
+    position: relative;
+    z-index: 10;
+    pointer-events: none; /* Container transparente */
 }
-div.element-container:has(div.card-box) + div.element-container button:hover {
-    background-color: #4338ca !important;
-    transform: translateY(-2px) !important;
+
+div[data-testid="stVerticalBlock"] > div > div[data-testid="stButton"] > button {
+    pointer-events: auto; /* Botão clicável */
+    background-color: #4F46E5;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.2rem;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+    transition: all 0.2s;
+}
+
+div[data-testid="stVerticalBlock"] > div > div[data-testid="stButton"] > button:hover {
+    background-color: #4338ca;
+    transform: scale(1.05);
+    color: white;
 }
 
 /* RECURSOS EXTERNOS */
-.res-link { text-decoration: none; }
+.res-link { text-decoration: none !important; }
 .res-card {
     background: white; padding: 20px; border-radius: 12px;
     border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 15px;
-    transition: transform 0.2s;
+    transition: transform 0.2s; height: 100%;
 }
 .res-card:hover { transform: translateY(-3px); border-color: #CBD5E1; }
 .res-icon { font-size: 1.5rem; }
-.res-tit { font-weight: 700; color: #1E293B; font-size: 0.95rem; }
-.res-sub { font-size: 0.8rem; color: #64748B; }
+.res-tit { font-weight: 700; color: #1E293B; font-size: 0.9rem; }
+.res-sub { font-size: 0.75rem; color: #64748B; }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. HELPERS
+# 3. HELPERS & STATE
 # ==============================================================================
 if "dados" not in st.session_state: st.session_state.dados = {"nome": "", "nasc": date(2015,1,1)}
 if "autenticado" not in st.session_state: st.session_state.autenticado = False
@@ -146,7 +169,7 @@ if not st.session_state.get("autenticado") or not st.session_state.get("workspac
     st.stop()
 
 # ==============================================================================
-# 4. LAYOUT
+# 4. RENDERIZAÇÃO
 # ==============================================================================
 
 # TOPBAR
@@ -159,11 +182,11 @@ txt_tag = f'<img src="data:image/png;base64,{txt_b64}" style="height:30px;">' if
 
 st.markdown(f"""
 <div class="topbar">
-    <div class="brand-group">{logo_tag} {txt_tag}</div>
-    <div class="brand-group">
-        <span style="background:#F1F5F9; padding:5px 12px; border-radius:20px; font-size:0.8rem; font-weight:700; color:#64748B;">{escola()}</span>
-        <div style="width:35px; height:35px; background:#2563EB; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">{user[:2].upper()}</div>
-    </div>
+<div class="brand-group">{logo_tag} {txt_tag}</div>
+<div class="brand-group">
+<span style="background:#F1F5F9; padding:5px 12px; border-radius:20px; font-size:0.8rem; font-weight:700; color:#64748B;">{escola()}</span>
+<div style="width:35px; height:35px; background:#2563EB; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">{user[:2].upper()}</div>
+</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -173,8 +196,8 @@ saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else 
 
 st.markdown(f"""
 <div class="hero">
-    <h1>{saudacao}, {user}!</h1>
-    <p>Seu painel de controle pedagógico está pronto. Selecione um módulo abaixo.</p>
+<h1>{saudacao}, {user}!</h1>
+<p>Seu painel de controle pedagógico está pronto. Selecione um módulo abaixo.</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -182,7 +205,7 @@ st.markdown(f"""
 st.markdown("### 🚀 Seus Módulos")
 
 def card_funcional(titulo, desc, icone, cor, arquivo, chave):
-    # HTML SEM INDENTAÇÃO
+    # HTML SEM INDENTAÇÃO para evitar bugs
     html = f"""
 <div class="card-box">
 <div class="card-edge" style="background-color: {cor};"></div>
@@ -197,22 +220,21 @@ def card_funcional(titulo, desc, icone, cor, arquivo, chave):
     
     # BOTÃO REAL (que será movido pelo CSS acima)
     if st.button("CLIQUE AQUI", key=chave):
-        # Lógica de redirecionamento precisa
         if "Alunos" in titulo:
-            st.switch_page("pages/Alunos.py") 
+            st.switch_page("pages/Alunos.py") # CAMINHO EXATO
         elif st.session_state.dados.get("nome"):
-            st.switch_page(arquivo)
+            st.switch_page(arquivo) # CAMINHO EXATO
         else:
             st.toast("⚠️ Selecione um aluno primeiro!", icon="🚫")
             time.sleep(1)
             st.switch_page("pages/Alunos.py")
 
-# GRID 2 POR LINHA (Para ficar largo e bonito)
+# GRID 2 POR LINHA (Largo)
 c1, c2 = st.columns(2, gap="large")
 
 with c1:
     card_funcional("Estudantes", "Gestão e histórico escolar.", "ri-group-fill", "#4F46E5", "pages/Alunos.py", "btn_aluno")
-    st.write("") # Espaço
+    st.write("") # Espaço para o CSS funcionar bem
     card_funcional("Plano de Ação / PAEE", "Sala de recursos e intervenções.", "ri-puzzle-2-fill", "#9333EA", "pages/2_PAE.py", "btn_paee")
     st.write("")
     card_funcional("Hub de Recursos", "Materiais adaptados e IA.", "ri-rocket-2-fill", "#0D9488", "pages/3_Hub_Inclusao.py", "btn_hub")
@@ -229,6 +251,7 @@ st.markdown("<br>### 📚 Recursos Externos", unsafe_allow_html=True)
 
 def link_card(col, icon, tit, sub, url, color):
     with col:
+        # Link seguro sem indentação
         st.markdown(f"""
 <a href="{url}" target="_blank" class="res-link">
 <div class="res-card">
@@ -255,4 +278,4 @@ with st.sidebar:
         st.session_state.autenticado = False; st.rerun()
 
 st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
-st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.75rem;'>Omnisfera v160.0</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #CBD5E0; font-size: 0.75rem;'>Omnisfera desenvolvida por RODRIGO A. QUEIROZ</div>", unsafe_allow_html=True)
