@@ -38,18 +38,59 @@ if ENV != "TESTE":
     )
 
 
-if st.button("🔑 Voltar para o Login", use_container_width=True, type="primary"):
-    # limpa sessão
-    st.session_state.autenticado = False
-    st.session_state.workspace_id = None
-    st.session_state.workspace_name = None
+def acesso_bloqueado(msg: str):
+    st.markdown(
+        f"""
+        <div style="
+            max-width:520px;
+            margin: 120px auto;
+            padding: 28px;
+            background: white;
+            border-radius: 18px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 20px 40px rgba(15,82,186,0.12);
+            text-align: center;
+        ">
+            <div style="font-size:2.2rem; margin-bottom:10px;">🔐</div>
+            <div style="font-weight:900; font-size:1.1rem; margin-bottom:6px; color:#0f172a;">
+                Acesso restrito
+            </div>
+            <div style="color:#4A5568; font-weight:700; font-size:0.95rem; margin-bottom:18px;">
+                {msg}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    # ✅ volta para o início do app (onde está o router/login)
-    try:
-        st.switch_page("streamlit_app.py")
-    except Exception:
-        # fallback: recarrega e deixa o usuário clicar no início
-        st.rerun()
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🔑 Voltar para o Login", use_container_width=True, type="primary"):
+            # 1) limpa sessão
+            for k in ["autenticado", "workspace_id", "workspace_name", "usuario_nome", "usuario_cargo"]:
+                st.session_state.pop(k, None)
+
+            # 2) tenta ir para o começo (streamlit_app.py)
+            try:
+                st.switch_page("streamlit_app.py")
+            except Exception:
+                # 3) fallback SUPER confiável: link para raiz
+                st.markdown(
+                    """
+                    <div style="text-align:center; margin-top:12px;">
+                      <a href="/" target="_self"
+                         style="display:inline-block; padding:10px 14px; border-radius:12px;
+                                background:#0F52BA; color:white; font-weight:900; text-decoration:none;">
+                        Clique aqui para voltar ao Login
+                      </a>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                st.stop()
+
+    st.stop()
+
 
 
 
