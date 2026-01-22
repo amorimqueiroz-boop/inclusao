@@ -2615,74 +2615,77 @@ with tab8:
                 st.error(f"Não foi possível gerar Word: {e}")
 
         with col_backup:
-            st.caption("💾 Backup (JSON)")
-            st.markdown(
-                "<div style='font-size:.85rem; color:#4A5568; margin-bottom:8px;'>"
-                "<b>O que é o JSON?</b> É um backup completo do PEI (campos, seleções e textos). "
-                "Use para reabrir depois ou transferir para outra versão do app."
-                "</div>",
-                unsafe_allow_html=True
-            )
-            st.download_button(
-                "Salvar Arquivo .JSON",
-                json.dumps(d, default=str, ensure_ascii=False),
-                f"PEI_{d.get('nome','Aluno')}.json",
-                "application/json",
-                use_container_width=True
-            )
+    st.caption("💾 Backup (JSON)")
+    st.markdown(
+        "<div style='font-size:.85rem; color:#4A5568; margin-bottom:8px;'>"
+        "<b>O que é o JSON?</b> É um backup completo do PEI (campos, seleções e textos). "
+        "Use para reabrir depois ou transferir para outra versão do app."
+        "</div>",
+        unsafe_allow_html=True
+    )
+    st.download_button(
+        "Salvar Arquivo .JSON",
+        json.dumps(d, default=str, ensure_ascii=False),
+        f"PEI_{d.get('nome','Aluno')}.json",
+        "application/json",
+        use_container_width=True
+    )
 
-                with col_sys:
-            st.caption("🌐 Omnisfera")
-            st.markdown(
-                "<div style='font-size:.85rem; color:#4A5568; margin-bottom:8px;'>"
-                "Clique para <b>vincular o aluno</b> e <b>salvar o PEI</b> na nuvem (Supabase)."
-                "</div>",
-                unsafe_allow_html=True
-            )
 
-            if st.button(
-                "🔗 Sincronizar (Omnisfera)",
-                type="primary",
-                use_container_width=True,
-                key="btn_sync_omnisfera_tab8"
-            ):
-                if not _cloud_ready():
-                    st.error("Nuvem indisponível: verifique login, workspace e Supabase.")
-                else:
-                    try:
-                        sid = st.session_state.get("selected_student_id")
+with col_sys:
+    st.caption("🌐 Omnisfera")
+    st.markdown(
+        "<div style='font-size:.85rem; color:#4A5568; margin-bottom:8px;'>"
+        "Clique para <b>vincular o aluno</b> e <b>salvar o PEI</b> na nuvem (Supabase)."
+        "</div>",
+        unsafe_allow_html=True
+    )
 
-                        # Se não tem vínculo, cria aluno na tabela students
-                        if not sid:
-                            created = db_create_student({
-                                "name": d.get("nome"),
-                                "birth_date": d.get("nasc").isoformat() if hasattr(d.get("nasc"), "isoformat") else None,
-                                "grade": d.get("serie"),
-                                "class_group": d.get("turma") or None,
-                                "diagnosis": d.get("diagnostico") or None,
-                            })
-                            sid = (created or {}).get("id")
+    if st.button(
+        "🔗 Sincronizar (Omnisfera)",
+        type="primary",
+        use_container_width=True,
+        key="btn_sync_omnisfera_tab8"
+    ):
+        if not _cloud_ready():
+            st.error("Nuvem indisponível: verifique login, workspace e Supabase.")
+        else:
+            try:
+                sid = st.session_state.get("selected_student_id")
 
-                            if not sid:
-                                raise RuntimeError("Falha ao criar aluno no Supabase (students). Verifique RLS/policies.")
+                # Se não tem vínculo, cria aluno na tabela students
+                if not sid:
+                    created = db_create_student({
+                        "name": d.get("nome"),
+                        "birth_date": d.get("nasc").isoformat() if hasattr(d.get("nasc"), "isoformat") else None,
+                        "grade": d.get("serie"),
+                        "class_group": d.get("turma") or None,
+                        "diagnosis": d.get("diagnostico") or None,
+                    })
+                    sid = (created or {}).get("id")
 
-                            st.session_state["selected_student_id"] = sid
-                            st.session_state["selected_student_name"] = (created or {}).get("name") or ""
+                    if not sid:
+                        raise RuntimeError(
+                            "Falha ao criar aluno no Supabase (students). Verifique RLS/policies."
+                        )
 
-                        # Atualiza student (se existir a função no seu projeto)
-                        if "supa_sync_student_from_dados" in globals():
-                            supa_sync_student_from_dados(sid, d)
+                    st.session_state["selected_student_id"] = sid
+                    st.session_state["selected_student_name"] = (created or {}).get("name") or ""
 
-                        # Salva PEI (se existir a função no seu projeto)
-                        if "supa_save_pei" in globals():
-                            supa_save_pei(sid, d, st.session_state.get("pdf_text", ""))
+                # Atualiza student (se existir a função)
+                if "supa_sync_student_from_dados" in globals():
+                    supa_sync_student_from_dados(sid, d)
 
-                        st.success("✅ Sincronizado: aluno vinculado + PEI salvo na nuvem.")
-                        st.caption(f"student_id: {sid[:8]}...")
-                        st.rerun()
+                # Salva PEI (se existir a função)
+                if "supa_save_pei" in globals():
+                    supa_save_pei(sid, d, st.session_state.get("pdf_text", ""))
 
-                    except Exception as e:
-                        st.error(f"Erro ao sincronizar/salvar: {e}")
+                st.success("✅ Sincronizado: aluno vinculado + PEI salvo na nuvem.")
+                st.caption(f"student_id: {sid[:8]}...")
+                st.rerun()
+
+            except Exception as e:
+                st.error(f"Erro ao sincronizar/salvar: {e}")
 
 # ==============================================================================
 # ABA — JORNADA GAMIFICADA (BLOCO COMPLETO)
