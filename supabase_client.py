@@ -7,6 +7,7 @@ RPC_NAME = "workspace_from_pin"
 
 
 def _get_secret(name: str) -> str | None:
+    """Lê secrets (Streamlit Cloud) e fallback para env var."""
     try:
         v = st.secrets.get(name)
         if v:
@@ -20,8 +21,8 @@ def _get_secret(name: str) -> str | None:
 @st.cache_resource(show_spinner=False)
 def _create_supabase_client():
     """
-    Cria um client Supabase (cacheado no app).
-    NÃO depende de session_state.
+    Cria UM cliente Supabase (cacheado para o app inteiro).
+    Não depende de session_state.
     """
     try:
         from supabase import create_client  # type: ignore
@@ -46,18 +47,21 @@ def _create_supabase_client():
 
 def get_sb():
     """
-    Garante que o client Supabase exista e fique acessível em:
-    st.session_state["sb"]
+    ✅ Função padrão do projeto: garante sb na session_state.
+    Retorna o client.
     """
-    try:
-        sb = _create_supabase_client()
-        st.session_state["sb"] = sb
-        st.session_state.pop("sb_error", None)
-        return sb
-    except Exception as e:
-        st.session_state["sb"] = None
-        st.session_state["sb_error"] = str(e)
-        raise
+    if "sb" in st.session_state and st.session_state["sb"] is not None:
+        return st.session_state["sb"]
+
+    sb = _create_supabase_client()
+    st.session_state["sb"] = sb
+    return sb
+
+
+# Compatibilidade com seu código antigo
+def get_supabase():
+    """Alias para manter compatibilidade com versões anteriores."""
+    return get_sb()
 
 
 def rpc_workspace_from_pin(pin: str) -> dict | None:
@@ -66,17 +70,15 @@ def rpc_workspace_from_pin(pin: str) -> dict | None:
     public.workspace_from_pin(p_pin text)
     Retorna: { id, name } ou None
     """
-    sb = _create_supabase_client()
-    res = sb.rpc(RPC_NAME, {"p_pin": pin}).execute()
+    sb = get_sb()
 
+    res = sb.rpc(RPC_NAME, {"p_pin": pin}).execute()
     data = res.data
+
     if not data:
         return None
-
     if isinstance(data, list):
         return data[0] if data else None
-
     if isinstance(data, dict):
         return data
-
     return None
