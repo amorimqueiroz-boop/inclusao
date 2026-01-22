@@ -8,7 +8,7 @@ import time
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v136.0 (Wide Dashboard)"
+APP_VERSION = "v136.1 (Wide Dashboard + Fix)"
 
 # Detecção de Ambiente
 try:
@@ -84,23 +84,23 @@ st.markdown("""
 html, body, [class*="css"] {
     font-family: 'Nunito', sans-serif;
     color: #1A202C;
-    background-color: #F8FAFC; /* Fundo levemente azulado/cinza para modernidade */
+    background-color: #F8FAFC; /* Fundo levemente azulado/cinza */
 }
 
 /* Limpeza do Streamlit */
 [data-testid="stSidebarNav"] { display: none !important; }
 [data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
 
-/* AQUI ESTÁ O TRUQUE: Aumentar a largura máxima para 95% */
+/* LAYOUT WIDE (95% DA TELA) */
 .block-container { 
     padding-top: 100px !important; 
     padding-bottom: 3rem !important; 
-    max-width: 95% !important; /* Ocupa quase toda a tela */
+    max-width: 95% !important; 
     padding-left: 2rem !important;
     padding-right: 2rem !important;
 }
 
-/* --- TOPBAR FLUTUANTE (GLASSMORPHISM) --- */
+/* --- TOPBAR FLUTUANTE --- */
 .header-container {
     position: fixed; top: 0; left: 0; width: 100%; height: 75px;
     background: rgba(255, 255, 255, 0.85);
@@ -139,7 +139,6 @@ html, body, [class*="css"] {
     overflow: hidden;
 }
 
-/* Efeito de fundo sutil no Hero */
 .hero-wide::before {
     content: "";
     position: absolute;
@@ -173,7 +172,7 @@ html, body, [class*="css"] {
     border: 1px solid #F1F5F9;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    height: 100%; /* Ocupa altura total da coluna */
+    height: 100%;
     min-height: 200px;
     position: relative;
     display: flex; flex-direction: column; 
@@ -206,7 +205,7 @@ html, body, [class*="css"] {
     font-size: 0.95rem; 
     color: #64748B; 
     line-height: 1.6; 
-    flex-grow: 1; /* Empurra o link para baixo */
+    flex-grow: 1; 
 }
 .card-footer {
     margin-top: 20px;
@@ -227,7 +226,7 @@ html, body, [class*="css"] {
 .theme-indigo { background: #EEF2FF; color: #4F46E5; }
 .theme-gray { background: #F8FAFC; color: #64748B; }
 
-/* Botão Fantasma (Clique no Card todo) */
+/* Botão Fantasma */
 .ghost-btn button {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     opacity: 0; z-index: 20; cursor: pointer;
@@ -288,9 +287,14 @@ with st.sidebar:
 # ==============================================================================
 nome_usuario = st.session_state.get('usuario_nome', 'Visitante').split()[0]
 
-# Tenta pegar estatísticas rápidas do estado (opcional, só visual)
+# Estatísticas Visuais
 total_alunos = len(st.session_state.get("banco_estudantes", []))
 aluno_ativo = st.session_state.dados.get("nome", "Nenhum")
+
+# Correção do Erro de Split: Verifica se existe e não está vazio
+display_aluno = "-"
+if aluno_ativo and aluno_ativo != "Nenhum" and aluno_ativo.strip():
+    display_aluno = aluno_ativo.split()[0]
 
 st.markdown(f"""
 <div class="hero-wide">
@@ -309,8 +313,8 @@ st.markdown(f"""
         </div>
         <div style="width:1px; background:rgba(255,255,255,0.3);"></div>
         <div class="stat-item">
-            <div class="stat-val">Active</div>
-            <div class="stat-lbl">{aluno_ativo.split()[0] if aluno_ativo != "Nenhum" else "-"}</div>
+            <div class="stat-val">Ativo</div>
+            <div class="stat-lbl">{display_aluno}</div>
         </div>
     </div>
 </div>
@@ -322,7 +326,6 @@ st.markdown(f"""
 st.markdown("### 🚀 Módulos da Omnisfera")
 
 def render_module_card(title, desc, icon_class, theme_class, target_page, key, cta_text="Acessar"):
-    # HTML
     st.markdown(f"""
     <div class="flat-card">
         <div class="icon-box {theme_class}">
@@ -338,7 +341,6 @@ def render_module_card(title, desc, icon_class, theme_class, target_page, key, c
     </div>
     """, unsafe_allow_html=True)
     
-    # Botão Invisível
     st.markdown(f'<div class="ghost-btn">', unsafe_allow_html=True)
     if st.button(f"btn_{key}", key=key):
         if target_page:
@@ -347,13 +349,13 @@ def render_module_card(title, desc, icon_class, theme_class, target_page, key, c
             else:
                 st.toast("⚠️ Selecione um aluno no módulo 'Estudantes' primeiro!", icon="👇")
                 time.sleep(1.5)
-                st.switch_page("pages/0_Alunos.py") # Redireciona para alunos para facilitar
+                st.switch_page("pages/0_Alunos.py")
         else:
             st.toast("🚧 Em desenvolvimento", icon="🔨")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # GRID DE 3 COLUNAS
-c1, c2, c3 = st.columns(3, gap="large") # gap="large" ajuda a espalhar
+c1, c2, c3 = st.columns(3, gap="large")
 
 with c1:
     render_module_card(
@@ -361,7 +363,7 @@ with c1:
         "Gestão centralizada, histórico clínico e seleção do aluno ativo.", 
         "ri-group-line", "theme-indigo", "pages/0_Alunos.py", "mod_alunos"
     )
-    st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True) # Espaçamento vertical
+    st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
     render_module_card(
         "Hub de Recursos", 
         "Banco de adaptações, materiais pedagógicos e ferramentas de IA.", 
