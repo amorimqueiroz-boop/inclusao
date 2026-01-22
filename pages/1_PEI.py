@@ -2614,7 +2614,7 @@ with tab8:
             except Exception as e:
                 st.error(f"Não foi possível gerar Word: {e}")
 
-        with col_backup:
+    with col_backup:
     st.caption("💾 Backup (JSON)")
     st.markdown(
         "<div style='font-size:.85rem; color:#4A5568; margin-bottom:8px;'>"
@@ -2630,7 +2630,6 @@ with tab8:
         "application/json",
         use_container_width=True
     )
-
 
 with col_sys:
     st.caption("🌐 Omnisfera")
@@ -2665,18 +2664,16 @@ with col_sys:
                     sid = (created or {}).get("id")
 
                     if not sid:
-                        raise RuntimeError(
-                            "Falha ao criar aluno no Supabase (students). Verifique RLS/policies."
-                        )
+                        raise RuntimeError("Falha ao criar aluno no Supabase (students). Verifique RLS/policies.")
 
                     st.session_state["selected_student_id"] = sid
                     st.session_state["selected_student_name"] = (created or {}).get("name") or ""
 
-                # Atualiza student (se existir a função)
+                # Atualiza student (se existir a função no seu projeto)
                 if "supa_sync_student_from_dados" in globals():
                     supa_sync_student_from_dados(sid, d)
 
-                # Salva PEI (se existir a função)
+                # Salva PEI (se existir a função no seu projeto)
                 if "supa_save_pei" in globals():
                     supa_save_pei(sid, d, st.session_state.get("pdf_text", ""))
 
@@ -2685,8 +2682,8 @@ with col_sys:
                 st.rerun()
 
             except Exception as e:
-                st.error(f"Erro ao sincronizar/salvar: {e}")
-
+                st.error(f"Erro ao sincronizar/salvar: {e}")   
+        
 # ==============================================================================
 # ABA — JORNADA GAMIFICADA (BLOCO COMPLETO)
 # ==============================================================================
