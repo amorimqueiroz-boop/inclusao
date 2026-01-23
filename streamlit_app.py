@@ -3,6 +3,13 @@ import os
 import streamlit as st
 from login_view import render_login
 
+# ✅ centraliza o lockdown num arquivo só
+try:
+    from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
+except Exception:
+    hide_streamlit_chrome_if_needed = None
+    hide_default_sidebar_nav = None
+
 
 def get_env() -> str:
     try:
@@ -23,19 +30,14 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Esconde chrome só fora do TESTE
-if ENV != "TESTE":
-    st.markdown(
-        """
-        <style>
-          #MainMenu {visibility: hidden;}
-          footer {visibility: hidden;}
-          header {visibility: hidden;}
-          [data-testid="stToolbar"] {visibility: hidden;}
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+# ✅ aplica o lockdown central (em vez de CSS solto aqui)
+if hide_streamlit_chrome_if_needed:
+    hide_streamlit_chrome_if_needed()
+
+# ✅ esconde a navegação automática do multipage (a “sidebar antiga”)
+if hide_default_sidebar_nav:
+    hide_default_sidebar_nav()  # NÃO passe hide_sidebar_container=True aqui
+
 
 
 def acesso_bloqueado(msg: str):
