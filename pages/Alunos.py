@@ -37,7 +37,7 @@ html, body, [class*="css"] {
 
 /* ===== CONTAINER COM SIDEBAR VISÍVEL ===== */
 .block-container {
-    padding-top: 1.25rem !important;
+    padding-top: 3.5rem !important; /* AUMENTADO PARA DESCER O CABEÇALHO */
     padding-bottom: 3rem !important;
     max-width: 95% !important;
     padding-left: 1rem !important;
@@ -514,8 +514,8 @@ def acesso_bloqueado(msg: str):
                     """
                     <div style="text-align:center; margin-top:10px;">
                       <a href="/" target="_self"
-                         style="display:inline-block; padding:10px 14px; border-radius:12px;
-                                background:#0F52BA; color:white; font-weight:900; text-decoration:none;">
+                          style="display:inline-block; padding:10px 14px; border-radius:12px;
+                                 background:#0F52BA; color:white; font-weight:900; text-decoration:none;">
                         Clique aqui para voltar ao Login
                       </a>
                     </div>
@@ -780,7 +780,7 @@ for a in alunos:
         with col1:
             # Botão de lixeira estilizado
             if st.button("🗑️", key=f"del_{sid}", help="Apagar estudante", 
-                        use_container_width=True):
+                         use_container_width=True):
                 st.session_state[confirm_key] = True
                 st.rerun()
     else:
