@@ -6,7 +6,7 @@ import os
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v2.0 - React Style"
+APP_VERSION = "v2.0 - Simplificado"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV", "PRODUCAO") == "TESTE"
@@ -17,12 +17,12 @@ st.set_page_config(
     page_title="Omnisfera - Plataforma de Inclusão Educacional",
     page_icon="🌐" if not os.path.exists("omni_icone.png") else "omni_icone.png",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="auto",  # Usar sidebar nativa do Streamlit
     menu_items=None
 )
 
 # ==============================================================================
-# 2. CSS & DESIGN SYSTEM
+# 2. CSS & DESIGN SYSTEM (SIMPLIFICADO)
 # ==============================================================================
 st.markdown(
     """
@@ -30,32 +30,10 @@ st.markdown(
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import url("https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css");
 
-* {
-    transition: all 0.2s ease;
-}
-
 html, body, [class*="css"] {
     font-family: 'Plus Jakarta Sans', sans-serif !important;
     color: #1E293B !important;
     background-color: #F8FAFC !important;
-    scroll-behavior: smooth;
-}
-
-/* --- LIMPEZA STREAMLIT NATIVO --- */
-[data-testid="stSidebarNav"],
-[data-testid="stHeader"],
-[data-testid="collapsedControl"],
-[data-testid="stToolbar"],
-footer {
-    display: none !important;
-}
-
-.block-container {
-    padding-top: 100px !important;
-    padding-bottom: 4rem !important;
-    max-width: 95% !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
 }
 
 /* --- HEADER FIXO --- */
@@ -105,74 +83,6 @@ footer {
     font-weight: 700;
     color: #64748B;
     letter-spacing: 0.5px;
-}
-
-/* --- SIDEBAR --- */
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%) !important;
-    border-right: 1px solid #E2E8F0 !important;
-    padding-top: 80px !important;
-}
-
-.sidebar-logo-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px 0;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #E2E8F0;
-}
-
-.sidebar-nav-section {
-    padding: 0 15px;
-}
-
-.sidebar-nav-title {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #64748B;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.sidebar-nav-button {
-    width: 100%;
-    margin-bottom: 8px;
-    border-radius: 12px !important;
-    border: 1px solid #E2E8F0;
-    background: white;
-    color: #475569;
-    font-weight: 600;
-    font-size: 0.9rem;
-    padding: 12px 16px;
-    text-align: left;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-}
-
-.sidebar-nav-button:hover {
-    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%) !important;
-    color: white !important;
-    border-color: #4F46E5 !important;
-    transform: translateX(4px) !important;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2) !important;
-}
-
-.sidebar-nav-button i {
-    font-size: 1.1rem;
-    transition: transform 0.2s;
-}
-
-.sidebar-nav-button:hover i {
-    transform: scale(1.1);
 }
 
 /* --- HERO SECTION --- */
@@ -490,27 +400,6 @@ footer {
 }
 .rc-orange .res-icon { background: #FFF7ED !important; border: 1px solid #FDBA74 !important; }
 
-/* --- ANIMAÇÕES --- */
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.fade-in-up {
-    animation: fadeInUp 0.5s ease-out;
-}
-
 /* --- MÉTRICAS --- */
 .metric-card {
     background: white;
@@ -559,6 +448,12 @@ footer {
 .metric-down { color: #DC2626 !important; }
 .metric-neutral { color: #64748B !important; }
 
+/* --- ANIMAÇÕES --- */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 /* --- RESPONSIVIDADE --- */
 @media (max-width: 1024px) {
     .topbar { padding: 0 1.5rem; }
@@ -600,38 +495,8 @@ footer {
 )
 
 # ==============================================================================
-# 3. FUNÇÕES AUXILIARES
+# 3. FUNÇÕES AUXILIARES SIMPLIFICADAS
 # ==============================================================================
-def acesso_bloqueado(msg: str):
-    """Componente de acesso restrito"""
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown(
-            f"""
-            <div style='
-                text-align: center; 
-                padding: 3rem; 
-                background: white;
-                border-radius: 20px;
-                border: 1px solid #E2E8F0;
-                box-shadow: 0 20px 40px rgba(0,0,0,0.05);
-                margin: 4rem 0;
-            '>
-                <div style='font-size: 4rem; margin-bottom: 1rem;'>🔐</div>
-                <h3 style='color: #1E293B; margin-bottom: 1rem;'>Acesso Restrito</h3>
-                <p style='color: #64748B;'>{msg}</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        
-        if st.button("🔓 Ir para Login", use_container_width=True, type="primary"):
-            st.session_state.autenticado = False
-            st.session_state.workspace_id = None
-            st.rerun()
-    st.stop()
-
-
 def get_base64_image(image_path: str) -> str:
     """Carrega imagem e converte para base64"""
     if not os.path.exists(image_path):
@@ -686,12 +551,16 @@ def initialize_session_state():
 # Inicializa estado
 initialize_session_state()
 
-# Verificação de autenticação
+# Verificação de autenticação (simplificada)
 if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
-    acesso_bloqueado("Sessão inválida ou expirada. Por favor, faça login novamente.")
+    st.warning("🔐 Sessão inválida. Por favor, faça login.")
+    if st.button("Ir para Login"):
+        st.session_state.autenticado = False
+        st.rerun()
+    st.stop()
 
 # ==============================================================================
-# 5. FUNÇÕES DE RENDERIZAÇÃO
+# 5. FUNÇÕES DE RENDERIZAÇÃO (APENAS HEADER E CONTEÚDO)
 # ==============================================================================
 def render_topbar():
     """Renderiza a barra superior fixa"""
@@ -750,127 +619,8 @@ def render_topbar():
     )
 
 
-def render_sidebar():
-    """Renderiza a sidebar personalizada"""
-    with st.sidebar:
-        # Logo da sidebar
-        st.markdown('<div class="sidebar-logo-container">', unsafe_allow_html=True)
-        
-        if os.path.exists("omnisfera.png"):
-            st.image("omnisfera.png", use_column_width=True)
-        elif os.path.exists("omni_texto.png"):
-            st.image("omni_texto.png", use_column_width=True)
-        else:
-            st.markdown(
-                """
-                <div style="text-align: center;">
-                    <div style="font-size: 2rem; font-weight: 800; color: #4F46E5; margin-bottom: 8px;">
-                        🌐
-                    </div>
-                    <div style="
-                        font-size: 1.5rem; 
-                        font-weight: 800; 
-                        background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); 
-                        -webkit-background-clip: text; 
-                        -webkit-text-fill-color: transparent;
-                        margin-bottom: 4px;
-                    ">
-                        OMNISFERA
-                    </div>
-                    <div style="font-size: 0.7rem; color: #94A3B8; font-weight: 600;">
-                        Plataforma de Inclusão
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-        # Navegação
-        st.markdown(
-            """
-            <div class="sidebar-nav-section">
-                <div class="sidebar-nav-title">
-                    <i class="ri-compass-3-line"></i> NAVEGAÇÃO
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        
-        sidebar_options = [
-            ("👥 Alunos", "pages/Alunos.py", "#4F46E5", "ri-team-line"),
-            ("📘 PEI", "pages/1_PEI.py", "#3B82F6", "ri-book-open-line"),
-            ("🧩 PAEE", "pages/2_PAE.py", "#8B5CF6", "ri-puzzle-line"),
-            ("🚀 Hub", "pages/3_Hub_Inclusao.py", "#14B8A6", "ri-rocket-line"),
-            ("📓 Diário", "pages/4_Diario_de_Bordo.py", "#E11D48", "ri-notebook-line"),
-            ("📊 Dados", "pages/5_Monitoramento_Avaliacao.py", "#0284C7", "ri-bar-chart-line"),
-        ]
-        
-        for label, page, color, icon in sidebar_options:
-            st.markdown(
-                f"""
-                <a href="{page}" style="text-decoration: none; display: block; margin-bottom: 8px;">
-                    <div class="sidebar-nav-button" style="border-left: 4px solid {color};">
-                        <i class="{icon}"></i> {label}
-                    </div>
-                </a>
-                """,
-                unsafe_allow_html=True,
-            )
-        
-        # Logout
-        st.markdown(
-            "<div style='margin: 20px 0; border-top: 1px solid #E2E8F0;'></div>",
-            unsafe_allow_html=True,
-        )
-        
-        if st.button(
-            "🚪 Sair do Sistema",
-            use_container_width=True,
-            type="secondary",
-            help="Clique para sair do sistema",
-            key="sidebar_logout"
-        ):
-            st.session_state.autenticado = False
-            st.rerun()
-
-
-def render_hero():
-    """Renderiza a seção hero com saudação dinâmica"""
-    hora = datetime.now().hour
-    saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
-    nome_user = st.session_state.get("usuario_nome", "Visitante").split()[0]
-    
-    st.markdown(
-        f"""
-        <div class="hero-wrapper">
-            <div class="hero-content">
-                <div class="hero-greet">{saudacao}, {nome_user}!</div>
-                <div class="hero-text">"A inclusão acontece quando aprendemos com as diferenças e não com as igualdades."</div>
-            </div>
-            <div class="hero-icon"><i class="ri-heart-pulse-fill"></i></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def create_module_card(title, desc, icon, color_cls, bg_cls, page, key, logo_path=None):
+def create_module_card(title, desc, icon, color_cls, bg_cls, page, key):
     """Cria um card de módulo com botão de acesso"""
-    logo_html = ""
-    if logo_path and os.path.exists(logo_path):
-        logo_b64 = get_base64_image(logo_path)
-        if logo_b64:
-            logo_html = f"""
-            <img src="data:image/png;base64,{logo_b64}" style="
-                height: 36px;
-                width: auto;
-                filter: drop-shadow(0 2px 6px rgba(0,0,0,.1));
-            "/>
-            """
-    
     with st.container():
         st.markdown(
             f"""
@@ -878,7 +628,7 @@ def create_module_card(title, desc, icon, color_cls, bg_cls, page, key, logo_pat
                 <div class="mod-card-rect">
                     <div class="mod-bar {color_cls}"></div>
                     <div class="mod-icon-area {bg_cls}">
-                        {logo_html if logo_html else f"<i class='{icon}'></i>"}
+                        <i class="{icon}"></i>
                     </div>
                     <div class="mod-content">
                         <div class="mod-title">{title}</div>
@@ -995,27 +745,6 @@ def render_metrics():
             )
 
 
-def render_footer():
-    """Renderiza o rodapé da aplicação"""
-    st.markdown(
-        f"""
-        <div style='
-            text-align: center;
-            color: #64748B;
-            font-size: 0.75rem;
-            padding: 20px;
-            border-top: 1px solid #E2E8F0;
-            margin-top: 40px;
-        '>
-            <strong>Omnisfera {APP_VERSION}</strong> • Plataforma de Inclusão Educacional • 
-            Desenvolvido por RODRIGO A. QUEIROZ • 
-            {datetime.now().strftime("%d/%m/%Y %H:%M")}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
 # ==============================================================================
 # 6. RENDERIZAÇÃO PRINCIPAL
 # ==============================================================================
@@ -1023,11 +752,23 @@ def render_footer():
 # Renderiza a topbar fixa
 render_topbar()
 
-# Renderiza a sidebar (inicia recolhida)
-render_sidebar()
+# HERO SECTION
+hora = datetime.now().hour
+saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
+nome_user = st.session_state.get("usuario_nome", "Visitante").split()[0]
 
-# Conteúdo principal
-render_hero()
+st.markdown(
+    f"""
+    <div class="hero-wrapper">
+        <div class="hero-content">
+            <div class="hero-greet">{saudacao}, {nome_user}!</div>
+            <div class="hero-text">"A inclusão acontece quando aprendemos com as diferenças e não com as igualdades."</div>
+        </div>
+        <div class="hero-icon"><i class="ri-heart-pulse-fill"></i></div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # Módulos da Plataforma
 st.markdown("### 🚀 Módulos da Plataforma")
@@ -1041,7 +782,6 @@ modules_data = [
         "bg_cls": "bg-indigo-soft",
         "page": "pages/Alunos.py",
         "key": "m_aluno",
-        "logo_path": None,
     },
     {
         "title": "Estratégias & PEI",
@@ -1051,17 +791,15 @@ modules_data = [
         "bg_cls": "bg-blue-soft",
         "page": "pages/1_PEI.py",
         "key": "m_pei",
-        "logo_path": None,
     },
     {
         "title": "Plano de Ação / PAEE",
         "desc": "Plano de Atendimento Educacional Especializado e sala de recursos.",
-        "icon": "ri-puzzle-fill",
+        "icon": "ri-puzzle-fill",  # Mudado para ícone padrão
         "color_cls": "c-purple",
         "bg_cls": "bg-purple-soft",
         "page": "pages/2_PAE.py",
         "key": "m_pae",
-        "logo_path": "assets/paee_logo.png" if os.path.exists("assets/paee_logo.png") else None,
     },
     {
         "title": "Hub de Recursos",
@@ -1071,7 +809,6 @@ modules_data = [
         "bg_cls": "bg-teal-soft",
         "page": "pages/3_Hub_Inclusao.py",
         "key": "m_hub",
-        "logo_path": None,
     },
     {
         "title": "Diário de Bordo",
@@ -1081,7 +818,6 @@ modules_data = [
         "bg_cls": "bg-rose-soft",
         "page": "pages/4_Diario_de_Bordo.py",
         "key": "m_diario",
-        "logo_path": None,
     },
     {
         "title": "Evolução & Dados",
@@ -1091,7 +827,6 @@ modules_data = [
         "bg_cls": "bg-sky-soft",
         "page": "pages/5_Monitoramento_Avaliacao.py",
         "key": "m_dados",
-        "logo_path": None,
     },
 ]
 
@@ -1106,8 +841,7 @@ for i, module in enumerate(modules_data):
             color_cls=module["color_cls"],
             bg_cls=module["bg_cls"],
             page=module["page"],
-            key=module["key"],
-            logo_path=module.get("logo_path")
+            key=module["key"]
         )
 
 st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
@@ -1121,4 +855,42 @@ st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
 render_metrics()
 
 # Rodapé
-render_footer()
+st.markdown(
+    f"""
+    <div style='
+        text-align: center;
+        color: #64748B;
+        font-size: 0.75rem;
+        padding: 20px;
+        border-top: 1px solid #E2E8F0;
+        margin-top: 40px;
+    '>
+        <strong>Omnisfera {APP_VERSION}</strong> • Plataforma de Inclusão Educacional • 
+        Desenvolvido por RODRIGO A. QUEIROZ • 
+        {datetime.now().strftime("%d/%m/%Y %H:%M")}
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ==============================================================================
+# 7. SIDEBAR NATIVA DO STREAMLIT
+# ==============================================================================
+with st.sidebar:
+    st.markdown("### 🔧 Configurações")
+    
+    # Informações do usuário
+    st.markdown(f"**Usuário:** {nome_user}")
+    st.markdown(f"**Escola:** {escola_vinculada()}")
+    
+    st.markdown("---")
+    
+    # Botão de logout
+    if st.button("🚪 Sair do Sistema", use_container_width=True):
+        st.session_state.autenticado = False
+        st.rerun()
+    
+    st.markdown("---")
+    
+    # Versão do sistema
+    st.caption(f"Omnisfera {APP_VERSION}")
