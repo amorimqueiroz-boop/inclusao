@@ -2,7 +2,6 @@ import streamlit as st
 from datetime import date, datetime
 import base64
 import os
-import json
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
@@ -258,6 +257,43 @@ footer {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+/* --- CORES DOS CARDS DE MÓDULO (RESTAURADAS) --- */
+.c-indigo { background: #4F46E5 !important; }
+.bg-indigo-soft { 
+    background: #EEF2FF !important; 
+    color: #4F46E5 !important;
+}
+
+.c-blue { background: #3B82F6 !important; }
+.bg-blue-soft { 
+    background: #EFF6FF !important;
+    color: #2563EB !important;
+}
+
+.c-purple { background: #8B5CF6 !important; }
+.bg-purple-soft { 
+    background: #F5F3FF !important;
+    color: #7C3AED !important;
+}
+
+.c-teal { background: #14B8A6 !important; }
+.bg-teal-soft { 
+    background: #F0FDFA !important;
+    color: #0D9488 !important;
+}
+
+.c-rose { background: #E11D48 !important; }
+.bg-rose-soft { 
+    background: #FFF1F2 !important;
+    color: #BE123C !important;
+}
+
+.c-sky { background: #0284C7 !important; }
+.bg-sky-soft { 
+    background: #F0F9FF !important;
+    color: #0369A1 !important;
 }
 
 /* --- BOTÕES STREAMLIT --- */
@@ -530,64 +566,34 @@ footer {
 .metric-down { color: #DC2626 !important; }
 .metric-neutral { color: #64748B !important; }
 
-/* --- CHAT SECTION --- */
-.chat-container {
-    background: white;
-    border-radius: 20px;
-    border: 1px solid #E2E8F0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-    margin-top: 30px;
+/* --- CORES RECURSOS --- */
+.rc-sky {
+    background: #F0F9FF !important;
+    color: #0284C7 !important;
+    border-color: #BAE6FD !important;
 }
+.rc-sky .res-icon { background: #F0F9FF !important; border: 1px solid #BAE6FD !important; }
 
-.chat-header {
-    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-    color: white;
-    padding: 20px;
-    text-align: center;
+.rc-green {
+    background: #F0FDF4 !important;
+    color: #16A34A !important;
+    border-color: #BBF7D0 !important;
 }
+.rc-green .res-icon { background: #F0FDF4 !important; border: 1px solid #BBF7D0 !important; }
 
-.chat-header h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    font-weight: 700;
+.rc-rose {
+    background: #FFF1F2 !important;
+    color: #E11D48 !important;
+    border-color: #FECDD3 !important;
 }
+.rc-rose .res-icon { background: #FFF1F2 !important; border: 1px solid #FECDD3 !important; }
 
-.chat-messages {
-    height: 300px;
-    overflow-y: auto;
-    padding: 20px;
-    background: #F8FAFC;
+.rc-orange {
+    background: #FFF7ED !important;
+    color: #EA580C !important;
+    border-color: #FDBA74 !important;
 }
-
-.message {
-    margin-bottom: 15px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    max-width: 80%;
-    word-wrap: break-word;
-}
-
-.user-message {
-    background: #E0E7FF;
-    color: #3730A3;
-    margin-left: auto;
-    border-bottom-right-radius: 4px;
-}
-
-.bot-message {
-    background: white;
-    color: #1E293B;
-    border: 1px solid #E2E8F0;
-    margin-right: auto;
-    border-bottom-left-radius: 4px;
-}
-
-.chat-input-container {
-    padding: 20px;
-    border-top: 1px solid #E2E8F0;
-    background: white;
-}
+.rc-orange .res-icon { background: #FFF7ED !important; border: 1px solid #FDBA74 !important; }
 
 /* --- ANIMAÇÕES --- */
 @keyframes spin {
@@ -683,8 +689,7 @@ def initialize_session_state():
         "workspace_id": None,
         "usuario_nome": "Visitante",
         "workspace_name": "Escola Modelo",
-        "dados": {"nome": "", "nasc": date(2015, 1, 1), "serie": None},
-        "chat_messages": []
+        "dados": {"nome": "", "nasc": date(2015, 1, 1), "serie": None}
     }
     
     for key, value in defaults.items():
@@ -878,7 +883,7 @@ def render_info_cards():
         },
         {
             "title": "Adaptações e Transtornos",
-            "icon": "ri-adjustments-line",
+            "icon": "ri-settings-5-line",
             "color": "info-card-rose",
             "content": """
                 <p><strong>Foco:</strong> Estratégias para sala de aula.</p>
@@ -949,66 +954,6 @@ def render_info_cards():
                 """,
                 unsafe_allow_html=True,
             )
-
-
-def render_chat():
-    """Renderiza o chat integrado"""
-    st.markdown(
-        """
-        <div class="chat-container">
-            <div class="chat-header">
-                <h3><i class="ri-robot-line"></i> Assistente de Inclusão Omnisfera</h3>
-            </div>
-            <div class="chat-messages" id="chat-messages">
-        """,
-        unsafe_allow_html=True,
-    )
-    
-    # Exibir mensagens anteriores
-    for msg in st.session_state.chat_messages:
-        if msg["role"] == "user":
-            st.markdown(f'<div class="message user-message"><strong>Você:</strong> {msg["content"]}</div>', unsafe_allow_html=True)
-        else:
-            st.markdown(f'<div class="message bot-message"><strong>Assistente:</strong> {msg["content"]}</div>', unsafe_allow_html=True)
-    
-    st.markdown(
-        """
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    
-    # Input do chat
-    with st.form(key="chat_form", clear_on_submit=True):
-        col1, col2 = st.columns([6, 1])
-        with col1:
-            user_input = st.text_input(
-                "Digite sua pergunta sobre inclusão:",
-                placeholder="Ex: Como adaptar atividades para alunos com TEA?",
-                label_visibility="collapsed"
-            )
-        with col2:
-            submit_button = st.form_submit_button("Enviar", use_container_width=True)
-    
-    if submit_button and user_input:
-        # Adicionar mensagem do usuário
-        st.session_state.chat_messages.append({"role": "user", "content": user_input})
-        
-        # Simular resposta do assistente (substituir por integração real com ChatGPT)
-        resposta = f"""Ótima pergunta sobre inclusão! Baseado nos nossos guias:
-
-Para alunos com TEA, recomendo:
-1. Estruturar rotinas visuais claras
-2. Usar histórias sociais para explicar situações
-3. Criar espaços tranquilos para momentos de sobrecarga sensorial
-4. Adaptar instruções com suportes visuais
-5. Trabalhar com antecipação de atividades
-
-Gostaria de mais detalhes sobre alguma dessas estratégias?"""
-        
-        st.session_state.chat_messages.append({"role": "assistant", "content": resposta})
-        st.rerun()
 
 
 def render_resources():
@@ -1156,7 +1101,7 @@ modules_data = [
     {
         "title": "Plano de Ação / PAEE",
         "desc": "Plano de Atendimento Educacional Especializado e sala de recursos.",
-        "icon": "ri-puzzle-fill",
+        "icon": "ri-settings-5-fill",  # Ícone alterado
         "color_cls": "c-purple",
         "bg_cls": "bg-purple-soft",
         "page": "pages/2_PAE.py",
@@ -1220,12 +1165,6 @@ st.markdown("---")
 st.markdown("## 📘 Guia Prático de Inclusão")
 st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 render_info_cards()
-
-# Chat Integrado
-st.markdown("---")
-st.markdown("## 🤖 Assistente de Inclusão")
-st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-render_chat()
 
 # Rodapé
 st.markdown(
