@@ -9,7 +9,7 @@ from datetime import datetime
 st.set_page_config(page_title="Omnisfera • Estudantes", page_icon="👥", layout="wide")
 
 # ==============================================================================
-# 🔷 DESIGN SYSTEM COMPLETO (HOME v2.0 + OTIMIZAÇÕES)
+# 🔷 DESIGN SYSTEM OTIMIZADO (SIDEBAR VISÍVEL)
 # ==============================================================================
 def _ui_home_block():
     st.markdown(
@@ -25,155 +25,125 @@ html, body, [class*="css"] {
     background-color: #F8FAFC !important;
 }
 
-/* ===== TOPBAR (MESMA DA HOME) ===== */
-[data-testid="stSidebarNav"],
+/* ===== SIDEBAR VISÍVEL (REMOVER OCULTAÇÃO) ===== */
+/* REMOVEMOS: [data-testid="stSidebarNav"], [data-testid="collapsedControl"] */
 [data-testid="stHeader"],
 [data-testid="stToolbar"],
-[data-testid="collapsedControl"],
 footer {
     display: none !important;
 }
 
-.topbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 80px;
-    background: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    border-bottom: 1px solid #E2E8F0;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 2.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.brand-box {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.brand-text {
-    font-weight: 800;
-    font-size: 1.2rem;
-    color: #2B3674;
-    background: linear-gradient(135deg, #4F46E5, #7C3AED);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.user-badge {
-    background: #F1F5F9;
-    border: 1px solid #E2E8F0;
-    padding: 6px 14px;
-    border-radius: 99px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #64748B;
-    letter-spacing: 0.5px;
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #4F46E5, #7C3AED);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 0.9rem;
-}
-
-/* ===== CONTAINER ===== */
+/* ===== CONTAINER COM SIDEBAR ===== */
 .block-container {
-    padding-top: 100px !important;
+    padding-top: 2rem !important;
     padding-bottom: 3rem !important;
     max-width: 95% !important;
     padding-left: 1rem !important;
     padding-right: 1rem !important;
 }
 
-/* ===== HERO STUDENTS (DESDOBRAMENTO DO CARD) ===== */
-.hero-students {
-    background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
-    border-radius: 20px;
-    padding: 2rem;
-    margin-bottom: 32px;
+/* ===== CARD HERO (ESTILO EXATO DA HOME) ===== */
+.mod-card-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+.mod-card-rect {
+    background: white;
+    border-radius: 16px 16px 0 0;
+    padding: 0;
+    border: 1px solid #E2E8F0;
+    border-bottom: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 130px;
+    width: 100%;
     position: relative;
     overflow: hidden;
-    border: 1px solid #BAE6FD;
-    box-shadow: 0 12px 24px rgba(2, 132, 199, 0.08);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 140px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.hero-students::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%230284c7' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
-    opacity: 0.3;
+.mod-card-rect:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    border-color: #CBD5E1;
 }
 
-.hero-icon-area {
-    width: 100px;
-    height: 100px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.9);
+.mod-bar {
+    width: 6px;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+.mod-icon-area {
+    width: 90px;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.5rem;
-    color: #0284C7;
-    border: 1px solid #BAE6FD;
-    box-shadow: 0 8px 16px rgba(2, 132, 199, 0.1);
-    z-index: 2;
-    position: relative;
-}
-
-.hero-content {
-    z-index: 2;
-    position: relative;
-    flex-grow: 1;
-    padding-left: 32px;
-}
-
-.hero-title {
     font-size: 1.8rem;
+    flex-shrink: 0;
+    background: #FAFAFA;
+    border-right: 1px solid #F1F5F9;
+    transition: all 0.3s ease;
+}
+
+.mod-card-rect:hover .mod-icon-area {
+    background: white;
+    transform: scale(1.05);
+}
+
+.mod-content {
+    flex-grow: 1;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.mod-title {
     font-weight: 800;
-    color: #0C4A6E;
-    margin-bottom: 8px;
-    letter-spacing: -0.5px;
+    font-size: 1.1rem;
+    color: #1E293B;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+    transition: color 0.2s;
 }
 
-.hero-desc {
-    font-size: 0.95rem;
-    color: #475569;
-    max-width: 800px;
-    line-height: 1.6;
-    font-weight: 500;
+.mod-card-rect:hover .mod-title {
+    color: #4F46E5;
 }
 
-/* ===== STUDENT TABLE (NOVO DESIGN) ===== */
+.mod-desc {
+    font-size: 0.8rem;
+    color: #64748B;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* CORES DOS CARDS */
+.c-sky { background: #0284C7 !important; }
+.bg-sky-soft { 
+    background: #F0F9FF !important;
+    color: #0284C7 !important;
+}
+
+/* ===== STUDENT TABLE (MELHORADA) ===== */
 .student-table {
     background: white;
     border-radius: 16px;
     border: 1px solid #E2E8F0;
     overflow: hidden;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    margin-top: 24px;
 }
 
 .student-header {
@@ -241,14 +211,8 @@ footer {
     text-align: center;
 }
 
-/* ===== ACTIONS ===== */
-.actions-container {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.action-btn {
+/* ===== ACTION BUTTONS (MELHORADO) ===== */
+.action-btn-small {
     width: 36px;
     height: 36px;
     border-radius: 10px;
@@ -259,6 +223,14 @@ footer {
     transition: all 0.2s ease;
     border: 1px solid transparent;
     font-size: 0.9rem;
+    background: white;
+    color: #475569;
+    border: 1px solid #E2E8F0;
+}
+
+.action-btn-small:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
 }
 
 .action-delete {
@@ -269,7 +241,6 @@ footer {
 
 .action-delete:hover {
     background: #FEE2E2;
-    transform: scale(1.05);
 }
 
 .action-confirm {
@@ -291,6 +262,7 @@ footer {
     background: white;
     border-radius: 16px;
     border: 1px dashed #E2E8F0;
+    margin-top: 24px;
 }
 
 .empty-icon {
@@ -313,20 +285,12 @@ footer {
 }
 
 /* ===== CONTROLS ===== */
-.search-box {
+.search-box-container {
     background: white;
     border: 1px solid #E2E8F0;
     border-radius: 12px;
-    padding: 12px 16px;
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
-    width: 100%;
-}
-
-.search-box:focus {
-    outline: none;
-    border-color: #4F46E5;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    padding: 8px 16px;
+    margin-bottom: 16px;
 }
 
 .action-button {
@@ -349,27 +313,6 @@ footer {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
     border-color: #CBD5E1;
-}
-
-/* ===== RESPONSIVIDADE ===== */
-@media (max-width: 1024px) {
-    .topbar { padding: 0 1.5rem; }
-    .hero-students { padding: 1.5rem; }
-    .hero-icon-area { width: 80px; height: 80px; font-size: 2rem; }
-    .student-header, .student-row { grid-template-columns: 2.5fr 1fr 1fr 2fr 1fr; }
-}
-
-@media (max-width: 768px) {
-    .topbar { padding: 0 1rem; }
-    .hero-students {
-        flex-direction: column;
-        text-align: center;
-        gap: 1rem;
-    }
-    .hero-content { padding-left: 0; }
-    .hero-title { font-size: 1.5rem; }
-    .student-header, .student-row { grid-template-columns: 1fr; gap: 12px; }
-    .student-header { display: none; }
 }
 
 /* ===== STREAMLIT OVERRIDES ===== */
@@ -396,11 +339,38 @@ footer {
     border-radius: 12px !important;
     border: 1px solid #E2E8F0 !important;
     padding: 12px 16px !important;
+    font-size: 0.9rem !important;
 }
 
 .stTextInput > div > div > input:focus {
     border-color: #4F46E5 !important;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1) !important;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 1024px) {
+    .student-header, .student-row { grid-template-columns: 2.5fr 1fr 1fr 2fr 1fr; }
+    .mod-card-rect { height: 120px; }
+    .mod-icon-area { width: 80px; }
+}
+
+@media (max-width: 768px) {
+    .student-header, .student-row { grid-template-columns: 1fr; gap: 12px; }
+    .student-header { display: none; }
+    .mod-card-rect { 
+        height: 110px;
+        flex-direction: column;
+        height: auto;
+        padding: 16px;
+    }
+    .mod-bar { width: 100%; height: 6px; }
+    .mod-icon-area { 
+        width: 100%; 
+        height: 60px; 
+        border-right: none;
+        border-bottom: 1px solid #F1F5F9;
+    }
+    .mod-content { padding: 16px 0 0 0; }
 }
 </style>
         """,
@@ -409,7 +379,6 @@ footer {
 
 
 _ui_home_block()
-
 
 # ==============================================================================
 # 🔒 VERIFICAÇÃO DE ACESSO
@@ -475,40 +444,57 @@ WORKSPACE_NAME = st.session_state.get("workspace_name") or f"{str(WORKSPACE_ID)[
 USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
 
 # ==============================================================================
-# TOPBAR CUSTOMIZADA
+# CARD HERO (ESTILO EXATO DA HOME COM HOVER)
 # ==============================================================================
-def get_user_initials(nome: str) -> str:
-    if not nome:
-        return "U"
-    parts = nome.split()
-    if len(parts) >= 2:
-        return f"{parts[0][0]}{parts[-1][0]}".upper()
-    return nome[:2].upper() if len(nome) >= 2 else nome[0].upper()
+hora = datetime.now().hour
+saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
 
-
-def render_topbar():
-    user_initials = get_user_initials(st.session_state.get("usuario_nome", "Visitante"))
-    
-    st.markdown(
-        f"""
-        <div class="topbar">
-            <div class="brand-box">
-                <div class="brand-text">OMNISFERA</div>
+st.markdown(
+    f"""
+    <div class="mod-card-wrapper">
+        <div class="mod-card-rect">
+            <div class="mod-bar c-sky"></div>
+            <div class="mod-icon-area bg-sky-soft">
+                <i class="ri-group-fill"></i>
             </div>
-            <div class="brand-box" style="gap: 16px;">
-                <div class="user-badge">{WORKSPACE_NAME[:20] + '...' if len(WORKSPACE_NAME) > 20 else WORKSPACE_NAME}</div>
-                <div style="display: flex; align-items: center; gap: 12px; font-weight: 700; color: #334155;">
-                    <div class="user-avatar">{user_initials}</div>
-                    <div>{USUARIO_NOME}</div>
+            <div class="mod-content">
+                <div class="mod-title">Gestão de Estudantes</div>
+                <div class="mod-desc">
+                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Aqui você gerencia todos os estudantes do workspace 
+                    <strong>{WORKSPACE_NAME}</strong>. Visualize, busque e administre os dados dos alunos vinculados aos PEIs.
                 </div>
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ==============================================================================
+# CONTROLES SUPERIORES
+# ==============================================================================
+col1, col2 = st.columns([3, 1], gap="medium")
+
+with col1:
+    q = st.text_input(
+        "Buscar por nome",
+        placeholder="Digite o nome do estudante...",
+        label_visibility="collapsed",
+        key="search_students"
     )
 
+with col2:
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+    if st.button("🔄 Atualizar Lista", use_container_width=True, type="secondary"):
+        list_students_rest.clear()
+        st.rerun()
 
-render_topbar()
+# 🔥 Refresh automático se veio do PEI
+if st.session_state.pop("students_dirty", False):
+    try:
+        list_students_rest.clear()
+    except Exception:
+        pass
 
 # ==============================================================================
 # SUPABASE REST
@@ -565,57 +551,6 @@ def delete_student_rest(student_id: str, workspace_id: str):
     if r.status_code >= 400:
         _http_error("Delete em students falhou", r)
     return r.json()
-
-
-# ==============================================================================
-# HERO SECTION (DESDOBRAMENTO DO CARD DA HOME)
-# ==============================================================================
-hora = datetime.now().hour
-saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
-
-st.markdown(
-    f"""
-    <div class="hero-students">
-        <div class="hero-icon-area">
-            <i class="ri-group-fill"></i>
-        </div>
-        <div class="hero-content">
-            <div class="hero-title">Gestão de Estudantes</div>
-            <div class="hero-desc">
-                {saudacao}, <strong>{USUARIO_NOME}</strong>! Aqui você gerencia todos os estudantes do workspace 
-                <strong>{WORKSPACE_NAME}</strong>. Visualize, busque e administre os dados dos alunos vinculados aos PEIs.
-            </div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-# ==============================================================================
-# CONTROLES SUPERIORES
-# ==============================================================================
-col1, col2 = st.columns([3, 1], gap="medium")
-
-with col1:
-    q = st.text_input(
-        "Buscar por nome",
-        placeholder="Digite o nome do estudante...",
-        label_visibility="collapsed",
-        key="search_students"
-    )
-
-with col2:
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-    if st.button("🔄 Atualizar Lista", use_container_width=True, type="secondary"):
-        list_students_rest.clear()
-        st.rerun()
-
-# 🔥 Refresh automático se veio do PEI
-if st.session_state.pop("students_dirty", False):
-    try:
-        list_students_rest.clear()
-    except Exception:
-        pass
 
 # ==============================================================================
 # CARREGAMENTO DOS DADOS
@@ -694,49 +629,47 @@ for a in alunos:
         unsafe_allow_html=True,
     )
     
-    # Controles de ação inline
-    col_a1, col_a2, col_a3 = st.columns([1, 1, 1])
-    
-    with col_a1:
-        if not st.session_state[confirm_key]:
-            if st.button("🗑️", key=f"del_{sid}", help="Apagar estudante"):
+    # Controles de ação com hover antigo preservado
+    if not st.session_state[confirm_key]:
+        col1, _ = st.columns([1, 5])
+        with col1:
+            if st.button("🗑️", key=f"del_{sid}", help="Apagar estudante", use_container_width=True):
                 st.session_state[confirm_key] = True
                 st.rerun()
-        else:
-            st.markdown(
-                f"""
-                <div class="actions-container">
-                    <div class="action-btn action-confirm" onclick="document.getElementById('confirm_yes_{sid}').click()">
-                        <i class="ri-check-line"></i>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            if st.button("✅", key=f"confirm_yes_{sid}", visible=False):
+    else:
+        # Modal de confirmação inline
+        st.markdown(f"""
+        <div style="
+            background: #FEF3C7;
+            border: 1px solid #FDE68A;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-top: 4px;
+            font-size: 0.8rem;
+            color: #92400E;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        ">
+            <div>Confirmar exclusão?</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("✅ Sim", key=f"yes_{sid}", use_container_width=True, type="primary"):
                 try:
                     delete_student_rest(sid, WORKSPACE_ID)
                     list_students_rest.clear()
                     st.session_state[confirm_key] = False
-                    st.toast(f"Estudante '{nome}' removido com sucesso!", icon="🗑️")
+                    st.toast(f"✅ Estudante '{nome}' removido com sucesso!", icon="🗑️")
                     st.rerun()
                 except Exception as e:
                     st.session_state[confirm_key] = False
                     st.error(f"Erro ao apagar: {e}")
-    
-    with col_a2:
-        if st.session_state[confirm_key]:
-            st.markdown(
-                f"""
-                <div class="actions-container">
-                    <div class="action-btn action-cancel" onclick="document.getElementById('confirm_no_{sid}').click()">
-                        <i class="ri-close-line"></i>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            if st.button("❌", key=f"confirm_no_{sid}", visible=False):
+        
+        with col2:
+            if st.button("❌ Não", key=f"no_{sid}", use_container_width=True):
                 st.session_state[confirm_key] = False
                 st.rerun()
     
