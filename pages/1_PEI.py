@@ -69,7 +69,7 @@ def verificar_login_supabase():
 verificar_login_supabase()
 OWNER_ID = st.session_state.get("supabase_user_id", "")
 
-def render_sidebar():
+def render_sidebar_old():
     # garante variáveis que outras partes podem usar
     st.session_state.setdefault("selected_student_id", None)
     st.session_state.setdefault("selected_student_name", "")
@@ -621,12 +621,10 @@ def _is_cloud_ready():
     }
 
 
-def render_sidebar(active: str = "pei"):
-    # garante variáveis que outras partes podem usar
+def render_sidebar(active: str = "pei", key_prefix: str = "pei"):
     st.session_state.setdefault("selected_student_id", None)
     st.session_state.setdefault("selected_student_name", "")
 
-    # injeta CSS/JS se existirem (sem quebrar se vazio)
     if sidebar_css and isinstance(sidebar_css, str):
         st.markdown(sidebar_css, unsafe_allow_html=True)
     if sidebar_js and isinstance(sidebar_js, str):
@@ -636,15 +634,15 @@ def render_sidebar(active: str = "pei"):
         st.markdown("### 🧭 Navegação")
 
         # Home real
-        if st.button("🏠 Home", key="pei_nav_home", use_container_width=True):
+        if st.button("🏠 Home", key=f"{key_prefix}_nav_home", use_container_width=True):
             st.switch_page("pages/0_Home.py")
 
         col1, col2 = st.columns(2)
         with col1:
-            st.button("📘 PEI", key="pei_nav_pei", use_container_width=True, disabled=True)
+            st.button("📘 PEI", key=f"{key_prefix}_nav_pei", use_container_width=True, disabled=True)
         with col2:
-            if st.button("🧩 PAEE", key="pei_nav_paee", use_container_width=True):
-                st.switch_page("pages/2_PAE.py")
+            if st.button("🧑‍🎓 Alunos", key=f"{key_prefix}_nav_alunos", use_container_width=True):
+                st.switch_page("pages/0_Alunos.py")
 
         if st.button("🚀 Hub", key="pei_nav_hub", use_container_width=True):
             st.switch_page("pages/3_Hub_Inclusao.py")
@@ -692,7 +690,7 @@ def render_sidebar(active: str = "pei"):
 
 
 # chama UMA VEZ
-render_sidebar(active="pei")
+render_sidebar(active="pei", key_prefix="pei_sidebar")
 
 # deixa api_key disponível para o resto do app
 api_key = st.session_state.get("OPENAI_API_KEY", "")
