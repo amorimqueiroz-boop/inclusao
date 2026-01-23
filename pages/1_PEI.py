@@ -109,67 +109,81 @@ def _is_cloud_ready():
     }
 
 
-with st.sidebar:
-    st.markdown("### 🧭 Navegação")
+def render_sidebar(active: str = "pei", key_prefix: str = "pei_sidebar"):
+    """
+    Sidebar unificada com keys estáveis (evita StreamlitDuplicateElementKey)
+    e sem NameError do k().
+    """
 
-    # ✅ Home real é pages/0_Home.py
-    if st.button("🏠 Home", key=k("pei_nav_home"), use_container_width=True):
-        st.switch_page("pages/0_Home.py")
+    def k(name: str) -> str:
+        return f"{key_prefix}_{name}"
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.button("📘 PEI", key=k("pei_nav_pei"), use_container_width=True, disabled=True)
-    with col2:
-        if st.button("🧩 PAEE", key=k("pei_nav_paee"), use_container_width=True):
-            st.switch_page("pages/2_PAE.py")
+    with st.sidebar:
+        st.markdown("### 🧭 Navegação")
 
-    if st.button("🚀 Hub", key=k("pei_nav_hub"), use_container_width=True):
-        st.switch_page("pages/3_Hub_Inclusao.py")
+        # ✅ Home real é pages/0_Home.py
+        if st.button("🏠 Home", key=k("pei_nav_home"), use_container_width=True):
+            st.switch_page("pages/0_Home.py")
 
-    st.markdown("---")
-    st.markdown("### 👤 Sessão")
-    st.caption(f"Usuário: **{st.session_state.get('usuario_nome','')}**")
-    st.caption(f"Workspace: **{st.session_state.get('workspace_name','')}**")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.button("📘 PEI", key=k("pei_nav_pei"), use_container_width=True, disabled=True)
+        with col2:
+            if st.button("🧩 PAEE", key=k("pei_nav_paee"), use_container_width=True):
+                st.switch_page("pages/2_PAE.py")
 
-    st.markdown("---")
-    st.markdown("### 🔑 OpenAI")
+        if st.button("🚀 Hub", key=k("pei_nav_hub"), use_container_width=True):
+            st.switch_page("pages/3_Hub_Inclusao.py")
 
-    # ✅ padrão: usa secrets se existir, senão pede e guarda em session_state
-    if "OPENAI_API_KEY" in st.secrets and str(st.secrets.get("OPENAI_API_KEY","")).strip():
-        st.session_state["OPENAI_API_KEY"] = str(st.secrets["OPENAI_API_KEY"]).strip()
-        st.success("✅ OpenAI OK (Secrets)")
-    else:
-        typed = st.text_input("Chave OpenAI:", type="password", key="pei_openai_key")
-        if typed and typed.strip():
-            st.session_state["OPENAI_API_KEY"] = typed.strip()
-            st.success("✅ OpenAI OK (Sessão)")
+        st.markdown("---")
+        st.markdown("### 👤 Sessão")
+        st.caption(f"Usuário: **{st.session_state.get('usuario_nome','')}**")
+        st.caption(f"Workspace: **{st.session_state.get('workspace_name','')}**")
+
+        st.markdown("---")
+        st.markdown("### 🔑 OpenAI")
+
+        # ✅ padrão: usa secrets se existir, senão pede e guarda em session_state
+        if "OPENAI_API_KEY" in st.secrets and str(st.secrets.get("OPENAI_API_KEY","")).strip():
+            st.session_state["OPENAI_API_KEY"] = str(st.secrets["OPENAI_API_KEY"]).strip()
+            st.success("✅ OpenAI OK (Secrets)")
         else:
-            st.info("Informe sua chave OpenAI para liberar a IA nesta sessão.")
+            typed = st.text_input("Chave OpenAI:", type="password", key=k("pei_openai_key"))
+            if typed and typed.strip():
+                st.session_state["OPENAI_API_KEY"] = typed.strip()
+                st.success("✅ OpenAI OK (Sessão)")
+            else:
+                st.info("Informe sua chave OpenAI para liberar a IA nesta sessão.")
 
-    st.markdown("---")
-    st.markdown("### 🧾 Status do Aluno (Supabase)")
+        st.markdown("---")
+        st.markdown("### 🧾 Status do Aluno (Supabase)")
 
-    student_id = st.session_state.get("selected_student_id")
-    if student_id:
-        st.success("✅ Vinculado ao Supabase")
-        st.caption(f"student_id: {student_id[:8]}…")
-    else:
-        st.warning("📝 Rascunho (ainda não salvo no Supabase)")
+        student_id = st.session_state.get("selected_student_id")
+        if student_id:
+            st.success("✅ Vinculado ao Supabase")
+            st.caption(f"student_id: {student_id[:8]}…")
+        else:
+            st.warning("📝 Rascunho (ainda não salvo no Supabase)")
 
-    st.markdown("---")
-    st.markdown("### ☁️ Status da Nuvem (Supabase)")
+        st.markdown("---")
+        st.markdown("### ☁️ Status da Nuvem (Supabase)")
 
-    ok_cloud, details = _is_cloud_ready()
-    if ok_cloud:
-        st.success("✅ Nuvem pronta (REST)")
-    else:
-        st.warning("⚠️ Nuvem incompleta")
-        # debug leve (sem expor valores)
-        st.caption(
-            " • ".join([f"{k}:{'OK' if v else 'FALTA'}" for k, v in details.items()])
-        )
+        ok_cloud, details = _is_cloud_ready()
+        if ok_cloud:
+            st.success("✅ Nuvem pronta (REST)")
+        else:
+            st.warning("⚠️ Nuvem incompleta")
+            # debug leve (sem expor valores)
+            st.caption(
+                " • ".join([f"{kk}:{'OK' if vv else 'FALTA'}" for kk, vv in details.items()])
+            )
 
-    st.markdown("---")
+        st.markdown("---")
+
+
+# ✅ chama UMA VEZ
+render_sidebar(active="pei", key_prefix="pei_sidebar")
+
 
 
 # ==============================================================================
