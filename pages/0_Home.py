@@ -6,7 +6,7 @@ import os
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v2.0 - Simplificado"
+APP_VERSION = "v2.0 - Sidebar Ocultada"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV", "PRODUCAO") == "TESTE"
@@ -17,12 +17,12 @@ st.set_page_config(
     page_title="Omnisfera - Plataforma de Inclusão Educacional",
     page_icon="🌐" if not os.path.exists("omni_icone.png") else "omni_icone.png",
     layout="wide",
-    initial_sidebar_state="auto",  # Usar sidebar nativa do Streamlit
+    initial_sidebar_state="auto",
     menu_items=None
 )
 
 # ==============================================================================
-# 2. CSS & DESIGN SYSTEM (SIMPLIFICADO)
+# 2. CSS & DESIGN SYSTEM (COM SIDEBAR OCULTADA)
 # ==============================================================================
 st.markdown(
     """
@@ -36,7 +36,25 @@ html, body, [class*="css"] {
     background-color: #F8FAFC !important;
 }
 
-/* --- HEADER FIXO --- */
+/* --- OCULTAR SIDEBAR E HEADER NATIVOS DO STREAMLIT --- */
+[data-testid="stSidebarNav"],
+[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="collapsedControl"],
+footer {
+    display: none !important;
+}
+
+/* Ajustar padding para compensar a topbar fixa */
+.block-container {
+    padding-top: 100px !important;
+    padding-bottom: 4rem !important;
+    max-width: 95% !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+/* --- HEADER FIXO COM LOGO GRANDE --- */
 .topbar {
     position: fixed;
     top: 0;
@@ -62,14 +80,14 @@ html, body, [class*="css"] {
 }
 
 .brand-logo {
-    height: 45px;
-    width: auto;
+    height: 55px !important;  /* AUMENTEI O TAMANHO DA LOGO */
+    width: auto !important;
     animation: spin 45s linear infinite;
     filter: brightness(1.1);
 }
 
 .brand-img-text {
-    height: 30px;
+    height: 35px !important;  /* AUMENTEI O TAMANHO DO TEXTO */
     width: auto;
     margin-left: 10px;
 }
@@ -495,7 +513,7 @@ html, body, [class*="css"] {
 )
 
 # ==============================================================================
-# 3. FUNÇÕES AUXILIARES SIMPLIFICADAS
+# 3. FUNÇÕES AUXILIARES
 # ==============================================================================
 def get_base64_image(image_path: str) -> str:
     """Carrega imagem e converte para base64"""
@@ -551,16 +569,37 @@ def initialize_session_state():
 # Inicializa estado
 initialize_session_state()
 
-# Verificação de autenticação (simplificada)
+# Verificação de autenticação
 if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
-    st.warning("🔐 Sessão inválida. Por favor, faça login.")
-    if st.button("Ir para Login"):
-        st.session_state.autenticado = False
-        st.rerun()
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown(
+            f"""
+            <div style='
+                text-align: center; 
+                padding: 3rem; 
+                background: white;
+                border-radius: 20px;
+                border: 1px solid #E2E8F0;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+                margin: 4rem 0;
+            '>
+                <div style='font-size: 4rem; margin-bottom: 1rem;'>🔐</div>
+                <h3 style='color: #1E293B; margin-bottom: 1rem;'>Acesso Restrito</h3>
+                <p style='color: #64748B;'>Sessão inválida ou expirada. Por favor, faça login novamente.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        
+        if st.button("🔓 Ir para Login", use_container_width=True, type="primary"):
+            st.session_state.autenticado = False
+            st.session_state.workspace_id = None
+            st.rerun()
     st.stop()
 
 # ==============================================================================
-# 5. FUNÇÕES DE RENDERIZAÇÃO (APENAS HEADER E CONTEÚDO)
+# 5. FUNÇÕES DE RENDERIZAÇÃO
 # ==============================================================================
 def render_topbar():
     """Renderiza a barra superior fixa"""
@@ -749,7 +788,7 @@ def render_metrics():
 # 6. RENDERIZAÇÃO PRINCIPAL
 # ==============================================================================
 
-# Renderiza a topbar fixa
+# Renderiza a topbar fixa (OCULTA SIDEBAR NATIVA)
 render_topbar()
 
 # HERO SECTION
@@ -795,7 +834,7 @@ modules_data = [
     {
         "title": "Plano de Ação / PAEE",
         "desc": "Plano de Atendimento Educacional Especializado e sala de recursos.",
-        "icon": "ri-puzzle-fill",  # Mudado para ícone padrão
+        "icon": "ri-puzzle-fill",
         "color_cls": "c-purple",
         "bg_cls": "bg-purple-soft",
         "page": "pages/2_PAE.py",
@@ -872,25 +911,3 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-# ==============================================================================
-# 7. SIDEBAR NATIVA DO STREAMLIT
-# ==============================================================================
-with st.sidebar:
-    st.markdown("### 🔧 Configurações")
-    
-    # Informações do usuário
-    st.markdown(f"**Usuário:** {nome_user}")
-    st.markdown(f"**Escola:** {escola_vinculada()}")
-    
-    st.markdown("---")
-    
-    # Botão de logout
-    if st.button("🚪 Sair do Sistema", use_container_width=True):
-        st.session_state.autenticado = False
-        st.rerun()
-    
-    st.markdown("---")
-    
-    # Versão do sistema
-    st.caption(f"Omnisfera {APP_VERSION}")
