@@ -127,6 +127,11 @@ with top_r:
     if st.button("🔄 Atualizar", use_container_width=True):
         list_students.clear()
         st.rerun()
+if st.session_state.pop("students_dirty", False):
+    try:
+        list_students.clear()
+    except Exception:
+        pass
 
 with st.spinner("Carregando estudantes..."):
     alunos = list_students(WORKSPACE_ID)
