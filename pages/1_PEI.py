@@ -113,17 +113,17 @@ with st.sidebar:
     st.markdown("### 🧭 Navegação")
 
     # ✅ Home real é pages/0_Home.py
-    if st.button("🏠 Home", key=k"pei_nav_home", use_container_width=True):
+    if st.button("🏠 Home", key=k("pei_nav_home"), use_container_width=True):
         st.switch_page("pages/0_Home.py")
 
     col1, col2 = st.columns(2)
     with col1:
-        st.button("📘 PEI", key=k"pei_nav_pei", use_container_width=True, disabled=True)
+        st.button("📘 PEI", key=(k"pei_nav_pei"), use_container_width=True, disabled=True)
     with col2:
-        if st.button("🧩 PAEE", key=k"pei_nav_paee", use_container_width=True):
+        if st.button("🧩 PAEE", key=k("pei_nav_paee"), use_container_width=True):
             st.switch_page("pages/2_PAE.py")
 
-    if st.button("🚀 Hub", key=k"pei_nav_hub", use_container_width=True):
+    if st.button("🚀 Hub", key=k("pei_nav_hub"), use_container_width=True):
         st.switch_page("pages/3_Hub_Inclusao.py")
 
     st.markdown("---")
