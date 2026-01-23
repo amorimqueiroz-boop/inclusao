@@ -587,26 +587,18 @@ st.session_state.setdefault("selected_student_name", "")
 # 6. SIDEBAR (Renderização segura)
 # ==============================================================================
 
-def render_sidebar():
-    """
-    Renderiza a sidebar da Omnisfera.
-    Este bloco é isolado e seguro contra IndentationError.
-    """
+# Injetar CSS (se existir)
+if sidebar_css:
+    st.markdown(sidebar_css, unsafe_allow_html=True)
 
-    # CSS e JS podem estar vazios sem quebrar o app
-    sidebar_css = ""
-    sidebar_js = ""
+# Injetar JS (se existir)
+if sidebar_js:
+    st.markdown(sidebar_js, unsafe_allow_html=True)
 
-    # Injetar CSS (se existir)
-    if sidebar_css:
-        st.markdown(sidebar_css, unsafe_allow_html=True)
 
-    # Injetar JS (se existir)
-    if sidebar_js:
-        st.markdown(sidebar_js, unsafe_allow_html=True)
+# ✅ SIDEBAR (unificada)
+render_sidebar(active="pei")
 
-  # ✅ SIDEBAR (unificada)
-  render_sidebar()
 
 
 # ==============================================================================
