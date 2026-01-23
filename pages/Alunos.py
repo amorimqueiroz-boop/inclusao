@@ -11,7 +11,7 @@ import os
 st.set_page_config(page_title="Omnisfera • Estudantes", page_icon="👥", layout="wide")
 
 # ==============================================================================
-# 🔷 DESIGN SYSTEM OTIMIZADO (SIDEBAR VISÍVEL + LOGO FLUTUANTE)
+# 🔷 DESIGN SYSTEM COM NAVBAR FLUTUANTE SUPERIOR
 # ==============================================================================
 def _ui_home_block():
     # Carrega a imagem da logo para base64
@@ -40,50 +40,55 @@ html, body, [class*="css"] {{
     background-color: #F8FAFC !important;
 }}
 
-/* ===== SIDEBAR VISÍVEL ===== */
-/* Apenas oculta header e footer nativos */
-[data-testid="stHeader"],
-[data-testid="stToolbar"],
-footer {{
-    display: none !important;
-}}
-
-/* ===== CARD FLUTUANTE COM LOGO (LADO DIREITO) ===== */
-.floating-logo-card {{
+/* ===== NAVBAR FLUTUANTE SUPERIOR (PÍLULA) ===== */
+.floating-navbar {{
     position: fixed;
-    top: 120px;
-    right: 20px;
-    width: 80px;
-    height: 80px;
-    background: white;
-    border-radius: 20px;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 1200px;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
     border: 1px solid #E2E8F0;
+    border-radius: 99px;
+    z-index: 9999;
     display: flex;
     align-items: center;
-    justify-content: center;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-    z-index: 999;
+    justify-content: space-between;
+    padding: 12px 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
 }}
 
-.floating-logo-card:hover {{
-    transform: translateY(-4px) scale(1.05);
-    box-shadow: 0 16px 32px rgba(79, 70, 229, 0.15);
-    border-color: #4F46E5;
+.floating-navbar:hover {{
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+    border-color: #CBD5E1;
+    transform: translateX(-50%) translateY(-2px);
 }}
 
-.floating-logo {{
-    width: 55px;
-    height: 55px;
+.nav-brand {{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: #2B3674;
+    text-decoration: none;
+}}
+
+.nav-logo {{
+    width: 32px;
+    height: 32px;
     animation: spin 45s linear infinite;
     filter: brightness(1.1);
     transition: all 0.3s ease;
 }}
 
-.floating-logo-card:hover .floating-logo {{
+.floating-navbar:hover .nav-logo {{
     animation-duration: 20s;
-    filter: brightness(1.2) drop-shadow(0 4px 8px rgba(79, 70, 229, 0.3));
+    filter: brightness(1.2);
 }}
 
 @keyframes spin {{
@@ -91,13 +96,102 @@ footer {{
     100% {{ transform: rotate(360deg); }}
 }}
 
-/* ===== CONTAINER COM SIDEBAR ===== */
+.nav-menu {{
+    display: flex;
+    gap: 2px;
+    background: #F1F5F9;
+    border-radius: 99px;
+    padding: 4px;
+}}
+
+.nav-item {{
+    padding: 10px 20px;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748B;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    white-space: nowrap;
+}}
+
+.nav-item:hover {{
+    background: white;
+    color: #4F46E5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}}
+
+.nav-item.active {{
+    background: white;
+    color: #4F46E5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}}
+
+.nav-actions {{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}}
+
+.nav-action-btn {{
+    background: #F1F5F9;
+    border: 1px solid #E2E8F0;
+    border-radius: 99px;
+    padding: 8px 16px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}}
+
+.nav-action-btn:hover {{
+    background: white;
+    color: #4F46E5;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}}
+
+.nav-user {{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #334155;
+}}
+
+.user-avatar {{
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.8rem;
+}}
+
+/* ===== CONTAINER COM NAVBAR ===== */
 .block-container {{
-    padding-top: 1.25rem !important;
+    padding-top: 100px !important;
     padding-bottom: 3rem !important;
     max-width: 95% !important;
     padding-left: 1rem !important;
     padding-right: 1rem !important;
+}}
+
+/* ===== SIDEBAR VISÍVEL ===== */
+[data-testid="stHeader"],
+[data-testid="stToolbar"],
+footer {{
+    display: none !important;
 }}
 
 /* ===== CARD HERO (ESTILO EXATO DA HOME) ===== */
@@ -376,15 +470,20 @@ footer {{
 
 /* ===== RESPONSIVIDADE ===== */
 @media (max-width: 1024px) {{
-    .floating-logo-card {{
-        width: 60px;
-        height: 60px;
-        top: 100px;
-        right: 15px;
+    .floating-navbar {{
+        flex-direction: column;
+        gap: 12px;
+        border-radius: 20px;
+        padding: 16px;
+        top: 10px;
     }}
-    .floating-logo {{
-        width: 40px;
-        height: 40px;
+    .nav-menu {{
+        flex-wrap: wrap;
+        justify-content: center;
+    }}
+    .nav-actions {{
+        flex-wrap: wrap;
+        justify-content: center;
     }}
     .student-header, .student-row {{ grid-template-columns: 2.5fr 1fr 1fr 2fr 1fr; }}
     .mod-card-rect {{ height: 120px; }}
@@ -392,8 +491,20 @@ footer {{
 }}
 
 @media (max-width: 768px) {{
-    .floating-logo-card {{
-        display: none; /* Esconde em mobile */
+    .floating-navbar {{
+        width: 95%;
+        padding: 12px;
+    }}
+    .nav-brand span {{
+        display: none;
+    }}
+    .nav-item {{
+        padding: 8px 12px;
+        font-size: 0.7rem;
+    }}
+    .nav-action-btn {{
+        padding: 6px 12px;
+        font-size: 0.7rem;
     }}
     .student-header, .student-row {{ grid-template-columns: 1fr; gap: 12px; }}
     .student-header {{ display: none; }}
@@ -428,10 +539,53 @@ footer {{
 }}
 </style>
 
-<!-- CARD FLUTUANTE COM LOGO -->
-<div class="floating-logo-card">
-    {f'<img src="data:image/png;base64,{icone_b64}" class="floating-logo" alt="Omnisfera Logo">' if icone_b64 else '🌐'}
+<!-- NAVBAR FLUTUANTE SUPERIOR -->
+<div class="floating-navbar">
+    <div class="nav-brand">
+        {f'<img src="data:image/png;base64,{icone_b64}" class="nav-logo" alt="Omnisfera Logo">' if icone_b64 else '🌐'}
+        <span>OMNISFERA</span>
+    </div>
+    
+    <div class="nav-menu">
+        <button class="nav-item active" onclick="window.location.href='/Alunos'">ESTUDANTES</button>
+        <button class="nav-item" onclick="window.location.href='/1_PEI'">PEI</button>
+        <button class="nav-item" onclick="window.location.href='/2_PAE'">PLANO DE AÇÃO</button>
+        <button class="nav-item" onclick="window.location.href='/4_Diario_de_Bordo'">DIÁRIO</button>
+        <button class="nav-item" onclick="window.location.href='/5_Monitoramento_Avaliacao'">DASHBOARD</button>
+        <button class="nav-item" onclick="window.location.href='/3_Hub_Inclusao'">HUB IA</button>
+    </div>
+    
+    <div class="nav-actions">
+        <a href="#" class="nav-action-btn">WORKSPACE</a>
+        <a href="#" class="nav-action-btn">AJUDA</a>
+        <div class="nav-user">
+            <div class="user-avatar" id="userAvatar">U</div>
+        </div>
+    </div>
 </div>
+
+<script>
+// Função para definir as iniciais do usuário no avatar
+function setUserInitials() {{
+    const userName = "{st.session_state.get('usuario_nome', 'Visitante')}";
+    if (!userName) return;
+    
+    const parts = userName.split(' ');
+    let initials = 'U';
+    if (parts.length >= 2) {{
+        initials = (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }} else if (userName.length >= 2) {{
+        initials = userName.substring(0, 2).toUpperCase();
+    }} else {{
+        initials = userName[0].toUpperCase();
+    }}
+    
+    document.getElementById('userAvatar').textContent = initials;
+}}
+
+// Executar quando a página carregar
+document.addEventListener('DOMContentLoaded', setUserInitials);
+</script>
         """,
         unsafe_allow_html=True,
     )
