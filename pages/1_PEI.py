@@ -125,23 +125,20 @@ def verificar_login_app():
 
 def verificar_login_supabase():
     # Supabase é necessário para SALVAR/CARREGAR, mas o PEI pode abrir como rascunho.
-    # Então aqui só avisamos, não bloqueamos tudo.
-    if "supabase_jwt" not in st.session_state or not st.session_state["supabase_jwt"]:
+    # Então aqui só garantimos chaves mínimas (não bloqueia).
+    if "supabase_jwt" not in st.session_state:
         st.session_state["supabase_jwt"] = ""
-    if "supabase_user_id" not in st.session_state or not st.session_state["supabase_user_id"]:
+    if "supabase_user_id" not in st.session_state:
         st.session_state["supabase_user_id"] = ""
 
 verificar_login_app()
 verificar_login_supabase()
 
-# =============================================================================
-# SUPABASE (CRUD students) — versão REST (compatível com omni_utils.py)
-# Remove dependência de: sb / OWNER_ID
-# =============================================================================
 
-import requests
-import streamlit as st
-
+# =============================================================================
+# 2. SUPABASE (CRUD students) — REST (compatível com omni_utils.py)
+#    Remove dependência de: sb / OWNER_ID / supabase-py
+# =============================================================================
 
 def _rest_ready(debug: bool = False):
     """
@@ -198,7 +195,7 @@ def _headers() -> dict:
     }
 
 
-def _http_error(prefix: str, r: requests.Response):
+def _http_error(prefix: str, r):
     raise RuntimeError(f"{prefix}: {r.status_code} {r.text}")
 
 
@@ -206,7 +203,7 @@ def db_create_student(payload: dict):
     """
     Cria aluno em public.students usando REST.
     - injeta workspace_id automaticamente
-    - retorna o registro criado (dict) ou levanta erro
+    - retorna o registro criado
     """
     ok, details = _rest_ready(debug=True)
     if not ok:
@@ -279,8 +276,7 @@ def db_delete_student(student_id: str):
     if r.status_code >= 400:
         _http_error("Delete em students falhou", r)
 
-    data = r.json()
-    return data
+    return r.json()
 
 
 def db_list_students(search: str | None = None):
@@ -298,7 +294,6 @@ def db_list_students(search: str | None = None):
     if search:
         s = str(search).strip()
         if s:
-            # ilike precisa de *...*
             base += f"&name=ilike.*{s}*"
 
     r = requests.get(base, headers=_headers(), timeout=20)
@@ -307,7 +302,6 @@ def db_list_students(search: str | None = None):
 
     data = r.json()
     return data if isinstance(data, list) else []
-
 
 # ==============================================================================
 # 3. BLOCO VISUAL (badge / logo)
