@@ -3,12 +3,11 @@ import streamlit as st
 from datetime import date, datetime
 import base64
 import os
-import time
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v160.0 (Sidebar Corrigida com Logo Centralizada)"
+APP_VERSION = "v161.0 (Sidebar Travada + Ordem dos Cards + Logo PAEE + Cores Diário/Dados)"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -19,13 +18,14 @@ st.set_page_config(
     page_title="Omnisfera",
     page_icon="omni_icone.png" if os.path.exists("omni_icone.png") else "🌐",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
 )
 
 # ==============================================================================
-# 2. CSS & DESIGN SYSTEM ATUALIZADO (SIDEBAR CORRIGIDA)
+# 2. CSS & DESIGN SYSTEM
 # ==============================================================================
-st.markdown("""
+st.markdown(
+    """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import url("https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css");
@@ -39,6 +39,11 @@ html, body, [class*="css"] {
 /* Limpeza Geral */
 [data-testid="stSidebarNav"], [data-testid="stHeader"] { 
     display: none !important; 
+}
+
+/* --- TRAVA SIDEBAR: começa recolhida e sem botão de reabrir --- */
+[data-testid="collapsedControl"]{
+    display: none !important;
 }
 
 .block-container { 
@@ -95,13 +100,11 @@ html, body, [class*="css"] {
 }
 
 /* --- SIDEBAR PERSONALIZADA --- */
-/* Container principal da sidebar */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
     border-right: 1px solid #E2E8F0;
 }
 
-/* Logo centralizada na sidebar */
 .sidebar-logo-container {
     display: flex;
     justify-content: center;
@@ -111,17 +114,6 @@ html, body, [class*="css"] {
     border-bottom: 1px solid #E2E8F0;
 }
 
-.sidebar-logo {
-    max-width: 180px;
-    height: auto;
-    transition: transform 0.3s ease;
-}
-
-.sidebar-logo:hover {
-    transform: scale(1.03);
-}
-
-/* Seção de navegação */
 .sidebar-nav-section {
     padding: 0 15px;
 }
@@ -138,7 +130,6 @@ html, body, [class*="css"] {
     gap: 8px;
 }
 
-/* Botões da sidebar */
 .sidebar-nav-button {
     width: 100%;
     margin-bottom: 8px;
@@ -165,19 +156,6 @@ html, body, [class*="css"] {
 
 .sidebar-nav-button i {
     font-size: 1.1rem;
-}
-
-/* Botão sair especial */
-.sidebar-logout-button {
-    background: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
-    color: white;
-    border: none;
-    margin-top: 20px;
-}
-
-.sidebar-logout-button:hover {
-    background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
-    transform: translateX(0) scale(1.02);
 }
 
 /* --- HERO SECTION --- */
@@ -207,9 +185,7 @@ html, body, [class*="css"] {
     pointer-events: none;
 }
 
-.hero-content { 
-    z-index: 1; 
-}
+.hero-content { z-index: 1; }
 
 .hero-greet { 
     font-size: 2rem; 
@@ -234,10 +210,10 @@ html, body, [class*="css"] {
 /* --- CARDS DE MÓDULO --- */
 .mod-card-rect {
     background: white;
-    border-radius: 16px 16px 0 0; /* Arredondar só em cima */
+    border-radius: 16px 16px 0 0;
     padding: 0;
     border: 1px solid #E2E8F0;
-    border-bottom: none; /* Remove borda inferior */
+    border-bottom: none;
     box-shadow: 0 4px 6px rgba(0,0,0,0.01);
     display: flex; 
     flex-direction: row;
@@ -255,11 +231,7 @@ html, body, [class*="css"] {
     border-color: #CBD5E1;
 }
 
-.mod-bar { 
-    width: 6px; 
-    height: 100%; 
-    flex-shrink: 0; 
-}
+.mod-bar { width: 6px; height: 100%; flex-shrink: 0; }
 
 .mod-icon-area {
     width: 80px; 
@@ -294,78 +266,14 @@ html, body, [class*="css"] {
     line-height: 1.3; 
 }
 
-/* --- BOTÕES COLORIDOS ABAIXO DOS CARDS --- */
-.mod-action-button {
-    width: 100%;
-    height: 40px;
-    border: none;
-    border-radius: 0 0 16px 16px;
-    color: white;
-    font-weight: 700;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.mod-action-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-/* Cores específicas para cada tipo de botão */
-.btn-indigo {
-    background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
-}
-
-.btn-indigo:hover {
-    background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
-}
-
-.btn-teal {
-    background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
-}
-
-.btn-teal:hover {
-    background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%);
-}
-
-.btn-blue {
-    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-}
-
-.btn-blue:hover {
-    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
-}
-
-.btn-purple {
-    background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
-}
-
-.btn-purple:hover {
-    background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
-}
-
-.btn-slate {
-    background: linear-gradient(135deg, #64748B 0%, #475569 100%);
-}
-
-.btn-slate:hover {
-    background: linear-gradient(135deg, #475569 0%, #334155 100%);
+/* --- BOTÕES (Streamlit) - só hover leve (sem pintar tudo) --- */
+.stButton > button:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
 }
 
 /* --- RECURSOS --- */
-.res-card-link { 
-    text-decoration: none !important; 
-    display: block; 
-    height: 100%; 
-}
+.res-card-link { text-decoration: none !important; display: block; height: 100%; }
 
 .res-card {
     background: white; 
@@ -394,22 +302,9 @@ html, body, [class*="css"] {
     font-size: 1.3rem;
 }
 
-.res-info { 
-    display: flex; 
-    flex-direction: column; 
-}
-
-.res-name { 
-    font-weight: 700; 
-    color: #1E293B; 
-    font-size: 0.9rem; 
-}
-
-.res-meta { 
-    font-size: 0.75rem; 
-    font-weight: 600; 
-    opacity: 0.8; 
-}
+.res-info { display: flex; flex-direction: column; }
+.res-name { font-weight: 700; color: #1E293B; font-size: 0.9rem; }
+.res-meta { font-size: 0.75rem; font-weight: 600; opacity: 0.8; }
 
 /* CORES TEMÁTICAS DOS CARDS */
 .c-blue { background: #3B82F6; color: #3B82F6; }
@@ -423,120 +318,148 @@ html, body, [class*="css"] {
 .c-slate { background: #64748B; color: #64748B; }
 .bg-slate-soft { background: #F8FAFC; color: #475569; }
 
+/* NOVAS PALETAS (Diário e Dados) */
+.c-rose { background: #E11D48; color: #E11D48; }
+.bg-rose-soft { background: #FFF1F2; color: #BE123C; }
+
+.c-sky { background: #0284C7; color: #0284C7; }
+.bg-sky-soft { background: #F0F9FF; color: #0369A1; }
+
 /* Cores Recursos */
 .rc-green { background: #F0FDF4; color: #16A34A; border-color: #DCFCE7; }
 .rc-orange { background: #FFF7ED; color: #EA580C; border-color: #FFEDD5; }
 .rc-rose { background: #FFF1F2; color: #E11D48; border-color: #FECDD3; }
 .rc-sky { background: #F0F9FF; color: #0284C7; border-color: #E0F2FE; }
 
-@keyframes spin { 
-    100% { transform: rotate(360deg); } 
-}
+@keyframes spin { 100% { transform: rotate(360deg); } }
 
 /* --- RESPONSIVIDADE --- */
 @media (max-width: 768px) {
-    .topbar {
-        padding: 0 20px;
-    }
-    .hero-wrapper {
-        padding: 30px 20px;
-    }
-    .mod-card-rect {
-        height: 100px;
-    }
-    .mod-icon-area {
-        width: 60px;
-    }
-    .mod-title {
-        font-size: 0.9rem;
-    }
-    .mod-desc {
-        font-size: 0.7rem;
-    }
-    .sidebar-logo {
-        max-width: 140px;
-    }
+    .topbar { padding: 0 20px; }
+    .hero-wrapper { padding: 30px 20px; }
+    .mod-card-rect { height: 100px; }
+    .mod-icon-area { width: 60px; }
+    .mod-title { font-size: 0.9rem; }
+    .mod-desc { font-size: 0.7rem; }
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # ==============================================================================
 # 3. HELPERS
 # ==============================================================================
-def acesso_bloqueado(msg):
-    st.markdown(f"<div style='text-align:center; padding:50px; color:#64748B;'><h3>🔐 Acesso Restrito</h3><p>{msg}</p></div>", unsafe_allow_html=True)
+def acesso_bloqueado(msg: str):
+    st.markdown(
+        f"<div style='text-align:center; padding:50px; color:#64748B;'><h3>🔐 Acesso Restrito</h3><p>{msg}</p></div>",
+        unsafe_allow_html=True,
+    )
     if st.button("Ir para Login"):
         st.session_state.autenticado = False
         st.session_state.workspace_id = None
         st.rerun()
     st.stop()
 
-# Verificar autenticação
-if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
-    acesso_bloqueado("Sessão inválida.")
 
-# Inicializar dados se não existirem
-if "dados" not in st.session_state:
-    st.session_state.dados = {"nome": "", "nasc": date(2015,1,1), "serie": None}
-
-def get_base64_image(image_path):
-    if not os.path.exists(image_path): 
+def get_base64_image(image_path: str) -> str:
+    if not os.path.exists(image_path):
         return ""
-    with open(image_path, "rb") as f: 
+    with open(image_path, "rb") as f:
         return base64.b64encode(f.read()).decode()
+
 
 def escola_vinculada():
     return st.session_state.get("workspace_name") or st.session_state.get("workspace_id", "")[:8]
 
+
 # ==============================================================================
-# 4. FUNÇÃO PARA CRIAR CARDS COM BOTÕES COLORIDOS (SEM VERIFICAÇÃO DE ALUNO)
+# 4. SEGURANÇA / ESTADO
 # ==============================================================================
-def create_module_with_button(title, desc, icon, color_cls, bg_cls, btn_class, page_path, key):
-    """Cria um card com botão colorido abaixo - SEM verificação de aluno"""
-    
-    # Container principal
+if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
+    acesso_bloqueado("Sessão inválida.")
+
+if "dados" not in st.session_state:
+    st.session_state.dados = {"nome": "", "nasc": date(2015, 1, 1), "serie": None}
+
+
+# ==============================================================================
+# 5. FUNÇÃO DE CARD (com logo opcional)
+# ==============================================================================
+def create_module_with_button(
+    title,
+    desc,
+    icon,
+    color_cls,
+    bg_cls,
+    page_path,
+    key,
+    logo_path=None,
+):
+    """Cria um card com botão abaixo. Se logo_path existir, usa imagem no lugar do ícone."""
+    logo_html = ""
+    if logo_path and os.path.exists(logo_path):
+        logo_b64 = get_base64_image(logo_path)
+        if logo_b64:
+            logo_html = f"""
+            <img src="data:image/png;base64,{logo_b64}" style="
+                height:34px; width:auto;
+                filter: drop-shadow(0 2px 6px rgba(0,0,0,.08));
+            "/>
+            """
+
     with st.container():
-        # Card visual
-        st.markdown(f"""
+        st.markdown(
+            f"""
         <div class="mod-card-wrapper">
             <div class="mod-card-rect">
                 <div class="mod-bar {color_cls}"></div>
                 <div class="mod-icon-area {bg_cls}">
-                    <i class="{icon}"></i>
+                    {logo_html if logo_html else f"<i class='{icon}'></i>"}
                 </div>
                 <div class="mod-content">
                     <div class="mod-title">{title}</div>
                     <div class="mod-desc">{desc}</div>
                 </div>
             </div>
-        """, unsafe_allow_html=True)
-        
-        # Botão colorido abaixo do card
+        """,
+            unsafe_allow_html=True,
+        )
+
         if st.button(
-            f"📂 ACESSAR {title.split()[0].upper()}",  # Pega a primeira palavra do título
+            f"📂 ACESSAR {title.split()[0].upper()}",
             key=f"btn_{key}",
             use_container_width=True,
-            help=f"Clique para acessar {title}"
+            help=f"Clique para acessar {title}",
         ):
-            # Lógica de navegação SIMPLIFICADA - SEM verificação de aluno
             st.switch_page(page_path)
-        
+
         st.markdown("</div>", unsafe_allow_html=True)
 
+
 # ==============================================================================
-# 5. RENDERIZAÇÃO PRINCIPAL
+# 6. RENDERIZAÇÃO PRINCIPAL
 # ==============================================================================
 
 # TOPBAR
 icone_b64 = get_base64_image("omni_icone.png")
 texto_b64 = get_base64_image("omni_texto.png")
 workspace = escola_vinculada()
-nome_user = st.session_state.get('usuario_nome', 'Visitante').split()[0]
+nome_user = st.session_state.get("usuario_nome", "Visitante").split()[0]
 
-img_logo = f'<img src="data:image/png;base64,{icone_b64}" class="brand-logo">' if icone_b64 else "🌐"
-img_text = f'<img src="data:image/png;base64,{texto_b64}" class="brand-img-text">' if texto_b64 else "<span style='font-weight:800; font-size:1.2rem; color:#2B3674;'>OMNISFERA</span>"
+img_logo = (
+    f'<img src="data:image/png;base64,{icone_b64}" class="brand-logo">'
+    if icone_b64
+    else "🌐"
+)
+img_text = (
+    f'<img src="data:image/png;base64,{texto_b64}" class="brand-img-text">'
+    if texto_b64
+    else "<span style='font-weight:800; font-size:1.2rem; color:#2B3674;'>OMNISFERA</span>"
+)
 
-st.markdown(f"""
+st.markdown(
+    f"""
 <div class="topbar">
     <div class="brand-box">
         {img_logo} 
@@ -547,22 +470,21 @@ st.markdown(f"""
         <div style="font-weight:700; color:#334155;">{nome_user}</div>
     </div>
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-# SIDEBAR CORRIGIDA COM LOGO CENTRALIZADA
+# SIDEBAR (vai iniciar recolhida e sem botão de reabrir)
 with st.sidebar:
-    # Container para logo centralizada
     st.markdown('<div class="sidebar-logo-container">', unsafe_allow_html=True)
-    
-    # Primeiro tenta carregar omnisfera.png (logo com texto)
+
     if os.path.exists("omnisfera.png"):
         st.image("omnisfera.png", use_column_width=True)
-    # Se não encontrar, tenta omni_texto.png
     elif os.path.exists("omni_texto.png"):
         st.image("omni_texto.png", use_column_width=True)
-    # Se não encontrar nenhum, mostra placeholder
     else:
-        st.markdown("""
+        st.markdown(
+            """
         <div style="text-align: center;">
             <div style="font-size: 1.8rem; font-weight: 800; color: #4F46E5; margin-bottom: 5px;">
                 🌐
@@ -572,55 +494,63 @@ with st.sidebar:
                 OMNISFERA
             </div>
         </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Seção de navegação
-    st.markdown("""
+        """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown(
+        """
     <div class="sidebar-nav-section">
         <div class="sidebar-nav-title">
             <i class="ri-compass-3-line"></i> NAVEGAÇÃO
         </div>
     </div>
-    """, unsafe_allow_html=True)
-    
-    # Links rápidos com estilo personalizado
+    """,
+        unsafe_allow_html=True,
+    )
+
     sidebar_options = [
         ("👥 Alunos", "pages/Alunos.py", "#4F46E5", "ri-team-line"),
         ("📘 PEI", "pages/1_PEI.py", "#3B82F6", "ri-book-open-line"),
         ("🧩 PAEE", "pages/2_PAE.py", "#8B5CF6", "ri-puzzle-line"),
         ("🚀 Hub", "pages/3_Hub_Inclusao.py", "#14B8A6", "ri-rocket-line"),
-        ("📓 Diário", "pages/4_Diario_de_Bordo.py", "#64748B", "ri-notebook-line"),
-        ("📊 Dados", "pages/5_Monitoramento_Avaliacao.py", "#475569", "ri-bar-chart-line"),
+        ("📓 Diário", "pages/4_Diario_de_Bordo.py", "#E11D48", "ri-notebook-line"),
+        ("📊 Dados", "pages/5_Monitoramento_Avaliacao.py", "#0284C7", "ri-bar-chart-line"),
     ]
-    
+
     for label, page, color, icon in sidebar_options:
-        # Usando HTML/CSS para botões personalizados
-        button_html = f"""
+        st.markdown(
+            f"""
         <button class="sidebar-nav-button" onclick="window.location='{page}'" 
                 style="border-left: 4px solid {color};">
             <i class="{icon}"></i> {label}
         </button>
-        """
-        st.markdown(button_html, unsafe_allow_html=True)
-    
-    # Separador
-    st.markdown("<div style='margin: 20px 0; border-top: 1px solid #E2E8F0;'></div>", unsafe_allow_html=True)
-    
-    # Botão de logout
-    if st.button("🚪 Sair do Sistema", 
-                 use_container_width=True, 
-                 type="secondary",
-                 help="Clique para sair do sistema"):
+        """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown(
+        "<div style='margin: 20px 0; border-top: 1px solid #E2E8F0;'></div>",
+        unsafe_allow_html=True,
+    )
+
+    if st.button(
+        "🚪 Sair do Sistema",
+        use_container_width=True,
+        type="secondary",
+        help="Clique para sair do sistema",
+    ):
         st.session_state.autenticado = False
         st.rerun()
 
-# HERO SECTION
+# HERO
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
 
-st.markdown(f"""
+st.markdown(
+    f"""
 <div class="hero-wrapper">
     <div class="hero-content">
         <div class="hero-greet">{saudacao}, {nome_user}!</div>
@@ -628,12 +558,13 @@ st.markdown(f"""
     </div>
     <div style="opacity:0.8; font-size:4rem;"><i class="ri-heart-pulse-fill"></i></div>
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-# MÓDULOS COM BOTÕES COLORIDOS
+# MÓDULOS (ordem pela sequência das pastas)
 st.markdown("### 🚀 Módulos da Plataforma")
 
-# Definir módulos com suas cores específicas
 modules = [
     {
         "title": "Estudantes",
@@ -641,19 +572,9 @@ modules = [
         "icon": "ri-group-fill",
         "color_cls": "c-indigo",
         "bg_cls": "bg-indigo-soft",
-        "btn_class": "btn-indigo",
         "page": "pages/Alunos.py",
-        "key": "m_aluno"
-    },
-    {
-        "title": "Hub de Recursos",
-        "desc": "Biblioteca de materiais, modelos e inteligência artificial para apoio.",
-        "icon": "ri-rocket-2-fill",
-        "color_cls": "c-teal",
-        "bg_cls": "bg-teal-soft",
-        "btn_class": "btn-teal",
-        "page": "pages/3_Hub_Inclusao.py",
-        "key": "m_hub"
+        "key": "m_aluno",
+        "logo_path": None,
     },
     {
         "title": "Estratégias & PEI",
@@ -661,9 +582,9 @@ modules = [
         "icon": "ri-book-open-fill",
         "color_cls": "c-blue",
         "bg_cls": "bg-blue-soft",
-        "btn_class": "btn-blue",
         "page": "pages/1_PEI.py",
-        "key": "m_pei"
+        "key": "m_pei",
+        "logo_path": None,
     },
     {
         "title": "Plano de Ação / PAEE",
@@ -671,64 +592,69 @@ modules = [
         "icon": "ri-puzzle-fill",
         "color_cls": "c-purple",
         "bg_cls": "bg-purple-soft",
-        "btn_class": "btn-purple",
         "page": "pages/2_PAE.py",
-        "key": "m_pae"
+        "key": "m_pae",
+        # TROQUE o caminho abaixo pelo arquivo real do seu logo (se existir)
+        "logo_path": "assets/paee_logo.png",
+    },
+    {
+        "title": "Hub de Recursos",
+        "desc": "Biblioteca de materiais, modelos e inteligência artificial para apoio.",
+        "icon": "ri-rocket-2-fill",
+        "color_cls": "c-teal",
+        "bg_cls": "bg-teal-soft",
+        "page": "pages/3_Hub_Inclusao.py",
+        "key": "m_hub",
+        "logo_path": None,
     },
     {
         "title": "Diário de Bordo",
         "desc": "Registro diário de observações, evidências e intervenções.",
         "icon": "ri-file-list-3-fill",
-        "color_cls": "c-slate",
-        "bg_cls": "bg-slate-soft",
-        "btn_class": "btn-slate",
+        "color_cls": "c-rose",
+        "bg_cls": "bg-rose-soft",
         "page": "pages/4_Diario_de_Bordo.py",
-        "key": "m_diario"
+        "key": "m_diario",
+        "logo_path": None,
     },
     {
         "title": "Evolução & Dados",
         "desc": "Indicadores, gráficos e relatórios de progresso dos alunos.",
         "icon": "ri-bar-chart-box-fill",
-        "color_cls": "c-slate",
-        "bg_cls": "bg-slate-soft",
-        "btn_class": "btn-slate",
+        "color_cls": "c-sky",
+        "bg_cls": "bg-sky-soft",
         "page": "pages/5_Monitoramento_Avaliacao.py",
-        "key": "m_dados"
-    }
+        "key": "m_dados",
+        "logo_path": None,
+    },
 ]
 
-# Criar grid 3x2
 cols = st.columns(3, gap="medium")
-
-# Distribuir módulos pelas colunas
 for i, module in enumerate(modules):
     with cols[i % 3]:
-        # Usar a função que cria card + botão
         create_module_with_button(
             title=module["title"],
             desc=module["desc"],
             icon=module["icon"],
             color_cls=module["color_cls"],
             bg_cls=module["bg_cls"],
-            btn_class=module["btn_class"],
             page_path=module["page"],
-            key=module["key"]
+            key=module["key"],
+            logo_path=module.get("logo_path"),
         )
 
-# Adicionar espaçamento entre as linhas
 st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
 # RECURSOS EXTERNOS
 st.markdown("### 📚 Recursos Externos & Referências")
-
-# Criar colunas para recursos
 r1, r2, r3, r4 = st.columns(4, gap="medium")
 
-# Função para criar recursos
+
 def create_resource(col, title, desc, icon, theme, link):
     with col:
         if link != "#":
-            st.markdown(f"""
+            st.markdown(
+                f"""
             <a href="{link}" target="_blank" class="res-card-link">
                 <div class="res-card {theme}">
                     <div class="res-icon {theme}"><i class="{icon}"></i></div>
@@ -738,9 +664,12 @@ def create_resource(col, title, desc, icon, theme, link):
                     </div>
                 </div>
             </a>
-            """, unsafe_allow_html=True)
+            """,
+                unsafe_allow_html=True,
+            )
         else:
-            st.markdown(f"""
+            st.markdown(
+                f"""
             <div class="res-card {theme}" style="cursor: pointer;">
                 <div class="res-icon {theme}"><i class="{icon}"></i></div>
                 <div class="res-info">
@@ -748,18 +677,40 @@ def create_resource(col, title, desc, icon, theme, link):
                     <div class="res-meta">{desc}</div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """,
+                unsafe_allow_html=True,
+            )
 
-# Adicionar recursos
-create_resource(r1, "Lei da Inclusão", "LBI e diretrizes", "ri-government-fill", "rc-sky", "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm")
-create_resource(r2, "Base Nacional", "Competências BNCC", "ri-compass-3-fill", "rc-green", "http://basenacionalcomum.mec.gov.br/")
-create_resource(r3, "Neurociência", "Artigos e estudos", "ri-brain-fill", "rc-rose", "https://institutoneurosaber.com.br/")
+
+create_resource(
+    r1,
+    "Lei da Inclusão",
+    "LBI e diretrizes",
+    "ri-government-fill",
+    "rc-sky",
+    "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm",
+)
+create_resource(
+    r2,
+    "Base Nacional",
+    "Competências BNCC",
+    "ri-compass-3-fill",
+    "rc-green",
+    "http://basenacionalcomum.mec.gov.br/",
+)
+create_resource(
+    r3,
+    "Neurociência",
+    "Artigos e estudos",
+    "ri-brain-fill",
+    "rc-rose",
+    "https://institutoneurosaber.com.br/",
+)
 create_resource(r4, "Ajuda Omnisfera", "Tutoriais e suporte", "ri-question-fill", "rc-orange", "#")
 
 # RODAPÉ
 st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
 
-# Estatísticas rápidas
 col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.metric("Alunos Ativos", "12", "+2")
@@ -770,9 +721,9 @@ with col3:
 with col4:
     st.metric("Meta Mensal", "75%", "+5%")
 
-# Copyright
 st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
-st.markdown(f"""
+st.markdown(
+    f"""
 <div style='
     text-align: center; 
     color: #64748B; 
@@ -785,47 +736,6 @@ st.markdown(f"""
     Desenvolvido por RODRIGO A. QUEIROZ • 
     {datetime.now().strftime("%d/%m/%Y %H:%M")}
 </div>
-""", unsafe_allow_html=True)
-
-# CSS ADICIONAL para corrigir interatividade dos botões na sidebar
-st.markdown("""
-<script>
-// JavaScript para fazer os botões da sidebar funcionarem
-document.addEventListener('DOMContentLoaded', function() {
-    // Seleciona todos os botões personalizados da sidebar
-    const sidebarButtons = document.querySelectorAll('.sidebar-nav-button');
-    
-    sidebarButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const pageUrl = this.getAttribute('onclick').match(/'([^']+)'/)[1];
-            // Usando o método Streamlit para navegação
-            window.parent.postMessage({
-                type: 'streamlit:setComponentValue',
-                data: {page: pageUrl}
-            }, '*');
-        });
-    });
-});
-</script>
-
-<style>
-/* CSS para corrigir a cor dos botões principais */
-.stButton > button {
-    background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
-    color: white !important;
-    border: none !important;
-    font-weight: 700 !important;
-}
-
-/* Cor específica para cada botão baseado no texto (fallback) */
-.stButton > button[data-testid="baseButton-secondary"] {
-    background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
-}
-
-/* Hover states para botões Streamlit */
-.stButton > button:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
-}
-</style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
