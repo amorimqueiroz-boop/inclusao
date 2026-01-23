@@ -34,12 +34,6 @@ html, body, [class*="css"] {
     background-color: #F8FAFC !important;
 }
 
-/* ===== HEADER NATIVO (OCULTAR) ===== */
-[data-testid="stHeader"],
-[data-testid="stToolbar"],
-footer {
-    display: none !important;
-}
 
 /* ===== CONTAINER COM SIDEBAR VISÍVEL ===== */
 .block-container {
