@@ -6,6 +6,7 @@ from docx import Document
 from openai import OpenAI
 from pypdf import PdfReader
 from fpdf import FPDF
+import requests
 import base64
 import json
 import os
