@@ -6,7 +6,7 @@ import os
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v2.0 - React Style"
+APP_VERSION = "v2.0 - Guia de Inclusão"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV", "PRODUCAO") == "TESTE"
@@ -17,12 +17,12 @@ st.set_page_config(
     page_title="Omnisfera - Plataforma de Inclusão Educacional",
     page_icon="🌐" if not os.path.exists("omni_icone.png") else "omni_icone.png",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="auto",
     menu_items=None
 )
 
 # ==============================================================================
-# 2. CSS & DESIGN SYSTEM
+# 2. CSS & DESIGN SYSTEM (COM SIDEBAR OCULTADA)
 # ==============================================================================
 st.markdown(
     """
@@ -30,26 +30,22 @@ st.markdown(
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import url("https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css");
 
-* {
-    transition: all 0.2s ease;
-}
-
 html, body, [class*="css"] {
     font-family: 'Plus Jakarta Sans', sans-serif !important;
     color: #1E293B !important;
     background-color: #F8FAFC !important;
-    scroll-behavior: smooth;
 }
 
-/* --- LIMPEZA STREAMLIT NATIVO --- */
+/* --- OCULTAR SIDEBAR E HEADER NATIVOS DO STREAMLIT --- */
 [data-testid="stSidebarNav"],
 [data-testid="stHeader"],
-[data-testid="collapsedControl"],
 [data-testid="stToolbar"],
+[data-testid="collapsedControl"],
 footer {
     display: none !important;
 }
 
+/* Ajustar padding para compensar a topbar fixa */
 .block-container {
     padding-top: 100px !important;
     padding-bottom: 4rem !important;
@@ -58,7 +54,7 @@ footer {
     padding-right: 1rem !important;
 }
 
-/* --- HEADER FIXO --- */
+/* --- HEADER FIXO COM LOGO GRANDE --- */
 .topbar {
     position: fixed;
     top: 0;
@@ -84,14 +80,14 @@ footer {
 }
 
 .brand-logo {
-    height: 45px;
-    width: auto;
+    height: 55px !important;
+    width: auto !important;
     animation: spin 45s linear infinite;
     filter: brightness(1.1);
 }
 
 .brand-img-text {
-    height: 30px;
+    height: 35px !important;
     width: auto;
     margin-left: 10px;
 }
@@ -105,74 +101,6 @@ footer {
     font-weight: 700;
     color: #64748B;
     letter-spacing: 0.5px;
-}
-
-/* --- SIDEBAR --- */
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%) !important;
-    border-right: 1px solid #E2E8F0 !important;
-    padding-top: 80px !important;
-}
-
-.sidebar-logo-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px 0;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #E2E8F0;
-}
-
-.sidebar-nav-section {
-    padding: 0 15px;
-}
-
-.sidebar-nav-title {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #64748B;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.sidebar-nav-button {
-    width: 100%;
-    margin-bottom: 8px;
-    border-radius: 12px !important;
-    border: 1px solid #E2E8F0;
-    background: white;
-    color: #475569;
-    font-weight: 600;
-    font-size: 0.9rem;
-    padding: 12px 16px;
-    text-align: left;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-}
-
-.sidebar-nav-button:hover {
-    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%) !important;
-    color: white !important;
-    border-color: #4F46E5 !important;
-    transform: translateX(4px) !important;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2) !important;
-}
-
-.sidebar-nav-button i {
-    font-size: 1.1rem;
-    transition: transform 0.2s;
-}
-
-.sidebar-nav-button:hover i {
-    transform: scale(1.1);
 }
 
 /* --- HERO SECTION --- */
@@ -331,6 +259,43 @@ footer {
     overflow: hidden;
 }
 
+/* --- CORES DOS CARDS DE MÓDULO (RESTAURADAS) --- */
+.c-indigo { background: #4F46E5 !important; }
+.bg-indigo-soft { 
+    background: #EEF2FF !important; 
+    color: #4F46E5 !important;
+}
+
+.c-blue { background: #3B82F6 !important; }
+.bg-blue-soft { 
+    background: #EFF6FF !important;
+    color: #2563EB !important;
+}
+
+.c-purple { background: #8B5CF6 !important; }
+.bg-purple-soft { 
+    background: #F5F3FF !important;
+    color: #7C3AED !important;
+}
+
+.c-teal { background: #14B8A6 !important; }
+.bg-teal-soft { 
+    background: #F0FDFA !important;
+    color: #0D9488 !important;
+}
+
+.c-rose { background: #E11D48 !important; }
+.bg-rose-soft { 
+    background: #FFF1F2 !important;
+    color: #BE123C !important;
+}
+
+.c-sky { background: #0284C7 !important; }
+.bg-sky-soft { 
+    background: #F0F9FF !important;
+    color: #0369A1 !important;
+}
+
 /* --- BOTÕES STREAMLIT --- */
 .stButton > button {
     border-radius: 0 0 16px 16px !important;
@@ -424,91 +389,133 @@ footer {
     opacity: 0.8;
 }
 
-/* --- CORES TEMÁTICAS --- */
-.c-indigo { background: #4F46E5 !important; }
-.bg-indigo-soft { 
-    background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%) !important; 
-    color: #4F46E5 !important;
+/* --- CARDS DE INFORMAÇÃO --- */
+.info-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid #E2E8F0;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    height: 100%;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
-.c-blue { background: #3B82F6 !important; }
-.bg-blue-soft { 
-    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%) !important;
-    color: #2563EB !important;
+.info-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    border-color: #CBD5E1;
 }
 
-.c-purple { background: #8B5CF6 !important; }
-.bg-purple-soft { 
-    background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%) !important;
-    color: #7C3AED !important;
+.info-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #F1F5F9;
 }
 
-.c-teal { background: #14B8A6 !important; }
-.bg-teal-soft { 
-    background: linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%) !important;
-    color: #0D9488 !important;
+.info-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
 }
 
-.c-rose { background: #E11D48 !important; }
-.bg-rose-soft { 
-    background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%) !important;
-    color: #BE123C !important;
+.info-card-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #1E293B;
+    margin: 0;
+    line-height: 1.3;
 }
 
-.c-sky { background: #0284C7 !important; }
-.bg-sky-soft { 
-    background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%) !important;
-    color: #0369A1 !important;
+.info-card-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 8px;
 }
 
-/* --- CORES RECURSOS --- */
-.rc-sky {
-    background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%) !important;
-    color: #0284C7 !important;
-    border-color: #BAE6FD !important;
-}
-.rc-sky .res-icon { background: #F0F9FF !important; border: 1px solid #BAE6FD !important; }
-
-.rc-green {
-    background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%) !important;
-    color: #16A34A !important;
-    border-color: #BBF7D0 !important;
-}
-.rc-green .res-icon { background: #F0FDF4 !important; border: 1px solid #BBF7D0 !important; }
-
-.rc-rose {
-    background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%) !important;
-    color: #E11D48 !important;
-    border-color: #FECDD3 !important;
-}
-.rc-rose .res-icon { background: #FFF1F2 !important; border: 1px solid #FECDD3 !important; }
-
-.rc-orange {
-    background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%) !important;
-    color: #EA580C !important;
-    border-color: #FDBA74 !important;
-}
-.rc-orange .res-icon { background: #FFF7ED !important; border: 1px solid #FDBA74 !important; }
-
-/* --- ANIMAÇÕES --- */
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.info-card-content p {
+    font-size: 0.85rem;
+    color: #64748B;
+    line-height: 1.5;
+    margin-bottom: 12px;
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.info-card-content ul {
+    font-size: 0.85rem;
+    color: #64748B;
+    line-height: 1.5;
+    margin-left: 16px;
+    margin-bottom: 12px;
 }
 
-.fade-in-up {
-    animation: fadeInUp 0.5s ease-out;
+.info-card-content li {
+    margin-bottom: 6px;
+}
+
+/* --- CORES DOS CARDS DE INFORMAÇÃO --- */
+.info-card-orange {
+    border-left: 4px solid #EA580C;
+}
+.info-card-orange .info-card-icon {
+    background: #FFF7ED;
+    color: #EA580C;
+    border: 1px solid #FDBA74;
+}
+
+.info-card-blue {
+    border-left: 4px solid #3B82F6;
+}
+.info-card-blue .info-card-icon {
+    background: #EFF6FF;
+    color: #3B82F6;
+    border: 1px solid #93C5FD;
+}
+
+.info-card-purple {
+    border-left: 4px solid #8B5CF6;
+}
+.info-card-purple .info-card-icon {
+    background: #F5F3FF;
+    color: #8B5CF6;
+    border: 1px solid #C4B5FD;
+}
+
+.info-card-teal {
+    border-left: 4px solid #14B8A6;
+}
+.info-card-teal .info-card-icon {
+    background: #F0FDFA;
+    color: #14B8A6;
+    border: 1px solid #5EEAD4;
+}
+
+.info-card-rose {
+    border-left: 4px solid #E11D48;
+}
+.info-card-rose .info-card-icon {
+    background: #FFF1F2;
+    color: #E11D48;
+    border: 1px solid #FDA4AF;
+}
+
+.info-card-indigo {
+    border-left: 4px solid #4F46E5;
+}
+.info-card-indigo .info-card-icon {
+    background: #EEF2FF;
+    color: #4F46E5;
+    border: 1px solid #A5B4FC;
 }
 
 /* --- MÉTRICAS --- */
@@ -559,6 +566,41 @@ footer {
 .metric-down { color: #DC2626 !important; }
 .metric-neutral { color: #64748B !important; }
 
+/* --- CORES RECURSOS --- */
+.rc-sky {
+    background: #F0F9FF !important;
+    color: #0284C7 !important;
+    border-color: #BAE6FD !important;
+}
+.rc-sky .res-icon { background: #F0F9FF !important; border: 1px solid #BAE6FD !important; }
+
+.rc-green {
+    background: #F0FDF4 !important;
+    color: #16A34A !important;
+    border-color: #BBF7D0 !important;
+}
+.rc-green .res-icon { background: #F0FDF4 !important; border: 1px solid #BBF7D0 !important; }
+
+.rc-rose {
+    background: #FFF1F2 !important;
+    color: #E11D48 !important;
+    border-color: #FECDD3 !important;
+}
+.rc-rose .res-icon { background: #FFF1F2 !important; border: 1px solid #FECDD3 !important; }
+
+.rc-orange {
+    background: #FFF7ED !important;
+    color: #EA580C !important;
+    border-color: #FDBA74 !important;
+}
+.rc-orange .res-icon { background: #FFF7ED !important; border: 1px solid #FDBA74 !important; }
+
+/* --- ANIMAÇÕES --- */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 /* --- RESPONSIVIDADE --- */
 @media (max-width: 1024px) {
     .topbar { padding: 0 1.5rem; }
@@ -566,6 +608,7 @@ footer {
     .hero-greet { font-size: 2rem; }
     .mod-card-rect { height: 120px; }
     .mod-icon-area { width: 80px; }
+    .info-card { min-height: 350px; }
 }
 
 @media (max-width: 768px) {
@@ -585,6 +628,7 @@ footer {
     .mod-desc { font-size: 0.75rem; }
     .res-card { padding: 16px; gap: 12px; }
     .res-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+    .info-card { min-height: 380px; padding: 18px; }
 }
 
 @media (max-width: 640px) {
@@ -602,36 +646,6 @@ footer {
 # ==============================================================================
 # 3. FUNÇÕES AUXILIARES
 # ==============================================================================
-def acesso_bloqueado(msg: str):
-    """Componente de acesso restrito"""
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown(
-            f"""
-            <div style='
-                text-align: center; 
-                padding: 3rem; 
-                background: white;
-                border-radius: 20px;
-                border: 1px solid #E2E8F0;
-                box-shadow: 0 20px 40px rgba(0,0,0,0.05);
-                margin: 4rem 0;
-            '>
-                <div style='font-size: 4rem; margin-bottom: 1rem;'>🔐</div>
-                <h3 style='color: #1E293B; margin-bottom: 1rem;'>Acesso Restrito</h3>
-                <p style='color: #64748B;'>{msg}</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        
-        if st.button("🔓 Ir para Login", use_container_width=True, type="primary"):
-            st.session_state.autenticado = False
-            st.session_state.workspace_id = None
-            st.rerun()
-    st.stop()
-
-
 def get_base64_image(image_path: str) -> str:
     """Carrega imagem e converte para base64"""
     if not os.path.exists(image_path):
@@ -688,7 +702,32 @@ initialize_session_state()
 
 # Verificação de autenticação
 if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
-    acesso_bloqueado("Sessão inválida ou expirada. Por favor, faça login novamente.")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown(
+            f"""
+            <div style='
+                text-align: center; 
+                padding: 3rem; 
+                background: white;
+                border-radius: 20px;
+                border: 1px solid #E2E8F0;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+                margin: 4rem 0;
+            '>
+                <div style='font-size: 4rem; margin-bottom: 1rem;'>🔐</div>
+                <h3 style='color: #1E293B; margin-bottom: 1rem;'>Acesso Restrito</h3>
+                <p style='color: #64748B;'>Sessão inválida ou expirada. Por favor, faça login novamente.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        
+        if st.button("🔓 Ir para Login", use_container_width=True, type="primary"):
+            st.session_state.autenticado = False
+            st.session_state.workspace_id = None
+            st.rerun()
+    st.stop()
 
 # ==============================================================================
 # 5. FUNÇÕES DE RENDERIZAÇÃO
@@ -750,127 +789,8 @@ def render_topbar():
     )
 
 
-def render_sidebar():
-    """Renderiza a sidebar personalizada"""
-    with st.sidebar:
-        # Logo da sidebar
-        st.markdown('<div class="sidebar-logo-container">', unsafe_allow_html=True)
-        
-        if os.path.exists("omnisfera.png"):
-            st.image("omnisfera.png", use_column_width=True)
-        elif os.path.exists("omni_texto.png"):
-            st.image("omni_texto.png", use_column_width=True)
-        else:
-            st.markdown(
-                """
-                <div style="text-align: center;">
-                    <div style="font-size: 2rem; font-weight: 800; color: #4F46E5; margin-bottom: 8px;">
-                        🌐
-                    </div>
-                    <div style="
-                        font-size: 1.5rem; 
-                        font-weight: 800; 
-                        background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); 
-                        -webkit-background-clip: text; 
-                        -webkit-text-fill-color: transparent;
-                        margin-bottom: 4px;
-                    ">
-                        OMNISFERA
-                    </div>
-                    <div style="font-size: 0.7rem; color: #94A3B8; font-weight: 600;">
-                        Plataforma de Inclusão
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-        # Navegação
-        st.markdown(
-            """
-            <div class="sidebar-nav-section">
-                <div class="sidebar-nav-title">
-                    <i class="ri-compass-3-line"></i> NAVEGAÇÃO
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        
-        sidebar_options = [
-            ("👥 Alunos", "pages/Alunos.py", "#4F46E5", "ri-team-line"),
-            ("📘 PEI", "pages/1_PEI.py", "#3B82F6", "ri-book-open-line"),
-            ("🧩 PAEE", "pages/2_PAE.py", "#8B5CF6", "ri-puzzle-line"),
-            ("🚀 Hub", "pages/3_Hub_Inclusao.py", "#14B8A6", "ri-rocket-line"),
-            ("📓 Diário", "pages/4_Diario_de_Bordo.py", "#E11D48", "ri-notebook-line"),
-            ("📊 Dados", "pages/5_Monitoramento_Avaliacao.py", "#0284C7", "ri-bar-chart-line"),
-        ]
-        
-        for label, page, color, icon in sidebar_options:
-            st.markdown(
-                f"""
-                <a href="{page}" style="text-decoration: none; display: block; margin-bottom: 8px;">
-                    <div class="sidebar-nav-button" style="border-left: 4px solid {color};">
-                        <i class="{icon}"></i> {label}
-                    </div>
-                </a>
-                """,
-                unsafe_allow_html=True,
-            )
-        
-        # Logout
-        st.markdown(
-            "<div style='margin: 20px 0; border-top: 1px solid #E2E8F0;'></div>",
-            unsafe_allow_html=True,
-        )
-        
-        if st.button(
-            "🚪 Sair do Sistema",
-            use_container_width=True,
-            type="secondary",
-            help="Clique para sair do sistema",
-            key="sidebar_logout"
-        ):
-            st.session_state.autenticado = False
-            st.rerun()
-
-
-def render_hero():
-    """Renderiza a seção hero com saudação dinâmica"""
-    hora = datetime.now().hour
-    saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
-    nome_user = st.session_state.get("usuario_nome", "Visitante").split()[0]
-    
-    st.markdown(
-        f"""
-        <div class="hero-wrapper">
-            <div class="hero-content">
-                <div class="hero-greet">{saudacao}, {nome_user}!</div>
-                <div class="hero-text">"A inclusão acontece quando aprendemos com as diferenças e não com as igualdades."</div>
-            </div>
-            <div class="hero-icon"><i class="ri-heart-pulse-fill"></i></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def create_module_card(title, desc, icon, color_cls, bg_cls, page, key, logo_path=None):
+def create_module_card(title, desc, icon, color_cls, bg_cls, page, key):
     """Cria um card de módulo com botão de acesso"""
-    logo_html = ""
-    if logo_path and os.path.exists(logo_path):
-        logo_b64 = get_base64_image(logo_path)
-        if logo_b64:
-            logo_html = f"""
-            <img src="data:image/png;base64,{logo_b64}" style="
-                height: 36px;
-                width: auto;
-                filter: drop-shadow(0 2px 6px rgba(0,0,0,.1));
-            "/>
-            """
-    
     with st.container():
         st.markdown(
             f"""
@@ -878,7 +798,7 @@ def create_module_card(title, desc, icon, color_cls, bg_cls, page, key, logo_pat
                 <div class="mod-card-rect">
                     <div class="mod-bar {color_cls}"></div>
                     <div class="mod-icon-area {bg_cls}">
-                        {logo_html if logo_html else f"<i class='{icon}'></i>"}
+                        <i class="{icon}"></i>
                     </div>
                     <div class="mod-content">
                         <div class="mod-title">{title}</div>
@@ -898,6 +818,142 @@ def create_module_card(title, desc, icon, color_cls, bg_cls, page, key, logo_pat
             st.switch_page(page)
         
         st.markdown("</div>", unsafe_allow_html=True)
+
+
+def render_info_cards():
+    """Renderiza os cards informativos"""
+    info_cards_data = [
+        {
+            "title": "Acolhimento e Cultura Inclusiva",
+            "icon": "ri-heart-line",
+            "color": "info-card-orange",
+            "content": """
+                <p><strong>Foco:</strong> O primeiro passo para a inclusão efetiva.</p>
+                <p><strong>Conceito:</strong> Receber o aluno com deficiência não garante a inclusão automática; é necessário integrar plenamente por meio de práticas pedagógicas significativas.</p>
+                <p><strong>Pilares do Acolhimento:</strong></p>
+                <ul>
+                    <li><strong>Políticas Claras:</strong> Adoção de um Projeto Político-Pedagógico (PPP) que contemple a diversidade.</li>
+                    <li><strong>Acessibilidade:</strong> Adaptação da infraestrutura (rampas, banheiros, tecnologias assistivas).</li>
+                    <li><strong>Mediação:</strong> Gestores devem atuar proativamente contra preconceitos e oferecer apoio emocional aos educadores.</li>
+                </ul>
+                <p><strong>Ação Prática:</strong> Criar um plano de acolhimento personalizado envolvendo a família e realizar atividades de integração.</p>
+            """
+        },
+        {
+            "title": "Gestão Estratégica (PGEI)",
+            "icon": "ri-strategy-line",
+            "color": "info-card-blue",
+            "content": """
+                <p><strong>Foco:</strong> Organização macro da escola para a inclusão.</p>
+                <p><strong>O que é:</strong> O Plano Geral de Educação Inclusiva (PGEI) organiza ações para diferentes perfis (deficiências, transtornos, altas habilidades).</p>
+                <p><strong>Dimensionamento:</strong> É crucial analisar o número total de alunos versus profissionais disponíveis para definir a carga horária e a alocação de recursos.</p>
+                <p><strong>Check-list do Gestor:</strong></p>
+                <ul>
+                    <li>Levantar perfis específicos dos alunos.</li>
+                    <li>Dimensionar a equipe de inclusão.</li>
+                    <li>Planejar ações coletivas e individuais alinhadas ao PPP.</li>
+                </ul>
+            """
+        },
+        {
+            "title": "Equipe Multidisciplinar",
+            "icon": "ri-team-line",
+            "color": "info-card-purple",
+            "content": """
+                <p><strong>Foco:</strong> Papéis e responsabilidades dos profissionais.</p>
+                <ul>
+                    <li><strong>Orientador Educacional:</strong> Atua na convivência, integração social e pontes entre currículo e desempenho.</li>
+                    <li><strong>Psicólogo Escolar:</strong> Acompanha estudos de caso, supervisiona ATs e APs e orienta famílias (não faz terapia clínica na escola).</li>
+                    <li><strong>Atendente Terapêutico (AT):</strong> Profissional externo (custeado pela família/Estado) com foco no atendimento individual e exclusivo (ex: autismo).</li>
+                    <li><strong>Atendente Pedagógico (AP):</strong> Vínculo com a escola; auxilia na locomoção, higiene, organização de materiais e interação em atividades coletivas.</li>
+                </ul>
+            """
+        },
+        {
+            "title": "O Plano Individual (PEI/PDI)",
+            "icon": "ri-file-list-3-line",
+            "color": "info-card-teal",
+            "content": """
+                <p><strong>Foco:</strong> O roteiro de aprendizagem do aluno.</p>
+                <p><strong>Definição:</strong> O Plano Educacional Individualizado (PEI) ou Plano de Desenvolvimento Individual (PDI) é um roteiro flexível e obrigatório para nortear a aprendizagem.</p>
+                <p><strong>Elaboração:</strong> Feito pela equipe multidisciplinar em parceria com a família e profissionais externos, devendo ser atualizado sistematicamente.</p>
+                <p><strong>Conteúdo Essencial:</strong> Identidade, necessidades específicas, dados de autonomia, desenvolvimento escolar e necessidade de tecnologias assistivas.</p>
+                <p><strong>Avaliação:</strong> Baseada no progresso individual em relação ao conhecimento inicial, e não comparativa com a turma.</p>
+            """
+        },
+        {
+            "title": "Adaptações e Transtornos",
+            "icon": "ri-settings-5-line",
+            "color": "info-card-rose",
+            "content": """
+                <p><strong>Foco:</strong> Estratégias para sala de aula.</p>
+                <ul>
+                    <li><strong>Flexibilidade:</strong> Ajuste no tempo para execução de tarefas e avaliações.</li>
+                    <li><strong>Avaliação:</strong> Diversificar instrumentos (orais, adaptados) e considerar toda produção do aluno como avaliativa.</li>
+                    <li><strong>Ambiente:</strong> Organizar a sala para reduzir estímulos ou facilitar o contato com o professor.</li>
+                    <li><strong>Materiais:</strong> Uso de recursos visuais, materiais concretos, fontes ampliadas e tecnologia assistiva.</li>
+                </ul>
+            """
+        },
+        {
+            "title": "Deficiências e Suporte Prático",
+            "icon": "ri-wheelchair-line",
+            "color": "info-card-indigo",
+            "content": """
+                <p><strong>Foco:</strong> Resumo técnico das necessidades.</p>
+                <ul>
+                    <li><strong>Física:</strong> Foco em acessibilidade arquitetônica, mobiliário adaptado e apoio para mobilidade.</li>
+                    <li><strong>Auditiva:</strong> Uso de Libras, leitura labial, legendas e aparelhos auditivos. Varia de leve a profunda.</li>
+                    <li><strong>Visual:</strong> Desde baixa visão até cegueira. Requer Braille, audiodescrição, pisos táteis e leitores de tela.</li>
+                    <li><strong>Intelectual:</strong> Limitações no raciocínio e comportamento adaptativo. Requer linguagem simples, rotina e apoio no desenvolvimento de habilidades de vida.</li>
+                </ul>
+            """
+        }
+    ]
+    
+    # Primeira linha de cards
+    cols = st.columns(3, gap="medium")
+    for idx, card in enumerate(info_cards_data[:3]):
+        with cols[idx]:
+            st.markdown(
+                f"""
+                <div class="info-card {card['color']}">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="{card['icon']}"></i>
+                        </div>
+                        <h3 class="info-card-title">{card['title']}</h3>
+                    </div>
+                    <div class="info-card-content">
+                        {card['content']}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+    
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+    
+    # Segunda linha de cards
+    cols = st.columns(3, gap="medium")
+    for idx, card in enumerate(info_cards_data[3:]):
+        with cols[idx]:
+            st.markdown(
+                f"""
+                <div class="info-card {card['color']}">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="{card['icon']}"></i>
+                        </div>
+                        <h3 class="info-card-title">{card['title']}</h3>
+                    </div>
+                    <div class="info-card-content">
+                        {card['content']}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 def render_resources():
@@ -995,39 +1051,30 @@ def render_metrics():
             )
 
 
-def render_footer():
-    """Renderiza o rodapé da aplicação"""
-    st.markdown(
-        f"""
-        <div style='
-            text-align: center;
-            color: #64748B;
-            font-size: 0.75rem;
-            padding: 20px;
-            border-top: 1px solid #E2E8F0;
-            margin-top: 40px;
-        '>
-            <strong>Omnisfera {APP_VERSION}</strong> • Plataforma de Inclusão Educacional • 
-            Desenvolvido por RODRIGO A. QUEIROZ • 
-            {datetime.now().strftime("%d/%m/%Y %H:%M")}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
 # ==============================================================================
 # 6. RENDERIZAÇÃO PRINCIPAL
 # ==============================================================================
 
-# Renderiza a topbar fixa
+# Renderiza a topbar fixa (OCULTA SIDEBAR NATIVA)
 render_topbar()
 
-# Renderiza a sidebar (inicia recolhida)
-render_sidebar()
+# HERO SECTION
+hora = datetime.now().hour
+saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
+nome_user = st.session_state.get("usuario_nome", "Visitante").split()[0]
 
-# Conteúdo principal
-render_hero()
+st.markdown(
+    f"""
+    <div class="hero-wrapper">
+        <div class="hero-content">
+            <div class="hero-greet">{saudacao}, {nome_user}!</div>
+            <div class="hero-text">"A inclusão acontece quando aprendemos com as diferenças e não com as igualdades."</div>
+        </div>
+        <div class="hero-icon"><i class="ri-heart-pulse-fill"></i></div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # Módulos da Plataforma
 st.markdown("### 🚀 Módulos da Plataforma")
@@ -1041,7 +1088,6 @@ modules_data = [
         "bg_cls": "bg-indigo-soft",
         "page": "pages/Alunos.py",
         "key": "m_aluno",
-        "logo_path": None,
     },
     {
         "title": "Estratégias & PEI",
@@ -1051,17 +1097,15 @@ modules_data = [
         "bg_cls": "bg-blue-soft",
         "page": "pages/1_PEI.py",
         "key": "m_pei",
-        "logo_path": None,
     },
     {
         "title": "Plano de Ação / PAEE",
         "desc": "Plano de Atendimento Educacional Especializado e sala de recursos.",
-        "icon": "ri-puzzle-fill",
+        "icon": "ri-settings-5-fill",  # Ícone alterado
         "color_cls": "c-purple",
         "bg_cls": "bg-purple-soft",
         "page": "pages/2_PAE.py",
         "key": "m_pae",
-        "logo_path": "assets/paee_logo.png" if os.path.exists("assets/paee_logo.png") else None,
     },
     {
         "title": "Hub de Recursos",
@@ -1071,7 +1115,6 @@ modules_data = [
         "bg_cls": "bg-teal-soft",
         "page": "pages/3_Hub_Inclusao.py",
         "key": "m_hub",
-        "logo_path": None,
     },
     {
         "title": "Diário de Bordo",
@@ -1081,7 +1124,6 @@ modules_data = [
         "bg_cls": "bg-rose-soft",
         "page": "pages/4_Diario_de_Bordo.py",
         "key": "m_diario",
-        "logo_path": None,
     },
     {
         "title": "Evolução & Dados",
@@ -1091,7 +1133,6 @@ modules_data = [
         "bg_cls": "bg-sky-soft",
         "page": "pages/5_Monitoramento_Avaliacao.py",
         "key": "m_dados",
-        "logo_path": None,
     },
 ]
 
@@ -1106,8 +1147,7 @@ for i, module in enumerate(modules_data):
             color_cls=module["color_cls"],
             bg_cls=module["bg_cls"],
             page=module["page"],
-            key=module["key"],
-            logo_path=module.get("logo_path")
+            key=module["key"]
         )
 
 st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
@@ -1120,5 +1160,27 @@ render_resources()
 st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
 render_metrics()
 
+# Nova Seção: Guia de Inclusão
+st.markdown("---")
+st.markdown("## 📘 Guia Prático de Inclusão")
+st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+render_info_cards()
+
 # Rodapé
-render_footer()
+st.markdown(
+    f"""
+    <div style='
+        text-align: center;
+        color: #64748B;
+        font-size: 0.75rem;
+        padding: 20px;
+        border-top: 1px solid #E2E8F0;
+        margin-top: 40px;
+    '>
+        <strong>Omnisfera {APP_VERSION}</strong> • Plataforma de Inclusão Educacional • 
+        Desenvolvido por RODRIGO A. QUEIROZ • 
+        {datetime.now().strftime("%d/%m/%Y %H:%M")}
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
