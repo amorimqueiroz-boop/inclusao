@@ -1,8 +1,6 @@
 # pages/Alunos.py
 import streamlit as st
 import requests
-import base64
-import os
 
 # ==============================================================================
 # CONFIG
@@ -14,8 +12,7 @@ st.set_page_config(page_title="Omnisfera • Estudantes", page_icon="👥", layo
 # 🔒 BLOCO VISUAL (HOME v2.0) — NÃO MEXER POR ENQUANTO
 # - Objetivo: trazer identidade visual da Home para a página Estudantes
 # - Sem topbar (vamos usar sidebar para navegar)
-# - Mantém a “pílula” flutuante à direita
-# - Banner “Estudantes” vira card branco (estética Home)
+# - Tudo isolado para mexer fácil no futuro
 # ==============================================================================
 def _ui_home_block():
     st.markdown(
@@ -46,120 +43,54 @@ footer {
     padding-right: 1rem !important;
 }
 
-/* =========================
-   FLOATING PILL (direita)
-   ========================= */
-.float-pill {
-    position: fixed;
-    right: 18px;
-    top: 92px;
-    z-index: 999;
-    background: rgba(255,255,255,0.92);
-    border: 1px solid #E2E8F0;
-    border-radius: 999px;
-    padding: 10px 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.10);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-}
+/* --- PADRÃO "RECURSOS EXTERNOS" (para cabeçalhos internos) --- */
+.res-card-link { text-decoration: none !important; display: block; height: 100%; border-radius: 14px; overflow: hidden; }
 
-.pill-badge {
-    background: #F1F5F9;
-    border: 1px solid #E2E8F0;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    color: #64748B;
-    max-width: 180px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.pill-user {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 800;
-    color: #334155;
-}
-
-.pill-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #4F46E5, #7C3AED);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
-    font-size: 0.82rem;
-}
-
-/* =========================
-   PAGE CARD HEADER (Estudantes)
-   - mesmo "look" dos cards da Home
-   ========================= */
-.page-card {
+.res-card {
     background: white;
-    border-radius: 16px;
+    border-radius: 14px;
+    padding: 20px;
     border: 1px solid #E2E8F0;
-    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
-    overflow: hidden;
-    margin-bottom: 16px;
-}
-
-.page-card-inner {
-    padding: 18px 18px;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    min-height: 96px;
 }
 
-.page-card-logo {
+.res-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    border-color: transparent;
+}
+
+.res-icon {
     width: 56px;
     height: 56px;
     border-radius: 14px;
-    border: 1px solid #E2E8F0;
-    background: #F8FAFC;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    font-size: 1.6rem;
     flex-shrink: 0;
+    transition: all 0.3s ease;
 }
 
-.page-card-logo img {
-    width: 44px;
-    height: 44px;
-    object-fit: contain;
-}
+.res-card:hover .res-icon { transform: scale(1.06) rotate(4deg); }
 
-.page-card-title {
-    font-weight: 900;
-    font-size: 1.1rem;
-    color: #0f172a;
-    margin-bottom: 2px;
-    letter-spacing: -0.2px;
-}
+.res-info { display: flex; flex-direction: column; flex-grow: 1; }
+.res-name { font-weight: 800; color: #1E293B; font-size: 1.15rem; margin-bottom: 2px; transition: color 0.2s; }
+.res-card:hover .res-name { color: #4F46E5; }
+.res-meta { font-size: 0.86rem; font-weight: 650; color: #64748B; opacity: 0.95; line-height: 1.4; }
 
-.page-card-sub {
-    font-size: 0.86rem;
-    font-weight: 650;
-    color: #64748B;
-    line-height: 1.35;
+/* Tema usado na página Estudantes (pode trocar depois) */
+.rc-sky {
+    background: #F0F9FF !important;
+    color: #0284C7 !important;
+    border-color: #BAE6FD !important;
 }
-
-/* barra de cor (igual sensação de “módulo”) */
-.page-card-bar {
-    height: 5px;
-    background: linear-gradient(90deg, #0284C7, #3B82F6);
-}
+.rc-sky .res-icon { background: #F0F9FF !important; border: 1px solid #BAE6FD !important; }
 
 /* Botões um pouco mais elegantes (sem alterar lógica) */
 .stButton > button {
@@ -177,11 +108,6 @@ footer {
     transform: translateY(-1px) !important;
     box-shadow: 0 10px 18px rgba(0,0,0,0.08) !important;
 }
-
-/* Responsivo: pílula some no mobile (opcional) */
-@media (max-width: 640px) {
-    .float-pill { display:none !important; }
-}
 </style>
         """,
         unsafe_allow_html=True,
@@ -192,83 +118,7 @@ _ui_home_block()
 
 
 # ==============================================================================
-# AUX VISUAIS (isolados para mexer fácil depois)
-# ==============================================================================
-def _img_b64(path: str) -> str:
-    if not os.path.exists(path):
-        return ""
-    try:
-        with open(path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    except Exception:
-        return ""
-
-
-def _first_name(full: str) -> str:
-    full = (full or "").strip()
-    return (full.split()[0] if full else "Visitante")
-
-
-def _initials(full: str) -> str:
-    full = (full or "").strip()
-    if not full:
-        return "U"
-    parts = full.split()
-    if len(parts) >= 2:
-        return f"{parts[0][0]}{parts[-1][0]}".upper()
-    return full[:2].upper()
-
-
-def render_floating_pill(workspace_name: str):
-    nome_full = st.session_state.get("usuario_nome", "Visitante")
-    nome = _first_name(nome_full)
-    ini = _initials(nome_full)
-
-    st.markdown(
-        f"""
-        <div class="float-pill">
-            <div class="pill-badge">{workspace_name}</div>
-            <div class="pill-user">
-                <div class="pill-avatar">{ini}</div>
-                <div style="font-size:0.82rem; font-weight:900;">{nome}</div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def render_estudantes_page_card(workspace_name: str):
-    # logo dentro do card branco (mesma “vibe” dos cards da Home)
-    logo_b64 = _img_b64("omni_icone.png")
-    logo_html = (
-        f'<img src="data:image/png;base64,{logo_b64}" alt="Omnisfera">'
-        if logo_b64
-        else "<i class='ri-group-fill' style='font-size:1.6rem; color:#0284C7;'></i>"
-    )
-
-    st.markdown(
-        f"""
-        <div class="page-card">
-            <div class="page-card-bar"></div>
-            <div class="page-card-inner">
-                <div class="page-card-logo">{logo_html}</div>
-                <div style="flex:1;">
-                    <div class="page-card-title">Estudantes</div>
-                    <div class="page-card-sub">
-                        Gestão do workspace (PIN) — <strong>{workspace_name}</strong>.
-                        Aqui você visualiza os estudantes criados no PEI e pode remover quando necessário.
-                    </div>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-# ==============================================================================
-# 🔒 GATE (SEM LOGIN AQUI) — só redireciona para o começo do app
+# 🔒 GATE (SEM LOGIN AQUI) — NÃO MEXER POR ENQUANTO
 # ==============================================================================
 def acesso_bloqueado(msg: str):
     st.markdown(
@@ -390,13 +240,25 @@ def delete_student_rest(student_id: str, workspace_id: str):
 
 
 # ==============================================================================
-# UI
+# UI — Cabeçalho novo (padrão Recursos Externos) + resto igual
 # ==============================================================================
-# ✅ Mantém a pílula flutuante (direita)
-render_floating_pill(WORKSPACE_NAME)
-
-# ✅ Banner vira card branco no padrão da Home
-render_estudantes_page_card(WORKSPACE_NAME)
+st.markdown(
+    f"""
+    <div class="res-card rc-sky" style="margin-bottom: 14px;">
+        <div class="res-icon rc-sky" style="font-size: 1.9rem;">
+            <i class="ri-group-fill"></i>
+        </div>
+        <div class="res-info">
+            <div class="res-name">Estudantes</div>
+            <div class="res-meta">
+                Gestão do workspace (PIN) — <strong>{WORKSPACE_NAME}</strong>.
+                Aqui você apenas visualiza os estudantes criados no PEI deste workspace e pode apagar quando necessário.
+            </div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 top_l, top_r = st.columns([3, 1])
 with top_l:
