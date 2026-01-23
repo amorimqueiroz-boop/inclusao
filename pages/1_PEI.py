@@ -1282,22 +1282,293 @@ def render_sidebar():
         st.markdown(sidebar_js, unsafe_allow_html=True)
         
 # ==============================================================================
-# 10. HEADER + ABAS
+# 10. HEADER + ABAS - NOVO DESIGN (PADRÃO ESTUDANTES)
 # ==============================================================================
-logo_path = finding_logo()
-b64_logo = get_base64_image(logo_path)
-mime = "image/png"
-img_html = f'<img src="data:{mime};base64,{b64_logo}" style="height: 110px;">' if logo_path else ""
+
+# ==============================================================================
+# BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA (MESMO PADRÃO)
+# ==============================================================================
+# 1. Detecção Automática de Ambiente
+try:
+    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
+except:
+    IS_TEST_ENV = False
+
+# 2. Função para carregar a logo em Base64
+def get_logo_base64():
+    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
+    for c in caminhos:
+        if os.path.exists(c):
+            with open(c, "rb") as f:
+                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
+
+src_logo_giratoria = get_logo_base64()
+
+# 3. Definição Dinâmica de Cores
+if IS_TEST_ENV:
+    card_bg = "rgba(255, 220, 50, 0.95)" 
+    card_border = "rgba(200, 160, 0, 0.5)"
+else:
+    card_bg = "rgba(255, 255, 255, 0.85)"
+    card_border = "rgba(255, 255, 255, 0.6)"
+
+# 4. Renderização do Header Flutuante
+st.markdown(f"""
+<style>
+    /* CARD FLUTUANTE (OMNISFERA) - MESMO PADRÃO */
+    .omni-badge {{
+        position: fixed;
+        top: 15px; 
+        right: 15px;
+        background: {card_bg};
+        border: 1px solid {card_border};
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        padding: 4px 30px;
+        min-width: 260px;
+        justify-content: center;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        z-index: 999990;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        pointer-events: none;
+    }}
+
+    .omni-text {{
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 800;
+        font-size: 0.9rem;
+        color: #2D3748;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }}
+
+    @keyframes spin-slow {{
+        from {{ transform: rotate(0deg); }}
+        to {{ transform: rotate(360deg); }}
+    }}
+    
+    .omni-logo-spin {{
+        height: 26px;
+        width: 26px;
+        animation: spin-slow 10s linear infinite;
+    }}
+
+    /* CARD HERO PARA PEI */
+    .mod-card-wrapper {{
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    }}
+
+    .mod-card-rect {{
+        background: white;
+        border-radius: 16px 16px 0 0;
+        padding: 0;
+        border: 1px solid #E2E8F0;
+        border-bottom: none;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        height: 130px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }}
+
+    .mod-card-rect:hover {{
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+        border-color: #CBD5E1;
+    }}
+
+    .mod-bar {{
+        width: 6px;
+        height: 100%;
+        flex-shrink: 0;
+    }}
+
+    .mod-icon-area {{
+        width: 90px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        flex-shrink: 0;
+        background: #FAFAFA;
+        border-right: 1px solid #F1F5F9;
+        transition: all 0.3s ease;
+    }}
+
+    .mod-card-rect:hover .mod-icon-area {{
+        background: white;
+        transform: scale(1.05);
+    }}
+
+    .mod-content {{
+        flex-grow: 1;
+        padding: 0 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }}
+
+    .mod-title {{
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: #1E293B;
+        margin-bottom: 6px;
+        letter-spacing: -0.3px;
+        transition: color 0.2s;
+    }}
+
+    .mod-card-rect:hover .mod-title {{
+        color: #4F46E5;
+    }}
+
+    .mod-desc {{
+        font-size: 0.8rem;
+        color: #64748B;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }}
+
+    /* CORES DOS CARDS - MESMA DA HOME (AZUL PARA PEI) */
+    .c-blue {{ background: #3B82F6 !important; }}
+    .bg-blue-soft {{ 
+        background: #EFF6FF !important;
+        color: #2563EB !important;
+    }}
+
+    /* STYLING PARA AS ABAS DO STREAMLIT */
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 2px;
+        background-color: #F8FAFC;
+        padding: 4px;
+        border-radius: 12px;
+        margin-top: 20px;
+    }}
+
+    .stTabs [data-baseweb="tab"] {{
+        height: 40px;
+        white-space: pre-wrap;
+        background-color: #F1F5F9;
+        border-radius: 10px;
+        gap: 1px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        color: #64748B;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        transition: all 0.2s ease;
+    }}
+
+    .stTabs [aria-selected="true"] {{
+        background-color: white !important;
+        color: #2563EB !important;
+        font-weight: 800 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }}
+
+    .stTabs [data-baseweb="tab"]:hover {{
+        background-color: #E2E8F0;
+        color: #475569;
+        transform: translateY(-1px);
+    }}
+
+    /* RESPONSIVIDADE */
+    @media (max-width: 1024px) {{
+        .mod-card-rect {{ height: 120px; }}
+        .mod-icon-area {{ width: 80px; }}
+        .stTabs [data-baseweb="tab"] {{
+            font-size: 0.7rem;
+            padding: 8px 12px;
+        }}
+    }}
+
+    @media (max-width: 768px) {{
+        .mod-card-rect {{ 
+            height: 110px;
+            flex-direction: column;
+            height: auto;
+            padding: 16px;
+        }}
+        .mod-bar {{ width: 100%; height: 6px; }}
+        .mod-icon-area {{ 
+            width: 100%; 
+            height: 60px; 
+            border-right: none;
+            border-bottom: 1px solid #F1F5F9;
+        }}
+        .mod-content {{ padding: 16px 0 0 0; }}
+        .stTabs [data-baseweb="tab-list"] {{
+            flex-wrap: wrap;
+        }}
+        .stTabs [data-baseweb="tab"] {{
+            flex: 1 0 calc(50% - 4px);
+            margin-bottom: 4px;
+        }}
+    }}
+</style>
+
+<!-- BADGE FLUTUANTE OMNISFERA -->
+<div class="omni-badge">
+    <img src="{src_logo_giratoria}" class="omni-logo-spin">
+    <span class="omni-text">OMNISFERA</span>
+</div>
+""", unsafe_allow_html=True)
+
+# ==============================================================================
+# CARD HERO PARA PEI (MESMO DESIGN DOS ESTUDANTES)
+# ==============================================================================
+hora = datetime.now().hour
+saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
+USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
+WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
 
 st.markdown(
-    f"""<div class="header-unified">{img_html}<div class="header-subtitle">Planejamento Educacional Inclusivo Inteligente</div></div>""",
-    unsafe_allow_html=True
+    f"""
+    <div class="mod-card-wrapper">
+        <div class="mod-card-rect">
+            <div class="mod-bar c-blue"></div>
+            <div class="mod-icon-area bg-blue-soft">
+                <i class="ri-book-open-fill"></i>
+            </div>
+            <div class="mod-content">
+                <div class="mod-title">Plano Educacional Individualizado (PEI)</div>
+                <div class="mod-desc">
+                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie e gerencie Planos Educacionais Individualizados 
+                    para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>. Desenvolva estratégias personalizadas 
+                    e acompanhe o progresso de cada aluno.
+                </div>
+            </div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
+# ==============================================================================
+# ABAS DO PEI (COM ESTILO ATUALIZADO)
+# ==============================================================================
 abas = [
     "INÍCIO", "ESTUDANTE", "EVIDÊNCIAS", "REDE DE APOIO", "MAPEAMENTO",
     "PLANO DE AÇÃO", "MONITORAMENTO", "CONSULTORIA IA", "DASHBOARD & DOCS", "JORNADA GAMIFICADA"
 ]
+
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
 
 
