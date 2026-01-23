@@ -1562,14 +1562,293 @@ st.markdown(
 )
 
 # ==============================================================================
-# ABAS DO PEI (COM ESTILO ATUALIZADO)
+# ABAS DO PEI (DESIGN MODERNO COM ÍCONES - MÍNIMAS ALTERAÇÕES)
 # ==============================================================================
+
+# CSS para estilizar as abas do Streamlit
+st.markdown("""
+<style>
+/* ===== ESTILIZAÇÃO DAS ABAS DO STREAMLIT ===== */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 4px;
+    background-color: transparent;
+    padding: 4px;
+    border-radius: 12px;
+    margin: 20px 0 10px 0;
+}
+
+.stTabs [data-baseweb="tab"] {
+    height: 44px;
+    white-space: nowrap;
+    background-color: #F1F5F9;
+    border-radius: 10px;
+    gap: 8px;
+    padding: 0 20px;
+    color: #64748B;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #E2E8F0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    background-color: #E2E8F0;
+    color: #475569;
+    transform: translateY(-1px);
+    opacity: 0.9;
+    border-color: #CBD5E1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stTabs [aria-selected="true"] {
+    background-color: white !important;
+    color: #2563EB !important;
+    font-weight: 800 !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    border-color: #60A5FA !important;
+    opacity: 1 !important;
+    transform: translateY(-2px);
+}
+
+.stTabs [aria-selected="true"]:hover {
+    background-color: white !important;
+    color: #2563EB !important;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
+    transform: translateY(-3px);
+}
+
+/* ===== CONTAINER DE CONTEÚDO DAS ABAS ===== */
+.stTabs [data-baseweb="tab-panel"] {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #E2E8F0;
+    padding: 24px;
+    margin-top: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    min-height: 500px;
+}
+
+/* ===== ADICIONAR ÍCONES ÀS ABAS ===== */
+/* Vamos usar pseudo-elementos para os ícones */
+.tab-inicio::before {
+    content: "🏠";
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.tab-estudante::before {
+    content: "👤";
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.tab-evidencias::before {
+    content: "📊";
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.tab-rede::before {
+    content: "👥";
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.tab-mapeamento::before {
+    content: "🗺️";
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.tab-plano::before {
+    content: "✅";
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.tab-monitoramento::before {
+    content: "📈";
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.tab-ia::before {
+    content: "🤖";
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.tab-dashboard::before {
+    content: "📋";
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.tab-jornada::before {
+    content: "🎮";
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 1024px) {
+    .stTabs [data-baseweb="tab"] {
+        font-size: 0.7rem;
+        padding: 0 12px;
+    }
+    
+    .tab-inicio::before,
+    .tab-estudante::before,
+    .tab-evidencias::before,
+    .tab-rede::before,
+    .tab-mapeamento::before,
+    .tab-plano::before,
+    .tab-monitoramento::before,
+    .tab-ia::before,
+    .tab-dashboard::before,
+    .tab-jornada::before {
+        font-size: 0.9rem;
+        margin-right: 6px;
+    }
+}
+
+@media (max-width: 768px) {
+    .stTabs [data-baseweb="tab-list"] {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        flex: 1 0 calc(33.333% - 8px);
+        margin-bottom: 4px;
+        font-size: 0.65rem;
+        padding: 0 8px;
+    }
+}
+
+@media (max-width: 640px) {
+    .stTabs [data-baseweb="tab"] {
+        flex: 1 0 calc(50% - 6px);
+        font-size: 0.6rem;
+    }
+    
+    .tab-inicio::before,
+    .tab-estudante::before,
+    .tab-evidencias::before,
+    .tab-rede::before,
+    .tab-mapeamento::before,
+    .tab-plano::before,
+    .tab-monitoramento::before,
+    .tab-ia::before,
+    .tab-dashboard::before,
+    .tab-jornada::before {
+        display: none; /* Esconde ícones em telas muito pequenas */
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ==============================================================================
+# CRIAR AS ABAS COM ESTILO PERSONALIZADO
+# ==============================================================================
+# Precisamos adicionar classes personalizadas às abas
+# Usaremos JavaScript para injetar as classes
+
+st.markdown("""
+<script>
+// Função para adicionar classes personalizadas às abas
+function styleTabs() {
+    // Aguardar as abas serem renderizadas
+    setTimeout(function() {
+        const tabs = document.querySelectorAll('[data-baseweb="tab"]');
+        const tabNames = [
+            'tab-inicio', 'tab-estudante', 'tab-evidencias', 'tab-rede',
+            'tab-mapeamento', 'tab-plano', 'tab-monitoramento',
+            'tab-ia', 'tab-dashboard', 'tab-jornada'
+        ];
+        
+        tabs.forEach((tab, index) => {
+            if (index < tabNames.length) {
+                tab.classList.add(tabNames[index]);
+            }
+        });
+    }, 100);
+}
+
+// Executar quando a página carregar
+document.addEventListener('DOMContentLoaded', styleTabs);
+
+// Executar também quando o Streamlit terminar de renderizar
+if (window.parent && window.parent.document) {
+    const observer = new MutationObserver(function(mutations) {
+        styleTabs();
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+</script>
+""", unsafe_allow_html=True)
+
+# ==============================================================================
+# CRIAÇÃO DAS ABAS (MANTENDO O FORMATO ORIGINAL DO STREAMLIT)
+# ==============================================================================
+# Nomes das abas com espaços (serão estilizadas via CSS/JS)
 abas = [
     "INÍCIO", "ESTUDANTE", "EVIDÊNCIAS", "REDE DE APOIO", "MAPEAMENTO",
     "PLANO DE AÇÃO", "MONITORAMENTO", "CONSULTORIA IA", "DASHBOARD & DOCS", "JORNADA GAMIFICADA"
 ]
 
+# Criar as abas normalmente
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
+
+# ==============================================================================
+# CONTEÚDO DAS ABAS (EXEMPLO MÍNIMO PARA TESTE)
+# ==============================================================================
+with tab0:
+    st.markdown("### 🏠 Visão Geral do PEI")
+    st.write("Bem-vindo ao módulo de Planejamento Educacional Individualizado.")
+    
+with tab1:
+    st.markdown("### 👤 Dados do Estudante")
+    st.write("Informações do estudante selecionado.")
+    
+with tab2:
+    st.markdown("### 📊 Evidências e Observações")
+    st.write("Registro de evidências e observações.")
+    
+with tab3:
+    st.markdown("### 👥 Rede de Apoio")
+    st.write("Profissionais e equipe de apoio.")
+    
+with tab4:
+    st.markdown("### 🗺️ Mapeamento de Habilidades")
+    st.write("Mapeamento de competências e habilidades.")
+    
+with tab5:
+    st.markdown("### ✅ Plano de Ação")
+    st.write("Estratégias e ações planejadas.")
+    
+with tab6:
+    st.markdown("### 📈 Monitoramento do Progresso")
+    st.write("Acompanhamento e avaliação.")
+    
+with tab7:
+    st.markdown("### 🤖 Consultoria IA")
+    st.info("Esta funcionalidade está em desenvolvimento.")
+    
+with tab8:
+    st.markdown("### 📋 Dashboard & Documentação")
+    st.write("Relatórios e documentação.")
+    
+with tab_mapa:
+    st.markdown("### 🎮 Jornada Gamificada")
+    st.info("Esta funcionalidade está em desenvolvimento.")
 
 
 # ==============================================================================
