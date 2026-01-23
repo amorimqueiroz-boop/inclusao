@@ -1,740 +1,422 @@
-# pages/0_Home.py
-import streamlit as st
-from datetime import date, datetime
-import base64
-import os
+import React, { useState, useMemo } from 'react';
+import { 
+  Users, BookOpen, Puzzle, Rocket, 
+  NotebookPen, BarChart3, Landmark, 
+  Compass, BrainCircuit, HelpCircle,
+  TrendingUp, Minus, HeartPulse,
+  Globe, Menu, User, LogOut,
+  FolderOpen, Landmark as LandmarkIcon,
+  BrainCircuit as BrainIcon,
+  TrendingUp as TrendingIcon
+} from 'lucide-react';
 
-# ==============================================================================
-# 1. CONFIGURAÇÃO INICIAL
-# ==============================================================================
-APP_VERSION = "v161.0 (Sidebar Travada + Ordem dos Cards + Logo PAEE + Cores Diário/Dados)"
+import { Header } from './components/Header';
+import { Sidebar } from './components/Sidebar';
+import { Hero } from './components/Hero';
+import { ModuleCard } from './components/ModuleCard';
+import { ResourceCard } from './components/ResourceCard';
+import { ModuleData, ResourceData, MetricData } from './types';
 
-try:
-    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
-except Exception:
-    IS_TEST_ENV = False
+// Mock Data Configuration
+const WORKSPACE_NAME = "Escola Modelo";
+const USER_NAME = "Rodrigo";
 
-st.set_page_config(
-    page_title="Omnisfera",
-    page_icon="omni_icone.png" if os.path.exists("omni_icone.png") else "🌐",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
+const MODULES: ModuleData[] = [
+  {
+    id: 'm_aluno',
+    title: 'Estudantes',
+    desc: 'Gestão completa de alunos, histórico e acompanhamento individualizado.',
+    icon: Users,
+    colorClass: 'text-indigo-600',
+    bgClass: 'bg-indigo-50',
+    borderClass: 'border-indigo-200',
+    page: 'alunos'
+  },
+  {
+    id: 'm_pei',
+    title: 'Estratégias & PEI',
+    desc: 'Plano Educacional Individual com objetivos, avaliações e acompanhamento.',
+    icon: BookOpen,
+    colorClass: 'text-blue-600',
+    bgClass: 'bg-blue-50',
+    borderClass: 'border-blue-200',
+    page: 'pei'
+  },
+  {
+    id: 'm_pae',
+    title: 'Plano de Ação / PAEE',
+    desc: 'Plano de Atendimento Educacional Especializado e sala de recursos.',
+    icon: Puzzle,
+    colorClass: 'text-purple-600',
+    bgClass: 'bg-purple-50',
+    borderClass: 'border-purple-200',
+    page: 'paee'
+  },
+  {
+    id: 'm_hub',
+    title: 'Hub de Recursos',
+    desc: 'Biblioteca de materiais, modelos e inteligência artificial para apoio.',
+    icon: Rocket,
+    colorClass: 'text-teal-600',
+    bgClass: 'bg-teal-50',
+    borderClass: 'border-teal-200',
+    page: 'hub'
+  },
+  {
+    id: 'm_diario',
+    title: 'Diário de Bordo',
+    desc: 'Registro diário de observações, evidências e intervenções.',
+    icon: NotebookPen,
+    colorClass: 'text-rose-600',
+    bgClass: 'bg-rose-50',
+    borderClass: 'border-rose-200',
+    page: 'diario'
+  },
+  {
+    id: 'm_dados',
+    title: 'Evolução & Dados',
+    desc: 'Indicadores, gráficos e relatórios de progresso dos alunos.',
+    icon: BarChart3,
+    colorClass: 'text-sky-600',
+    bgClass: 'bg-sky-50',
+    borderClass: 'border-sky-200',
+    page: 'dados'
+  },
+];
 
-# ==============================================================================
-# 2. CSS & DESIGN SYSTEM
-# ==============================================================================
-st.markdown(
-    """
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-@import url("https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css");
+const RESOURCES: ResourceData[] = [
+  { 
+    title: "Lei da Inclusão", 
+    desc: "LBI e diretrizes", 
+    icon: LandmarkIcon, 
+    theme: "sky", 
+    link: "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" 
+  },
+  { 
+    title: "Base Nacional", 
+    desc: "Competências BNCC", 
+    icon: Compass, 
+    theme: "green", 
+    link: "http://basenacionalcomum.mec.gov.br/" 
+  },
+  { 
+    title: "Neurociência", 
+    desc: "Artigos e estudos", 
+    icon: BrainIcon, 
+    theme: "rose", 
+    link: "https://institutoneurosaber.com.br/" 
+  },
+  { 
+    title: "Ajuda Omnisfera", 
+    desc: "Tutoriais e suporte", 
+    icon: HelpCircle, 
+    theme: "orange", 
+    link: "#" 
+  },
+];
 
-html, body, [class*="css"] {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    color: #1E293B;
-    background-color: #F8FAFC;
-}
+const METRICS: MetricData[] = [
+  { label: "Alunos Ativos", value: "12", change: "+2", trend: "up" },
+  { label: "PEIs Ativos", value: "8", change: "+1", trend: "up" },
+  { label: "Evidências Hoje", value: "3", change: "0", trend: "neutral" },
+  { label: "Meta Mensal", value: "75%", change: "+5%", trend: "up" },
+];
 
-/* Limpeza Geral */
-[data-testid="stSidebarNav"], [data-testid="stHeader"] { 
-    display: none !important; 
-}
-
-/* --- TRAVA SIDEBAR: começa recolhida e sem botão de reabrir --- */
-[data-testid="collapsedControl"]{
-    display: none !important;
-}
-
-.block-container { 
-    padding-top: 100px !important; 
-    padding-bottom: 4rem !important; 
-    max-width: 95% !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-}
-
-/* --- HEADER --- */
-.topbar {
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    right: 0; 
-    height: 80px;
-    background: rgba(255,255,255,0.95); 
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid #E2E8F0; 
-    z-index: 9999;
-    display: flex; 
-    align-items: center; 
-    justify-content: space-between;
-    padding: 0 40px;
-}
-
-.brand-box { 
-    display: flex; 
-    align-items: center; 
-    gap: 12px; 
-}
-
-.brand-logo { 
-    height: 45px; 
-    width: auto; 
-    animation: spin 45s linear infinite; 
-}
-
-.brand-img-text { 
-    height: 30px; 
-    width: auto; 
-    margin-left: 10px; 
-} 
-
-.user-badge { 
-    background: #F1F5F9; 
-    border: 1px solid #E2E8F0; 
-    padding: 6px 14px; 
-    border-radius: 99px; 
-    font-size: 0.8rem; 
-    font-weight: 700; 
-    color: #64748B;
-}
-
-/* --- SIDEBAR PERSONALIZADA --- */
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
-    border-right: 1px solid #E2E8F0;
-}
-
-.sidebar-logo-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px 0;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #E2E8F0;
-}
-
-.sidebar-nav-section {
-    padding: 0 15px;
-}
-
-.sidebar-nav-title {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #64748B;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.sidebar-nav-button {
-    width: 100%;
-    margin-bottom: 8px;
-    border-radius: 10px;
-    border: 1px solid #E2E8F0;
-    background: white;
-    color: #475569;
-    font-weight: 600;
-    font-size: 0.9rem;
-    padding: 12px 16px;
-    text-align: left;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.sidebar-nav-button:hover {
-    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-    color: white;
-    border-color: #4F46E5;
-    transform: translateX(5px);
-}
-
-.sidebar-nav-button i {
-    font-size: 1.1rem;
-}
-
-/* --- HERO SECTION --- */
-.hero-wrapper {
-    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
-    border-radius: 20px; 
-    padding: 40px; 
-    color: white;
-    margin-bottom: 40px; 
-    position: relative; 
-    overflow: hidden;
-    box-shadow: 0 15px 30px -10px rgba(30, 58, 138, 0.3);
-    display: flex; 
-    align-items: center; 
-    justify-content: space-between;
-}
-
-.hero-wrapper::after {
-    content: ""; 
-    position: absolute; 
-    right: -50px; 
-    top: -50px;
-    width: 300px; 
-    height: 300px; 
-    background: rgba(255,255,255,0.1);
-    border-radius: 50%; 
-    pointer-events: none;
-}
-
-.hero-content { z-index: 1; }
-
-.hero-greet { 
-    font-size: 2rem; 
-    font-weight: 800; 
-    margin-bottom: 8px; 
-    letter-spacing: -1px; 
-}
-
-.hero-text { 
-    font-size: 1.05rem; 
-    opacity: 0.95; 
-    max-width: 800px; 
-}
-
-/* --- CONTAINER DO CARD + BOTÃO --- */
-.mod-card-wrapper {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 20px;
-}
-
-/* --- CARDS DE MÓDULO --- */
-.mod-card-rect {
-    background: white;
-    border-radius: 16px 16px 0 0;
-    padding: 0;
-    border: 1px solid #E2E8F0;
-    border-bottom: none;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.01);
-    display: flex; 
-    flex-direction: row;
-    align-items: center;
-    height: 120px;
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.25s ease;
-}
-
-.mod-card-rect:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-    border-color: #CBD5E1;
-}
-
-.mod-bar { width: 6px; height: 100%; flex-shrink: 0; }
-
-.mod-icon-area {
-    width: 80px; 
-    height: 100%;
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    font-size: 1.8rem; 
-    flex-shrink: 0;
-    background: #FAFAFA;
-    border-right: 1px solid #F1F5F9;
-}
-
-.mod-content {
-    flex-grow: 1; 
-    padding: 0 20px;
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center;
-}
-
-.mod-title { 
-    font-weight: 800; 
-    font-size: 1rem; 
-    color: #1E293B; 
-    margin-bottom: 4px; 
-}
-
-.mod-desc { 
-    font-size: 0.75rem; 
-    color: #64748B; 
-    line-height: 1.3; 
-}
-
-/* --- BOTÕES (Streamlit) - só hover leve (sem pintar tudo) --- */
-.stButton > button:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
-}
-
-/* --- RECURSOS --- */
-.res-card-link { text-decoration: none !important; display: block; height: 100%; }
-
-.res-card {
-    background: white; 
-    border-radius: 14px; 
-    padding: 18px;
-    border: 1px solid #E2E8F0; 
-    display: flex; 
-    align-items: center; 
-    gap: 14px;
-    transition: all 0.2s; 
-    height: 100%;
-}
-
-.res-card:hover { 
-    transform: translateY(-3px); 
-    box-shadow: 0 8px 16px rgba(0,0,0,0.05); 
-}
-
-.res-icon { 
-    width: 42px; 
-    height: 42px; 
-    border-radius: 10px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    font-size: 1.3rem;
-}
-
-.res-info { display: flex; flex-direction: column; }
-.res-name { font-weight: 700; color: #1E293B; font-size: 0.9rem; }
-.res-meta { font-size: 0.75rem; font-weight: 600; opacity: 0.8; }
-
-/* CORES TEMÁTICAS DOS CARDS */
-.c-blue { background: #3B82F6; color: #3B82F6; }
-.bg-blue-soft { background: #EFF6FF; color: #2563EB; }
-.c-purple { background: #8B5CF6; color: #8B5CF6; }
-.bg-purple-soft { background: #F5F3FF; color: #7C3AED; }
-.c-teal { background: #14B8A6; color: #14B8A6; }
-.bg-teal-soft { background: #F0FDFA; color: #0D9488; }
-.c-indigo { background: #6366F1; color: #6366F1; }
-.bg-indigo-soft { background: #EEF2FF; color: #4F46E5; }
-.c-slate { background: #64748B; color: #64748B; }
-.bg-slate-soft { background: #F8FAFC; color: #475569; }
-
-/* NOVAS PALETAS (Diário e Dados) */
-.c-rose { background: #E11D48; color: #E11D48; }
-.bg-rose-soft { background: #FFF1F2; color: #BE123C; }
-
-.c-sky { background: #0284C7; color: #0284C7; }
-.bg-sky-soft { background: #F0F9FF; color: #0369A1; }
-
-/* Cores Recursos */
-.rc-green { background: #F0FDF4; color: #16A34A; border-color: #DCFCE7; }
-.rc-orange { background: #FFF7ED; color: #EA580C; border-color: #FFEDD5; }
-.rc-rose { background: #FFF1F2; color: #E11D48; border-color: #FECDD3; }
-.rc-sky { background: #F0F9FF; color: #0284C7; border-color: #E0F2FE; }
-
-@keyframes spin { 100% { transform: rotate(360deg); } }
-
-/* --- RESPONSIVIDADE --- */
-@media (max-width: 768px) {
-    .topbar { padding: 0 20px; }
-    .hero-wrapper { padding: 30px 20px; }
-    .mod-card-rect { height: 100px; }
-    .mod-icon-area { width: 60px; }
-    .mod-title { font-size: 0.9rem; }
-    .mod-desc { font-size: 0.7rem; }
-}
-</style>
-""",
-    unsafe_allow_html=True,
-)
-
-# ==============================================================================
-# 3. HELPERS
-# ==============================================================================
-def acesso_bloqueado(msg: str):
-    st.markdown(
-        f"<div style='text-align:center; padding:50px; color:#64748B;'><h3>🔐 Acesso Restrito</h3><p>{msg}</p></div>",
-        unsafe_allow_html=True,
-    )
-    if st.button("Ir para Login"):
-        st.session_state.autenticado = False
-        st.session_state.workspace_id = None
-        st.rerun()
-    st.stop()
-
-
-def get_base64_image(image_path: str) -> str:
-    if not os.path.exists(image_path):
-        return ""
-    with open(image_path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-
-def escola_vinculada():
-    return st.session_state.get("workspace_name") or st.session_state.get("workspace_id", "")[:8]
-
-
-# ==============================================================================
-# 4. SEGURANÇA / ESTADO
-# ==============================================================================
-if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
-    acesso_bloqueado("Sessão inválida.")
-
-if "dados" not in st.session_state:
-    st.session_state.dados = {"nome": "", "nasc": date(2015, 1, 1), "serie": None}
-
-
-# ==============================================================================
-# 5. FUNÇÃO DE CARD (com logo opcional)
-# ==============================================================================
-def create_module_with_button(
-    title,
-    desc,
-    icon,
-    color_cls,
-    bg_cls,
-    page_path,
-    key,
-    logo_path=None,
-):
-    """Cria um card com botão abaixo. Se logo_path existir, usa imagem no lugar do ícone."""
-    logo_html = ""
-    if logo_path and os.path.exists(logo_path):
-        logo_b64 = get_base64_image(logo_path)
-        if logo_b64:
-            logo_html = f"""
-            <img src="data:image/png;base64,{logo_b64}" style="
-                height:34px; width:auto;
-                filter: drop-shadow(0 2px 6px rgba(0,0,0,.08));
-            "/>
-            """
-
-    with st.container():
-        st.markdown(
-            f"""
-        <div class="mod-card-wrapper">
-            <div class="mod-card-rect">
-                <div class="mod-bar {color_cls}"></div>
-                <div class="mod-icon-area {bg_cls}">
-                    {logo_html if logo_html else f"<i class='{icon}'></i>"}
-                </div>
-                <div class="mod-content">
-                    <div class="mod-title">{title}</div>
-                    <div class="mod-desc">{desc}</div>
-                </div>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-
-        if st.button(
-            f"📂 ACESSAR {title.split()[0].upper()}",
-            key=f"btn_{key}",
-            use_container_width=True,
-            help=f"Clique para acessar {title}",
-        ):
-            st.switch_page(page_path)
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-
-# ==============================================================================
-# 6. RENDERIZAÇÃO PRINCIPAL
-# ==============================================================================
-
-# TOPBAR
-icone_b64 = get_base64_image("omni_icone.png")
-texto_b64 = get_base64_image("omni_texto.png")
-workspace = escola_vinculada()
-nome_user = st.session_state.get("usuario_nome", "Visitante").split()[0]
-
-img_logo = (
-    f'<img src="data:image/png;base64,{icone_b64}" class="brand-logo">'
-    if icone_b64
-    else "🌐"
-)
-img_text = (
-    f'<img src="data:image/png;base64,{texto_b64}" class="brand-img-text">'
-    if texto_b64
-    else "<span style='font-weight:800; font-size:1.2rem; color:#2B3674;'>OMNISFERA</span>"
-)
-
-st.markdown(
-    f"""
-<div class="topbar">
-    <div class="brand-box">
-        {img_logo} 
-        {img_text}
+// Login Component
+const LoginScreen = ({ onLogin }: { onLogin: () => void }) => (
+  <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+    <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-slate-100">
+      <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6 text-indigo-600">
+        <Puzzle className="w-8 h-8" />
+      </div>
+      <h2 className="text-2xl font-bold text-slate-800 mb-2">Omnisfera</h2>
+      <p className="text-slate-500 mb-8">Plano de Atendimento Educacional</p>
+      <button 
+        onClick={onLogin}
+        className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-200"
+      >
+        Entrar no Sistema
+      </button>
     </div>
-    <div class="brand-box">
-        <div class="user-badge">{workspace}</div>
-        <div style="font-weight:700; color:#334155;">{nome_user}</div>
-    </div>
-</div>
-""",
-    unsafe_allow_html=True,
-)
+  </div>
+);
 
-# SIDEBAR (vai iniciar recolhida e sem botão de reabrir)
-with st.sidebar:
-    st.markdown('<div class="sidebar-logo-container">', unsafe_allow_html=True)
+// Home Dashboard Component
+const HomeDashboard = ({ 
+  userName, 
+  onNavigate,
+  onLogout 
+}: { 
+  userName: string; 
+  onNavigate: (page: string) => void;
+  onLogout: () => void;
+}) => {
+  return (
+    <div className="animate-fade-in-up">
+      <Hero userName={userName} />
 
-    if os.path.exists("omnisfera.png"):
-        st.image("omnisfera.png", use_column_width=True)
-    elif os.path.exists("omni_texto.png"):
-        st.image("omni_texto.png", use_column_width=True)
-    else:
-        st.markdown(
-            """
-        <div style="text-align: center;">
-            <div style="font-size: 1.8rem; font-weight: 800; color: #4F46E5; margin-bottom: 5px;">
-                🌐
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+          <Rocket className="w-5 h-5 text-indigo-600" />
+          Módulos da Plataforma
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {MODULES.map((mod) => (
+            <div key={mod.id} className="flex flex-col">
+              {/* Card Body */}
+              <div className="flex h-32 bg-white border border-slate-200 rounded-t-2xl overflow-hidden group hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 transition-all duration-300">
+                {/* Color Bar */}
+                <div className={`w-1.5 h-full ${
+                  mod.colorClass.includes('indigo') ? 'bg-indigo-500' :
+                  mod.colorClass.includes('blue') ? 'bg-blue-500' :
+                  mod.colorClass.includes('purple') ? 'bg-purple-500' :
+                  mod.colorClass.includes('teal') ? 'bg-teal-500' :
+                  mod.colorClass.includes('rose') ? 'bg-rose-500' :
+                  'bg-sky-500'
+                }`}></div>
+                
+                {/* Icon Area */}
+                <div className={`w-20 h-full flex items-center justify-center flex-shrink-0 ${mod.bgClass} border-r border-slate-100`}>
+                  <mod.icon className={`w-8 h-8 ${mod.colorClass}`} />
+                </div>
+
+                {/* Content Area */}
+                <div className="flex-1 p-5 flex flex-col justify-center">
+                  <h3 className="font-extrabold text-slate-800 text-lg mb-1 leading-tight group-hover:text-indigo-600 transition-colors">
+                    {mod.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed line-clamp-2">
+                    {mod.desc}
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <button 
+                onClick={() => onNavigate(mod.page)}
+                className="w-full py-3 bg-white border-x border-b border-slate-200 rounded-b-2xl text-xs font-bold text-slate-500 uppercase tracking-wider hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center justify-center gap-2 shadow-sm"
+              >
+                <FolderOpen className="w-4 h-4" />
+                Acessar {mod.title.split(' ')[0]}
+              </button>
             </div>
-            <div style="font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); 
-                -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                OMNISFERA
-            </div>
+          ))}
         </div>
-        """,
-            unsafe_allow_html=True,
-        )
+      </div>
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown(
-        """
-    <div class="sidebar-nav-section">
-        <div class="sidebar-nav-title">
-            <i class="ri-compass-3-line"></i> NAVEGAÇÃO
-        </div>
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    sidebar_options = [
-        ("👥 Alunos", "pages/Alunos.py", "#4F46E5", "ri-team-line"),
-        ("📘 PEI", "pages/1_PEI.py", "#3B82F6", "ri-book-open-line"),
-        ("🧩 PAEE", "pages/2_PAE.py", "#8B5CF6", "ri-puzzle-line"),
-        ("🚀 Hub", "pages/3_Hub_Inclusao.py", "#14B8A6", "ri-rocket-line"),
-        ("📓 Diário", "pages/4_Diario_de_Bordo.py", "#E11D48", "ri-notebook-line"),
-        ("📊 Dados", "pages/5_Monitoramento_Avaliacao.py", "#0284C7", "ri-bar-chart-line"),
-    ]
-
-    for label, page, color, icon in sidebar_options:
-        st.markdown(
-            f"""
-        <button class="sidebar-nav-button" onclick="window.location='{page}'" 
-                style="border-left: 4px solid {color};">
-            <i class="{icon}"></i> {label}
-        </button>
-        """,
-            unsafe_allow_html=True,
-        )
-
-    st.markdown(
-        "<div style='margin: 20px 0; border-top: 1px solid #E2E8F0;'></div>",
-        unsafe_allow_html=True,
-    )
-
-    if st.button(
-        "🚪 Sair do Sistema",
-        use_container_width=True,
-        type="secondary",
-        help="Clique para sair do sistema",
-    ):
-        st.session_state.autenticado = False
-        st.rerun()
-
-# HERO
-hora = datetime.now().hour
-saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
-
-st.markdown(
-    f"""
-<div class="hero-wrapper">
-    <div class="hero-content">
-        <div class="hero-greet">{saudacao}, {nome_user}!</div>
-        <div class="hero-text">"A inclusão acontece quando aprendemos com as diferenças e não com as igualdades."</div>
-    </div>
-    <div style="opacity:0.8; font-size:4rem;"><i class="ri-heart-pulse-fill"></i></div>
-</div>
-""",
-    unsafe_allow_html=True,
-)
-
-# MÓDULOS (ordem pela sequência das pastas)
-st.markdown("### 🚀 Módulos da Plataforma")
-
-modules = [
-    {
-        "title": "Estudantes",
-        "desc": "Gestão completa de alunos, histórico e acompanhamento individualizado.",
-        "icon": "ri-group-fill",
-        "color_cls": "c-indigo",
-        "bg_cls": "bg-indigo-soft",
-        "page": "pages/Alunos.py",
-        "key": "m_aluno",
-        "logo_path": None,
-    },
-    {
-        "title": "Estratégias & PEI",
-        "desc": "Plano Educacional Individual com objetivos, avaliações e acompanhamento.",
-        "icon": "ri-book-open-fill",
-        "color_cls": "c-blue",
-        "bg_cls": "bg-blue-soft",
-        "page": "pages/1_PEI.py",
-        "key": "m_pei",
-        "logo_path": None,
-    },
-    {
-        "title": "Plano de Ação / PAEE",
-        "desc": "Plano de Atendimento Educacional Especializado e sala de recursos.",
-        "icon": "ri-puzzle-fill",
-        "color_cls": "c-purple",
-        "bg_cls": "bg-purple-soft",
-        "page": "pages/2_PAE.py",
-        "key": "m_pae",
-        "logo_path": "assets/paee_logo.png",
-    },
-    {
-        "title": "Hub de Recursos",
-        "desc": "Biblioteca de materiais, modelos e inteligência artificial para apoio.",
-        "icon": "ri-rocket-2-fill",
-        "color_cls": "c-teal",
-        "bg_cls": "bg-teal-soft",
-        "page": "pages/3_Hub_Inclusao.py",
-        "key": "m_hub",
-        "logo_path": None,
-    },
-    {
-        "title": "Diário de Bordo",
-        "desc": "Registro diário de observações, evidências e intervenções.",
-        "icon": "ri-file-list-3-fill",
-        "color_cls": "c-rose",
-        "bg_cls": "bg-rose-soft",
-        "page": "pages/4_Diario_de_Bordo.py",
-        "key": "m_diario",
-        "logo_path": None,
-    },
-    {
-        "title": "Evolução & Dados",
-        "desc": "Indicadores, gráficos e relatórios de progresso dos alunos.",
-        "icon": "ri-bar-chart-box-fill",
-        "color_cls": "c-sky",
-        "bg_cls": "bg-sky-soft",
-        "page": "pages/5_Monitoramento_Avaliacao.py",
-        "key": "m_dados",
-        "logo_path": None,
-    },
-]
-
-cols = st.columns(3, gap="medium")
-for i, module in enumerate(modules):
-    with cols[i % 3]:
-        create_module_with_button(
-            title=module["title"],
-            desc=module["desc"],
-            icon=module["icon"],
-            color_cls=module["color_cls"],
-            bg_cls=module["bg_cls"],
-            page_path=module["page"],
-            key=module["key"],
-            logo_path=module.get("logo_path"),
-        )
-
-st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-
-# RECURSOS EXTERNOS
-st.markdown("### 📚 Recursos Externos & Referências")
-r1, r2, r3, r4 = st.columns(4, gap="medium")
-
-
-def create_resource(col, title, desc, icon, theme, link):
-    with col:
-        if link != "#":
-            st.markdown(
-                f"""
-            <a href="{link}" target="_blank" class="res-card-link">
-                <div class="res-card {theme}">
-                    <div class="res-icon {theme}"><i class="{icon}"></i></div>
-                    <div class="res-info">
-                        <div class="res-name">{title}</div>
-                        <div class="res-meta">{desc}</div>
-                    </div>
+      <div className="mb-12">
+        <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-indigo-600" />
+          Recursos Externos & Referências
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {RESOURCES.map((res, idx) => (
+            <div key={idx} className="h-24">
+              <a 
+                href={res.link} 
+                target={res.link !== '#' ? "_blank" : "_self"}
+                rel="noreferrer"
+                className="block h-full group"
+              >
+                <div className="h-full flex items-center gap-4 p-5 bg-white border border-slate-200 rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                  <div className={`
+                    w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0 border
+                    ${res.theme === 'sky' ? 'bg-sky-50 text-sky-600 border-sky-100' :
+                      res.theme === 'green' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                      res.theme === 'rose' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                      'bg-orange-50 text-orange-600 border-orange-100'}
+                  `}>
+                    <res.icon className="w-6 h-6" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors">
+                      {res.title}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-400 mt-0.5">
+                      {res.desc}
+                    </span>
+                  </div>
                 </div>
-            </a>
-            """,
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown(
-                f"""
-            <div class="res-card {theme}" style="cursor: pointer;">
-                <div class="res-icon {theme}"><i class="{icon}"></i></div>
-                <div class="res-info">
-                    <div class="res-name">{title}</div>
-                    <div class="res-meta">{desc}</div>
-                </div>
+              </a>
             </div>
-            """,
-                unsafe_allow_html=True,
-            )
+          ))}
+        </div>
+      </div>
 
+      <div className="border-t border-slate-200 pt-8 mt-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {METRICS.map((stat, idx) => (
+            <div key={idx} className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</span>
+              <div className="flex items-end gap-2">
+                <span className="text-3xl font-black text-slate-800">{stat.value}</span>
+                <div className={`flex items-center text-xs font-bold mb-1.5 ${
+                  stat.trend === 'up' ? 'text-emerald-500' : 
+                  stat.trend === 'down' ? 'text-red-500' : 
+                  'text-slate-400'
+                }`}>
+                  {stat.trend === 'up' ? <TrendingIcon className="w-3 h-3 mr-0.5" /> : 
+                   stat.trend === 'down' ? <TrendingIcon className="w-3 h-3 mr-0.5 rotate-180" /> : 
+                   <Minus className="w-3 h-3 mr-0.5" />}
+                  {stat.change}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
-create_resource(
-    r1,
-    "Lei da Inclusão",
-    "LBI e diretrizes",
-    "ri-government-fill",
-    "rc-sky",
-    "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm",
-)
-create_resource(
-    r2,
-    "Base Nacional",
-    "Competências BNCC",
-    "ri-compass-3-fill",
-    "rc-green",
-    "http://basenacionalcomum.mec.gov.br/",
-)
-create_resource(
-    r3,
-    "Neurociência",
-    "Artigos e estudos",
-    "ri-brain-fill",
-    "rc-rose",
-    "https://institutoneurosaber.com.br/",
-)
-create_resource(r4, "Ajuda Omnisfera", "Tutoriais e suporte", "ri-question-fill", "rc-orange", "#")
+// Other Page Placeholder
+const OtherPagePlaceholder = ({ pageName, onBack }: { pageName: string; onBack: () => void }) => (
+  <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+    <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-400">
+      <Puzzle className="w-10 h-10" />
+    </div>
+    <h2 className="text-2xl font-bold text-slate-800 mb-2">Página em Construção</h2>
+    <p className="text-slate-500 max-w-md">
+      O módulo <strong>{pageName.toUpperCase()}</strong> está sendo preparado. Volte ao início para acessar os módulos disponíveis.
+    </p>
+    <button 
+      onClick={onBack}
+      className="mt-6 px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+    >
+      Voltar para Home
+    </button>
+  </div>
+);
 
-# RODAPÉ
-st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [activePage, setActivePage] = useState('home');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.metric("Alunos Ativos", "12", "+2")
-with col2:
-    st.metric("PEIs Ativos", "8", "+1")
-with col3:
-    st.metric("Evidências Hoje", "3", "0")
-with col4:
-    st.metric("Meta Mensal", "75%", "+5%")
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
+  }
 
-st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
-st.markdown(
-    f"""
-<div style='
-    text-align: center; 
-    color: #64748B; 
-    font-size: 0.75rem;
-    padding: 20px;
-    border-top: 1px solid #E2E8F0;
-    margin-top: 20px;
-'>
-    <strong>Omnisfera v2.0</strong> • Plataforma de Inclusão Educacional • 
-    Desenvolvido por RODRIGO A. QUEIROZ • 
-    {datetime.now().strftime("%d/%m/%Y %H:%M")}
-</div>
-""",
-    unsafe_allow_html=True,
-)
+  const handleNavigate = (page: string) => {
+    setActivePage(page);
+    setSidebarOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setActivePage('home');
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] font-['Plus_Jakarta_Sans']">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-white to-slate-50 border-r border-slate-200 
+        flex flex-col z-40 transition-transform duration-300
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+        md:translate-x-0 md:flex
+      `}>
+        {/* Logo Area */}
+        <div className="h-20 flex items-center justify-center border-b border-slate-200">
+          <div className="flex flex-col items-center">
+            <Globe className="w-8 h-8 text-indigo-600 mb-1" />
+            <span className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-indigo-600 to-purple-600">
+              OMNISFERA
+            </span>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto py-6 px-4">
+          <div className="mb-4 flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest px-2">
+            <Compass className="w-4 h-4" />
+            <span>Navegação</span>
+          </div>
+
+          <div className="space-y-2">
+            {MODULES.map((item) => (
+              <button
+                key={item.page}
+                onClick={() => handleNavigate(item.page)}
+                className={`
+                  w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group
+                  ${activePage === item.page 
+                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md' 
+                    : 'bg-white text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-100 hover:border-indigo-200 shadow-sm'
+                  }
+                `}
+                style={{ 
+                  borderLeftWidth: activePage === item.page ? '4px' : '4px', 
+                  borderLeftColor: activePage === item.page ? 'transparent' : 
+                    item.colorClass.includes('indigo') ? '#4F46E5' :
+                    item.colorClass.includes('blue') ? '#3B82F6' :
+                    item.colorClass.includes('purple') ? '#8B5CF6' :
+                    item.colorClass.includes('teal') ? '#14B8A6' :
+                    item.colorClass.includes('rose') ? '#E11D48' :
+                    '#0284C7'
+                }}
+              >
+                <item.icon className={`w-5 h-5 ${activePage === item.page ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'}`} />
+                {item.title}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer / Logout */}
+        <div className="p-4 border-t border-slate-200">
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors duration-200"
+          >
+            <LogOut className="w-4 h-4" />
+            Sair do Sistema
+          </button>
+        </div>
+      </aside>
+      
+      <div className="md:ml-64 flex flex-col min-h-screen">
+        <Header 
+          workspaceName={WORKSPACE_NAME} 
+          userName={USER_NAME}
+          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+        />
+
+        <main className="flex-1 px-6 md:px-12 py-8 mt-20 max-w-7xl mx-auto w-full">
+          {activePage === 'home' ? (
+            <HomeDashboard 
+              userName={USER_NAME}
+              onNavigate={handleNavigate}
+              onLogout={handleLogout}
+            />
+          ) : (
+            <OtherPagePlaceholder 
+              pageName={activePage}
+              onBack={() => handleNavigate('home')}
+            />
+          )}
+
+          <footer className="mt-16 py-8 border-t border-slate-200 text-center">
+            <p className="text-xs text-slate-400 font-medium">
+              <strong className="text-slate-600">Omnisfera v2.0</strong> • Plataforma de Inclusão Educacional • Desenvolvido por RODRIGO A. QUEIROZ
+            </p>
+            <p className="text-[10px] text-slate-300 mt-2 font-mono">
+              {new Date().toLocaleString('pt-BR')}
+            </p>
+          </footer>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export default App;
