@@ -134,61 +134,179 @@ def verificar_login_supabase():
 verificar_login_app()
 verificar_login_supabase()
 
-# ==============================================================================
-# 2. SUPABASE: STUDENTS (criar/atualizar/listar/excluir) — com workspace_id
-# ==============================================================================
-def _sb_ok():
-    return sb is not None and OWNER_ID and ws_id
+# =============================================================================
+# SUPABASE (CRUD students) — versão REST (compatível com omni_utils.py)
+# Remove dependência de: sb / OWNER_ID
+# =============================================================================
+
+import requests
+import streamlit as st
+
+
+def _rest_ready(debug: bool = False):
+    """
+    Checa se a nuvem está pronta para operar via REST:
+    - autenticado
+    - workspace_id presente
+    - SUPABASE_URL e alguma KEY (SERVICE ou ANON) presentes
+    """
+    details = {}
+    details["autenticado"] = bool(st.session_state.get("autenticado", False))
+    details["has_workspace_id"] = bool(st.session_state.get("workspace_id"))
+
+    try:
+        details["has_supabase_url"] = bool(str(st.secrets.get("SUPABASE_URL", "")).strip())
+    except Exception:
+        details["has_supabase_url"] = False
+
+    try:
+        service = str(st.secrets.get("SUPABASE_SERVICE_KEY", "")).strip()
+        anon = str(st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
+        details["has_supabase_key"] = bool(service or anon)
+    except Exception:
+        details["has_supabase_key"] = False
+
+    ok = all(details.values())
+    if debug:
+        details["missing"] = [k for k, v in details.items() if not v]
+    return ok, details
+
+
+def _sb_url() -> str:
+    url = str(st.secrets.get("SUPABASE_URL", "")).strip()
+    if not url:
+        raise RuntimeError("SUPABASE_URL não encontrado nos secrets.")
+    return url.rstrip("/")
+
+
+def _sb_key() -> str:
+    # Preferência: SERVICE_KEY (server-side), fallback: ANON_KEY
+    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "")).strip()
+    if not key:
+        key = str(st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
+    if not key:
+        raise RuntimeError("SUPABASE_SERVICE_KEY/ANON_KEY não encontrado nos secrets.")
+    return key
+
+
+def _headers() -> dict:
+    key = _sb_key()
+    return {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+    }
+
+
+def _http_error(prefix: str, r: requests.Response):
+    raise RuntimeError(f"{prefix}: {r.status_code} {r.text}")
+
 
 def db_create_student(payload: dict):
-    if not _sb_ok():
-        raise RuntimeError("Supabase não está pronto (sb/OWNER_ID/workspace_id).")
-    payload = dict(payload or {})
-    payload["owner_id"] = OWNER_ID
-    payload["workspace_id"] = ws_id
-    res = sb.table("students").insert(payload).execute()
-    return (res.data or [None])[0]
+    """
+    Cria aluno em public.students usando REST.
+    - injeta workspace_id automaticamente
+    - retorna o registro criado (dict) ou levanta erro
+    """
+    ok, details = _rest_ready(debug=True)
+    if not ok:
+        raise RuntimeError(f"Supabase não está pronto (REST). Missing: {details.get('missing')}")
+
+    ws_id = st.session_state.get("workspace_id")
+    row = dict(payload or {})
+    row["workspace_id"] = ws_id
+
+    url = f"{_sb_url()}/rest/v1/students"
+    h = _headers()
+    h["Prefer"] = "return=representation"
+
+    r = requests.post(url, headers=h, json=row, timeout=20)
+    if r.status_code >= 400:
+        _http_error("Insert em students falhou", r)
+
+    data = r.json()
+    if isinstance(data, list) and len(data) > 0:
+        return data[0]
+    if isinstance(data, dict):
+        return data
+    return None
+
 
 def db_update_student(student_id: str, payload: dict):
-    if not _sb_ok():
-        raise RuntimeError("Supabase não está pronto (sb/OWNER_ID/workspace_id).")
-    payload = dict(payload or {})
-    sb.table("students").update(payload).eq("id", student_id).eq("owner_id", OWNER_ID).eq("workspace_id", ws_id).execute()
+    """
+    Atualiza aluno em public.students (por id) via REST
+    - garante workspace_id no filtro
+    """
+    ok, details = _rest_ready(debug=True)
+    if not ok:
+        raise RuntimeError(f"Supabase não está pronto (REST). Missing: {details.get('missing')}")
+
+    ws_id = st.session_state.get("workspace_id")
+    row = dict(payload or {})
+
+    url = f"{_sb_url()}/rest/v1/students?id=eq.{student_id}&workspace_id=eq.{ws_id}"
+    h = _headers()
+    h["Prefer"] = "return=representation"
+
+    r = requests.patch(url, headers=h, json=row, timeout=20)
+    if r.status_code >= 400:
+        _http_error("Update em students falhou", r)
+
+    data = r.json()
+    if isinstance(data, list) and len(data) > 0:
+        return data[0]
+    if isinstance(data, dict):
+        return data
+    return None
+
 
 def db_delete_student(student_id: str):
-    if not _sb_ok():
-        raise RuntimeError("Supabase não está pronto (sb/OWNER_ID/workspace_id).")
-    sb.table("students").delete().eq("id", student_id).eq("owner_id", OWNER_ID).eq("workspace_id", ws_id).execute()
+    """
+    Deleta aluno em public.students (por id) via REST
+    - garante workspace_id no filtro
+    """
+    ok, details = _rest_ready(debug=True)
+    if not ok:
+        raise RuntimeError(f"Supabase não está pronto (REST). Missing: {details.get('missing')}")
+
+    ws_id = st.session_state.get("workspace_id")
+
+    url = f"{_sb_url()}/rest/v1/students?id=eq.{student_id}&workspace_id=eq.{ws_id}"
+    h = _headers()
+    h["Prefer"] = "return=representation"
+
+    r = requests.delete(url, headers=h, timeout=20)
+    if r.status_code >= 400:
+        _http_error("Delete em students falhou", r)
+
+    data = r.json()
+    return data
+
 
 def db_list_students(search: str | None = None):
-    if not _sb_ok():
+    """
+    Lista alunos do workspace atual.
+    Se search vier preenchido, filtra por nome (ilike).
+    """
+    ok, _ = _rest_ready(debug=False)
+    if not ok:
         return []
-    q = (
-        sb.table("students")
-        .select("id, owner_id, workspace_id, name, birth_date, grade, class_group, diagnosis, created_at, updated_at")
-        .eq("owner_id", OWNER_ID)
-        .eq("workspace_id", ws_id)
-        .order("name", desc=False)
-    )
-    if search:
-        q = q.ilike("name", f"%{search}%")
-    res = q.execute()
-    return res.data or []
 
-def db_get_student(student_id: str):
-    if not _sb_ok():
-        return None
-    res = (
-        sb.table("students")
-        .select("id, owner_id, workspace_id, name, birth_date, grade, class_group, diagnosis, created_at, updated_at")
-        .eq("id", student_id)
-        .eq("owner_id", OWNER_ID)
-        .eq("workspace_id", ws_id)
-        .limit(1)
-        .execute()
-    )
-    data = res.data or []
-    return data[0] if data else None
+    ws_id = st.session_state.get("workspace_id")
+    base = f"{_sb_url()}/rest/v1/students?select=*&workspace_id=eq.{ws_id}&order=created_at.desc"
+
+    if search:
+        s = str(search).strip()
+        if s:
+            # ilike precisa de *...*
+            base += f"&name=ilike.*{s}*"
+
+    r = requests.get(base, headers=_headers(), timeout=20)
+    if r.status_code >= 400:
+        _http_error("List students falhou", r)
+
+    data = r.json()
+    return data if isinstance(data, list) else []
 
 
 # ==============================================================================
