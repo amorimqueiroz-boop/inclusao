@@ -2440,12 +2440,31 @@ with tab8:
         lambda t: {"Curto": "—", "Medio": "—", "Longo": "—"}
     )
 
-    # tenta importar a função real (sem depender de globals)
-    supa_save_pei_fn = None
-    try:
-        from omni_utils import supa_save_pei as supa_save_pei_fn  # type: ignore
-    except Exception:
-        supa_save_pei_fn = None
+    # ✅ Converte qualquer coisa "não serializável" (date/datetime etc.) em JSON-safe
+    def _json_safe(obj):
+        from datetime import date, datetime
+
+        if obj is None:
+            return None
+
+        # date/datetime → ISO
+        if isinstance(obj, (date, datetime)):
+            return obj.isoformat()
+
+        # dict → recursivo
+        if isinstance(obj, dict):
+            return {str(k): _json_safe(v) for k, v in obj.items()}
+
+        # list/tuple → recursivo
+        if isinstance(obj, (list, tuple)):
+            return [_json_safe(x) for x in obj]
+
+        # tipos simples ok
+        if isinstance(obj, (str, int, float, bool)):
+            return obj
+
+        # fallback seguro (ex.: objetos)
+        return str(obj)
 
     # --------------------------------------------------------------------------
     # 2) GUARD
@@ -2559,10 +2578,9 @@ with tab8:
     # ---------------- BACKUP ----------------
     with col_backup:
         st.caption("💾 Backup (JSON)")
-        # ✅ Isso é SÓ local (baixar arquivo). Não tem relação com Supabase.
         st.download_button(
             "Salvar JSON",
-            json.dumps(d, default=str, ensure_ascii=False),
+            json.dumps(_json_safe(d), ensure_ascii=False),  # ✅ também fica mais robusto
             f"PEI_{d.get('nome')}.json",
             "application/json",
             use_container_width=True
@@ -2580,15 +2598,7 @@ with tab8:
         )
 
         def _cloud_ready(debug: bool = False):
-            """
-            ✅ Você usa Supabase via REST.
-            Nuvem pronta se:
-              - autenticado == True
-              - workspace_id existe
-              - secrets SUPABASE_URL e alguma KEY existem (ANON ou SERVICE)
-            """
             details = {}
-
             auth = bool(st.session_state.get("autenticado", False))
             ws_id = st.session_state.get("workspace_id")
 
@@ -2613,7 +2623,6 @@ with tab8:
             ok = all(details.values())
             if debug:
                 details["missing"] = [k for k, v in details.items() if not v]
-
             return ok, details
 
         if st.button(
@@ -2629,17 +2638,21 @@ with tab8:
                 st.stop()
 
             try:
+                from omni_utils import supa_save_pei
+
                 sid = st.session_state.get("selected_student_id")
 
-                # 1) cria aluno no Supabase se ainda não tiver student_id
+                # 1) cria aluno no Supabase se ainda não tiver
                 if not sid:
+                    nasc = d.get("nasc")
+                    birth_iso = nasc.isoformat() if hasattr(nasc, "isoformat") else None
+
                     created = db_create_student({
                         "name": d.get("nome"),
-                        "birth_date": d.get("nasc").isoformat() if hasattr(d.get("nasc"), "isoformat") else None,
+                        "birth_date": birth_iso,
                         "grade": d.get("serie"),
                         "class_group": d.get("turma") or None,
                         "diagnosis": d.get("diagnostico") or None,
-                        # NÃO precisa mandar workspace_id aqui se seu db_create_student já injeta
                     })
 
                     sid = (created or {}).get("id") if isinstance(created, dict) else None
@@ -2648,15 +2661,9 @@ with tab8:
 
                     st.session_state["selected_student_id"] = sid
 
-                # 2) salva PEI
-                if not supa_save_pei_fn:
-                    raise RuntimeError(
-                        "Função supa_save_pei não encontrada.\n"
-                        "➡️ Cole a função supa_save_pei no FINAL do omni_utils.py "
-                        "(junto do supabase_upsert)."
-                    )
-
-                supa_save_pei_fn(sid, d, st.session_state.get("pdf_text", ""))
+                # 2) ✅ salva PEI com dados JSON-safe
+                dados_cloud = _json_safe(d)
+                supa_save_pei(sid, dados_cloud, st.session_state.get("pdf_text", ""))
 
                 st.success("✅ Sincronizado: aluno vinculado + PEI salvo na nuvem.")
                 st.rerun()
