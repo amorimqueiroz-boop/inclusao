@@ -594,7 +594,6 @@ modules = [
         "bg_cls": "bg-purple-soft",
         "page": "pages/2_PAE.py",
         "key": "m_pae",
-        # TROQUE o caminho abaixo pelo arquivo real do seu logo (se existir)
         "logo_path": "assets/paee_logo.png",
     },
     {
