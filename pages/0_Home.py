@@ -6,7 +6,7 @@ import os
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v2.1 - Guia de Inclusão Otimizado"
+APP_VERSION = "v2.0 - Guia de Inclusão"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV", "PRODUCAO") == "TESTE"
@@ -126,7 +126,7 @@ footer {
     left: 0;
     right: 0;
     bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+    background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
     opacity: 0.3;
 }
 
@@ -389,7 +389,7 @@ footer {
     opacity: 0.8;
 }
 
-/* --- CARDS DE INFORMAÇÃO (GUIA) MELHORADOS --- */
+/* --- CARDS DE INFORMAÇÃO --- */
 .info-card {
     background: white;
     border-radius: 16px;
@@ -398,7 +398,7 @@ footer {
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
     height: 100%;
-    min-height: 280px; /* Reduzido levemente pois agora são 2 colunas */
+    min-height: 320px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -444,73 +444,127 @@ footer {
     padding-right: 8px;
 }
 
-/* Novas classes para o Guia (Tag e Lista) */
-.guide-tag {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.7rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 12px;
-}
-
-.tag-orange { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
-.tag-blue { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
-.tag-purple { background: #FAF5FF; color: #7E22CE; border: 1px solid #E9D5FF; }
-.tag-teal { background: #F0FDFA; color: #0F766E; border: 1px solid #99F6E4; }
-.tag-rose { background: #FFF1F2; color: #BE123C; border: 1px solid #FECDD3; }
-.tag-indigo { background: #EEF2FF; color: #4338CA; border: 1px solid #C7D2FE; }
-
 .info-card-content p {
-    font-size: 0.9rem;
-    color: #475569;
-    line-height: 1.6;
+    font-size: 0.85rem;
+    color: #64748B;
+    line-height: 1.5;
     margin-bottom: 12px;
 }
 
 .info-card-content ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.info-card-content li {
-    position: relative;
-    padding-left: 20px;
-    margin-bottom: 8px;
     font-size: 0.85rem;
     color: #64748B;
     line-height: 1.5;
+    margin-left: 16px;
+    margin-bottom: 12px;
 }
 
-.info-card-content li::before {
-    content: "•";
-    position: absolute;
-    left: 4px;
-    color: #CBD5E1;
-    font-weight: bold;
+.info-card-content li {
+    margin-bottom: 6px;
 }
 
 /* --- CORES DOS CARDS DE INFORMAÇÃO --- */
-.info-card-orange { border-left: 4px solid #EA580C; }
-.info-card-orange .info-card-icon { background: #FFF7ED; color: #EA580C; border: 1px solid #FDBA74; }
+.info-card-orange {
+    border-left: 4px solid #EA580C;
+}
+.info-card-orange .info-card-icon {
+    background: #FFF7ED;
+    color: #EA580C;
+    border: 1px solid #FDBA74;
+}
 
-.info-card-blue { border-left: 4px solid #3B82F6; }
-.info-card-blue .info-card-icon { background: #EFF6FF; color: #3B82F6; border: 1px solid #93C5FD; }
+.info-card-blue {
+    border-left: 4px solid #3B82F6;
+}
+.info-card-blue .info-card-icon {
+    background: #EFF6FF;
+    color: #3B82F6;
+    border: 1px solid #93C5FD;
+}
 
-.info-card-purple { border-left: 4px solid #8B5CF6; }
-.info-card-purple .info-card-icon { background: #F5F3FF; color: #8B5CF6; border: 1px solid #C4B5FD; }
+.info-card-purple {
+    border-left: 4px solid #8B5CF6;
+}
+.info-card-purple .info-card-icon {
+    background: #F5F3FF;
+    color: #8B5CF6;
+    border: 1px solid #C4B5FD;
+}
 
-.info-card-teal { border-left: 4px solid #14B8A6; }
-.info-card-teal .info-card-icon { background: #F0FDFA; color: #14B8A6; border: 1px solid #5EEAD4; }
+.info-card-teal {
+    border-left: 4px solid #14B8A6;
+}
+.info-card-teal .info-card-icon {
+    background: #F0FDFA;
+    color: #14B8A6;
+    border: 1px solid #5EEAD4;
+}
 
-.info-card-rose { border-left: 4px solid #E11D48; }
-.info-card-rose .info-card-icon { background: #FFF1F2; color: #E11D48; border: 1px solid #FDA4AF; }
+.info-card-rose {
+    border-left: 4px solid #E11D48;
+}
+.info-card-rose .info-card-icon {
+    background: #FFF1F2;
+    color: #E11D48;
+    border: 1px solid #FDA4AF;
+}
 
-.info-card-indigo { border-left: 4px solid #4F46E5; }
-.info-card-indigo .info-card-icon { background: #EEF2FF; color: #4F46E5; border: 1px solid #A5B4FC; }
+.info-card-indigo {
+    border-left: 4px solid #4F46E5;
+}
+.info-card-indigo .info-card-icon {
+    background: #EEF2FF;
+    color: #4F46E5;
+    border: 1px solid #A5B4FC;
+}
+
+/* --- MÉTRICAS --- */
+.metric-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid #E2E8F0;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+    border-color: #CBD5E1;
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1E293B;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.metric-change {
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.metric-up { color: #059669 !important; }
+.metric-down { color: #DC2626 !important; }
+.metric-neutral { color: #64748B !important; }
 
 /* --- CORES RECURSOS --- */
 .rc-sky {
@@ -767,35 +821,37 @@ def create_module_card(title, desc, icon, color_cls, bg_cls, page, key):
 
 
 def render_info_cards():
-    """Renderiza os cards informativos com layout melhorado (2 colunas)"""
+    """Renderiza os cards informativos"""
     info_cards_data = [
         {
-            "title": "Acolhimento & Cultura",
+            "title": "Acolhimento e Cultura Inclusiva",
             "icon": "ri-heart-line",
             "color": "info-card-orange",
-            "tag_class": "tag-orange",
-            "tag_text": "PASSO 01",
             "content": """
-                <p>Receber o aluno com deficiência não garante a inclusão automática; é necessário integrar plenamente.</p>
+                <p><strong>Foco:</strong> O primeiro passo para a inclusão efetiva.</p>
+                <p><strong>Conceito:</strong> Receber o aluno com deficiência não garante a inclusão automática; é necessário integrar plenamente por meio de práticas pedagógicas significativas.</p>
+                <p><strong>Pilares do Acolhimento:</strong></p>
                 <ul>
-                    <li><strong>Políticas:</strong> Adoção de um PPP que contemple a diversidade.</li>
-                    <li><strong>Acessibilidade:</strong> Adaptação da infraestrutura (rampas, banheiros).</li>
-                    <li><strong>Mediação:</strong> Gestores atuando proativamente contra preconceitos.</li>
+                    <li><strong>Políticas Claras:</strong> Adoção de um Projeto Político-Pedagógico (PPP) que contemple a diversidade.</li>
+                    <li><strong>Acessibilidade:</strong> Adaptação da infraestrutura (rampas, banheiros, tecnologias assistivas).</li>
+                    <li><strong>Mediação:</strong> Gestores devem atuar proativamente contra preconceitos e oferecer apoio emocional aos educadores.</li>
                 </ul>
+                <p><strong>Ação Prática:</strong> Criar um plano de acolhimento personalizado envolvendo a família e realizar atividades de integração.</p>
             """
         },
         {
             "title": "Gestão Estratégica (PGEI)",
             "icon": "ri-strategy-line",
             "color": "info-card-blue",
-            "tag_class": "tag-blue",
-            "tag_text": "ORGANIZAÇÃO MACRO",
             "content": """
-                <p>O Plano Geral de Educação Inclusiva organiza ações para todos os perfis (deficiências, transtornos).</p>
+                <p><strong>Foco:</strong> Organização macro da escola para a inclusão.</p>
+                <p><strong>O que é:</strong> O Plano Geral de Educação Inclusiva (PGEI) organiza ações para diferentes perfis (deficiências, transtornos, altas habilidades).</p>
+                <p><strong>Dimensionamento:</strong> É crucial analisar o número total de alunos versus profissionais disponíveis para definir a carga horária e a alocação de recursos.</p>
+                <p><strong>Check-list do Gestor:</strong></p>
                 <ul>
                     <li>Levantar perfis específicos dos alunos.</li>
-                    <li>Dimensionar a equipe de inclusão x número de alunos.</li>
-                    <li>Planejar ações coletivas alinhadas ao PPP.</li>
+                    <li>Dimensionar a equipe de inclusão.</li>
+                    <li>Planejar ações coletivas e individuais alinhadas ao PPP.</li>
                 </ul>
             """
         },
@@ -803,114 +859,101 @@ def render_info_cards():
             "title": "Equipe Multidisciplinar",
             "icon": "ri-team-line",
             "color": "info-card-purple",
-            "tag_class": "tag-purple",
-            "tag_text": "RESPONSABILIDADES",
             "content": """
-                <p>Quem faz o que no processo de inclusão escolar:</p>
+                <p><strong>Foco:</strong> Papéis e responsabilidades dos profissionais.</p>
                 <ul>
-                    <li><strong>Psicólogo Escolar:</strong> Estudos de caso e orientação (não clínico).</li>
-                    <li><strong>AT (Terapêutico):</strong> Profissional externo para apoio individual (ex: autismo).</li>
-                    <li><strong>AP (Pedagógico):</strong> Apoio na locomoção, higiene e materiais.</li>
+                    <li><strong>Orientador Educacional:</strong> Atua na convivência, integração social e pontes entre currículo e desempenho.</li>
+                    <li><strong>Psicólogo Escolar:</strong> Acompanha estudos de caso, supervisiona ATs e APs e orienta famílias (não faz terapia clínica na escola).</li>
+                    <li><strong>Atendente Terapêutico (AT):</strong> Profissional externo (custeado pela família/Estado) com foco no atendimento individual e exclusivo (ex: autismo).</li>
+                    <li><strong>Atendente Pedagógico (AP):</strong> Vínculo com a escola; auxilia na locomoção, higiene, organização de materiais e interação em atividades coletivas.</li>
                 </ul>
             """
         },
         {
-            "title": "O Plano Individual (PEI)",
+            "title": "O Plano Individual (PEI/PDI)",
             "icon": "ri-file-list-3-line",
             "color": "info-card-teal",
-            "tag_class": "tag-teal",
-            "tag_text": "ROTEIRO DE APRENDIZAGEM",
             "content": """
-                <p>Roteiro flexível e obrigatório para nortear a aprendizagem do estudante.</p>
-                <ul>
-                    <li><strong>Elaboração:</strong> Equipe multi + família + externos.</li>
-                    <li><strong>Essencial:</strong> Identidade, necessidades e tecnologias assistivas.</li>
-                    <li><strong>Avaliação:</strong> Baseada no progresso individual (não comparativa).</li>
-                </ul>
+                <p><strong>Foco:</strong> O roteiro de aprendizagem do aluno.</p>
+                <p><strong>Definição:</strong> O Plano Educacional Individualizado (PEI) ou Plano de Desenvolvimento Individual (PDI) é um roteiro flexível e obrigatório para nortear a aprendizagem.</p>
+                <p><strong>Elaboração:</strong> Feito pela equipe multidisciplinar em parceria com a família e profissionais externos, devendo ser atualizado sistematicamente.</p>
+                <p><strong>Conteúdo Essencial:</strong> Identidade, necessidades específicas, dados de autonomia, desenvolvimento escolar e necessidade de tecnologias assistivas.</p>
+                <p><strong>Avaliação:</strong> Baseada no progresso individual em relação ao conhecimento inicial, e não comparativa com a turma.</p>
             """
         },
         {
-            "title": "Adaptações & Sala de Aula",
+            "title": "Adaptações e Transtornos",
             "icon": "ri-settings-5-line",
             "color": "info-card-rose",
-            "tag_class": "tag-rose",
-            "tag_text": "ESTRATÉGIAS PRÁTICAS",
             "content": """
-                <p>Ajustes no cotidiano para garantir o acesso ao currículo.</p>
+                <p><strong>Foco:</strong> Estratégias para sala de aula.</p>
                 <ul>
-                    <li><strong>Flexibilidade:</strong> Tempo estendido para tarefas e provas.</li>
-                    <li><strong>Avaliação:</strong> Diversificar instrumentos (orais, adaptados).</li>
-                    <li><strong>Ambiente:</strong> Organizar sala para reduzir estímulos excessivos.</li>
+                    <li><strong>Flexibilidade:</strong> Ajuste no tempo para execução de tarefas e avaliações.</li>
+                    <li><strong>Avaliação:</strong> Diversificar instrumentos (orais, adaptados) e considerar toda produção do aluno como avaliativa.</li>
+                    <li><strong>Ambiente:</strong> Organizar a sala para reduzir estímulos ou facilitar o contato com o professor.</li>
+                    <li><strong>Materiais:</strong> Uso de recursos visuais, materiais concretos, fontes ampliadas e tecnologia assistiva.</li>
                 </ul>
             """
         },
         {
-            "title": "Deficiências: Suporte",
+            "title": "Deficiências e Suporte Prático",
             "icon": "ri-wheelchair-line",
             "color": "info-card-indigo",
-            "tag_class": "tag-indigo",
-            "tag_text": "RESUMO TÉCNICO",
             "content": """
-                <p>Principais necessidades por tipo de deficiência:</p>
+                <p><strong>Foco:</strong> Resumo técnico das necessidades.</p>
                 <ul>
-                    <li><strong>Auditiva:</strong> Libras, leitura labial, legendas.</li>
-                    <li><strong>Visual:</strong> Braille, audiodescrição, leitores de tela.</li>
-                    <li><strong>Intelectual:</strong> Linguagem simples e apoio na rotina.</li>
+                    <li><strong>Física:</strong> Foco em acessibilidade arquitetônica, mobiliário adaptado e apoio para mobilidade.</li>
+                    <li><strong>Auditiva:</strong> Uso de Libras, leitura labial, legendas e aparelhos auditivos. Varia de leve a profunda.</li>
+                    <li><strong>Visual:</strong> Desde baixa visão até cegueira. Requer Braille, audiodescrição, pisos táteis e leitores de tela.</li>
+                    <li><strong>Intelectual:</strong> Limitações no raciocínio e comportamento adaptativo. Requer linguagem simples, rotina e apoio no desenvolvimento de habilidades de vida.</li>
                 </ul>
             """
         }
     ]
     
-    # Grid de 2 colunas para melhor leitura
-    for i in range(0, len(info_cards_data), 2):
-        cols = st.columns(2, gap="medium")
-        
-        # Card Esquerda
-        if i < len(info_cards_data):
-            card = info_cards_data[i]
-            with cols[0]:
-                st.markdown(
-                    f"""
-                    <div class="info-card {card['color']}">
-                        <div class="info-card-header">
-                            <div class="info-card-icon">
-                                <i class="{card['icon']}"></i>
-                            </div>
-                            <h3 class="info-card-title">{card['title']}</h3>
+    # Primeira linha de cards
+    cols = st.columns(3, gap="medium")
+    for idx, card in enumerate(info_cards_data[:3]):
+        with cols[idx]:
+            st.markdown(
+                f"""
+                <div class="info-card {card['color']}">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="{card['icon']}"></i>
                         </div>
-                        <div class="info-card-content">
-                            <span class="guide-tag {card['tag_class']}">{card['tag_text']}</span>
-                            {card['content']}
-                        </div>
+                        <h3 class="info-card-title">{card['title']}</h3>
                     </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-        
-        # Card Direita
-        if i + 1 < len(info_cards_data):
-            card = info_cards_data[i+1]
-            with cols[1]:
-                st.markdown(
-                    f"""
-                    <div class="info-card {card['color']}">
-                        <div class="info-card-header">
-                            <div class="info-card-icon">
-                                <i class="{card['icon']}"></i>
-                            </div>
-                            <h3 class="info-card-title">{card['title']}</h3>
-                        </div>
-                        <div class="info-card-content">
-                            <span class="guide-tag {card['tag_class']}">{card['tag_text']}</span>
-                            {card['content']}
-                        </div>
+                    <div class="info-card-content">
+                        {card['content']}
                     </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-        
-        # Espaçamento entre linhas
-        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+    
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+    
+    # Segunda linha de cards
+    cols = st.columns(3, gap="medium")
+    for idx, card in enumerate(info_cards_data[3:]):
+        with cols[idx]:
+            st.markdown(
+                f"""
+                <div class="info-card {card['color']}">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="{card['icon']}"></i>
+                        </div>
+                        <h3 class="info-card-title">{card['title']}</h3>
+                    </div>
+                    <div class="info-card-content">
+                        {card['content']}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 def render_resources():
@@ -977,6 +1020,35 @@ def render_resources():
                     """,
                     unsafe_allow_html=True,
                 )
+
+
+def render_metrics():
+    """Renderiza as métricas do dashboard"""
+    metrics_data = [
+        {"label": "Alunos Ativos", "value": "12", "change": "+2", "trend": "up"},
+        {"label": "PEIs Ativos", "value": "8", "change": "+1", "trend": "up"},
+        {"label": "Evidências Hoje", "value": "3", "change": "0", "trend": "neutral"},
+        {"label": "Meta Mensal", "value": "75%", "change": "+5%", "trend": "up"},
+    ]
+    
+    cols = st.columns(4, gap="medium")
+    for idx, metric in enumerate(metrics_data):
+        with cols[idx]:
+            trend_icon = "↗️" if metric["trend"] == "up" else "↘️" if metric["trend"] == "down" else "➡️"
+            trend_class = "metric-up" if metric["trend"] == "up" else "metric-down" if metric["trend"] == "down" else "metric-neutral"
+            
+            st.markdown(
+                f"""
+                <div class="metric-card">
+                    <span class="metric-label">{metric['label']}</span>
+                    <div class="metric-value">{metric['value']}</div>
+                    <div class="metric-change {trend_class}">
+                        {trend_icon} {metric['change']}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 # ==============================================================================
@@ -1084,12 +1156,14 @@ st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
 st.markdown("### 📚 Recursos Externos & Referências")
 render_resources()
 
-# Nova Seção: Guia de Inclusão OTIMIZADO
+# Métricas
+st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
+render_metrics()
+
+# Nova Seção: Guia de Inclusão
 st.markdown("---")
 st.markdown("## 📘 Guia Prático de Inclusão")
 st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-
-# Renderiza o guia com layout melhorado (2 colunas + tags)
 render_info_cards()
 
 # Rodapé
