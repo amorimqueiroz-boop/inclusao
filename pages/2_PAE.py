@@ -75,21 +75,68 @@ st.markdown(f"""
     .mod-card-rect:hover .mod-icon-area {{ transform: scale(1.05); }}
     .mod-content {{ flex-grow: 1; padding: 0 24px; display: flex; flex-direction: column; justify-content: center; }}
     .mod-title {{ font-weight: 800; font-size: 1.1rem; color: #1E293B; margin-bottom: 6px; letter-spacing: -0.3px; transition: color 0.2s; }}
-    .mod-card-rect:hover .mod-title {{ color: #4F46E5; }}
+    .mod-card-rect:hover .mod-title {{ color: #0D9488; }}
     .mod-desc {{ font-size: 0.8rem; color: #64748B; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
 
     /* CORES */
+    .c-teal {{ background: #0D9488 !important; }}
+    .bg-teal-soft {{ background: transparent !important; color: #0D9488 !important; }}
     .c-purple {{ background: #8B5CF6 !important; }}
     .bg-purple-soft {{ background: transparent !important; color: #8B5CF6 !important; }}
 
     /* ABAS */
-    .stTabs [data-baseweb="tab-list"] {{ gap: 4px !important; background-color: transparent !important; padding: 0 !important; border-radius: 0 !important; margin-top: 24px !important; border-bottom: none !important; flex-wrap: wrap !important; }}
-    .stTabs [data-baseweb="tab"] {{ height: 36px !important; white-space: nowrap !important; background-color: transparent !important; border-radius: 20px !important; padding: 0 16px !important; color: #64748B !important; font-weight: 600 !important; font-size: 0.72rem !important; text-transform: uppercase !important; letter-spacing: 0.3px !important; transition: all 0.2s ease !important; border: 1px solid #E2E8F0 !important; margin: 0 !important; }}
-    .stTabs [aria-selected="true"] {{ background-color: #8B5CF6 !important; color: white !important; font-weight: 700 !important; border: 1px solid #8B5CF6 !important; box-shadow: 0 1px 3px rgba(139, 92, 246, 0.2) !important; }}
-    .stTabs [data-baseweb="tab"]:not([aria-selected="true"]) {{ background-color: white !important; }}
-    .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{ background-color: #F8FAFC !important; border-color: #CBD5E1 !important; color: #475569 !important; }}
-    .stTabs [data-baseweb="tab"]::after, .stTabs [aria-selected="true"]::after, .stTabs [data-baseweb="tab"]::before, .stTabs [aria-selected="true"]::before {{ display: none !important; }}
-    .stTabs [data-baseweb="tab-list"] {{ border-bottom: none !important; }}
+    .stTabs [data-baseweb="tab-list"] {{ 
+        gap: 2px !important; 
+        background-color: transparent !important; 
+        padding: 0 !important; 
+        border-radius: 0 !important; 
+        margin-top: 24px !important; 
+        border-bottom: 2px solid #E2E8F0 !important; 
+        flex-wrap: wrap !important; 
+    }}
+    .stTabs [data-baseweb="tab"] {{ 
+        height: 36px !important; 
+        white-space: nowrap !important; 
+        background-color: transparent !important; 
+        border-radius: 8px 8px 0 0 !important; 
+        padding: 0 20px !important; 
+        color: #64748B !important; 
+        font-weight: 600 !important; 
+        font-size: 0.85rem !important; 
+        text-transform: uppercase !important; 
+        letter-spacing: 0.3px !important; 
+        transition: all 0.2s ease !important; 
+        border: none !important; 
+        margin: 0 2px 0 0 !important; 
+        position: relative !important;
+    }}
+    .stTabs [aria-selected="true"] {{ 
+        background-color: transparent !important; 
+        color: #0D9488 !important; 
+        font-weight: 700 !important; 
+        border: none !important; 
+        box-shadow: none !important; 
+    }}
+    .stTabs [aria-selected="true"]::after {{
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background-color: #0D9488;
+        border-radius: 2px 2px 0 0;
+    }}
+    .stTabs [data-baseweb="tab"]:not([aria-selected="true"]) {{ 
+        background-color: transparent !important; 
+    }}
+    .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{ 
+        background-color: #F8FAFC !important; 
+        color: #475569 !important; 
+    }}
+    .stTabs [data-baseweb="tab"]::before, .stTabs [aria-selected="true"]::before {{ 
+        display: none !important; 
+    }}
 
     /* PEDAGOGIA BOX */
     .pedagogia-box {{ background-color: #F8FAFC; border-left: 4px solid #CBD5E1; padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; font-size: 0.95rem; color: #4A5568; }}
@@ -132,8 +179,33 @@ st.markdown(f"""
     }}
     .prog-bar-fill {{ 
         height: 100%; 
-        background: linear-gradient(90deg, #8B5CF6, #6D28D9); 
+        background: linear-gradient(90deg, #0D9488, #14B8A6); 
         transition: width 1s; 
+    }}
+    
+    /* BOTÕES PERSONALIZADOS */
+    .stButton > button {{
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
+    }}
+    .stButton > button[kind="primary"] {{
+        background: linear-gradient(135deg, #0D9488, #14B8A6) !important;
+        border: none !important;
+    }}
+    .stButton > button[kind="primary"]:hover {{
+        background: linear-gradient(135deg, #0F766E, #0D9488) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2) !important;
+    }}
+    .stButton > button[kind="secondary"] {{
+        background: white !important;
+        color: #0D9488 !important;
+        border: 1px solid #0D9488 !important;
+    }}
+    .stButton > button[kind="secondary"]:hover {{
+        background: #F0FDFA !important;
+        border-color: #0D9488 !important;
     }}
     
     /* RESPONSIVIDADE */
@@ -192,8 +264,8 @@ st.markdown(
     f"""
     <div class="mod-card-wrapper">
         <div class="mod-card-rect">
-            <div class="mod-bar c-purple"></div>
-            <div class="mod-icon-area bg-purple-soft">
+            <div class="mod-bar c-teal"></div>
+            <div class="mod-icon-area bg-teal-soft">
                 <i class="ri-settings-5-fill"></i>
             </div>
             <div class="mod-content">
@@ -1037,12 +1109,12 @@ def renderizar_hub_recurso(tipo_recurso, conteudo_gerado, aluno_nome, dados_entr
 if is_ei:
     tab_barreiras, tab_projetos, tab_rotina, tab_ponte, tab_planejamento = st.tabs([
         "BARREIRAS NO BRINCAR", "BANCO DE EXPERIÊNCIAS", "ROTINA & ADAPTAÇÃO", 
-        "ARTICULAÇÃO", "🚀 PLANEJAMENTO DO CICLO"
+        "ARTICULAÇÃO", "PLANEJAMENTO DO CICLO"
     ])
 else:
     tab_barreiras, tab_plano, tab_tec, tab_ponte, tab_planejamento = st.tabs([
         "MAPEAR BARREIRAS", "PLANO DE HABILIDADES", "TEC. ASSISTIVA", 
-        "ARTICULAÇÃO", "🚀 PLANEJAMENTO DO CICLO"
+        "ARTICULAÇÃO", "PLANEJAMENTO DO CICLO"
     ])
 
 # ==============================================================================
@@ -1438,18 +1510,23 @@ with tab_ponte:
 # ABA 5: PLANEJAMENTO DO CICLO (CULMINAÇÃO)
 # ==============================================================================
 with tab_planejamento:
-    st.markdown("""
-    <div style='text-align: center; margin-bottom: 30px;'>
-        <h1 style='color: #8B5CF6;'>🚀 PLANEJAMENTO DO CICLO PAEE</h1>
-        <p style='color: #64748B;'>Culminação do PEI - Implementação prática das estratégias educacionais</p>
-    </div>
-    """, unsafe_allow_html=True)
+    col_titulo1, col_titulo2, col_titulo3 = st.columns([1, 2, 1])
+    with col_titulo2:
+        st.markdown("""
+        <div style='text-align: center; margin-bottom: 25px;'>
+            <h2 style='color: #1E293B; font-weight: 700; margin-bottom: 8px;'>📋 Planejamento do Ciclo AEE</h2>
+            <p style='color: #64748B; font-size: 0.95rem;'>Culminação do PEI - Implementação prática das estratégias</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Adicionar uma linha divisória sutil
+    st.markdown('<div style="border-top: 1px solid #E2E8F0; margin-bottom: 25px;"></div>', unsafe_allow_html=True)
     
     # Carregar PEI do aluno
     pei_data = carregar_pei_aluno(aluno['id'])
     
     # Seção 1: VISÃO GERAL DO PEI
-    with st.expander("📋 VISÃO GERAL DO PEI", expanded=True):
+    with st.expander("📋 Visão geral do PEI", expanded=True):
         col_visao1, col_visao2, col_visao3 = st.columns(3)
         
         with col_visao1:
@@ -1485,7 +1562,7 @@ with tab_planejamento:
                 st.metric("Status Ciclo", "🆕 Não iniciado")
     
     # Seção 2: METAS DO PEI PARA O CICLO
-    st.markdown("### 🎯 METAS DO PEI SELECIONADAS PARA ESTE CICLO")
+    st.markdown("### 🎯 Metas do PEI selecionadas")
     
     # Extrair metas do PEI
     metas_pei = extrair_metas_do_pei(pei_data)
@@ -1535,7 +1612,7 @@ with tab_planejamento:
         metas_selecionadas = []
     
     # Seção 3: RECURSOS GERADOS (das abas anteriores)
-    st.markdown("### 🧩 RECURSOS INCORPORADOS AO CICLO")
+    st.markdown("### 🧩 Recursos incorporados")
     
     # Coletar recursos das outras abas (do session_state)
     recursos_disponiveis = {
@@ -1585,7 +1662,7 @@ with tab_planejamento:
         recursos_selecionados = {}
     
     # Seção 4: CONFIGURAÇÃO DO CICLO
-    st.markdown("### ⚙️ CONFIGURAÇÃO DO CICLO")
+    st.markdown("### ⚙️ Configuração do ciclo")
     
     with st.form("config_ciclo_form"):
         col_config1, col_config2 = st.columns(2)
@@ -1643,7 +1720,7 @@ with tab_planejamento:
             usar_ia = st.checkbox("🤖 Usar IA para sugestão de cronograma", value=True)
         
         with col_gen2:
-            if st.form_submit_button("✨ GERAR PLANEJAMENTO DO CICLO", type="primary", use_container_width=True):
+            if st.form_submit_button("✨ Gerar planejamento", type="primary", use_container_width=True):
                 if not metas_selecionadas:
                     st.error("Selecione pelo menos uma meta do PEI para o ciclo.")
                 else:
@@ -1686,7 +1763,7 @@ with tab_planejamento:
     
     # Seção 5: PREVIEW E SALVAMENTO
     if 'ciclo_preview' in st.session_state:
-        st.markdown("### 📋 PREVIEW DO PLANEJAMENTO")
+        st.markdown("### 📋 Preview do planejamento")
         
         ciclo_preview = st.session_state.ciclo_preview
         
@@ -1727,7 +1804,7 @@ with tab_planejamento:
         col_save1, col_save2, col_save3 = st.columns(3)
         
         with col_save2:
-            if st.button("💾 SALVAR PLANEJAMENTO DO CICLO", type="primary", use_container_width=True):
+            if st.button("💾 Salvar planejamento", type="primary", use_container_width=True):
                 # Salvar no Supabase
                 resultado = salvar_paee_ciclo(aluno['id'], ciclo_preview)
                 
@@ -1754,8 +1831,8 @@ with tab_planejamento:
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #64748B; font-size: 0.9rem; padding: 20px;">
-    <p>🚀 <strong>Planejamento do Ciclo PAEE</strong> | Sistema Integrado Omnisfera</p>
-    <p>📋 <strong>Fluxo completo:</strong> PEI → Diagnóstico → Recursos → Planejamento do Ciclo → Execução → Avaliação</p>
-    <p>🔗 <strong>Integração:</strong> Todos os recursos são vinculados ao PEI e salvos no histórico do aluno.</p>
+    <p>📋 <strong>Planejamento do Ciclo AEE</strong> | Sistema Integrado Omnisfera</p>
+    <p>🔗 <strong>Fluxo completo:</strong> PEI → Diagnóstico → Recursos → Planejamento do Ciclo → Execução → Avaliação</p>
+    <p>💡 <strong>Integração:</strong> Todos os recursos são vinculados ao PEI e salvos no histórico do aluno.</p>
 </div>
 """, unsafe_allow_html=True)
