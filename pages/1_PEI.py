@@ -1451,69 +1451,78 @@ st.markdown(f"""
         color: #3B82F6 !important; /* COR AZUL MAIS INTENSA */
     }}
 
-    /* STYLING PARA AS ABAS DO STREAMLIT - DESIGN ATUALIZADO */
+    /* STYLING PARA AS ABAS DO STREAMLIT - DESIGN LIMPO E TRANSPARENTE */
     .stTabs [data-baseweb="tab-list"] {{
-        gap: 2px;
-        background-color: transparent !important; /* FUNDO TRANSPARENTE */
+        gap: 1px;
+        background-color: transparent !important; /* FUNDO COMPLETAMENTE TRANSPARENTE */
         padding: 4px 0;
-        border-radius: 12px;
+        border-radius: 0;
         margin-top: 20px;
-        border-bottom: 1px solid #E2E8F0; /* LINHA SUTIL PARA SEPARAÇÃO */
+        border-bottom: none !important; /* REMOVE QUALQUER LINHA */
     }}
 
     .stTabs [data-baseweb="tab"] {{
-        height: 42px;
-        white-space: pre-wrap;
+        height: 40px;
+        white-space: nowrap;
         background-color: transparent !important; /* FUNDO TRANSPARENTE */
-        border-radius: 8px 8px 0 0;
+        border-radius: 10px;
         gap: 1px;
         padding: 0 16px;
-        color: #94A3B8 !important; /* COR CINZA MAIS SUAVE PARA INATIVAS */
+        color: #94A3B8 !important; /* COR CINZA SUAVE PARA INATIVAS */
         font-weight: 600;
         font-size: 0.78rem;
         text-transform: uppercase;
         letter-spacing: 0.3px;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        opacity: 0.8; /* TRANSPARÊNCIA PARA ABAS INATIVAS */
+        border: 1px solid transparent !important; /* BORDA TRANSPARENTE */
+        opacity: 0.7; /* TRANSPARÊNCIA PARA ABAS INATIVAS */
     }}
 
     .stTabs [aria-selected="true"] {{
-        background-color: transparent !important;
+        background-color: rgba(59, 130, 246, 0.08) !important; /* FUNDO AZUL MUITO SUAVE */
         color: #3B82F6 !important; /* COR AZUL DO CARD/HEADER */
         font-weight: 800 !important;
         opacity: 1 !important;
+        border-color: #BAE6FD !important; /* BORDA AZUL CLARA */
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1); /* SOMBRA AZUL SUAVE */
+        transform: translateY(-1px); /* LEVE ELEVAÇÃO */
     }}
 
-    /* EFEITO "ACESO" PARA ABA ATIVA - GRADIENTE AZUL NA BORDA INFERIOR */
-    .stTabs [aria-selected="true"]::after {{
-        content: '';
-        position: absolute;
-        bottom: -1px;
-        left: 12px;
-        right: 12px;
-        height: 3px;
-        background: linear-gradient(90deg, #3B82F6, #60A5FA);
-        border-radius: 3px 3px 0 0;
-        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    /* REMOVENDO QUALQUER TRAÇO/SUBLINHADO */
+    .stTabs [aria-selected="true"]::after,
+    .stTabs [aria-selected="true"]::before {{
+        content: none !important;
+        display: none !important;
     }}
 
     .stTabs [data-baseweb="tab"]:hover {{
-        background-color: rgba(248, 250, 252, 0.8) !important; /* FUNDO MUITO SUAVE NO HOVER */
-        color: #475569 !important;
+        background-color: rgba(248, 250, 252, 0.6) !important; /* FUNDO MUITO SUAVE NO HOVER */
+        color: #64748B !important;
         opacity: 0.9;
-        transform: translateY(-1px);
+        border-color: #E2E8F0 !important;
     }}
 
-    /* ANIMAÇÃO PARA O EFEITO "ACESO" */
-    @keyframes pulse-glow {{
-        0% {{ box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }}
-        70% {{ box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); }}
-        100% {{ box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }}
+    .stTabs [aria-selected="true"]:hover {{
+        background-color: rgba(59, 130, 246, 0.12) !important;
+        color: #2563EB !important;
+        box-shadow: 0 3px 12px rgba(59, 130, 246, 0.15);
+        transform: translateY(-2px);
+    }}
+
+    /* ANIMAÇÃO SUAVE PARA O EFEITO "ACESO" - SEM PULSAÇÃO */
+    @keyframes gentle-appear {{
+        from {{ 
+            background-color: transparent;
+            box-shadow: none;
+        }}
+        to {{
+            background-color: rgba(59, 130, 246, 0.08);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }}
     }}
 
     .stTabs [aria-selected="true"] {{
-        animation: pulse-glow 2s infinite;
+        animation: gentle-appear 0.3s ease-out forwards;
     }}
 
     /* RESPONSIVIDADE */
@@ -1543,21 +1552,12 @@ st.markdown(f"""
         .mod-content {{ padding: 16px 0 0 0; }}
         .stTabs [data-baseweb="tab-list"] {{
             flex-wrap: wrap;
-            border-bottom: none;
+            gap: 4px;
         }}
         .stTabs [data-baseweb="tab"] {{
             flex: 1 0 calc(33.333% - 4px);
             margin-bottom: 4px;
-            border: 1px solid #E2E8F0;
-            border-radius: 8px;
             height: 36px;
-        }}
-        .stTabs [aria-selected="true"]::after {{
-            display: none; /* ESCONDE A LINHA EM MOBILE */
-        }}
-        .stTabs [aria-selected="true"] {{
-            background-color: #F0F9FF !important; /* FUNDO AZUL CLARO EM MOBILE */
-            border-color: #BAE6FD !important;
         }}
     }}
 
