@@ -2873,21 +2873,23 @@ with tab8:
         )
 
     # --------------------------------------------------------------------------
-# 7) EXPORTAÇÃO + SINCRONIZAÇÃO
-# --------------------------------------------------------------------------
+    # 7) EXPORTAÇÃO + SINCRONIZAÇÃO (BLOCO COMPLETO CORRIGIDO)
+    # --------------------------------------------------------------------------
     st.divider()
     st.markdown("#### 📤 Exportação e Sincronização")
 
-    # Verifica se existe conteúdo para exportar
+    # Verifica se existe conteúdo gerado pela IA
     if not d.get("ia_sugestao"):
         st.info("Gere o Plano na aba **Consultoria IA** para liberar PDF, Word e Sincronização.")
-        # Se estiver dentro de uma função ou loop, use return. Se for script corrido, st.stop() funciona.
+        # Se estiver dentro de uma função use return, se for script corrido:
         # st.stop() 
     else:
-        # --- CORREÇÃO DO ERRO: CRIAR AS COLUNAS AQUI ---
-        col_docs, col_backup, col_sys = st.columns(3)
+        # ======================================================================
+        # 👇 A CORREÇÃO ESTÁ NESTA LINHA ABAIXO. ELA PRECISA EXISTIR AQUI 👇
+        # ======================================================================
+        col_docs, col_backup, col_sys = st.columns(3) 
 
-        # ---------------- DOCS (PDF/WORD) ----------------
+        # ---------------- COLUNA 1: DOCS ----------------
         with col_docs:
             st.caption("📄 Documentos")
 
@@ -2921,14 +2923,13 @@ with tab8:
                     use_container_width=True
                 )
             except Exception as e:
-                # Botão desativado visualmente se der erro
-                st.button("Baixar Word (Erro)", disabled=True, use_container_width=True)
+                st.warning("Word indisponível no momento.")
 
-        # ---------------- BACKUP (LOCAL) ----------------
+        # ---------------- COLUNA 2: BACKUP LOCAL ----------------
         with col_backup:
             st.caption("💾 Backup (JSON)")
             st.markdown(
-                "<div style='font-size:.85rem; color:#4A5568; margin-bottom:8px;'>"
+                "<div style='font-size:.8rem; color:#64748B; margin-bottom:8px;'>"
                 "Salva um arquivo no seu computador para garantir que nada se perca."
                 "</div>",
                 unsafe_allow_html=True
@@ -2941,17 +2942,17 @@ with tab8:
                 use_container_width=True
             )
 
-        # ---------------- CLOUD (SUPABASE COMPLETO) ----------------
+        # ---------------- COLUNA 3: NUVEM (SUPABASE COMPLETO) ----------------
         with col_sys:
-            st.caption("🌐 Omnisfera Cloud")
+            st.caption("🌐 Nuvem (Supabase)")
             st.markdown(
-                "<div style='font-size:.85rem; color:#4A5568; margin-bottom:8px;'>"
-                "Sincroniza cadastro e <b>salva o conteúdo completo</b> na nuvem."
+                "<div style='font-size:.8rem; color:#64748B; margin-bottom:8px;'>"
+                "Salva cadastro + conteúdo completo (JSON) na nuvem."
                 "</div>",
                 unsafe_allow_html=True
             )
 
-            # Checagem rápida de credenciais
+            # Helper interno de verificação
             def _cloud_ready_check():
                 try:
                     url = str(st.secrets.get("SUPABASE_URL", "")).strip()
@@ -2960,16 +2961,16 @@ with tab8:
                 except:
                     return False
 
-            if st.button("🔗 Sincronizar Tudo", type="primary", use_container_width=True, key="btn_sync_full_final"):
+            if st.button("🔗 Sincronizar Tudo", type="primary", use_container_width=True, key="btn_sync_final_fix"):
                 if not _cloud_ready_check():
                     st.error("⚠️ Configure os Secrets do Supabase.")
                 else:
                     try:
-                        with st.spinner("Sincronizando dados completos..."):
+                        with st.spinner("Sincronizando dados..."):
                             # 1. Tratar datas
                             nasc_iso = d.get("nasc").isoformat() if hasattr(d.get("nasc"), "isoformat") else None
                             
-                            # 2. Dados Básicos (Cadastro)
+                            # 2. Dados Básicos
                             student_payload = {
                                 "name": d.get("nome"),
                                 "birth_date": nasc_iso,
@@ -2983,47 +2984,43 @@ with tab8:
                             sid = st.session_state.get("selected_student_id")
                             
                             if not sid:
-                                # Tenta criar novo
                                 created = db_create_student(student_payload)
                                 if created and isinstance(created, dict):
                                     sid = created.get("id")
                                     st.session_state["selected_student_id"] = sid
                             else:
-                                # Atualiza cadastro existente
                                 db_update_student(sid, student_payload)
 
-                            # 4. SALVAR CONTEÚDO COMPLETO (JSONB)
+                            # 4. SALVAR CONTEÚDO COMPLETO
                             if sid:
-                                # Chama a função nova que você adicionou
+                                # Certifique-se de ter colado a função 'db_update_pei_content' lá em cima nas funções!
                                 db_update_pei_content(sid, d)
                                 
-                                # Prepara backup para download imediato
                                 st.session_state["ultimo_backup_json"] = json.dumps(d, default=str, ensure_ascii=False)
                                 st.session_state["sync_sucesso"] = True
                                 
-                                st.toast("PEI salvo na nuvem com sucesso!", icon="☁️")
+                                st.toast("Salvo na nuvem com sucesso!", icon="☁️")
                                 st.rerun()
                             else:
-                                st.error("Erro ao identificar ID do aluno.")
+                                st.error("Erro: ID do aluno não encontrado.")
 
                     except Exception as e:
                         st.error(f"Erro na sincronização: {e}")
 
-            # Feedback de sucesso + Download
+            # Feedback e Download Pós-Sync
             if st.session_state.get("sync_sucesso"):
-                st.success("✅ Tudo salvo no Supabase!")
-                
+                st.success("✅ Tudo salvo!")
                 timestamp = datetime.now().strftime("%d-%m_%Hh%M")
                 nome_clean = (d.get('nome') or 'Aluno').replace(' ', '_')
                 
                 st.download_button(
-                    label="📂 BAIXAR BACKUP AGORA (.JSON)",
+                    label="📂 BAIXAR CÓPIA AGORA",
                     data=st.session_state["ultimo_backup_json"],
                     file_name=f"PEI_{nome_clean}_{timestamp}.json",
                     mime="application/json",
                     type="secondary",
                     use_container_width=True,
-                    key="btn_post_sync_download_final"
+                    key="btn_post_sync_download_fix"
                 )
 
 # ==============================================================================
