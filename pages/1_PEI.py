@@ -1451,7 +1451,7 @@ st.markdown(f"""
         color: #3B82F6 !important; /* COR AZUL MAIS INTENSA */
     }}
 
-    /* STYLING PARA AS ABAS DO STREAMLIT - COM EMOJIS */
+    /* STYLING PARA AS ABAS DO STREAMLIT - COM EMOJIS E TEXTO MINÚSCULO */
     .stTabs [data-baseweb="tab-list"] {{
         gap: 0;
         background-color: transparent !important;
@@ -1466,12 +1466,12 @@ st.markdown(f"""
         white-space: nowrap;
         background-color: transparent !important;
         border-radius: 0;
-        padding: 0 20px;
+        padding: 0 14px !important; /* Reduzido para caber mais */
         color: #94A3B8 !important;
-        font-weight: 600;
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
+        font-weight: 500; /* Peso médio para minúsculas */
+        font-size: 0.74rem !important; /* Um pouco menor */
+        text-transform: none !important; /* Remove uppercase */
+        letter-spacing: 0.1px; /* Menor espaçamento */
         transition: all 0.2s ease;
         border: none !important;
         position: relative;
@@ -1479,37 +1479,37 @@ st.markdown(f"""
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 8px !important;
+        gap: 6px !important; /* Menor gap */
     }}
 
     /* EMOJIS NAS ABAS - ESTADO INATIVO */
     .stTabs [data-baseweb="tab"]::before {{
-        font-size: 1rem !important;
+        font-size: 0.95rem !important; /* Um pouco menor */
         filter: grayscale(100%) !important;
         opacity: 0.7 !important;
         transition: all 0.2s ease !important;
     }}
 
-    /* DEFINIR EMOJIS PARA CADA ABA */
-    .stTabs [data-baseweb="tab"]:nth-child(1)::before {{ content: "🏠"; }} /* INÍCIO */
-    .stTabs [data-baseweb="tab"]:nth-child(2)::before {{ content: "👤"; }} /* ESTUDANTE */
-    .stTabs [data-baseweb="tab"]:nth-child(3)::before {{ content: "📊"; }} /* EVIDÊNCIAS */
-    .stTabs [data-baseweb="tab"]:nth-child(4)::before {{ content: "🤝"; }} /* REDE DE APOIO */
-    .stTabs [data-baseweb="tab"]:nth-child(5)::before {{ content: "🗺️"; }} /* MAPEAMENTO */
-    .stTabs [data-baseweb="tab"]:nth-child(6)::before {{ content: "📝"; }} /* PLANO DE AÇÃO */
-    .stTabs [data-baseweb="tab"]:nth-child(7)::before {{ content: "📈"; }} /* MONITORAMENTO */
-    .stTabs [data-baseweb="tab"]:nth-child(8)::before {{ content: "🤖"; }} /* CONSULTORIA IA */
-    .stTabs [data-baseweb="tab"]:nth-child(9)::before {{ content: "📑"; }} /* DASHBOARD & DOCS */
-    .stTabs [data-baseweb="tab"]:nth-child(10)::before {{ content: "🎮"; }} /* JORNADA GAMIFICADA */
+    /* DEFINIR EMOJIS PARA CADA ABA (COM OS NOVOS EMOJIS) */
+    .stTabs [data-baseweb="tab"]:nth-child(1)::before {{ content: "🏛️"; }} /* início */
+    .stTabs [data-baseweb="tab"]:nth-child(2)::before {{ content: "🎓"; }} /* estudante */
+    .stTabs [data-baseweb="tab"]:nth-child(3)::before {{ content: "🔎"; }} /* evidências */
+    .stTabs [data-baseweb="tab"]:nth-child(4)::before {{ content: "🔗"; }} /* rede de apoio */
+    .stTabs [data-baseweb="tab"]:nth-child(5)::before {{ content: "🧭"; }} /* mapeamento (BÚSSOLA) */
+    .stTabs [data-baseweb="tab"]:nth-child(6)::before {{ content: "🛠️"; }} /* plano de ação */
+    .stTabs [data-baseweb="tab"]:nth-child(7)::before {{ content: "📶"; }} /* monitoramento */
+    .stTabs [data-baseweb="tab"]:nth-child(8)::before {{ content: "✨"; }} /* consultoria ia */
+    .stTabs [data-baseweb="tab"]:nth-child(9)::before {{ content: "🗂️"; }} /* dashboard & docs */
+    .stTabs [data-baseweb="tab"]:nth-child(10)::before {{ content: "🚀"; }} /* jornada gamificada */
 
     /* ESTADO ATIVO */
     .stTabs [aria-selected="true"] {{
         background-color: transparent !important;
         color: #3B82F6 !important;
-        font-weight: 700 !important;
+        font-weight: 600 !important; /* Um pouco mais forte para ativo */
     }}
 
-    /* INDICADOR MINIMALISTA - APENAS BORDA INFERIOR */
+    /* INDICADOR MINIMALISTA */
     .stTabs [aria-selected="true"] {{
         border-bottom: 2px solid #3B82F6 !important;
     }}
@@ -1539,11 +1539,11 @@ st.markdown(f"""
         .mod-card-rect {{ height: 120px; }}
         .mod-icon-area {{ width: 80px; }}
         .stTabs [data-baseweb="tab"] {{
-            font-size: 0.7rem;
-            padding: 0 16px;
+            font-size: 0.7rem !important;
+            padding: 0 12px !important;
         }}
         .stTabs [data-baseweb="tab"]::before {{
-            font-size: 0.9rem !important;
+            font-size: 0.85rem !important;
         }}
     }}
 
@@ -1573,6 +1573,8 @@ st.markdown(f"""
             border-radius: 8px;
             height: 36px;
             margin-bottom: 4px;
+            text-align: center;
+            justify-content: center !important;
         }}
         .stTabs [aria-selected="true"] {{
             border-bottom: none !important;
@@ -1580,18 +1582,18 @@ st.markdown(f"""
             border-color: #BAE6FD !important;
         }}
         .stTabs [data-baseweb="tab"]::before {{
-            font-size: 0.85rem !important;
+            font-size: 0.8rem !important;
         }}
     }}
 
     @media (max-width: 640px) {{
         .stTabs [data-baseweb="tab"] {{
             flex: 1 0 calc(50% - 4px);
-            font-size: 0.65rem;
-            padding: 0 12px;
+            font-size: 0.65rem !important;
+            padding: 0 8px !important;
         }}
         .stTabs [data-baseweb="tab"]::before {{
-            font-size: 0.8rem !important;
+            font-size: 0.75rem !important;
         }}
     }}
 </style>
@@ -1634,12 +1636,11 @@ st.markdown(
 )
 
 # ==============================================================================
-# ABAS DO PEI (COM EMOJIS NOS NOMES PARA REFERÊNCIA)
+# ABAS DO PEI (NOMES ORIGINAIS EM MINÚSCULAS)
 # ==============================================================================
-# Mantendo os nomes originais para o JavaScript do CSS
 abas = [
-    "INÍCIO", "ESTUDANTE", "EVIDÊNCIAS", "REDE DE APOIO", "MAPEAMENTO",
-    "PLANO DE AÇÃO", "MONITORAMENTO", "CONSULTORIA IA", "DASHBOARD & DOCS", "JORNADA GAMIFICADA"
+    "início", "estudante", "evidências", "rede de apoio", "mapeamento",
+    "plano de ação", "monitoramento", "consultoria ia", "dashboard & docs", "jornada gamificada"
 ]
 
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
