@@ -384,40 +384,7 @@ def carregar_banco():
 if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
     st.session_state.banco_estudantes = carregar_banco()
 
-# --- HEADER UNIFICADO (CLEAN COM DIVISOR - LARANJA) ---
-def get_img_tag_custom(file_path, width):
-    if os.path.exists(file_path):
-        with open(file_path, "rb") as f:
-            data = base64.b64encode(f.read()).decode("utf-8")
-        return f'<img src="data:image/png;base64,{data}" width="{width}" style="object-fit: contain;">'
-    return ""
 
-img_pae = get_img_tag_custom("pae.png", "220")
-
-st.markdown(f"""
-<div style="background-color: white; 
-            padding: 35px 40px; 
-            border-radius: 16px; 
-            border: 1px solid #E2E8F0; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02); 
-            margin-bottom: 20px; 
-            display: flex; 
-            align-items: center; 
-            gap: 20px;
-            justify-content: flex-start;">
-    <div style="flex-shrink: 0;">
-        {img_pae}
-    </div>
-    <div style="font-size: 1.2rem; 
-                color: #F97316; 
-                font-weight: 600; 
-                border-left: 2px solid #FDBA74; 
-                padding-left: 20px; 
-                line-height: 1.2;">
-        Sala de Recursos & Eliminação de Barreiras
-    </div>
-</div>
-""", unsafe_allow_html=True)
 
 if not st.session_state.banco_estudantes:
     st.warning("⚠️ Nenhum aluno encontrado para o seu usuário. Cadastre no módulo PEI primeiro.")
