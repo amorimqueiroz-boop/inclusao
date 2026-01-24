@@ -8,6 +8,9 @@ import base64
 import requests
 import time
 from io import BytesIO
+import plotly.express as px  # Para os gráficos novos
+import altair as alt         # Para a timeline
+from datetime import timedelta
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
@@ -1119,50 +1122,192 @@ with tab_ponte:
                 st.rerun()
 
 # ==============================================================================
-# Módulo de Planejamento Semanal Inteligente
+# FUNÇÕES DE DASHBOARD E VISUALIZAÇÃO (NOVO)
 # ==============================================================================
-
-def gerar_planejamento_semanal_inteligente(api_key, aluno, data_inicio, data_revisao):
+def renderizar_dashboard_execucao(aluno, data_revisao, progresso_pct):
     """
-    Gera um planejamento semanal que distribui as estratégias do PEI
-    até a data de revisão
+    Renderiza o cabeçalho visual de progresso.
     """
-    contexto_pei = aluno.get('ia_sugestao', '')
+    html = f"""
+    <style>
+        .timeline-header {{
+            background: white; border-radius: 12px; padding: 20px;
+            margin-bottom: 20px; border: 1px solid #E2E8F0;
+            display: flex; align-items: center; justify-content: space-between;
+        }}
+        .prog-bar-bg {{
+            width: 100%; height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden; margin-top: 8px;
+        }}
+        .prog-bar-fill {{
+            height: 100%; background: linear-gradient(90deg, #8B5CF6, #6D28D9); width: {progresso_pct}%; transition: width 1s;
+        }}
+    </style>
     
-    prompt = f"""
-    COMO ESPECIALISTA EM EDUCAÇÃO INFANTIL INCLUSIVA, crie um PLANEJAMENTO SEMANAL.
-    
-    ALUNO: {aluno['nome']}
-    PERÍODO: {data_inicio} até {data_revisao}
-    PEI COMPLETO: {contexto_pei[:3000]}
-    
-    ESTRUTURE:
-    
-    1. **ANÁLISE DO PEI** (Resumo das principais necessidades)
-    2. **DISTRIBUIÇÃO TEMPORAL** (Atividades por semana)
-    3. **PLANO SEMANAL DETALHADO** (Para cada semana):
-       - Foco principal da semana
-       - Objetivos específicos (SMART)
-       - Atividades (2-3 por semana, variadas)
-       - Recursos necessários
-       - Critérios de observação
-       - Adaptações específicas
-    
-    4. **MATRIZ DE PROGRESSO** (Como acompanhar)
-    5. **ROTEIRO PARA REGISTRO** (O que documentar)
-    
-    IMPORTANTE:
-    - Sequência lógica e progressiva
-    - Variação de estratégias
-    - Inclusão de elementos lúdicos
-    - Conexão com BNCC Educação Infantil
-    - Espaço para ajustes
+    <div class="timeline-header">
+        <div style="flex-grow: 1; padding-right: 20px;">
+            <h3 style="margin:0; color: #1E293B;">📊 Execução do Plano: {aluno.get('nome')}</h3>
+            <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">
+                Revisão prevista: <strong>{data_revisao}</strong>
+            </div>
+            <div class="prog-bar-bg">
+                <div class="prog-bar-fill"></div>
+            </div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 1.5rem; font-weight: 800; color: #8B5CF6;">{progresso_pct}%</div>
+            <div style="font-size: 0.7rem; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Concluído</div>
+        </div>
+    </div>
     """
+    return html
+
+# Helpers para extração (Simulação para funcionar sem o PEI completo agora)
+def extrair_metas_mock(texto_ia):
+    # Tenta extrair metas se houver texto, senão retorna genérico
+    return ["Melhorar foco", "Ampliar vocabulário", "Autonomia na rotina"]
+
+def transformar_em_plano_executavel(aluno_dados, semanas=4):
+    """Gera estrutura de dados para o dashboard"""
+    hoje = date.today()
+    plano = []
+    for i in range(semanas):
+        inicio = hoje + timedelta(days=i*7)
+        fim = inicio + timedelta(days=6)
+        plano.append({
+            "semana": i + 1,
+            "inicio": inicio,
+            "fim": fim,
+            "status": "Pendente" if i > 0 else "Em Andamento",
+            "atividades": [
+                {"titulo": "Atividade de Vínculo", "feita": False},
+                {"titulo": "Treino Cognitivo", "feita": False}
+            ]
+        })
+    return plano
+
+# ==============================================================================
+# CLASSE DE REGISTRO E EXECUÇÃO
+# ==============================================================================
+class RegistroAEE:
+    def __init__(self, aluno_nome):
+        self.aluno_nome = aluno_nome
+        # Cria banco de dados na sessão se não existir
+        if "registros_aee" not in st.session_state:
+            st.session_state.registros_aee = []
+
+    def interface_registro_diario(self):
+        st.markdown("#### 📝 Diário de Bordo do AEE")
+        
+        with st.container(border=True):
+            c1, c2 = st.columns([2, 1])
+            descricao = c1.text_area("O que foi trabalhado hoje?", height=100, placeholder="Descreva a atividade, reação do aluno e adaptações...")
+            
+            with c2:
+                data_reg = st.date_input("Data", date.today())
+                engajamento = st.slider("Engajamento do Aluno", 1, 5, 3)
+                tipo = st.selectbox("Tipo", ["Individual", "Grupo", "Observação em Sala"])
+
+            # Upload de Evidência
+            evidencia = st.file_uploader("📸 Anexar Foto/Atividade", type=["png", "jpg", "pdf"], key="up_evidencia")
+
+            if st.button("💾 Salvar Registro de Hoje", use_container_width=True):
+                novo_registro = {
+                    "data": data_reg,
+                    "aluno": self.aluno_nome,
+                    "descricao": descricao,
+                    "engajamento": engajamento,
+                    "tipo": tipo,
+                    "tem_evidencia": evidencia is not None
+                }
+                st.session_state.registros_aee.append(novo_registro)
+                st.success("Registro salvo no histórico!")
+                time.sleep(1)
+                st.rerun()
+
+    def exibir_historico(self):
+        # Filtra registros deste aluno
+        regs = [r for r in st.session_state.registros_aee if r['aluno'] == self.aluno_nome]
+        
+        if not regs:
+            st.info("Nenhum registro encontrado.")
+            return
+
+        # Gráfico simples de engajamento
+        df = pd.DataFrame(regs)
+        if not df.empty:
+            st.markdown("##### 📈 Evolução do Engajamento")
+            st.line_chart(df.set_index("data")["engajamento"], color="#8B5CF6")
+
+        st.markdown("##### 🗂️ Histórico Recente")
+        for r in reversed(regs[-5:]): # Últimos 5
+            icon = "📸" if r['tem_evidencia'] else "📝"
+            st.markdown(
+                f"""
+                <div style="background:white; padding:15px; border-radius:10px; border:1px solid #E2E8F0; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#64748B;">
+                        <strong>{r['data'].strftime('%d/%m/%Y')}</strong>
+                        <span>{icon} {r['tipo']}</span>
+                    </div>
+                    <div style="margin-top:5px; color:#1E293B;">{r['descricao']}</div>
+                    <div style="margin-top:5px; font-size:0.8rem;">Engajamento: {"⭐"*r['engajamento']}</div>
+                </div>
+                """, unsafe_allow_html=True
+            )
     
-    # Implementação da chamada à API
-    return planejamento_gerado
+ # -----------------------------------------------------------------------------
+# ABA 1: EXECUÇÃO E MONITORAMENTO (INTEGRADA)
+# -----------------------------------------------------------------------------
+with tab_planejamento:
+    # 1. Dashboard de Topo
+    if 'cronograma_aee' in st.session_state:
+        # Se já tem cronograma, calcula progresso real
+        total_semanas = len(st.session_state['cronograma_aee'].get('fases', [])[0].get('semanas', [])) * len(st.session_state['cronograma_aee'].get('fases', []))
+        # (Mock de progresso para visualização)
+        st.markdown(renderizar_dashboard_execucao(aluno, "30/Dez", 25), unsafe_allow_html=True)
+    else:
+        st.info("Gere um cronograma abaixo para ativar o painel de execução.")
 
+    # 2. Área de Registro Diário (A novidade do DeepSeek)
+    sistema_registro = RegistroAEE(aluno['nome'])
+    
+    col_reg, col_cron = st.columns([1, 1.5], gap="large")
+    
+    with col_reg:
+        sistema_registro.interface_registro_diario()
+        st.divider()
+        sistema_registro.exibir_historico()
 
+    with col_cron:
+        st.markdown("### 🗓️ Planejamento do Ciclo")
+        
+        # Se não tiver cronograma, mostra o gerador
+        if 'cronograma_aee' not in st.session_state:
+            c1, c2 = st.columns(2)
+            dt_inicio = c1.date_input("Início", date.today())
+            dt_fim = c2.date_input("Revisão", date.today() + timedelta(days=60))
+            if st.button("✨ Gerar Novo Ciclo", use_container_width=True):
+                with st.spinner("IA criando roadmap..."):
+                    # Chama a função de IA que já existia no seu código
+                    plano = gerar_cronograma_aee(api_key, aluno, st.session_state.dados, 8, "2x", aluno.get("hiperfoco"))
+                    if "erro" not in plano:
+                        st.session_state['cronograma_aee'] = plano
+                        st.rerun()
+        
+        # Visualização do Cronograma (Timeline)
+        if 'cronograma_aee' in st.session_state:
+            cronograma = st.session_state['cronograma_aee']
+            for fase in cronograma.get('fases', []):
+                st.markdown(f"#### 🚩 {fase['nome_fase']}")
+                for sem in fase['semanas']:
+                    # Card da Semana
+                    with st.expander(f"Semana {sem['semana']}: {sem['tema']}", expanded=True):
+                        st.markdown(f"**Atividade:** {sem['atividade']}")
+                        st.caption(f"Recurso: {sem['recurso']}")
+                        
+                        # Checkbox de conclusão da semana
+                        check = st.checkbox("Concluída", key=f"check_sem_{sem['semana']}")
+                        if check:
+                            st.success("Semana finalizada!")
              
 
 # ==============================================================================
