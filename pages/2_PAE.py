@@ -396,6 +396,7 @@ def _http_error(prefix: str, r: requests.Response):
 @st.cache_data(ttl=10, show_spinner=False)
 def list_planos_pei_rest(workspace: str, responsavel: str):
     """Busca planos PEI do Supabase usando a mesma lógica da página Alunos"""
+    # CORREÇÃO: Usando o nome correto da tabela sem acento
     base = (
         f"{_sb_url()}/rest/v1/planos_pei"
         f"?select=id,nome_aluno,serie,hiperfoco,conteudo_gerado,responsavel,workspace,created_at"
@@ -405,8 +406,23 @@ def list_planos_pei_rest(workspace: str, responsavel: str):
     )
     r = requests.get(base, headers=_headers(), timeout=20)
     if r.status_code >= 400:
-        _http_error("List planos_pei falhou", r)
-    data = r.json()
+        # Se falhar, tentar tabela alternativa
+        try:
+            base_alt = (
+                f"{_sb_url()}/rest/v1/pei_plans"
+                f"?select=id,nome_aluno,serie,hiperfoco,conteudo_gerado,responsavel,workspace,created_at"
+                f"&workspace=eq.{workspace}"
+                f"&responsavel=eq.{responsavel}"
+                f"&order=created_at.desc"
+            )
+            r_alt = requests.get(base_alt, headers=_headers(), timeout=20)
+            if r_alt.status_code >= 400:
+                _http_error("List planos_pei falhou (tentou 'planos_pei' e 'pei_plans')", r)
+            data = r_alt.json()
+        except:
+            _http_error("List planos_pei falhou", r)
+    else:
+        data = r.json()
     return data if isinstance(data, list) else []
 
 # ==============================================================================
