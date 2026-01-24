@@ -1451,99 +1451,73 @@ st.markdown(f"""
         color: #3B82F6 !important; /* COR AZUL MAIS INTENSA */
     }}
 
-    /* STYLING PARA AS ABAS DO STREAMLIT - COM EMOJIS E TEXTO MINÚSCULO */
+    /* ABAS EM FORMATO DE PÍLULAS - DESIGN LIMPO E FUNCIONAL */
     .stTabs [data-baseweb="tab-list"] {{
-        gap: 0;
+        gap: 4px !important;
         background-color: transparent !important;
-        padding: 0;
-        border-radius: 0;
-        margin-top: 24px;
-        border-bottom: 1px solid #E2E8F0;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        margin-top: 24px !important;
+        border-bottom: none !important;
+        flex-wrap: wrap !important;
     }}
 
     .stTabs [data-baseweb="tab"] {{
-        height: 42px;
-        white-space: nowrap;
+        height: 36px !important;
+        white-space: nowrap !important;
         background-color: transparent !important;
-        border-radius: 0;
-        padding: 0 14px !important; /* Reduzido para caber mais */
-        color: #94A3B8 !important;
-        font-weight: 500; /* Peso médio para minúsculas */
-        font-size: 0.74rem !important; /* Um pouco menor */
-        text-transform: none !important; /* Remove uppercase */
-        letter-spacing: 0.1px; /* Menor espaçamento */
-        transition: all 0.2s ease;
-        border: none !important;
-        position: relative;
-        margin-bottom: -1px;
+        border-radius: 20px !important;
+        padding: 0 16px !important;
+        color: #64748B !important;
+        font-weight: 600 !important;
+        font-size: 0.72rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.3px !important;
+        transition: all 0.2s ease !important;
+        border: 1px solid #E2E8F0 !important;
+        position: relative !important;
+        margin: 0 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 6px !important; /* Menor gap */
     }}
 
-    /* EMOJIS NAS ABAS - ESTADO INATIVO */
-    .stTabs [data-baseweb="tab"]::before {{
-        font-size: 0.95rem !important; /* Um pouco menor */
-        filter: grayscale(100%) !important;
-        opacity: 0.7 !important;
-        transition: all 0.2s ease !important;
-    }}
-
-    /* DEFINIR EMOJIS PARA CADA ABA (COM OS NOVOS EMOJIS) */
-    .stTabs [data-baseweb="tab"]:nth-child(1)::before {{ content: "🏛️"; }} /* início */
-    .stTabs [data-baseweb="tab"]:nth-child(2)::before {{ content: "🎓"; }} /* estudante */
-    .stTabs [data-baseweb="tab"]:nth-child(3)::before {{ content: "🔎"; }} /* evidências */
-    .stTabs [data-baseweb="tab"]:nth-child(4)::before {{ content: "🔗"; }} /* rede de apoio */
-    .stTabs [data-baseweb="tab"]:nth-child(5)::before {{ content: "🧭"; }} /* mapeamento (BÚSSOLA) */
-    .stTabs [data-baseweb="tab"]:nth-child(6)::before {{ content: "🛠️"; }} /* plano de ação */
-    .stTabs [data-baseweb="tab"]:nth-child(7)::before {{ content: "📶"; }} /* monitoramento */
-    .stTabs [data-baseweb="tab"]:nth-child(8)::before {{ content: "✨"; }} /* consultoria ia */
-    .stTabs [data-baseweb="tab"]:nth-child(9)::before {{ content: "🗂️"; }} /* dashboard & docs */
-    .stTabs [data-baseweb="tab"]:nth-child(10)::before {{ content: "🚀"; }} /* jornada gamificada */
-
-    /* ESTADO ATIVO */
+    /* ABA ATIVA - FUNDO AZUL SÓLIDO */
     .stTabs [aria-selected="true"] {{
-        background-color: transparent !important;
-        color: #3B82F6 !important;
-        font-weight: 600 !important; /* Um pouco mais forte para ativo */
+        background-color: #3B82F6 !important;
+        color: white !important;
+        font-weight: 700 !important;
+        border: 1px solid #3B82F6 !important;
+        box-shadow: 0 1px 3px rgba(59, 130, 246, 0.2) !important;
     }}
 
-    /* INDICADOR MINIMALISTA */
-    .stTabs [aria-selected="true"] {{
-        border-bottom: 2px solid #3B82F6 !important;
-    }}
-
-    /* EMOJI ATIVO (SEM GRAYSCALE) */
-    .stTabs [aria-selected="true"]::before {{
-        filter: grayscale(0%) !important;
-        opacity: 1 !important;
-    }}
-
-    /* HOVER EFFECT */
-    .stTabs [data-baseweb="tab"]:hover {{
+    /* ABA INATIVA - APENAS CONTORNO SUTIL */
+    .stTabs [data-baseweb="tab"]:not([aria-selected="true"]) {{
+        background-color: white !important;
         color: #64748B !important;
-        background-color: #F8FAFC !important;
+        border: 1px solid #E2E8F0 !important;
     }}
 
-    .stTabs [data-baseweb="tab"]:hover::before {{
-        opacity: 0.9 !important;
+    /* HOVER SIMPLES E DIRETO */
+    .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{
+        background-color: #F8FAFC !important;
+        border-color: #CBD5E1 !important;
+        color: #475569 !important;
     }}
 
     .stTabs [aria-selected="true"]:hover {{
-        color: #2563EB !important;
+        background-color: #2563EB !important;
+        border-color: #2563EB !important;
     }}
 
-    /* RESPONSIVIDADE */
+    /* RESPONSIVIDADE PARA TELAS MENORES */
     @media (max-width: 1024px) {{
         .mod-card-rect {{ height: 120px; }}
         .mod-icon-area {{ width: 80px; }}
         .stTabs [data-baseweb="tab"] {{
-            font-size: 0.7rem !important;
-            padding: 0 12px !important;
-        }}
-        .stTabs [data-baseweb="tab"]::before {{
-            font-size: 0.85rem !important;
+            font-size: 0.68rem !important;
+            padding: 0 14px !important;
+            height: 34px !important;
         }}
     }}
 
@@ -1562,38 +1536,39 @@ st.markdown(f"""
             border-bottom: 1px solid #F1F5F9;
         }}
         .mod-content {{ padding: 16px 0 0 0; }}
+        
+        /* EM MOBILE, AS PÍLULAS FICAM EM GRID */
         .stTabs [data-baseweb="tab-list"] {{
-            flex-wrap: wrap;
-            border-bottom: none;
+            gap: 6px !important;
         }}
+        
         .stTabs [data-baseweb="tab"] {{
-            flex: 1 0 calc(33.333% - 4px);
-            margin-bottom: 4px;
-            border: 1px solid #E2E8F0 !important;
-            border-radius: 8px;
-            height: 36px;
-            margin-bottom: 4px;
-            text-align: center;
-            justify-content: center !important;
-        }}
-        .stTabs [aria-selected="true"] {{
-            border-bottom: none !important;
-            background-color: #F0F9FF !important;
-            border-color: #BAE6FD !important;
-        }}
-        .stTabs [data-baseweb="tab"]::before {{
-            font-size: 0.8rem !important;
+            flex: 1 0 calc(33.333% - 4px) !important;
+            min-width: calc(33.333% - 4px) !important;
+            margin-bottom: 0 !important;
+            height: 32px !important;
+            border-radius: 16px !important;
+            font-size: 0.65rem !important;
+            padding: 0 10px !important;
         }}
     }}
 
     @media (max-width: 640px) {{
         .stTabs [data-baseweb="tab"] {{
-            flex: 1 0 calc(50% - 4px);
-            font-size: 0.65rem !important;
+            flex: 1 0 calc(50% - 4px) !important;
+            min-width: calc(50% - 4px) !important;
+            font-size: 0.62rem !important;
             padding: 0 8px !important;
+            height: 30px !important;
         }}
-        .stTabs [data-baseweb="tab"]::before {{
-            font-size: 0.75rem !important;
+    }}
+
+    @media (max-width: 480px) {{
+        .stTabs [data-baseweb="tab"] {{
+            flex: 1 0 100% !important;
+            min-width: 100% !important;
+            border-radius: 12px !important;
+            margin-bottom: 4px !important;
         }}
     }}
 </style>
@@ -1636,11 +1611,11 @@ st.markdown(
 )
 
 # ==============================================================================
-# ABAS DO PEI (NOMES ORIGINAIS EM MINÚSCULAS)
+# ABAS DO PEI (TEXTO EM MAIÚSCULAS, SEM EMOJIS)
 # ==============================================================================
 abas = [
-    "início", "estudante", "evidências", "rede de apoio", "mapeamento",
-    "plano de ação", "monitoramento", "consultoria ia", "dashboard & docs", "jornada gamificada"
+    "INÍCIO", "ESTUDANTE", "EVIDÊNCIAS", "REDE DE APOIO", "MAPEAMENTO",
+    "PLANO DE AÇÃO", "MONITORAMENTO", "CONSULTORIA IA", "DASHBOARD & DOCS", "JORNADA GAMIFICADA"
 ]
 
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
