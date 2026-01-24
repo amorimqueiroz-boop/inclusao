@@ -2465,7 +2465,9 @@ with tab7:
         unsafe_allow_html=True,
     )
 
-
+    if not api_key:
+        st.error("⚠️ Configure a chave OpenAI na sidebar para gerar o PEI por IA.")
+        st.stop()
 
     # 1) Se ainda não tem texto, ou voltou para rascunho: botões de geração
     if (not st.session_state.dados.get("ia_sugestao")) or (st.session_state.dados.get("status_validacao_pei") == "rascunho"):
@@ -2596,6 +2598,7 @@ with tab7:
         if st.button("Cancelar", use_container_width=True):
             st.session_state.dados["status_validacao_pei"] = "revisao"
             st.rerun()
+
 
 
 # ==============================================================================
