@@ -358,6 +358,25 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+# ==============================================================================
+#  MOTOR DE IA (OpenAI) - CORRIGIDO
+# ==============================================================================
+def get_openai_client():
+    # 1. Tenta pegar automaticamente dos secrets
+    api_key = st.secrets.get("OPENAI_API_KEY")
+    
+    # 2. Se não achar, tenta pegar da sessão (caso o usuário tenha digitado na sidebar)
+    if not api_key:
+        api_key = st.session_state.get("OPENAI_API_KEY")
+    
+    # 3. Se ainda não tiver, retorna None (vai gerar erro amigável nas funções)
+    if not api_key: 
+        return None
+        
+    return OpenAI(api_key=api_key)
+
+# ... (Mantenha as funções extrair_dados_pdf_ia, consultar_gpt_pedagogico, etc. logo abaixo) ...
+
 
 # ==============================================================================
 # 4. LISTAS DE DADOS
