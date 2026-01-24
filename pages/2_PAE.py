@@ -757,7 +757,14 @@ if is_ei:
     tab_barreiras, tab_projetos, tab_rotina, tab_ponte = st.tabs([
         "BARREIRAS NO BRINCAR", "BANCO DE EXPERIÊNCIAS", "ROTINA & ADAPTAÇÃO", "ARTICULAÇÃO"
     ])
-    
+    if is_ei:
+    tab_barreiras, tab_projetos, tab_rotina, tab_ponte, tab_planejamento = st.tabs([
+        "BARREIRAS NO BRINCAR", "BANCO DE EXPERIÊNCIAS", "ROTINA & ADAPTAÇÃO", "ARTICULAÇÃO", "EXECUÇÃO & MONITORAMENTO"
+    ])
+else:
+    tab_barreiras, tab_plano, tab_tec, tab_ponte, tab_planejamento = st.tabs([
+        "MAPEAR BARREIRAS", "PLANO DE HABILIDADES", "TEC. ASSISTIVA", "CRONOGRAMA & ARTICULAÇÃO", "EXECUÇÃO & MONITORAMENTO"
+    ])
     # ABA 1: BARREIRAS NO BRINCAR (EI)
     with tab_barreiras:
         st.markdown("<div class='pedagogia-box'><strong>Diagnóstico do Brincar:</strong> Identifique barreiras na interação e no brincar.</div>", unsafe_allow_html=True)
