@@ -1438,7 +1438,7 @@ abas = [
     "PLANO DE AÇÃO", "MONITORAMENTO", "CONSULTORIA IA", "DASHBOARD & DOCS", "JORNADA GAMIFICADA"
 ]
 
-tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
+tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_9= st.tabs(abas)
 # ==============================================================================
 # 11. ABA INÍCIO — CENTRAL (Gestão de Alunos + Backups)
 # ==============================================================================
