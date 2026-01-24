@@ -915,10 +915,6 @@ tab1, tab2, tab3 = st.tabs([
 # ABA 1: PLANEJAMENTO DO CICLO
 # ==============================================================================
 with tab1:
-    # Declaração global movida para o início do escopo
-    global sistema_execucao
-    sistema_execucao = None  # Inicializar como None
-    
     st.markdown("### 📅 Planejamento do Ciclo de AEE")
     
     col_config, col_info = st.columns([1, 1])
@@ -955,19 +951,22 @@ with tab1:
                 st.error("⚠️ Configure pelo menos uma chave de IA na sidebar")
             else:
                 with st.spinner("🤖 IA planejando cronograma personalizado..."):
-                    cronograma = planejador.gerar_cronograma_inteligente(duracao_semanas)
-                    
-                    if "erro" in cronograma:
-                        st.error(f"Erro: {cronograma['erro']}")
-                    else:
-                        st.session_state['cronograma_atual'] = cronograma
-                        st.session_state['aluno_cronograma'] = aluno['id']
+                    try:
+                        cronograma = planejador.gerar_cronograma_inteligente(duracao_semanas)
                         
-                        # Inicializar sistema de execução
-                        sistema_execucao = SistemaExecucao(aluno['id'], cronograma)
-                        
-                        st.success(f"✅ Cronograma gerado com {duracao_semanas} semanas!")
-                        st.rerun()
+                        if "erro" in cronograma:
+                            st.error(f"Erro: {cronograma['erro']}")
+                        else:
+                            st.session_state['cronograma_atual'] = cronograma
+                            st.session_state['aluno_cronograma'] = aluno['id']
+                            
+                            # Inicializar sistema de execução no session_state
+                            st.session_state['sistema_execucao'] = SistemaExecucao(aluno['id'], cronograma)
+                            
+                            st.success(f"✅ Cronograma gerado com {duracao_semanas} semanas!")
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"Erro ao gerar cronograma: {str(e)}")
     
     with col_info:
         st.markdown("<div class='pedagogia-box'><strong>Informações do Ciclo:</strong> Contexto para planejamento.</div>", unsafe_allow_html=True)
@@ -988,12 +987,14 @@ with tab1:
                 st.markdown(f"**{meta['tipo']}:** {meta['descricao'][:100]}...")
     
     # SEÇÃO: CRONOGRAMA GERADO
-    if 'cronograma_atual' in st.session_state and st.session_state['aluno_cronograma'] == aluno['id']:
+    if ('cronograma_atual' in st.session_state and 
+        'aluno_cronograma' in st.session_state and 
+        st.session_state['aluno_cronograma'] == aluno['id']):
+        
         cronograma = st.session_state['cronograma_atual']
         
-        # Verificar se sistema_execucao já foi inicializado
-        if 'sistema_execucao' not in locals() and 'sistema_execucao' not in globals():
-            sistema_execucao = SistemaExecucao(aluno['id'], cronograma)
+        # Obter sistema de execução do session_state
+        sistema_execucao = st.session_state.get('sistema_execucao')
         
         st.markdown("---")
         st.markdown(f"### 🗓️ Cronograma Gerado ({cronograma.get('total_semanas', 0)} semanas)")
@@ -1006,11 +1007,15 @@ with tab1:
             st.caption(f"🎯 Foco: {foco_principal}")
             
             # Calcular progresso
-            semanas_executadas = len(sistema_execucao.estado['semanas_concluidas']) if sistema_execucao else 0
+            if sistema_execucao:
+                semanas_executadas = len(sistema_execucao.estado['semanas_concluidas'])
+            else:
+                semanas_executadas = 0
+                
             total_semanas = cronograma.get('total_semanas', 1)
-            progresso_pct = (semanas_executadas / total_semanas) * 100
+            progresso_pct = (semanas_executadas / total_semanas) * 100 if total_semanas > 0 else 0
             
-            st.progress(progresso_pct / 100)
+            st.progress(min(progresso_pct / 100, 1.0))
             st.caption(f"📊 Progresso: {semanas_executadas}/{total_semanas} semanas ({progresso_pct:.1f}%)")
         
         with col_motor:
@@ -1033,19 +1038,31 @@ with tab1:
                                 st.markdown(f"- {hab}")
                     
                     with col_f2:
-                        st.markdown(f"**Semanas:** {fase.get('semanas', [])}")
+                        semanas_fase = fase.get('semanas', [])
+                        if isinstance(semanas_fase, list):
+                            st.markdown(f"**Semanas:** {semanas_fase}")
+                        else:
+                            st.markdown(f"**Semanas:** {semanas_fase}")
+                        
                         if fase.get('recursos_principais'):
                             st.markdown("**Recursos:**")
                             for rec in fase['recursos_principais'][:3]:
                                 st.markdown(f"- {rec}")
         
         # Mostrar semanas detalhadas
-        if 'semanas' in cronograma:
+        if 'semanas' in cronograma and isinstance(cronograma['semanas'], list):
             st.markdown("#### 📋 Semanas Detalhadas")
             
             for semana in cronograma['semanas']:
+                if not isinstance(semana, dict):
+                    continue
+                    
                 semana_num = semana.get('numero', 0)
-                concluida = semana_num in (sistema_execucao.estado['semanas_concluidas'] if sistema_execucao else [])
+                
+                if sistema_execucao:
+                    concluida = semana_num in sistema_execucao.estado.get('semanas_concluidas', [])
+                else:
+                    concluida = False
                 
                 status_class = "activity-status-done" if concluida else "activity-status-pending"
                 
@@ -1054,7 +1071,7 @@ with tab1:
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <strong style="font-size: 1.1rem;">Semana {semana_num}: {semana.get('tema', '')}</strong>
-                            { '✅ <span style="color: #10B981; font-size: 0.9rem;">Concluída</span>' if concluida else '⏳ <span style="color: #F59E0B; font-size: 0.9rem;">Pendente</span>' }
+                            {'✅ <span style="color: #10B981; font-size: 0.9rem;">Concluída</span>' if concluida else '⏳ <span style="color: #F59E0B; font-size: 0.9rem;">Pendente</span>'}
                         </div>
                         <div>
                             <span class="skill-chip">{len(semana.get('atividades', []))} atividades</span>
@@ -1071,15 +1088,22 @@ with tab1:
                     atividades = semana.get('atividades', [])
                     
                     for idx, atividade in enumerate(atividades):
+                        if not isinstance(atividade, dict):
+                            continue
+                            
                         col_a1, col_a2 = st.columns([3, 1])
                         
                         with col_a1:
                             st.markdown(f"**{atividade.get('titulo', 'Atividade')}**")
-                            st.markdown(f"{atividade.get('descricao', '')[:150]}...")
+                            descricao = atividade.get('descricao', '')
+                            if descricao:
+                                st.markdown(f"{descricao[:150]}...")
                             
                             # Materiais
                             if atividade.get('materiais'):
-                                st.caption(f"📦 Materiais: {', '.join(atividade['materiais'][:3])}")
+                                materiais = atividade['materiais']
+                                if isinstance(materiais, list):
+                                    st.caption(f"📦 Materiais: {', '.join(materiais[:3])}")
                         
                         with col_a2:
                             st.caption(f"⏱️ {atividade.get('duracao', '')}")
@@ -1091,7 +1115,7 @@ with tab1:
                                     'indice': idx,
                                     'atividade': atividade
                                 }
-                                st.switch_to_tab("⚡ EXECUÇÃO EM TEMPO REAL")
+                                st.switch_page("pages/2_PAE.py")  # Ou use a navegação apropriada
         
         # Botão para exportar cronograma
         st.markdown("---")
@@ -1099,17 +1123,25 @@ with tab1:
         
         with col_exp1:
             if st.button("📥 Exportar Cronograma (JSON)", use_container_width=True):
-                cronograma_json = json.dumps(cronograma, indent=2, ensure_ascii=False)
-                st.download_button(
-                    label="Clique para baixar",
-                    data=cronograma_json,
-                    file_name=f"Cronograma_{aluno['nome']}_{hoje.strftime('%Y%m%d')}.json",
-                    mime="application/json"
-                )
+                try:
+                    import json
+                    cronograma_json = json.dumps(cronograma, indent=2, ensure_ascii=False, default=str)
+                    st.download_button(
+                        label="Clique para baixar",
+                        data=cronograma_json,
+                        file_name=f"Cronograma_{aluno['nome']}_{hoje.strftime('%Y%m%d')}.json",
+                        mime="application/json"
+                    )
+                except Exception as e:
+                    st.error(f"Erro ao exportar: {str(e)}")
         
         with col_exp2:
             if st.button("🔄 Regenerar Cronograma", use_container_width=True):
-                del st.session_state['cronograma_atual']
+                # Limpar estados relacionados
+                keys_to_clear = ['cronograma_atual', 'aluno_cronograma', 'sistema_execucao']
+                for key in keys_to_clear:
+                    if key in st.session_state:
+                        del st.session_state[key]
                 st.rerun()
     
     else:
