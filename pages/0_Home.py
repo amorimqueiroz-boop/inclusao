@@ -2,11 +2,13 @@ import streamlit as st
 from datetime import date, datetime
 import base64
 import os
+import json
+import re
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v2.5 - UI Square"
+APP_VERSION = "v3.0 - UI Unificada"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV", "PRODUCAO") == "TESTE"
@@ -14,15 +16,18 @@ except Exception:
     IS_TEST_ENV = False
 
 st.set_page_config(
-    page_title="Omnisfera - Plataforma de Inclusão Educacional",
-    page_icon="🌐" if not os.path.exists("omni_icone.png") else "omni_icone.png",
+    page_title="Omnisfera - PEI 360°",
+    page_icon="📘",
     layout="wide",
-    initial_sidebar_state="auto",
-    menu_items=None
+    initial_sidebar_state="collapsed", # Sidebar fechada para focar na UI nova
 )
 
+# Inicializa aba ativa se não existir
+if "aba_ativa" not in st.session_state:
+    st.session_state.aba_ativa = "INÍCIO"
+
 # ==============================================================================
-# 2. CSS & DESIGN SYSTEM
+# 2. CSS & DESIGN SYSTEM (UI QUADRADA + ACTIVE STATE)
 # ==============================================================================
 st.markdown(
     """
@@ -36,16 +41,15 @@ html, body, [class*="css"] {
     background-color: #F8FAFC !important;
 }
 
-/* --- OCULTAR ELEMENTOS NATIVOS --- */
+/* Ocultar elementos nativos */
 [data-testid="stSidebarNav"], [data-testid="stHeader"], [data-testid="stToolbar"], footer {
     display: none !important;
 }
 
-/* Ajuste de padding para a topbar fixa */
 .block-container {
     padding-top: 100px !important;
     padding-bottom: 4rem !important;
-    max-width: 95% !important;
+    max-width: 98% !important;
     padding-left: 1rem !important;
     padding-right: 1rem !important;
 }
@@ -54,27 +58,22 @@ html, body, [class*="css"] {
 .topbar {
     position: fixed; top: 0; left: 0; right: 0; height: 80px;
     background: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid #E2E8F0; z-index: 9999;
+    backdrop-filter: blur(12px); border-bottom: 1px solid #E2E8F0; z-index: 9999;
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 2.5rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 .brand-box { display: flex; align-items: center; gap: 12px; }
-.brand-logo { height: 50px; width: auto; }
+.brand-logo { height: 45px; width: auto; }
 .user-badge { background: #F1F5F9; border: 1px solid #E2E8F0; padding: 6px 14px; border-radius: 99px; font-size: 0.8rem; font-weight: 700; color: #64748B; }
 
-/* --- HERO SECTION (CARD AZUL) --- */
+/* --- HERO CARD --- */
 .hero-wrapper {
-    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
-    border-radius: 16px;
-    padding: 2rem; /* Padding reduzido */
-    color: white;
-    margin-bottom: 30px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.25);
+    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); /* Roxo Omnisfera */
+    border-radius: 20px; padding: 2rem; color: white; margin-bottom: 30px;
+    position: relative; overflow: hidden;
+    box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.3);
     display: flex; align-items: center; justify-content: space-between;
-    min-height: 160px; /* Altura reduzida */
+    min-height: 140px;
 }
 .hero-wrapper::before {
     content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -82,96 +81,56 @@ html, body, [class*="css"] {
     opacity: 0.3;
 }
 .hero-content { z-index: 2; position: relative; }
-.hero-greet { font-size: 2rem; font-weight: 800; margin-bottom: 0.2rem; letter-spacing: -0.5px; line-height: 1.2; }
-.hero-text { font-size: 0.95rem; opacity: 0.95; max-width: 800px; line-height: 1.5; font-weight: 500; }
+.hero-greet { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.2rem; letter-spacing: -0.5px; line-height: 1.2; }
+.hero-text { font-size: 0.95rem; opacity: 0.95; max-width: 800px; font-weight: 500; }
 .hero-icon { opacity: 0.8; font-size: 3rem; z-index: 1; position: relative; }
 
-/* --- BOTÕES QUADRADOS (TOP NAV) --- */
-.sq-nav-container {
+/* --- NAV UNIFICADA (BOTÕES QUADRADOS) --- */
+.nav-square-container {
     position: relative;
-    height: 72px; /* Altura fixa menor */
-    margin-bottom: 10px; /* Espaço até o card azul */
+    height: 75px; 
+    margin-bottom: 12px;
 }
 
-.sq-nav-card {
+.nav-square {
     background: white;
     border-radius: 12px;
     border: 1px solid #E2E8F0;
-    
-    /* Layout Flex Vertical para ficar quadrado */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    
-    width: 100%;
-    height: 100%;
-    
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    width: 100%; height: 100%;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    cursor: pointer;
 }
 
-/* Hover roxo */
-.sq-nav-container:hover .sq-nav-card {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 16px rgba(124, 58, 237, 0.1); /* Sombra roxa */
-    border-color: #7C3AED;
-    background-color: #FAFAFA;
+.nav-square:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-color: #C4B5FD;
 }
 
-.sq-nav-icon {
-    font-size: 1.5rem; /* Ícone um pouco menor */
-    color: #7C3AED; /* Roxo */
-    transition: transform 0.2s ease;
-}
+.nav-sq-icon { font-size: 1.4rem; color: #64748B; transition: color 0.2s; }
+.nav-sq-title { font-size: 0.65rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; }
 
-.sq-nav-container:hover .sq-nav-icon {
-    transform: scale(1.1);
+/* ESTADO ATIVO (ROXO PREENCHIDO) */
+.nav-active {
+    background: #7C3AED !important; /* Roxo */
+    border-color: #7C3AED !important;
+    box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3) !important;
 }
+.nav-active .nav-sq-icon { color: white !important; }
+.nav-active .nav-sq-title { color: white !important; }
 
-.sq-nav-title {
-    font-weight: 800;
-    font-size: 0.65rem; /* Fonte menor */
-    color: #475569;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-align: center;
-}
-
-.sq-nav-container:hover .sq-nav-title {
-    color: #7C3AED;
-}
-
-/* --- TRUQUE DO BOTÃO INVISÍVEL (CLICÁVEL) --- */
-/* Força o botão do Streamlit a ocupar 100% da área e ser invisível */
-.stButton button {
-    width: 100% !important;
-}
-
-/* Target específico para os botões da navegação */
+/* Botão invisível do Streamlit (Overlay) */
 div[data-testid="column"] button {
-    height: 72px !important; /* Mesma altura do container */
-    padding: 0 !important;
-    border: none !important;
-    background: transparent !important;
-    color: transparent !important;
-    z-index: 2;
+    position: absolute !important; top: 0 !important; left: 0 !important;
+    width: 100% !important; height: 75px !important;
+    opacity: 0 !important; z-index: 5 !important;
 }
-
-div[data-testid="column"] button:hover {
-    background: transparent !important;
-    color: transparent !important;
-    border: none !important;
-}
-
-/* --- RESTO DO DESIGN (RECURSOS, ETC) --- */
-.res-card { background: white; border-radius: 14px; padding: 20px; border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 16px; height: 100%; }
-.res-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-.rc-sky .res-icon { background: #F0F9FF; color: #0284C7; }
-.metric-card { background: white; border-radius: 16px; padding: 1.5rem; border: 1px solid #E2E8F0; text-align: center; }
-.info-card { background: white; border-radius: 16px; padding: 20px; border: 1px solid #E2E8F0; height: 100%; }
-.info-card-orange { border-left: 4px solid #EA580C; }
 </style>
     """,
     unsafe_allow_html=True,
@@ -184,37 +143,24 @@ def get_base64_image(image_path: str) -> str:
     if not os.path.exists(image_path): return ""
     with open(image_path, "rb") as f: return base64.b64encode(f.read()).decode()
 
-def escola_vinculada() -> str:
+def escola_vinculada():
     wn = st.session_state.get("workspace_name", "")
     wi = st.session_state.get("workspace_id", "")
     if wn: return wn[:20] + "..." if len(wn) > 20 else wn
     elif wi: return f"ID: {wi[:8]}..."
     return "Sem Escola"
 
-def get_user_initials(nome: str) -> str:
+def get_user_initials(nome: str):
     if not nome: return "U"
     parts = nome.split()
     if len(parts) >= 2: return f"{parts[0][0]}{parts[-1][0]}".upper()
     return nome[:2].upper() if len(nome) >= 2 else nome[0].upper()
 
 # ==============================================================================
-# 4. INITIALIZE STATE
+# 4. COMPONENTE: HEADER & MENU UNIFICADO
 # ==============================================================================
-if "autenticado" not in st.session_state: st.session_state.autenticado = False
-if "workspace_id" not in st.session_state: st.session_state.workspace_id = None
-
-if not st.session_state.autenticado:
-    # Tela de bloqueio simples se não autenticado
-    st.warning("Acesso restrito. Faça login.")
-    if st.button("Ir para Login"): st.rerun()
-    st.stop()
-
-# ==============================================================================
-# 5. RENDERIZAÇÃO
-# ==============================================================================
-
-# --- TOPBAR ---
-def render_topbar():
+def render_header_unified():
+    # --- 1. TOPBAR FIXA ---
     icone_b64 = get_base64_image("omni_icone.png")
     texto_b64 = get_base64_image("omni_texto.png")
     workspace = escola_vinculada()
@@ -222,7 +168,7 @@ def render_topbar():
     user_initials = get_user_initials(nome_user)
     
     img_logo = f'<img src="data:image/png;base64,{icone_b64}" class="brand-logo">' if icone_b64 else "🌐"
-    img_text = f'<img src="data:image/png;base64,{texto_b64}" class="brand-img-text">' if texto_b64 else "<span style='font-weight:800; font-size:1.2rem; color:#2B3674;'>OMNISFERA</span>"
+    img_text = f'<img src="data:image/png;base64,{texto_b64}" class="brand-img-text">' if texto_b64 else "<span style='font-weight:800; font-size:1.2rem; color:#4F46E5;'>OMNISFERA</span>"
     
     st.markdown(
         f"""
@@ -231,7 +177,7 @@ def render_topbar():
             <div class="brand-box" style="gap: 16px;">
                 <div class="user-badge">{workspace}</div>
                 <div style="display: flex; align-items: center; gap: 10px; font-weight: 700; color: #334155;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem;">{user_initials}</div>
+                    <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">{user_initials}</div>
                     <div>{nome_user}</div>
                 </div>
             </div>
@@ -239,106 +185,142 @@ def render_topbar():
         """,
         unsafe_allow_html=True,
     )
+    
+    # Espaço para não ficar atrás da topbar
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
-# --- QUADRADOS DE NAVEGAÇÃO (ACIMA DO HERO) ---
-def render_square_menu():
-    # Lista com 7 itens para alinhar
-    modules = [
-        {"title": "Início", "icon": "ri-home-smile-2-fill", "page": "pages/0_Home.py", "key": "sq_home"},
-        {"title": "Estudantes", "icon": "ri-group-fill", "page": "pages/Alunos.py", "key": "sq_aluno"},
-        {"title": "PEI", "icon": "ri-book-open-fill", "page": "pages/1_PEI.py", "key": "sq_pei"},
-        {"title": "PAEE", "icon": "ri-settings-5-fill", "page": "pages/2_PAE.py", "key": "sq_pae"},
-        {"title": "Hub", "icon": "ri-rocket-2-fill", "page": "pages/3_Hub_Inclusao.py", "key": "sq_hub"},
-        {"title": "Diário", "icon": "ri-file-list-3-fill", "page": "pages/4_Diario_de_Bordo.py", "key": "sq_diario"},
-        {"title": "Dados", "icon": "ri-bar-chart-box-fill", "page": "pages/5_Monitoramento_Avaliacao.py", "key": "sq_dados"},
+    # --- 2. MENU QUADRADO (UNIFICADO) ---
+    # Lista de abas que controlam o conteúdo
+    menu_items = [
+        {"id": "INÍCIO", "icon": "ri-home-smile-2-fill", "label": "Início"},
+        {"id": "ESTUDANTE", "icon": "ri-user-smile-fill", "label": "Estudante"},
+        {"id": "EVIDÊNCIAS", "icon": "ri-search-eye-line", "label": "Evidências"},
+        {"id": "REDE", "icon": "ri-team-fill", "label": "Rede"},
+        {"id": "MAPEAMENTO", "icon": "ri-radar-line", "label": "Mapa"},
+        {"id": "AÇÃO", "icon": "ri-tools-fill", "label": "Ação"},
+        {"id": "MONITOR", "icon": "ri-line-chart-fill", "label": "Monitor"},
+        {"id": "IA", "icon": "ri-robot-2-fill", "label": "Consultoria"},
+        {"id": "DASH", "icon": "ri-file-chart-fill", "label": "Docs"},
+        {"id": "GAME", "icon": "ri-gamepad-fill", "label": "Game"},
     ]
     
-    # 7 colunas - gap small para ficarem próximos
-    cols = st.columns(7, gap="small")
+    # Renderiza colunas (10 itens)
+    cols = st.columns(10, gap="small")
     
-    for i, mod in enumerate(modules):
+    for i, item in enumerate(menu_items):
         with cols[i]:
-            # Container visual (HTML)
-            # O z-index 1 garante que fique "embaixo" do botão transparente (z-index 2)
+            is_active = (st.session_state.aba_ativa == item["id"])
+            active_class = "nav-active" if is_active else ""
+            
+            # HTML Visual do botão
             st.markdown(
                 f"""
-                <div class="sq-nav-container">
-                    <div class="sq-nav-card">
-                        <i class="{mod['icon']} sq-nav-icon"></i>
-                        <div class="sq-nav-title">{mod['title']}</div>
+                <div class="nav-square-container">
+                    <div class="nav-square {active_class}">
+                        <i class="{item['icon']} nav-sq-icon"></i>
+                        <div class="nav-sq-title">{item['label']}</div>
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
             
-            # Botão Funcional Invisível (Overlay)
-            # O label contém um espaço vazio " " para renderizar, mas o CSS o torna transparente e ajusta o tamanho
-            if st.button(" ", key=mod["key"], use_container_width=True):
-                if mod["title"] == "Início":
-                    st.rerun()
-                else:
-                    st.switch_page(mod["page"])
+            # Botão funcional invisível (overlay)
+            if st.button(" ", key=f"nav_{item['id']}", use_container_width=True):
+                st.session_state.aba_ativa = item["id"]
+                st.rerun()
+
+    # --- 3. HERO CARD (DINÂMICO BASEADO NA ABA) ---
+    # Títulos e descrições mudam conforme a aba para dar contexto
+    hero_data = {
+        "INÍCIO": ("Bem-vindo ao PEI 360°", "Central de gestão e fundamentos do planejamento inclusivo."),
+        "ESTUDANTE": ("Dossiê do Estudante", "Identificação, histórico escolar e contexto familiar."),
+        "EVIDÊNCIAS": ("Coleta de Evidências", "Registre observações comportamentais e pedagógicas."),
+        "REDE": ("Rede de Apoio", "Conecte profissionais e centralize orientações clínicas."),
+        "MAPEAMENTO": ("Mapeamento de Barreiras", "Identifique barreiras, níveis de suporte e potencialidades."),
+        "AÇÃO": ("Plano de Ação", "Defina estratégias de acesso, ensino e avaliação."),
+        "MONITOR": ("Monitoramento", "Acompanhe metas e revise o plano periodicamente."),
+        "IA": ("Consultoria IA", "Gere o documento técnico do PEI com inteligência artificial."),
+        "DASH": ("Dashboard & Docs", "Visualize métricas, exporte PDF/Word e sincronize."),
+        "GAME": ("Jornada Gamificada", "Crie uma missão visual para engajar o estudante."),
+    }
+    
+    title, desc = hero_data.get(st.session_state.aba_ativa, ("PEI 360°", "Planejamento Inclusivo"))
+    
+    st.markdown(
+        f"""
+        <div class="hero-wrapper">
+            <div class="hero-content">
+                <div class="hero-greet">{title}</div>
+                <div class="hero-text">{desc}</div>
+            </div>
+            <div class="hero-icon"><i class="ri-book-open-fill"></i></div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # ==============================================================================
-# 6. EXECUÇÃO PRINCIPAL
+# 5. EXECUÇÃO DO CONTEÚDO (ROTEAMENTO)
 # ==============================================================================
 
-# 1. Topbar Fixa
-render_topbar()
+# 1. Renderiza Header + Menu + Hero
+render_header_unified()
 
-# 2. Navegação Quadrada (AGORA AQUI EM CIMA)
-# Pequeno espaço para separar da topbar fixa
-st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True) 
-render_square_menu()
+# 2. Renderiza o conteúdo da aba ativa
+aba = st.session_state.aba_ativa
 
-# 3. Hero Card (AGORA ABAIXO)
-hora = datetime.now().hour
-saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
-nome_user = st.session_state.get("usuario_nome", "Visitante").split()[0]
+if aba == "INÍCIO":
+    # --- CONTEÚDO DA ABA INÍCIO ---
+    c1, c2 = st.columns([1.5, 1])
+    with c1:
+        st.info("Aqui entram os fundamentos do PEI e gestão de backups.")
+        # ... (Seu código da aba Início aqui) ...
+    with c2:
+        st.warning("Selecione um aluno ou carregue um arquivo.")
 
+elif aba == "ESTUDANTE":
+    st.write("### 👤 Identificação e Histórico")
+    # ... (Seu código da aba Estudante aqui) ...
+    c1, c2 = st.columns(2)
+    c1.text_input("Nome do Aluno")
+    c2.selectbox("Série", ["1º Ano", "2º Ano"])
+
+elif aba == "EVIDÊNCIAS":
+    st.write("### 🔎 Evidências")
+    # ... (Conteúdo Evidências) ...
+
+elif aba == "REDE":
+    st.write("### 🤝 Rede de Apoio")
+    
+elif aba == "MAPEAMENTO":
+    st.write("### 🧭 Mapeamento de Barreiras")
+
+elif aba == "AÇÃO":
+    st.write("### 🛠️ Plano de Ação")
+
+elif aba == "MONITOR":
+    st.write("### 📈 Monitoramento")
+
+elif aba == "IA":
+    st.write("### 🤖 Consultoria IA")
+    st.button("Gerar PEI com IA", type="primary")
+
+elif aba == "DASH":
+    st.write("### 📊 Dashboard e Exportação")
+
+elif aba == "GAME":
+    st.write("### 🎮 Jornada Gamificada")
+
+# ==============================================================================
+# RODAPÉ
+# ==============================================================================
+st.markdown("---")
 st.markdown(
     f"""
-    <div class="hero-wrapper">
-        <div class="hero-content">
-            <div class="hero-greet">{saudacao}, {nome_user}!</div>
-            <div class="hero-text">"A inclusão acontece quando aprendemos com as diferenças e não com as igualdades."</div>
-        </div>
-        <div class="hero-icon"><i class="ri-heart-pulse-fill"></i></div>
+    <div style='text-align: center; color: #94A3B8; font-size: 0.75rem; padding: 20px;'>
+        <strong>Omnisfera {APP_VERSION}</strong> • Desenvolvido por RODRIGO A. QUEIROZ
     </div>
     """,
     unsafe_allow_html=True,
 )
-
-# 4. Resto do Conteúdo (Recursos, Métricas, Guia)
-st.markdown("### 📚 Recursos Externos & Referências")
-
-res_data = [
-    {"t": "Lei Inclusão", "d": "LBI 13.146", "i": "ri-government-fill", "c": "rc-sky", "l": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm"},
-    {"t": "Base Nacional", "d": "BNCC Oficial", "i": "ri-compass-3-fill", "c": "rc-green", "l": "http://basenacionalcomum.mec.gov.br/"},
-    {"t": "Neurociência", "d": "Artigos", "i": "ri-brain-fill", "c": "rc-rose", "l": "https://institutoneurosaber.com.br/"},
-    {"t": "Ajuda", "d": "Tutoriais", "i": "ri-question-fill", "c": "rc-orange", "l": "#"},
-]
-
-c_res = st.columns(4, gap="medium")
-for i, r in enumerate(res_data):
-    with c_res[i]:
-        st.markdown(
-            f"""<a href="{r['l']}" target="_blank" style="text-decoration:none;">
-            <div class="res-card {r['c']}"><div class="res-icon"><i class="{r['i']}"></i></div>
-            <div class="res-info"><div class="res-name">{r['t']}</div><div class="res-meta">{r['d']}</div></div></div></a>""",
-            unsafe_allow_html=True
-        )
-
-st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
-st.markdown("### 📊 Visão Geral")
-
-# Métricas simples para exemplo
-m_cols = st.columns(4)
-metrics = [("Alunos", "12", "metric-up"), ("PEIs", "8", "metric-up"), ("Evidências", "3", "metric-neutral"), ("Meta", "75%", "metric-up")]
-for i, (lbl, val, cls) in enumerate(metrics):
-    with m_cols[i]:
-        st.markdown(f"""<div class="metric-card"><div class="metric-label">{lbl}</div><div class="metric-value">{val}</div></div>""", unsafe_allow_html=True)
-
-st.markdown("---")
-st.caption(f"Omnisfera {APP_VERSION} • Desenvolvido por RODRIGO A. QUEIROZ")
