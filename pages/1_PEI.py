@@ -284,6 +284,34 @@ def db_update_pei_content(student_id: str, pei_dict: dict):
         raise RuntimeError(f"Erro ao salvar conteúdo do PEI: {r.text}")
         
     return r.json()
+    
+def db_update_pei_content(student_id: str, pei_dict: dict):
+    """Salva o JSON completo na coluna pei_data do Supabase"""
+    # Verifica credenciais
+    url = str(st.secrets.get("SUPABASE_URL", "")).strip()
+    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "") or st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
+    
+    if not url or not key: return None
+
+    api_url = f"{url.rstrip('/')}/rest/v1/students?id=eq.{student_id}"
+    headers = {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    }
+    
+    # Prepara o JSON seguro (datas viram string)
+    import json
+    payload_json = json.loads(json.dumps(pei_dict, default=str))
+    
+    body = {
+        "pei_data": payload_json,
+        "updated_at": datetime.now().isoformat()
+    }
+    
+    r = requests.patch(api_url, headers=headers, json=body, timeout=20)
+    return r.json() if r.status_code < 400 else None
 
 # ==============================================================================
 # 3. BLOCO VISUAL (badge / logo)
@@ -2908,90 +2936,91 @@ with tab8:
             use_container_width=True
         )
 
-    # ---------------- CLOUD (SUPABASE) ----------------
+    # ---------------- CLOUD (SINCRONIZAÇÃO COMPLETA) ----------------
     with col_sys:
-        st.caption("🌐 Omnisfera")
+        st.caption("🌐 Omnisfera Cloud")
         st.markdown(
             "<div style='font-size:.85rem; color:#4A5568; margin-bottom:8px;'>"
-            "Vincula o aluno e salva o PEI na nuvem (Supabase)."
+            "Sincroniza o cadastro e <b>salva todo o conteúdo do PEI</b> na nuvem (coluna pei_data)."
             "</div>",
             unsafe_allow_html=True
         )
 
-        def _cloud_ready(debug: bool = False):
-            details = {}
-            details["autenticado"] = bool(st.session_state.get("autenticado", False))
-            details["has_workspace_id"] = bool(st.session_state.get("workspace_id"))
-
+        def _cloud_ready_check():
             try:
-                details["has_supabase_url"] = bool(str(st.secrets.get("SUPABASE_URL", "")).strip())
-            except Exception:
-                details["has_supabase_url"] = False
+                url = str(st.secrets.get("SUPABASE_URL", "")).strip()
+                key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "") or st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
+                return bool(url and key)
+            except:
+                return False
 
-            try:
-                details["has_supabase_key"] = bool(
-                    str(st.secrets.get("SUPABASE_SERVICE_KEY", "")).strip()
-                    or str(st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
-                )
-            except Exception:
-                details["has_supabase_key"] = False
+        if st.button("🔗 Sincronizar Tudo", type="primary", use_container_width=True, key="btn_sync_full_final"):
+            if not _cloud_ready_check():
+                st.error("⚠️ Configure os Secrets do Supabase.")
+            else:
+                try:
+                    with st.spinner("Sincronizando dados completos..."):
+                        # 1. Tratar datas para o cadastro básico
+                        nasc_iso = d.get("nasc").isoformat() if hasattr(d.get("nasc"), "isoformat") else None
+                        
+                        # 2. Dados Básicos (Colunas fixas da tabela)
+                        student_payload = {
+                            "name": d.get("nome"),
+                            "birth_date": nasc_iso,
+                            "grade": d.get("serie"),
+                            "class_group": d.get("turma") or None,
+                            "diagnosis": d.get("diagnostico") or None,
+                            "workspace_id": st.session_state.get("workspace_id"),
+                        }
+                        
+                        # 3. Identificar ou Criar o Aluno
+                        sid = st.session_state.get("selected_student_id")
+                        
+                        # Se já existe ID na sessão, tentamos atualizar o básico primeiro, senão cria
+                        if not sid:
+                            # Tenta criar
+                            created = db_create_student(student_payload)
+                            if created and isinstance(created, dict):
+                                sid = created.get("id")
+                                st.session_state["selected_student_id"] = sid
+                        else:
+                            # Se já tem ID, atualiza os dados básicos também (opcional, mas recomendado)
+                            db_update_student(sid, student_payload)
 
-            ok = all(details.values())
-            if debug:
-                details["missing"] = [k for k, v in details.items() if not v]
-            return ok, details
+                        # 4. SALVAMENTO CRÍTICO: O CONTEÚDO COMPLETO (JSONB)
+                        if sid:
+                            # Aqui salvamos o dicionário 'd' inteiro na coluna 'pei_data'
+                            # Certifique-se de ter adicionado a função db_update_pei_content ao código principal!
+                            db_update_pei_content(sid, d)
+                            
+                            # 5. Preparar Backup Local
+                            st.session_state["ultimo_backup_json"] = json.dumps(d, default=str, ensure_ascii=False)
+                            st.session_state["sync_sucesso"] = True
+                            
+                            st.toast("PEI completo salvo na nuvem com sucesso!", icon="☁️")
+                            st.rerun()
+                        else:
+                            st.error("Erro: Não foi possível obter o ID do estudante no banco.")
 
-        def _as_iso(v):
-            # converte date/datetime para string, sem quebrar o dict original
-            try:
-                if hasattr(v, "isoformat"):
-                    return v.isoformat()
-            except Exception:
-                pass
-            return v
+                except Exception as e:
+                    st.error(f"Erro na sincronização: {e}")
 
-        if st.button("🔗 Sincronizar (Omnisfera)", type="primary", use_container_width=True, key="btn_sync_omnisfera_tab8"):
-            ok, details = _cloud_ready(debug=True)
-            if not ok:
-                st.error("Nuvem indisponível: verifique login/workspace/secrets do Supabase.")
-                st.json(details)
-                st.stop()
-
-            try:
-                # 1) vincula/cria aluno se ainda não tiver selected_student_id
-                sid = st.session_state.get("selected_student_id")
-
-                if not sid:
-                    # ⚠️ IMPORTANTE: birth_date precisa ser string ISO (para REST/JSON)
-                    created = db_create_student({
-                        "name": d.get("nome"),
-                        "birth_date": _as_iso(d.get("nasc")),
-                        "grade": d.get("serie"),
-                        "class_group": d.get("turma") or None,
-                        "diagnosis": d.get("diagnostico") or None,
-                        # workspace_id é injetado no db_create_student (seu bloco REST),
-                        # mas deixamos aqui também caso sua função não injete
-                        "workspace_id": st.session_state.get("workspace_id"),
-                    })
-
-                    sid = (created or {}).get("id") if isinstance(created, dict) else None
-                    if not sid:
-                        raise RuntimeError("Falha ao criar aluno no Supabase (students).")
-
-                    st.session_state["selected_student_id"] = sid
-
-                # 2) salva o PEI (precisa existir no projeto)
-                if "supa_save_pei" not in globals():
-                    raise RuntimeError("Função supa_save_pei não encontrada no projeto.")
-
-                supa_save_pei(sid, d, st.session_state.get("pdf_text", ""))
-
-                st.success("✅ Sincronizado: aluno vinculado + PEI salvo na nuvem.")
-                st.rerun()
-
-            except Exception as e:
-                st.error(f"Erro ao salvar na nuvem: {e}")
-
+        # Se deu certo, mostra o botão de download
+        if st.session_state.get("sync_sucesso"):
+            st.success("✅ Tudo salvo no Supabase!")
+            
+            timestamp = datetime.now().strftime("%d-%m_%Hh%M")
+            nome_clean = (d.get('nome') or 'Aluno').replace(' ', '_')
+            
+            st.download_button(
+                label="📂 BAIXAR BACKUP (.JSON)",
+                data=st.session_state["ultimo_backup_json"],
+                file_name=f"PEI_{nome_clean}_{timestamp}.json",
+                mime="application/json",
+                type="secondary",
+                use_container_width=True,
+                key="btn_post_sync_download_final"
+            )
 
 # ==============================================================================
 # ABA — JORNADA GAMIFICADA (BLOCO COMPLETO)
