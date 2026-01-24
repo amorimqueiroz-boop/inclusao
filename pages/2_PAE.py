@@ -47,6 +47,8 @@ else:
 
 # 4. Renderização do Header Flutuante
 st.markdown(f"""
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+
 <style>
     /* CARD FLUTUANTE (OMNISFERA) - MESMO PADRÃO */
     .omni-badge {{
@@ -163,7 +165,7 @@ st.markdown(f"""
     }}
 
     .mod-card-rect:hover .mod-title {{
-        color: #8B5CF6;
+        color: #4F46E5;
     }}
 
     .mod-desc {{
@@ -242,11 +244,24 @@ st.markdown(f"""
         border-color: #7C3AED !important;
     }}
 
-    /* PEDAGOGIA BOX (Atualizado para Roxo) */
+    /* REMOVER QUALQUER BORDA/INDICADOR VERMELHO DAS ABAS */
+    .stTabs [data-baseweb="tab"]::after,
+    .stTabs [aria-selected="true"]::after,
+    .stTabs [data-baseweb="tab"]::before,
+    .stTabs [aria-selected="true"]::before {{
+        display: none !important;
+    }}
+
+    /* REMOVER QUALQUER BORDA INFERIOR VERMELHA */
+    .stTabs [data-baseweb="tab-list"] {{
+        border-bottom: none !important;
+    }}
+
+    /* PEDAGOGIA BOX (ATUALIZADO PARA NEUTRO) */
     .pedagogia-box {{ 
-        background-color: #F5F3FF; border-left: 4px solid #8B5CF6; 
+        background-color: #F8FAFC; border-left: 4px solid #CBD5E1; 
         padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; 
-        font-size: 0.95rem; color: #5B21B6; 
+        font-size: 0.95rem; color: #4A5568; 
     }}
 
     /* RESPONSIVIDADE PARA TELAS MENORES */
@@ -349,7 +364,7 @@ st.markdown(
         <div class="mod-card-rect">
             <div class="mod-bar c-purple"></div>
             <div class="mod-icon-area bg-purple-soft">
-                <i class="ri-wheelchair-fill"></i>
+                <i class="ri-settings-5-fill"></i>
             </div>
             <div class="mod-content">
                 <div class="mod-title">Atendimento Educacional Especializado (AEE) & Tecnologia Assistiva</div>
@@ -515,12 +530,12 @@ if not aluno:
 serie_aluno = aluno.get('serie', '').lower()
 is_ei = any(term in serie_aluno for term in ["infantil", "creche", "pré", "pré-escola", "maternal", "berçario", "jardim"])
 
-# --- HEADER DO ALUNO (CORES ROXAS) ---
+# --- HEADER DO ALUNO (CORES NEUTRAS) ---
 st.markdown(f"""
-    <div style="background-color: #F5F3FF; border: 1px solid #C4B5FD; border-radius: 16px; padding: 20px 30px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-        <div><div style="font-size: 0.8rem; color: #8B5CF6; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Nome</div><div style="font-size: 1.2rem; color: #2D3748; font-weight: 800;">{aluno.get('nome', 'Não informado')}</div></div>
-        <div><div style="font-size: 0.8rem; color: #8B5CF6; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Série</div><div style="font-size: 1.2rem; color: #2D3748; font-weight: 800;">{aluno.get('serie', '-')}</div></div>
-        <div><div style="font-size: 0.8rem; color: #8B5CF6; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Hiperfoco</div><div style="font-size: 1.2rem; color: #8B5CF6; font-weight: 800;">{aluno.get('hiperfoco', '-')}</div></div>
+    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px 30px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Nome</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('nome', 'Não informado')}</div></div>
+        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Série</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('serie', '-')}</div></div>
+        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Hiperfoco</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('hiperfoco', '-')}</div></div>
     </div>
 """, unsafe_allow_html=True)
 
