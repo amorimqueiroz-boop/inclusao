@@ -6,7 +6,7 @@ import os
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v2.4 - UI Quadrada"
+APP_VERSION = "v2.5 - UI Square"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV", "PRODUCAO") == "TESTE"
@@ -66,15 +66,15 @@ html, body, [class*="css"] {
 /* --- HERO SECTION (CARD AZUL) --- */
 .hero-wrapper {
     background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
-    border-radius: 20px;
-    padding: 2.5rem;
+    border-radius: 16px;
+    padding: 2rem; /* Padding reduzido */
     color: white;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
     position: relative;
     overflow: hidden;
     box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.25);
     display: flex; align-items: center; justify-content: space-between;
-    min-height: 180px;
+    min-height: 160px; /* Altura reduzida */
 }
 .hero-wrapper::before {
     content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -82,21 +82,20 @@ html, body, [class*="css"] {
     opacity: 0.3;
 }
 .hero-content { z-index: 2; position: relative; }
-.hero-greet { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.5px; line-height: 1.2; }
-.hero-text { font-size: 1rem; opacity: 0.95; max-width: 800px; line-height: 1.6; font-weight: 500; }
-.hero-icon { opacity: 0.8; font-size: 3.5rem; z-index: 1; position: relative; }
+.hero-greet { font-size: 2rem; font-weight: 800; margin-bottom: 0.2rem; letter-spacing: -0.5px; line-height: 1.2; }
+.hero-text { font-size: 0.95rem; opacity: 0.95; max-width: 800px; line-height: 1.5; font-weight: 500; }
+.hero-icon { opacity: 0.8; font-size: 3rem; z-index: 1; position: relative; }
 
 /* --- BOTÕES QUADRADOS (TOP NAV) --- */
 .sq-nav-container {
     position: relative;
-    /* Define o tamanho quadrado */
-    height: 90px; 
-    margin-bottom: 25px; /* Espaço até o card azul */
+    height: 72px; /* Altura fixa menor */
+    margin-bottom: 10px; /* Espaço até o card azul */
 }
 
 .sq-nav-card {
     background: white;
-    border-radius: 14px;
+    border-radius: 12px;
     border: 1px solid #E2E8F0;
     
     /* Layout Flex Vertical para ficar quadrado */
@@ -104,24 +103,25 @@ html, body, [class*="css"] {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     
     width: 100%;
     height: 100%;
     
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 /* Hover roxo */
 .sq-nav-container:hover .sq-nav-card {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 20px rgba(124, 58, 237, 0.1); /* Sombra roxa */
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(124, 58, 237, 0.1); /* Sombra roxa */
     border-color: #7C3AED;
+    background-color: #FAFAFA;
 }
 
 .sq-nav-icon {
-    font-size: 1.8rem;
+    font-size: 1.5rem; /* Ícone um pouco menor */
     color: #7C3AED; /* Roxo */
     transition: transform 0.2s ease;
 }
@@ -131,8 +131,8 @@ html, body, [class*="css"] {
 }
 
 .sq-nav-title {
-    font-weight: 700;
-    font-size: 0.75rem;
+    font-weight: 800;
+    font-size: 0.65rem; /* Fonte menor */
     color: #475569;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -143,12 +143,26 @@ html, body, [class*="css"] {
     color: #7C3AED;
 }
 
-/* Botão invisível do Streamlit por cima */
+/* --- TRUQUE DO BOTÃO INVISÍVEL (CLICÁVEL) --- */
+/* Força o botão do Streamlit a ocupar 100% da área e ser invisível */
+.stButton button {
+    width: 100% !important;
+}
+
+/* Target específico para os botões da navegação */
 div[data-testid="column"] button {
-    position: absolute !important;
-    top: 0 !important; left: 0 !important;
-    width: 100% !important; height: 90px !important;
-    opacity: 0 !important; z-index: 5 !important;
+    height: 72px !important; /* Mesma altura do container */
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    color: transparent !important;
+    z-index: 2;
+}
+
+div[data-testid="column"] button:hover {
+    background: transparent !important;
+    color: transparent !important;
+    border: none !important;
 }
 
 /* --- RESTO DO DESIGN (RECURSOS, ETC) --- */
@@ -228,6 +242,7 @@ def render_topbar():
 
 # --- QUADRADOS DE NAVEGAÇÃO (ACIMA DO HERO) ---
 def render_square_menu():
+    # Lista com 7 itens para alinhar
     modules = [
         {"title": "Início", "icon": "ri-home-smile-2-fill", "page": "pages/0_Home.py", "key": "sq_home"},
         {"title": "Estudantes", "icon": "ri-group-fill", "page": "pages/Alunos.py", "key": "sq_aluno"},
@@ -238,12 +253,13 @@ def render_square_menu():
         {"title": "Dados", "icon": "ri-bar-chart-box-fill", "page": "pages/5_Monitoramento_Avaliacao.py", "key": "sq_dados"},
     ]
     
-    # 7 colunas
+    # 7 colunas - gap small para ficarem próximos
     cols = st.columns(7, gap="small")
     
     for i, mod in enumerate(modules):
         with cols[i]:
-            # HTML Visual (Quadrado)
+            # Container visual (HTML)
+            # O z-index 1 garante que fique "embaixo" do botão transparente (z-index 2)
             st.markdown(
                 f"""
                 <div class="sq-nav-container">
@@ -255,10 +271,14 @@ def render_square_menu():
                 """,
                 unsafe_allow_html=True
             )
-            # Botão Overlay
+            
+            # Botão Funcional Invisível (Overlay)
+            # O label contém um espaço vazio " " para renderizar, mas o CSS o torna transparente e ajusta o tamanho
             if st.button(" ", key=mod["key"], use_container_width=True):
-                if mod["title"] == "Início": st.rerun()
-                else: st.switch_page(mod["page"])
+                if mod["title"] == "Início":
+                    st.rerun()
+                else:
+                    st.switch_page(mod["page"])
 
 # ==============================================================================
 # 6. EXECUÇÃO PRINCIPAL
@@ -268,7 +288,8 @@ def render_square_menu():
 render_topbar()
 
 # 2. Navegação Quadrada (AGORA AQUI EM CIMA)
-st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True) # Espaço do Topbar
+# Pequeno espaço para separar da topbar fixa
+st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True) 
 render_square_menu()
 
 # 3. Hero Card (AGORA ABAIXO)
