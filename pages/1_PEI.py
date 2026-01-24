@@ -1282,7 +1282,7 @@ def render_sidebar():
         st.markdown(sidebar_js, unsafe_allow_html=True)
         
 # ==============================================================================
-# 10. HEADER + ABAS - NOVO DESIGN MINIMALISTA
+# 10. HEADER + ABAS - NOVO DESIGN (PADRÃO ESTUDANTES)
 # ==============================================================================
 
 # ==============================================================================
@@ -1313,7 +1313,7 @@ else:
     card_bg = "rgba(255, 255, 255, 0.85)"
     card_border = "rgba(255, 255, 255, 0.6)"
 
-# 4. Renderização do Header Flutuante e CSS Minimalista
+# 4. Renderização do Header Flutuante
 st.markdown(f"""
 <style>
     /* CARD FLUTUANTE (OMNISFERA) - MESMO PADRÃO */
@@ -1357,34 +1357,35 @@ st.markdown(f"""
         animation: spin-slow 10s linear infinite;
     }}
 
-    /* CARD HERO PARA PEI - MINIMALISTA */
+    /* CARD HERO PARA PEI - COM FUNDO TRANSPARENTE NO ÍCONE */
     .mod-card-wrapper {{
         display: flex;
         flex-direction: column;
         margin-bottom: 20px;
         border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
     }}
 
     .mod-card-rect {{
         background: white;
-        border-radius: 16px;
+        border-radius: 16px 16px 0 0;
         padding: 0;
         border: 1px solid #E2E8F0;
+        border-bottom: none;
         display: flex;
         flex-direction: row;
         align-items: center;
-        height: 110px;
+        height: 130px;
         width: 100%;
         position: relative;
         overflow: hidden;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }}
 
     .mod-card-rect:hover {{
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
         border-color: #CBD5E1;
     }}
 
@@ -1392,7 +1393,6 @@ st.markdown(f"""
         width: 6px;
         height: 100%;
         flex-shrink: 0;
-        background: linear-gradient(to bottom, #3B82F6, #60A5FA);
     }}
 
     .mod-icon-area {{
@@ -1401,13 +1401,15 @@ st.markdown(f"""
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem; /* Tamanho maior para emojis */
+        font-size: 1.8rem;
         flex-shrink: 0;
-        background: transparent; /* Fundo transparente */
+        background: transparent !important; /* FUNDO TRANSPARENTE */
+        border-right: 1px solid #F1F5F9;
         transition: all 0.3s ease;
     }}
 
     .mod-card-rect:hover .mod-icon-area {{
+        background: transparent !important;
         transform: scale(1.05);
     }}
 
@@ -1425,6 +1427,11 @@ st.markdown(f"""
         color: #1E293B;
         margin-bottom: 6px;
         letter-spacing: -0.3px;
+        transition: color 0.2s;
+    }}
+
+    .mod-card-rect:hover .mod-title {{
+        color: #4F46E5;
     }}
 
     .mod-desc {{
@@ -1437,51 +1444,48 @@ st.markdown(f"""
         overflow: hidden;
     }}
 
-    /* STYLING PARA AS ABAS DO STREAMLIT - MINIMALISTA */
+    /* CORES DOS CARDS - MESMA DA HOME (AZUL PARA PEI) */
+    .c-blue {{ background: #3B82F6 !important; }}
+    .bg-blue-soft {{ 
+        background: transparent !important; /* FUNDO TRANSPARENTE */
+        color: #3B82F6 !important; /* COR AZUL MAIS INTENSA */
+    }}
+
+    /* STYLING PARA AS ABAS DO STREAMLIT - DESIGN ATUALIZADO */
     .stTabs [data-baseweb="tab-list"] {{
-        gap: 1px;
-        background-color: transparent; /* Fundo transparente */
+        gap: 2px;
+        background-color: transparent !important; /* FUNDO TRANSPARENTE */
         padding: 4px 0;
-        border-radius: 0;
-        margin: 20px 0 10px 0;
-        border-bottom: 1px solid #E2E8F0; /* Linha sinalizadora */
+        border-radius: 12px;
+        margin-top: 20px;
+        border-bottom: 1px solid #E2E8F0; /* LINHA SUTIL PARA SEPARAÇÃO */
     }}
 
     .stTabs [data-baseweb="tab"] {{
         height: 42px;
-        white-space: nowrap;
-        background-color: transparent; /* Fundo transparente */
+        white-space: pre-wrap;
+        background-color: transparent !important; /* FUNDO TRANSPARENTE */
         border-radius: 8px 8px 0 0;
+        gap: 1px;
         padding: 0 16px;
-        color: #64748B;
+        color: #94A3B8 !important; /* COR CINZA MAIS SUAVE PARA INATIVAS */
         font-weight: 600;
         font-size: 0.78rem;
         text-transform: uppercase;
         letter-spacing: 0.3px;
-        transition: all 0.2s ease;
-        border: none;
-        opacity: 0.7;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-    }}
-
-    .stTabs [data-baseweb="tab"]:hover {{
-        background-color: #F8FAFC;
-        color: #475569;
-        opacity: 0.9;
+        opacity: 0.8; /* TRANSPARÊNCIA PARA ABAS INATIVAS */
     }}
 
     .stTabs [aria-selected="true"] {{
         background-color: transparent !important;
-        color: #2563EB !important;
-        font-weight: 700 !important;
+        color: #3B82F6 !important; /* COR AZUL DO CARD/HEADER */
+        font-weight: 800 !important;
         opacity: 1 !important;
     }}
 
-    /* Linha indicadora para aba ativa */
+    /* EFEITO "ACESO" PARA ABA ATIVA - GRADIENTE AZUL NA BORDA INFERIOR */
     .stTabs [aria-selected="true"]::after {{
         content: '';
         position: absolute;
@@ -1489,85 +1493,79 @@ st.markdown(f"""
         left: 12px;
         right: 12px;
         height: 3px;
-        background: #2563EB;
+        background: linear-gradient(90deg, #3B82F6, #60A5FA);
         border-radius: 3px 3px 0 0;
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
     }}
 
-    /* Emojis para as abas */
-    [data-baseweb="tab"]::before {{
-        font-size: 0.9rem;
+    .stTabs [data-baseweb="tab"]:hover {{
+        background-color: rgba(248, 250, 252, 0.8) !important; /* FUNDO MUITO SUAVE NO HOVER */
+        color: #475569 !important;
+        opacity: 0.9;
+        transform: translateY(-1px);
     }}
 
-    /* Estilização específica para cada aba com emoji */
-    div[data-testid="stTabs"] [role="tab"]:nth-child(1)::before {{ content: "🏠"; }}
-    div[data-testid="stTabs"] [role="tab"]:nth-child(2)::before {{ content: "👤"; }}
-    div[data-testid="stTabs"] [role="tab"]:nth-child(3)::before {{ content: "📊"; }}
-    div[data-testid="stTabs"] [role="tab"]:nth-child(4)::before {{ content: "👥"; }}
-    div[data-testid="stTabs"] [role="tab"]:nth-child(5)::before {{ content: "🗺️"; }}
-    div[data-testid="stTabs"] [role="tab"]:nth-child(6)::before {{ content: "✅"; }}
-    div[data-testid="stTabs"] [role="tab"]:nth-child(7)::before {{ content: "📈"; }}
-    div[data-testid="stTabs"] [role="tab"]:nth-child(8)::before {{ content: "🤖"; }}
-    div[data-testid="stTabs"] [role="tab"]:nth-child(9)::before {{ content: "📋"; }}
-    div[data-testid="stTabs"] [role="tab"]:nth-child(10)::before {{ content: "🎮"; }}
+    /* ANIMAÇÃO PARA O EFEITO "ACESO" */
+    @keyframes pulse-glow {{
+        0% {{ box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }}
+        70% {{ box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); }}
+        100% {{ box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }}
+    }}
+
+    .stTabs [aria-selected="true"] {{
+        animation: pulse-glow 2s infinite;
+    }}
 
     /* RESPONSIVIDADE */
     @media (max-width: 1024px) {{
-        .mod-card-rect {{ height: 100px; }}
-        .mod-icon-area {{ width: 80px; font-size: 1.8rem; }}
+        .mod-card-rect {{ height: 120px; }}
+        .mod-icon-area {{ width: 80px; }}
         .stTabs [data-baseweb="tab"] {{
             font-size: 0.7rem;
             padding: 0 12px;
-        }}
-        [data-baseweb="tab"]::before {{
-            font-size: 0.8rem;
         }}
     }}
 
     @media (max-width: 768px) {{
         .mod-card-rect {{ 
-            height: auto;
-            min-height: 90px;
+            height: 110px;
             flex-direction: column;
-            padding: 12px;
+            height: auto;
+            padding: 16px;
         }}
-        .mod-bar {{ 
-            width: 100%; 
-            height: 4px; 
-            background: linear-gradient(to right, #3B82F6, #60A5FA);
-        }}
+        .mod-bar {{ width: 100%; height: 6px; }}
         .mod-icon-area {{ 
             width: 100%; 
-            height: 50px; 
-            font-size: 1.6rem;
+            height: 60px; 
+            border-right: none;
+            border-bottom: 1px solid #F1F5F9;
         }}
-        .mod-content {{ padding: 12px 0 0 0; }}
+        .mod-content {{ padding: 16px 0 0 0; }}
         .stTabs [data-baseweb="tab-list"] {{
             flex-wrap: wrap;
             border-bottom: none;
         }}
         .stTabs [data-baseweb="tab"] {{
-            flex: 1 0 calc(33.333% - 8px);
+            flex: 1 0 calc(33.333% - 4px);
             margin-bottom: 4px;
             border: 1px solid #E2E8F0;
             border-radius: 8px;
             height: 36px;
         }}
         .stTabs [aria-selected="true"]::after {{
-            display: none;
+            display: none; /* ESCONDE A LINHA EM MOBILE */
         }}
-        [data-baseweb="tab"]::before {{
-            margin-right: 4px;
+        .stTabs [aria-selected="true"] {{
+            background-color: #F0F9FF !important; /* FUNDO AZUL CLARO EM MOBILE */
+            border-color: #BAE6FD !important;
         }}
     }}
 
     @media (max-width: 640px) {{
         .stTabs [data-baseweb="tab"] {{
-            flex: 1 0 calc(50% - 6px);
+            flex: 1 0 calc(50% - 4px);
             font-size: 0.65rem;
-            padding: 0 8px;
-        }}
-        [data-baseweb="tab"]::before {{
-            font-size: 0.75rem;
+            padding: 0 10px;
         }}
     }}
 </style>
@@ -1580,7 +1578,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# CARD HERO PARA PEI (DESIGN MINIMALISTA)
+# CARD HERO PARA PEI (MESMO DESIGN DOS ESTUDANTES)
 # ==============================================================================
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
@@ -1591,15 +1589,16 @@ st.markdown(
     f"""
     <div class="mod-card-wrapper">
         <div class="mod-card-rect">
-            <div class="mod-bar"></div>
-            <div class="mod-icon-area">
-                📘  <!-- Emoji em vez de ícone -->
+            <div class="mod-bar c-blue"></div>
+            <div class="mod-icon-area bg-blue-soft">
+                <i class="ri-book-open-fill"></i>
             </div>
             <div class="mod-content">
                 <div class="mod-title">Plano Educacional Individualizado (PEI)</div>
                 <div class="mod-desc">
                     {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie e gerencie Planos Educacionais Individualizados 
-                    para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>.
+                    para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>. Desenvolva estratégias personalizadas 
+                    e acompanhe o progresso de cada aluno.
                 </div>
             </div>
         </div>
@@ -1609,24 +1608,14 @@ st.markdown(
 )
 
 # ==============================================================================
-# ABAS DO PEI (COM EMOJIS E DESIGN MINIMALISTA)
+# ABAS DO PEI (COM ESTILO ATUALIZADO)
 # ==============================================================================
-# Criar abas com emojis nos nomes (funciona nativamente no Streamlit)
 abas = [
-    "🏠 INÍCIO", 
-    "👤 ESTUDANTE", 
-    "📊 EVIDÊNCIAS", 
-    "👥 REDE DE APOIO", 
-    "🗺️ MAPEAMENTO",
-    "✅ PLANO DE AÇÃO", 
-    "📈 MONITORAMENTO", 
-    "🤖 CONSULTORIA IA", 
-    "📋 DASHBOARD & DOCS", 
-    "🎮 JORNADA GAMIFICADA"
+    "INÍCIO", "ESTUDANTE", "EVIDÊNCIAS", "REDE DE APOIO", "MAPEAMENTO",
+    "PLANO DE AÇÃO", "MONITORAMENTO", "CONSULTORIA IA", "DASHBOARD & DOCS", "JORNADA GAMIFICADA"
 ]
 
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_mapa = st.tabs(abas)
-
 # ==============================================================================
 # 11. ABA INÍCIO — CENTRAL (Gestão de Alunos + Backups)
 # ==============================================================================
