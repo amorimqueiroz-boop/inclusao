@@ -20,13 +20,11 @@ st.set_page_config(
 # ==============================================================================
 # BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA (MESMO PADRÃO PEI)
 # ==============================================================================
-# 1. Detecção Automática de Ambiente
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
 except:
     IS_TEST_ENV = False
 
-# 2. Função para carregar a logo em Base64
 def get_logo_base64():
     caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
     for c in caminhos:
@@ -37,7 +35,6 @@ def get_logo_base64():
 
 src_logo_giratoria = get_logo_base64()
 
-# 3. Definição Dinâmica de Cores
 if IS_TEST_ENV:
     card_bg = "rgba(255, 220, 50, 0.95)" 
     card_border = "rgba(200, 160, 0, 0.5)"
@@ -45,289 +42,56 @@ else:
     card_bg = "rgba(255, 255, 255, 0.85)"
     card_border = "rgba(255, 255, 255, 0.6)"
 
-# 4. Renderização do Header Flutuante
 st.markdown(f"""
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 
 <style>
-    /* CARD FLUTUANTE (OMNISFERA) - MESMO PADRÃO */
+    /* CARD FLUTUANTE (OMNISFERA) */
     .omni-badge {{
-        position: fixed;
-        top: 15px; 
-        right: 15px;
-        background: {card_bg};
-        border: 1px solid {card_border};
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        padding: 4px 30px;
-        min-width: 260px;
-        justify-content: center;
-        border-radius: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        z-index: 999990;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        position: fixed; top: 15px; right: 15px;
+        background: {card_bg}; border: 1px solid {card_border};
+        backdrop-filter: blur(8px); padding: 4px 30px;
+        min-width: 260px; justify-content: center;
+        border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        z-index: 999990; display: flex; align-items: center; gap: 10px;
         pointer-events: none;
     }}
+    .omni-text {{ font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 0.9rem; color: #2D3748; letter-spacing: 1px; text-transform: uppercase; }}
+    @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
+    .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
 
-    .omni-text {{
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-weight: 800;
-        font-size: 0.9rem;
-        color: #2D3748;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-    }}
+    /* CARD HERO */
+    .mod-card-wrapper {{ display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); }}
+    .mod-card-rect {{ background: white; border-radius: 16px 16px 0 0; padding: 0; border: 1px solid #E2E8F0; border-bottom: none; display: flex; flex-direction: row; align-items: center; height: 130px; width: 100%; position: relative; overflow: hidden; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }}
+    .mod-card-rect:hover {{ transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08); border-color: #CBD5E1; }}
+    .mod-bar {{ width: 6px; height: 100%; flex-shrink: 0; }}
+    .mod-icon-area {{ width: 90px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0; background: transparent !important; border-right: 1px solid #F1F5F9; transition: all 0.3s ease; }}
+    .mod-card-rect:hover .mod-icon-area {{ transform: scale(1.05); }}
+    .mod-content {{ flex-grow: 1; padding: 0 24px; display: flex; flex-direction: column; justify-content: center; }}
+    .mod-title {{ font-weight: 800; font-size: 1.1rem; color: #1E293B; margin-bottom: 6px; letter-spacing: -0.3px; transition: color 0.2s; }}
+    .mod-card-rect:hover .mod-title {{ color: #4F46E5; }}
+    .mod-desc {{ font-size: 0.8rem; color: #64748B; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
 
-    @keyframes spin-slow {{
-        from {{ transform: rotate(0deg); }}
-        to {{ transform: rotate(360deg); }}
-    }}
-    
-    .omni-logo-spin {{
-        height: 26px;
-        width: 26px;
-        animation: spin-slow 10s linear infinite;
-    }}
-
-    /* CARD HERO PARA PAEE - COM FUNDO TRANSPARENTE NO ÍCONE */
-    .mod-card-wrapper {{
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 20px;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-    }}
-
-    .mod-card-rect {{
-        background: white;
-        border-radius: 16px 16px 0 0;
-        padding: 0;
-        border: 1px solid #E2E8F0;
-        border-bottom: none;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        height: 130px;
-        width: 100%;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }}
-
-    .mod-card-rect:hover {{
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-        border-color: #CBD5E1;
-    }}
-
-    .mod-bar {{
-        width: 6px;
-        height: 100%;
-        flex-shrink: 0;
-    }}
-
-    .mod-icon-area {{
-        width: 90px;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.8rem;
-        flex-shrink: 0;
-        background: transparent !important; /* FUNDO TRANSPARENTE */
-        border-right: 1px solid #F1F5F9;
-        transition: all 0.3s ease;
-    }}
-
-    .mod-card-rect:hover .mod-icon-area {{
-        background: transparent !important;
-        transform: scale(1.05);
-    }}
-
-    .mod-content {{
-        flex-grow: 1;
-        padding: 0 24px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }}
-
-    .mod-title {{
-        font-weight: 800;
-        font-size: 1.1rem;
-        color: #1E293B;
-        margin-bottom: 6px;
-        letter-spacing: -0.3px;
-        transition: color 0.2s;
-    }}
-
-    .mod-card-rect:hover .mod-title {{
-        color: #4F46E5;
-    }}
-
-    .mod-desc {{
-        font-size: 0.8rem;
-        color: #64748B;
-        line-height: 1.4;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }}
-
-    /* CORES DOS CARDS - ROXO PARA PAEE */
+    /* CORES */
     .c-purple {{ background: #8B5CF6 !important; }}
-    .bg-purple-soft {{ 
-        background: transparent !important; /* FUNDO TRANSPARENTE */
-        color: #8B5CF6 !important; /* COR ROXA MAIS INTENSA */
-    }}
+    .bg-purple-soft {{ background: transparent !important; color: #8B5CF6 !important; }}
 
-    /* ABAS EM FORMATO DE PÍLULAS - MESMO PADRÃO DO PEI */
-    .stTabs [data-baseweb="tab-list"] {{
-        gap: 4px !important;
-        background-color: transparent !important;
-        padding: 0 !important;
-        border-radius: 0 !important;
-        margin-top: 24px !important;
-        border-bottom: none !important;
-        flex-wrap: wrap !important;
-    }}
+    /* ABAS */
+    .stTabs [data-baseweb="tab-list"] {{ gap: 4px !important; background-color: transparent !important; padding: 0 !important; border-radius: 0 !important; margin-top: 24px !important; border-bottom: none !important; flex-wrap: wrap !important; }}
+    .stTabs [data-baseweb="tab"] {{ height: 36px !important; white-space: nowrap !important; background-color: transparent !important; border-radius: 20px !important; padding: 0 16px !important; color: #64748B !important; font-weight: 600 !important; font-size: 0.72rem !important; text-transform: uppercase !important; letter-spacing: 0.3px !important; transition: all 0.2s ease !important; border: 1px solid #E2E8F0 !important; margin: 0 !important; }}
+    .stTabs [aria-selected="true"] {{ background-color: #8B5CF6 !important; color: white !important; font-weight: 700 !important; border: 1px solid #8B5CF6 !important; box-shadow: 0 1px 3px rgba(139, 92, 246, 0.2) !important; }}
+    .stTabs [data-baseweb="tab"]:not([aria-selected="true"]) {{ background-color: white !important; }}
+    .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{ background-color: #F8FAFC !important; border-color: #CBD5E1 !important; color: #475569 !important; }}
+    .stTabs [data-baseweb="tab"]::after, .stTabs [aria-selected="true"]::after, .stTabs [data-baseweb="tab"]::before, .stTabs [aria-selected="true"]::before {{ display: none !important; }}
+    .stTabs [data-baseweb="tab-list"] {{ border-bottom: none !important; }}
 
-    .stTabs [data-baseweb="tab"] {{
-        height: 36px !important;
-        white-space: nowrap !important;
-        background-color: transparent !important;
-        border-radius: 20px !important;
-        padding: 0 16px !important;
-        color: #64748B !important;
-        font-weight: 600 !important;
-        font-size: 0.72rem !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.3px !important;
-        transition: all 0.2s ease !important;
-        border: 1px solid #E2E8F0 !important;
-        position: relative !important;
-        margin: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }}
+    /* PEDAGOGIA BOX */
+    .pedagogia-box {{ background-color: #F8FAFC; border-left: 4px solid #CBD5E1; padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; font-size: 0.95rem; color: #4A5568; }}
 
-    /* ABA ATIVA - FUNDO ROXO SÓLIDO (PAEE) */
-    .stTabs [aria-selected="true"] {{
-        background-color: #8B5CF6 !important;
-        color: white !important;
-        font-weight: 700 !important;
-        border: 1px solid #8B5CF6 !important;
-        box-shadow: 0 1px 3px rgba(139, 92, 246, 0.2) !important;
-    }}
-
-    /* ABA INATIVA - APENAS CONTORNO SUTIL */
-    .stTabs [data-baseweb="tab"]:not([aria-selected="true"]) {{
-        background-color: white !important;
-        color: #64748B !important;
-        border: 1px solid #E2E8F0 !important;
-    }}
-
-    /* HOVER SIMPLES E DIRETO */
-    .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{
-        background-color: #F8FAFC !important;
-        border-color: #CBD5E1 !important;
-        color: #475569 !important;
-    }}
-
-    .stTabs [aria-selected="true"]:hover {{
-        background-color: #7C3AED !important;
-        border-color: #7C3AED !important;
-    }}
-
-    /* REMOVER QUALQUER BORDA/INDICADOR VERMELHO DAS ABAS */
-    .stTabs [data-baseweb="tab"]::after,
-    .stTabs [aria-selected="true"]::after,
-    .stTabs [data-baseweb="tab"]::before,
-    .stTabs [aria-selected="true"]::before {{
-        display: none !important;
-    }}
-
-    /* REMOVER QUALQUER BORDA INFERIOR VERMELHA */
-    .stTabs [data-baseweb="tab-list"] {{
-        border-bottom: none !important;
-    }}
-
-    /* PEDAGOGIA BOX (ATUALIZADO PARA NEUTRO) */
-    .pedagogia-box {{ 
-        background-color: #F8FAFC; border-left: 4px solid #CBD5E1; 
-        padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; 
-        font-size: 0.95rem; color: #4A5568; 
-    }}
-
-    /* RESPONSIVIDADE PARA TELAS MENORES */
-    @media (max-width: 1024px) {{
-        .mod-card-rect {{ height: 120px; }}
-        .mod-icon-area {{ width: 80px; }}
-        .stTabs [data-baseweb="tab"] {{
-            font-size: 0.68rem !important;
-            padding: 0 14px !important;
-            height: 34px !important;
-        }}
-    }}
-
-    @media (max-width: 768px) {{
-        .mod-card-rect {{ 
-            height: 110px;
-            flex-direction: column;
-            height: auto;
-            padding: 16px;
-        }}
-        .mod-bar {{ width: 100%; height: 6px; }}
-        .mod-icon-area {{ 
-            width: 100%; 
-            height: 60px; 
-            border-right: none;
-            border-bottom: 1px solid #F1F5F9;
-        }}
-        .mod-content {{ padding: 16px 0 0 0; }}
-        
-        /* EM MOBILE, AS PÍLULAS FICAM EM GRID */
-        .stTabs [data-baseweb="tab-list"] {{
-            gap: 6px !important;
-        }}
-        
-        .stTabs [data-baseweb="tab"] {{
-            flex: 1 0 calc(33.333% - 4px) !important;
-            min-width: calc(33.333% - 4px) !important;
-            margin-bottom: 0 !important;
-            height: 32px !important;
-            border-radius: 16px !important;
-            font-size: 0.65rem !important;
-            padding: 0 10px !important;
-        }}
-    }}
-
-    @media (max-width: 640px) {{
-        .stTabs [data-baseweb="tab"] {{
-            flex: 1 0 calc(50% - 4px) !important;
-            min-width: calc(50% - 4px) !important;
-            font-size: 0.62rem !important;
-            padding: 0 8px !important;
-            height: 30px !important;
-        }}
-    }}
-
-    @media (max-width: 480px) {{
-        .stTabs [data-baseweb="tab"] {{
-            flex: 1 0 100% !important;
-            min-width: 100% !important;
-            border-radius: 12px !important;
-            margin-bottom: 4px !important;
-        }}
-    }}
+    /* RESPONSIVIDADE */
+    @media (max-width: 768px) {{ .mod-card-rect {{ height: auto; flex-direction: column; padding: 16px; }} .mod-icon-area {{ width: 100%; height: 60px; border-right: none; border-bottom: 1px solid #F1F5F9; }} .mod-content {{ padding: 16px 0 0 0; }} }}
 </style>
 
-<!-- BADGE FLUTUANTE OMNISFERA -->
 <div class="omni-badge">
     <img src="{src_logo_giratoria}" class="omni-logo-spin">
     <span class="omni-text">OMNISFERA</span>
@@ -342,7 +106,6 @@ def verificar_acesso():
 
 verificar_acesso()
 
-# --- BARRA LATERAL ---
 with st.sidebar:
     try: st.image("ominisfera.png", width=150)
     except: st.write("🌐 OMNISFERA")
@@ -351,7 +114,7 @@ with st.sidebar:
     st.markdown("---")
 
 # ==============================================================================
-# CARD HERO PARA PAEE (MESMO DESIGN DOS ESTUDANTES)
+# CARD HERO
 # ==============================================================================
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
@@ -381,189 +144,136 @@ st.markdown(
 )
 
 # ==============================================================================
-# FUNÇÕES DE ACESSO AO SUPABASE (MESMA LÓGICA DA PÁGINA DE ALUNOS)
+# FUNÇÕES SUPABASE (REST)
 # ==============================================================================
 def _sb_url() -> str:
     url = str(st.secrets.get("SUPABASE_URL", "")).strip()
-    if not url:
-        raise RuntimeError("SUPABASE_URL não encontrado nos secrets.")
+    if not url: raise RuntimeError("SUPABASE_URL missing")
     return url.rstrip("/")
 
 def _sb_key() -> str:
-    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "")).strip()
-    if not key:
-        key = str(st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
-    if not key:
-        raise RuntimeError("SUPABASE_SERVICE_KEY/ANON_KEY não encontrado nos secrets.")
+    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "") or st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
+    if not key: raise RuntimeError("SUPABASE_KEY missing")
     return key
 
 def _headers() -> dict:
     key = _sb_key()
-    return {
-        "apikey": key,
-        "Authorization": f"Bearer {key}",
-        "Content-Type": "application/json",
-    }
-
-def _http_error(prefix: str, r: requests.Response):
-    st.error(f"{prefix}: {r.status_code} {r.text}")
-    return []
+    return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
 
 # ==============================================================================
-# CARREGAR ESTUDANTES DO SUPABASE (USANDO STUDENTS TABELA)
+# CARREGAR ESTUDANTES (AGORA LENDO O PEI_DATA)
 # ==============================================================================
 @st.cache_data(ttl=10, show_spinner=False)
 def list_students_rest():
-    """Busca estudantes do Supabase - MESMA LÓGICA DA PÁGINA DE ALUNOS"""
+    """Busca estudantes do Supabase incluindo o campo PEI_DATA"""
     WORKSPACE_ID = st.session_state.get("workspace_id")
-    
-    if not WORKSPACE_ID:
-        st.error("Workspace ID não encontrado na sessão.")
-        return []
+    if not WORKSPACE_ID: return []
     
     try:
-        # Tenta a tabela 'students' primeiro (padrão da página Alunos)
+        # AQUI MUDOU: Adicionado 'pei_data' no select
         base = (
             f"{_sb_url()}/rest/v1/students"
-            f"?select=id,name,grade,class_group,diagnosis,created_at"
+            f"?select=id,name,grade,class_group,diagnosis,created_at,pei_data"
             f"&workspace_id=eq.{WORKSPACE_ID}"
             f"&order=created_at.desc"
         )
         r = requests.get(base, headers=_headers(), timeout=20)
-        
-        if r.status_code == 200:
-            data = r.json()
-            return data if isinstance(data, list) else []
-        else:
-            # Tenta tabela alternativa 'planos_pei' se 'students' falhar
-            st.warning(f"Tabela 'students' não encontrada (status {r.status_code}). Tentando 'planos_pei'...")
-            
-            # Usando o usuário atual para filtrar
-            usuario_atual = st.session_state.get("usuario_nome", "")
-            if usuario_atual:
-                base_alt = (
-                    f"{_sb_url()}/rest/v1/planos_pei"
-                    f"?select=id,nome_aluno,serie,hiperfoco,conteudo_gerado,responsavel,created_at"
-                    f"&responsavel=eq.{usuario_atual}"
-                    f"&order=created_at.desc"
-                )
-                r_alt = requests.get(base_alt, headers=_headers(), timeout=20)
-                
-                if r_alt.status_code == 200:
-                    data = r_alt.json()
-                    return data if isinstance(data, list) else []
-                else:
-                    return _http_error("List planos_pei falhou", r_alt)
-            else:
-                st.error("Usuário não identificado na sessão.")
-                return []
-                
-    except Exception as e:
-        st.error(f"Erro na requisição: {e}")
+        return r.json() if r.status_code == 200 else []
+    except:
         return []
 
 def carregar_estudantes_supabase():
-    """Carrega estudantes do Supabase convertendo para formato esperado"""
+    """Carrega e processa, extraindo dados ricos do PEI"""
     dados = list_students_rest()
-    
     estudantes = []
+    
     for item in dados:
-        # Verifica se vem da tabela 'students' ou 'planos_pei'
-        if 'name' in item:  # Tabela 'students'
-            estudante = {
-                'nome': item.get('name', ''),
-                'serie': item.get('grade', ''),
-                'hiperfoco': item.get('diagnosis', ''),
-                'ia_sugestao': f"Série: {item.get('grade', '')} | Turma: {item.get('class_group', '')} | Diagnóstico: {item.get('diagnosis', '')}",
-                'responsavel': st.session_state.get("usuario_nome", ""),
-                'id': item.get('id', ''),
-                'created_at': item.get('created_at', '')
-            }
-        else:  # Tabela 'planos_pei'
-            estudante = {
-                'nome': item.get('nome_aluno', ''),
-                'serie': item.get('serie', ''),
-                'hiperfoco': item.get('hiperfoco', ''),
-                'ia_sugestao': item.get('conteudo_gerado', ''),
-                'responsavel': item.get('responsavel', ''),
-                'id': item.get('id', ''),
-                'created_at': item.get('created_at', '')
-            }
+        # Tenta pegar dados do JSONB 'pei_data' salvo no módulo anterior
+        pei_completo = item.get('pei_data') or {}
         
-        # Só adiciona se tiver nome
+        # O contexto para IA vem preferencialmente do texto gerado no módulo PEI
+        contexto_ia = pei_completo.get('ia_sugestao', '')
+        
+        # Se não tiver PEI gerado, monta um resumo básico
+        if not contexto_ia:
+            diag = item.get('diagnosis', 'Não informado')
+            serie = item.get('grade', '')
+            contexto_ia = f"Aluno: {item.get('name')}. Série: {serie}. Diagnóstico: {diag}."
+
+        estudante = {
+            'nome': item.get('name', ''),
+            'serie': item.get('grade', ''),
+            'hiperfoco': item.get('diagnosis', ''), # Usando diagnóstico como hiperfoco/contexto principal
+            'ia_sugestao': contexto_ia, # AQUI ESTÁ O SEGREDO: O TEXTO RICO DO PEI
+            'id': item.get('id', ''),
+            'pei_data': pei_completo # Guarda tudo caso precise
+        }
         if estudante['nome']:
             estudantes.append(estudante)
-    
+            
     return estudantes
 
 # ==============================================================================
 # CARREGAMENTO DOS DADOS
 # ==============================================================================
 if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
-    with st.spinner("🔄 Carregando estudantes do Supabase..."):
+    with st.spinner("🔄 Lendo dados da nuvem..."):
         st.session_state.banco_estudantes = carregar_estudantes_supabase()
 
-# Se não houver estudantes, mostra opção para ir ao PEI
 if not st.session_state.banco_estudantes:
-    st.warning("⚠️ Nenhum aluno encontrado. Você precisa criar Planos Educacionais Individualizados (PEI) primeiro.")
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("📘 Ir para o módulo PEI", type="primary", use_container_width=True):
-            st.switch_page("pages/1_PEI.py")
-    
+    st.warning("⚠️ Nenhum aluno encontrado.")
+    if st.button("📘 Ir para o módulo PEI", type="primary"): st.switch_page("pages/1_PEI.py")
     st.stop()
 
 # --- SELEÇÃO DE ALUNO ---
-lista_alunos = [a['nome'] for a in st.session_state.banco_estudantes if a.get('nome')]
+lista_alunos = [a['nome'] for a in st.session_state.banco_estudantes]
 col_sel, col_info = st.columns([1, 2])
 with col_sel:
     nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista_alunos)
 
 aluno = next((a for a in st.session_state.banco_estudantes if a.get('nome') == nome_aluno), None)
 
-if not aluno:
-    st.error("Estudante não encontrado nos dados.")
-    st.stop()
+if not aluno: st.stop()
 
 # --- DETECTOR DE EDUCAÇÃO INFANTIL ---
 serie_aluno = aluno.get('serie', '').lower()
-is_ei = any(term in serie_aluno for term in ["infantil", "creche", "pré", "pré-escola", "maternal", "berçario", "jardim"])
+is_ei = any(term in serie_aluno for term in ["infantil", "creche", "pré", "maternal", "berçario", "jardim"])
 
-# --- HEADER DO ALUNO (CORES NEUTRAS) ---
+# --- HEADER DO ALUNO ---
 st.markdown(f"""
     <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px 30px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Nome</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('nome', 'Não informado')}</div></div>
-        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Série</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('serie', '-')}</div></div>
-        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Hiperfoco</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('hiperfoco', '-')}</div></div>
+        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Nome</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('nome')}</div></div>
+        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Série</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('serie')}</div></div>
+        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Diagnóstico</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('hiperfoco', '-')}</div></div>
     </div>
 """, unsafe_allow_html=True)
 
 if is_ei:
-    st.info("🧸 **Modo Educação Infantil Ativado:** Foco em Campos de Experiência (BNCC) e Brincar Heurístico.")
+    st.info("🧸 **Modo Educação Infantil:** Foco em Campos de Experiência (BNCC).")
 
-with st.expander("📄 Ver Resumo do PEI (Base para o PAEE)", expanded=False):
-    st.info(aluno.get('ia_sugestao', 'Nenhum dado de PEI processado ainda.'))
+with st.expander("📄 Ver Dados Completos do PEI", expanded=False):
+    st.write(aluno.get('ia_sugestao', 'Sem dados detalhados.'))
 
 # --- GESTÃO DE CHAVES ---
 if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']
 else: api_key = st.sidebar.text_input("Chave OpenAI:", type="password")
 
-# --- FUNÇÕES DE IA (MANTIDAS IGUAIS) ---
-
+# --- FUNÇÕES DE IA ---
 def gerar_diagnostico_barreiras(api_key, aluno, obs_prof):
     client = OpenAI(api_key=api_key)
+    # Usa o 'ia_sugestao' que agora contém o PEI completo
+    contexto = aluno.get('ia_sugestao', '')
     prompt = f"""
     ATUAR COMO: Especialista em AEE.
-    ALUNO: {aluno['nome']} | HIPERFOCO: {aluno.get('hiperfoco')}
-    RESUMO PEI: {aluno.get('ia_sugestao', '')[:1000]}
+    ALUNO: {aluno['nome']} | DIAGNÓSTICO: {aluno.get('hiperfoco')}
+    CONTEXTO DO PEI: {contexto[:2500]}
     OBSERVAÇÃO ATUAL: {obs_prof}
     
-    CLASSIFIQUE AS BARREIRAS (Lei Brasileira de Inclusão):
+    CLASSIFIQUE AS BARREIRAS (LBI):
     1. **Barreiras Comunicacionais**
     2. **Barreiras Metodológicas**
     3. **Barreiras Atitudinais**
-    4. **Barreiras Tecnológicas/Instrumentais**
+    4. **Barreiras Tecnológicas**
     SAÍDA: Tabela Markdown.
     """
     try:
@@ -573,26 +283,16 @@ def gerar_diagnostico_barreiras(api_key, aluno, obs_prof):
 
 def gerar_projetos_ei_bncc(api_key, aluno, campo_exp):
     client = OpenAI(api_key=api_key)
+    contexto = aluno.get('ia_sugestao', '')
     prompt = f"""
-    ATUAR COMO: Pedagogo Especialista em Educação Infantil e Inclusão.
-    ALUNO: {aluno['nome']} (Educação Infantil).
-    HIPERFOCO: {aluno.get('hiperfoco', 'Brincadeiras')}.
-    RESUMO DAS NECESSIDADES (PEI): {aluno.get('ia_sugestao', '')[:800]}
+    ATUAR COMO: Especialista em Ed. Infantil Inclusiva.
+    ALUNO: {aluno['nome']} | CONTEXTO PEI: {contexto[:2000]}
+    CAMPO DE EXPERIÊNCIA: "{campo_exp}".
     
-    SUA MISSÃO: Criar 3 propostas de EXPERIÊNCIAS LÚDICAS (Atividades) focadas no Campo de Experiência: "{campo_exp}".
-    
-    REGRAS:
-    1. As atividades devem usar o Hiperfoco para engajar.
-    2. Devem eliminar barreiras de participação.
-    3. Devem ser sensoriais e concretas.
-    
-    SAÍDA ESPERADA (Markdown):
-    ### 🧸 Experiência 1: [Nome Criativo]
-    * **Objetivo:** ...
-    * **Como Fazer:** ...
-    * **Adaptação:** ...
-    
-    (Repetir para 2 e 3)
+    Crie 3 EXPERIÊNCIAS LÚDICAS (Atividades):
+    1. Use interesses do aluno.
+    2. Elimine barreiras.
+    3. Sensorial e concreto.
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
@@ -601,11 +301,12 @@ def gerar_projetos_ei_bncc(api_key, aluno, campo_exp):
 
 def gerar_plano_habilidades(api_key, aluno, foco_treino):
     client = OpenAI(api_key=api_key)
+    contexto = aluno.get('ia_sugestao', '')
     prompt = f"""
-    CRIE UM PLANO DE INTERVENÇÃO AEE (Sala de Recursos).
-    FOCO: Desenvolvimento de Habilidades ({foco_treino}).
-    ALUNO: {aluno['nome']} | HIPERFOCO: {aluno.get('hiperfoco')}
-    GERE 3 METAS SMART (Longo Prazo, Estratégia com Hiperfoco, Recurso).
+    CRIE PLANO DE INTERVENÇÃO AEE.
+    FOCO: {foco_treino}.
+    ALUNO: {aluno['nome']} | CONTEXTO PEI: {contexto[:2000]}
+    GERE 3 METAS SMART (Curto, Médio, Longo prazo).
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
@@ -614,10 +315,12 @@ def gerar_plano_habilidades(api_key, aluno, foco_treino):
 
 def sugerir_tecnologia_assistiva(api_key, aluno, dificuldade):
     client = OpenAI(api_key=api_key)
+    contexto = aluno.get('ia_sugestao', '')
     prompt = f"""
     SUGESTÃO DE TECNOLOGIA ASSISTIVA.
-    Aluno: {aluno['nome']}. Dificuldade: {dificuldade}.
-    Sugira: Baixa Tecnologia (DIY), Média Tecnologia, Alta Tecnologia.
+    Aluno: {aluno['nome']} | Dificuldade: {dificuldade}.
+    Contexto PEI: {contexto[:1500]}
+    Sugira: Baixa Tecnologia (DIY), Média e Alta.
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
@@ -627,10 +330,10 @@ def sugerir_tecnologia_assistiva(api_key, aluno, dificuldade):
 def gerar_documento_articulacao(api_key, aluno, frequencia, acoes):
     client = OpenAI(api_key=api_key)
     prompt = f"""
-    ESCREVA UMA CARTA DE ARTICULAÇÃO (AEE -> SALA REGULAR).
+    CARTA DE ARTICULAÇÃO (AEE -> SALA REGULAR).
     Aluno: {aluno['nome']}. Frequência: {frequencia}.
     Ações no AEE: {acoes}.
-    Dê 3 dicas para o professor regente. Tom colaborativo.
+    Dê 3 dicas práticas para o professor regente.
     """
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.7)
@@ -638,102 +341,73 @@ def gerar_documento_articulacao(api_key, aluno, frequencia, acoes):
     except Exception as e: return str(e)
 
 # ==============================================================================
-# ABAS DO PAEE (MESMO PADRÃO DO PEI - TEXTO EM MAIÚSCULAS, SEM EMOJIS)
+# INTERFACE
 # ==============================================================================
 
 if is_ei:
-    # --- ABAS ESPECÍFICAS PARA EDUCAÇÃO INFANTIL ---
     tab_barreiras, tab_projetos, tab_rotina, tab_ponte = st.tabs([
-        "BARREIRAS NO BRINCAR", 
-        "BANCO DE EXPERIÊNCIAS", 
-        "ROTINA & ADAPTAÇÃO", 
-        "ARTICULAÇÃO"
+        "BARREIRAS NO BRINCAR", "BANCO DE EXPERIÊNCIAS", "ROTINA & ADAPTAÇÃO", "ARTICULAÇÃO"
     ])
     
-    # 1. BARREIRAS (EI)
     with tab_barreiras:
-        st.markdown("<div class='pedagogia-box'><strong>Diagnóstico do Brincar:</strong> Na Educação Infantil, a barreira não é 'não escrever', mas sim 'não participar da interação'.</div>", unsafe_allow_html=True)
-        obs_aee = st.text_area("Observação do Brincar:", placeholder="Ex: Isola-se no parquinho, não aceita texturas...", height=100)
-        if st.button("Mapear Barreiras do Brincar", type="primary"):
+        st.markdown("<div class='pedagogia-box'><strong>Diagnóstico do Brincar:</strong> Identifique barreiras na interação e no brincar.</div>", unsafe_allow_html=True)
+        obs_aee = st.text_area("Observação do Brincar:", height=100)
+        if st.button("Mapear Barreiras", type="primary"):
             if not api_key: st.error("Insira a chave OpenAI."); st.stop()
             with st.spinner("Analisando..."):
-                resultado = gerar_diagnostico_barreiras(api_key, aluno, obs_aee)
-                st.markdown(resultado)
+                st.markdown(gerar_diagnostico_barreiras(api_key, aluno, obs_aee))
 
-    # 2. PROJETOS (EI)
     with tab_projetos:
-        st.markdown("<div class='pedagogia-box'><strong>Banco de Experiências (BNCC):</strong> Atividades lúdicas usando o hiperfoco.</div>", unsafe_allow_html=True)
-        
-        campo_bncc = st.selectbox("Selecione o Campo de Experiência (BNCC):", [
-            "O eu, o outro e o nós (Identidade e Interação)",
-            "Corpo, gestos e movimentos (Motricidade)",
-            "Traços, sons, cores e formas (Artes)",
-            "Escuta, fala, pensamento e imaginação (Oralidade)",
-            "Espaços, tempos, quantidades, relações e transformações (Cognição)"
-        ])
-        
-        if st.button("✨ Gerar Atividades Lúdicas", type="primary"):
+        st.markdown("<div class='pedagogia-box'><strong>Banco de Experiências (BNCC):</strong> Atividades lúdicas.</div>", unsafe_allow_html=True)
+        campo_bncc = st.selectbox("Campo de Experiência:", ["O eu, o outro e o nós", "Corpo, gestos e movimentos", "Traços, sons, cores e formas", "Escuta, fala, pensamento e imaginação", "Espaços, tempos, quantidades, relações e transformações"])
+        if st.button("✨ Gerar Atividades", type="primary"):
             if not api_key: st.error("Insira a chave OpenAI."); st.stop()
-            with st.spinner("Criando experiências..."):
-                atividades = gerar_projetos_ei_bncc(api_key, aluno, campo_bncc)
-                st.markdown(atividades)
+            with st.spinner("Criando..."):
+                st.markdown(gerar_projetos_ei_bncc(api_key, aluno, campo_bncc))
 
-    # 3. ROTINA (EI)
     with tab_rotina:
-        st.markdown("<div class='pedagogia-box'><strong>Adaptação de Rotina:</strong> Recursos visuais e sensoriais para a creche/pré-escola.</div>", unsafe_allow_html=True)
-        dif_rotina = st.text_input("Dificuldade na Rotina:", placeholder="Ex: Hora do soninho, Desfralde, Alimentação")
+        st.markdown("<div class='pedagogia-box'><strong>Adaptação de Rotina:</strong> Recursos visuais e sensoriais.</div>", unsafe_allow_html=True)
+        dif_rotina = st.text_input("Dificuldade na Rotina:")
         if st.button("Sugerir Adaptação", type="primary"):
             if not api_key: st.error("Insira a chave OpenAI."); st.stop()
             with st.spinner("Buscando recursos..."):
-                resultado = sugerir_tecnologia_assistiva(api_key, aluno, f"Rotina EI: {dif_rotina}")
-                st.markdown(resultado)
+                st.markdown(sugerir_tecnologia_assistiva(api_key, aluno, f"Rotina EI: {dif_rotina}"))
 
 else:
-    # --- ABAS PADRÃO (FUNDAMENTAL / MÉDIO) ---
     tab_barreiras, tab_plano, tab_tec, tab_ponte = st.tabs([
-        "MAPEAR BARREIRAS", 
-        "PLANO DE HABILIDADES", 
-        "TEC. ASSISTIVA", 
-        "CRONOGRAMA & ARTICULAÇÃO"
+        "MAPEAR BARREIRAS", "PLANO DE HABILIDADES", "TEC. ASSISTIVA", "CRONOGRAMA & ARTICULAÇÃO"
     ])
 
-    # 1. BARREIRAS
     with tab_barreiras:
-        st.markdown("<div class='pedagogia-box'><strong>Diagnóstico de Acessibilidade:</strong> Identifique o que impede o aluno de participar, não a doença.</div>", unsafe_allow_html=True)
-        obs_aee = st.text_area("Observações Iniciais do AEE (Opcional):", placeholder="Ex: O aluno se recusa a escrever...", height=100)
-        if st.button("Analisar Barreiras via IA", type="primary"):
+        st.markdown("<div class='pedagogia-box'><strong>Diagnóstico de Acessibilidade:</strong> O que impede a participação?</div>", unsafe_allow_html=True)
+        obs_aee = st.text_area("Observações Iniciais do AEE:", height=100)
+        if st.button("Analisar Barreiras", type="primary"):
             if not api_key: st.error("Insira a chave OpenAI."); st.stop()
             with st.spinner("Analisando..."):
-                resultado = gerar_diagnostico_barreiras(api_key, aluno, obs_aee)
-                st.markdown(resultado)
+                st.markdown(gerar_diagnostico_barreiras(api_key, aluno, obs_aee))
 
-    # 2. PLANO
     with tab_plano:
-        st.markdown("<div class='pedagogia-box'><strong>Treino de Habilidades:</strong> Desenvolvimento cognitivo, motor e social.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='pedagogia-box'><strong>Treino de Habilidades:</strong> Desenvolvimento cognitivo/motor.</div>", unsafe_allow_html=True)
         foco = st.selectbox("Foco do atendimento:", ["Funções Executivas", "Autonomia", "Coordenação Motora", "Comunicação", "Habilidades Sociais"])
         if st.button("Gerar Plano", type="primary"):
             if not api_key: st.error("Insira a chave OpenAI."); st.stop()
             with st.spinner("Planejando..."):
-                resultado = gerar_plano_habilidades(api_key, aluno, foco)
-                st.markdown(resultado)
+                st.markdown(gerar_plano_habilidades(api_key, aluno, foco))
 
-    # 3. T.A.
     with tab_tec:
         st.markdown("<div class='pedagogia-box'><strong>Tecnologia Assistiva:</strong> Recursos para autonomia.</div>", unsafe_allow_html=True)
-        dif_especifica = st.text_input("Dificuldade Específica:", placeholder="Ex: Não segura o lápis")
+        dif_especifica = st.text_input("Dificuldade Específica:")
         if st.button("Sugerir Recursos", type="primary"):
             if not api_key: st.error("Insira a chave OpenAI."); st.stop()
             with st.spinner("Buscando T.A..."):
-                resultado = sugerir_tecnologia_assistiva(api_key, aluno, dif_especifica)
-                st.markdown(resultado)
+                st.markdown(sugerir_tecnologia_assistiva(api_key, aluno, dif_especifica))
 
-# 4. ARTICULAÇÃO (COMUM A TODOS)
 with tab_ponte:
-    st.markdown("<div class='pedagogia-box'><strong>Ponte com a Sala Regular:</strong> Documento de colaboração com os professores.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='pedagogia-box'><strong>Ponte com a Sala Regular:</strong> Documento colaborativo.</div>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     freq = c1.selectbox("Frequência:", ["1x/sem", "2x/sem", "3x/sem", "Diário"])
     turno = c2.selectbox("Turno:", ["Manhã", "Tarde"])
-    acoes_resumo = st.text_area("Trabalho no AEE:", placeholder="Ex: Comunicação alternativa...", height=70)
+    acoes_resumo = st.text_area("Trabalho no AEE:", height=70)
     if st.button("Gerar Carta", type="primary"):
         if not api_key: st.error("Insira a chave OpenAI."); st.stop()
         with st.spinner("Escrevendo..."):
