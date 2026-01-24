@@ -5,6 +5,7 @@ import json
 import pandas as pd
 from datetime import date
 import base64
+from datetime import datetime
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
@@ -17,172 +18,305 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 2. BLOCO VISUAL (DESIGN SYSTEM PREMIUM - AZUL SÓBRIO)
+# BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA (MESMO PADRÃO PEI)
 # ==============================================================================
-import os
-import base64
-import streamlit as st
+# 1. Detecção Automática de Ambiente
+try:
+    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
+except:
+    IS_TEST_ENV = False
 
-# 1. Detecção de Ambiente
-try: IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
-except: IS_TEST_ENV = False
-
-# 2. Logo Base64 (Giratória)
+# 2. Função para carregar a logo em Base64
 def get_logo_base64():
     caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
     for c in caminhos:
         if os.path.exists(c):
-            with open(c, "rb") as f: return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+            with open(c, "rb") as f:
+                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
     return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
 
 src_logo_giratoria = get_logo_base64()
 
-# 3. Cores Dinâmicas (Badge)
+# 3. Definição Dinâmica de Cores
 if IS_TEST_ENV:
-    card_bg, card_border = "rgba(255, 220, 50, 0.95)", "rgba(200, 160, 0, 0.5)"
+    card_bg = "rgba(255, 220, 50, 0.95)" 
+    card_border = "rgba(200, 160, 0, 0.5)"
 else:
-    card_bg, card_border = "rgba(255, 255, 255, 0.85)", "rgba(255, 255, 255, 0.6)"
+    card_bg = "rgba(255, 255, 255, 0.85)"
+    card_border = "rgba(255, 255, 255, 0.6)"
 
-# 4. Renderização CSS Global (Design System Premium - AZUL)
+# 4. Renderização do Header Flutuante
 st.markdown(f"""
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
-    <style>
-    /* VARIÁVEIS GLOBAIS - AZUL SÓBRIO */
-    :root {{ 
-        --brand-blue: #0F52BA; 
-        --brand-hover: #0A3D8F;
-        --card-radius: 16px; 
-    }}
-    
-    /* 1. Fontes e Cores Base */
-    html, body, [class*="css"] {{ 
-        font-family: 'Nunito', sans-serif; 
-        color: #2D3748; 
-        background-color: #F7FAFC; 
-    }}
-    .block-container {{ 
-        padding-top: 1.5rem !important; 
-        padding-bottom: 5rem !important; 
-    }}
-
-    /* 2. Navegação em Abas "Glow" Clean */
-    div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] {{ display: none !important; }}
-    
-    .stTabs [data-baseweb="tab-list"] {{ 
-        gap: 8px; 
-        display: flex;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        white-space: nowrap;
-        padding: 10px 5px;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }}
-    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {{ display: none; }}
-
-    /* ESTILO PADRÃO DAS ABAS (Pílula) */
-    .stTabs [data-baseweb="tab"] {{ 
-        height: 38px; 
-        border-radius: 20px !important; 
-        background-color: #FFFFFF; 
-        border: 1px solid #E2E8F0; 
-        color: #718096; 
-        font-weight: 700; 
-        font-size: 0.8rem; 
-        padding: 0 20px; 
-        transition: all 0.2s ease;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-        flex-shrink: 0;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }}
-    
-    .stTabs [data-baseweb="tab"]:hover {{
-        border-color: #CBD5E0;
-        color: #4A5568;
-        background-color: #EDF2F7;
-    }}
-
-    /* ESTADO SELECIONADO (AZUL COM GLOW) */
-    .stTabs [aria-selected="true"] {{ 
-        background-color: transparent !important; 
-        color: var(--brand-blue) !important; 
-        border: 1px solid var(--brand-blue) !important; 
-        font-weight: 800;
-        box-shadow: 0 0 12px rgba(15, 82, 186, 0.3), inset 0 0 5px rgba(15, 82, 186, 0.1) !important;
-    }}
-
-    /* 3. Header Unificado (Com Divisor Vertical - SEM barra lateral) */
-    .header-unified {{ 
-        background-color: white; 
-        padding: 35px 40px; /* Altura ajustada */
-        border-radius: 16px; 
-        border: 1px solid #E2E8F0; 
-        box-shadow: 0 2px 10px rgba(0,0,0,0.02); 
-        margin-bottom: 20px; 
-        display: flex; 
-        align-items: center; 
-        gap: 20px;
-        justify-content: flex-start; 
-    }}
-    
-    .header-subtitle {{ 
-        font-size: 1.2rem; 
-        color: #718096; 
-        font-weight: 600; 
-        border-left: 2px solid #E2E8F0; /* O DIVISOR VERTICAL */
-        padding-left: 20px; 
-        line-height: 1.2; 
-    }}
-
-    /* 5. Inputs e Botões (Arredondamento 8px) */
-    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stNumberInput input {{ 
-        border-radius: 8px !important; 
-        border-color: #E2E8F0 !important; 
-    }}
-    
-    div[data-testid="column"] .stButton button {{ 
-        border-radius: 8px !important; 
-        font-weight: 800 !important; 
-        text-transform: uppercase; 
-        height: 50px !important; 
-        background-color: var(--brand-blue) !important; /* Azul Sóbrio */
-        color: white !important; 
-        border: none !important;
-        letter-spacing: 0.5px;
-    }}
-    div[data-testid="column"] .stButton button:hover {{ 
-        background-color: var(--brand-hover) !important; 
-    }}
-
-    /* CARD FLUTUANTE (OMNISFERA) */
+<style>
+    /* CARD FLUTUANTE (OMNISFERA) - MESMO PADRÃO */
     .omni-badge {{
-        position: fixed; top: 15px; right: 15px;
-        background: {card_bg}; border: 1px solid {card_border};
-        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        padding: 4px 30px; min-width: 260px; justify-content: center;
-        border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        z-index: 999990; display: flex; align-items: center; gap: 10px;
+        position: fixed;
+        top: 15px; 
+        right: 15px;
+        background: {card_bg};
+        border: 1px solid {card_border};
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        padding: 4px 30px;
+        min-width: 260px;
+        justify-content: center;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        z-index: 999990;
+        display: flex;
+        align-items: center;
+        gap: 10px;
         pointer-events: none;
     }}
-    .omni-text {{ font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem; color: #2D3748; letter-spacing: 1px; text-transform: uppercase; }}
-    @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
-    .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
-    
-    /* PEDAGOGIA BOX (Atualizado para Azul) */
-    .pedagogia-box {{ 
-        background-color: #F8FAFC; border-left: 4px solid var(--brand-blue); 
-        padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; 
-        font-size: 0.95rem; color: #4A5568; 
+
+    .omni-text {{
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 800;
+        font-size: 0.9rem;
+        color: #2D3748;
+        letter-spacing: 1px;
+        text-transform: uppercase;
     }}
-    </style>
+
+    @keyframes spin-slow {{
+        from {{ transform: rotate(0deg); }}
+        to {{ transform: rotate(360deg); }}
+    }}
     
-    <div class="omni-badge">
-        <img src="{src_logo_giratoria}" class="omni-logo-spin">
-        <span class="omni-text">OMNISFERA</span>
-    </div>
+    .omni-logo-spin {{
+        height: 26px;
+        width: 26px;
+        animation: spin-slow 10s linear infinite;
+    }}
+
+    /* CARD HERO PARA PAEE - COM FUNDO TRANSPARENTE NO ÍCONE */
+    .mod-card-wrapper {{
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    }}
+
+    .mod-card-rect {{
+        background: white;
+        border-radius: 16px 16px 0 0;
+        padding: 0;
+        border: 1px solid #E2E8F0;
+        border-bottom: none;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        height: 130px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }}
+
+    .mod-card-rect:hover {{
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+        border-color: #CBD5E1;
+    }}
+
+    .mod-bar {{
+        width: 6px;
+        height: 100%;
+        flex-shrink: 0;
+    }}
+
+    .mod-icon-area {{
+        width: 90px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        flex-shrink: 0;
+        background: transparent !important; /* FUNDO TRANSPARENTE */
+        border-right: 1px solid #F1F5F9;
+        transition: all 0.3s ease;
+    }}
+
+    .mod-card-rect:hover .mod-icon-area {{
+        background: transparent !important;
+        transform: scale(1.05);
+    }}
+
+    .mod-content {{
+        flex-grow: 1;
+        padding: 0 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }}
+
+    .mod-title {{
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: #1E293B;
+        margin-bottom: 6px;
+        letter-spacing: -0.3px;
+        transition: color 0.2s;
+    }}
+
+    .mod-card-rect:hover .mod-title {{
+        color: #4F46E5;
+    }}
+
+    .mod-desc {{
+        font-size: 0.8rem;
+        color: #64748B;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }}
+
+    /* CORES DOS CARDS - MESMA DA HOME (LARANJA PARA PAEE) */
+    .c-orange {{ background: #F97316 !important; }}
+    .bg-orange-soft {{ 
+        background: transparent !important; /* FUNDO TRANSPARENTE */
+        color: #F97316 !important; /* COR LARANJA MAIS INTENSA */
+    }}
+
+    /* ABAS EM FORMATO DE PÍLULAS - MESMO PADRÃO DO PEI */
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 4px !important;
+        background-color: transparent !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        margin-top: 24px !important;
+        border-bottom: none !important;
+        flex-wrap: wrap !important;
+    }}
+
+    .stTabs [data-baseweb="tab"] {{
+        height: 36px !important;
+        white-space: nowrap !important;
+        background-color: transparent !important;
+        border-radius: 20px !important;
+        padding: 0 16px !important;
+        color: #64748B !important;
+        font-weight: 600 !important;
+        font-size: 0.72rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.3px !important;
+        transition: all 0.2s ease !important;
+        border: 1px solid #E2E8F0 !important;
+        position: relative !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }}
+
+    /* ABA ATIVA - FUNDO LARANJA SÓLIDO (PAEE) */
+    .stTabs [aria-selected="true"] {{
+        background-color: #F97316 !important;
+        color: white !important;
+        font-weight: 700 !important;
+        border: 1px solid #F97316 !important;
+        box-shadow: 0 1px 3px rgba(249, 115, 22, 0.2) !important;
+    }}
+
+    /* ABA INATIVA - APENAS CONTORNO SUTIL */
+    .stTabs [data-baseweb="tab"]:not([aria-selected="true"]) {{
+        background-color: white !important;
+        color: #64748B !important;
+        border: 1px solid #E2E8F0 !important;
+    }}
+
+    /* HOVER SIMPLES E DIRETO */
+    .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{
+        background-color: #F8FAFC !important;
+        border-color: #CBD5E1 !important;
+        color: #475569 !important;
+    }}
+
+    .stTabs [aria-selected="true"]:hover {{
+        background-color: #EA580C !important;
+        border-color: #EA580C !important;
+    }}
+
+    /* PEDAGOGIA BOX (Atualizado para Laranja) */
+    .pedagogia-box {{ 
+        background-color: #FFF7ED; border-left: 4px solid #F97316; 
+        padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; 
+        font-size: 0.95rem; color: #92400E; 
+    }}
+
+    /* RESPONSIVIDADE PARA TELAS MENORES */
+    @media (max-width: 1024px) {{
+        .mod-card-rect {{ height: 120px; }}
+        .mod-icon-area {{ width: 80px; }}
+        .stTabs [data-baseweb="tab"] {{
+            font-size: 0.68rem !important;
+            padding: 0 14px !important;
+            height: 34px !important;
+        }}
+    }}
+
+    @media (max-width: 768px) {{
+        .mod-card-rect {{ 
+            height: 110px;
+            flex-direction: column;
+            height: auto;
+            padding: 16px;
+        }}
+        .mod-bar {{ width: 100%; height: 6px; }}
+        .mod-icon-area {{ 
+            width: 100%; 
+            height: 60px; 
+            border-right: none;
+            border-bottom: 1px solid #F1F5F9;
+        }}
+        .mod-content {{ padding: 16px 0 0 0; }}
+        
+        /* EM MOBILE, AS PÍLULAS FICAM EM GRID */
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: 6px !important;
+        }}
+        
+        .stTabs [data-baseweb="tab"] {{
+            flex: 1 0 calc(33.333% - 4px) !important;
+            min-width: calc(33.333% - 4px) !important;
+            margin-bottom: 0 !important;
+            height: 32px !important;
+            border-radius: 16px !important;
+            font-size: 0.65rem !important;
+            padding: 0 10px !important;
+        }}
+    }}
+
+    @media (max-width: 640px) {{
+        .stTabs [data-baseweb="tab"] {{
+            flex: 1 0 calc(50% - 4px) !important;
+            min-width: calc(50% - 4px) !important;
+            font-size: 0.62rem !important;
+            padding: 0 8px !important;
+            height: 30px !important;
+        }}
+    }}
+
+    @media (max-width: 480px) {{
+        .stTabs [data-baseweb="tab"] {{
+            flex: 1 0 100% !important;
+            min-width: 100% !important;
+            border-radius: 12px !important;
+            margin-bottom: 4px !important;
+        }}
+    }}
+</style>
+
+<!-- BADGE FLUTUANTE OMNISFERA -->
+<div class="omni-badge">
+    <img src="{src_logo_giratoria}" class="omni-logo-spin">
+    <span class="omni-text">OMNISFERA</span>
+</div>
 """, unsafe_allow_html=True)
 
 def verificar_acesso():
@@ -200,6 +334,36 @@ with st.sidebar:
     st.markdown("---")
     if st.button("🏠 Voltar para Home", use_container_width=True): st.switch_page("Home.py")
     st.markdown("---")
+
+# ==============================================================================
+# CARD HERO PARA PAEE (MESMO DESIGN DOS ESTUDANTES)
+# ==============================================================================
+hora = datetime.now().hour
+saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
+USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
+WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
+
+st.markdown(
+    f"""
+    <div class="mod-card-wrapper">
+        <div class="mod-card-rect">
+            <div class="mod-bar c-orange"></div>
+            <div class="mod-icon-area bg-orange-soft">
+                <i class="ri-tools-fill"></i>
+            </div>
+            <div class="mod-content">
+                <div class="mod-title">Atendimento Educacional Especializado (AEE) & Tecnologia Assistiva</div>
+                <div class="mod-desc">
+                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Planeje e implemente estratégias de AEE para eliminação de barreiras 
+                    no workspace <strong>{WORKSPACE_NAME}</strong>. Desenvolva recursos, adaptações e tecnologias assistivas 
+                    para promover acessibilidade e participação plena.
+                </div>
+            </div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # ==============================================================================
 # 2. SISTEMA PAEE (Plano de Atendimento Educacional Especializado)
@@ -220,7 +384,7 @@ def carregar_banco():
 if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
     st.session_state.banco_estudantes = carregar_banco()
 
-# --- HEADER UNIFICADO (CLEAN COM DIVISOR - AZUL) ---
+# --- HEADER UNIFICADO (CLEAN COM DIVISOR - LARANJA) ---
 def get_img_tag_custom(file_path, width):
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
@@ -228,14 +392,28 @@ def get_img_tag_custom(file_path, width):
         return f'<img src="data:image/png;base64,{data}" width="{width}" style="object-fit: contain;">'
     return ""
 
-img_pae = get_img_tag_custom("pae.png", "220") # <--- AUMENTADO PARA 220px
+img_pae = get_img_tag_custom("pae.png", "220")
 
 st.markdown(f"""
-<div class="header-unified">
+<div style="background-color: white; 
+            padding: 35px 40px; 
+            border-radius: 16px; 
+            border: 1px solid #E2E8F0; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02); 
+            margin-bottom: 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 20px;
+            justify-content: flex-start;">
     <div style="flex-shrink: 0;">
         {img_pae}
     </div>
-    <div class="header-subtitle">
+    <div style="font-size: 1.2rem; 
+                color: #F97316; 
+                font-weight: 600; 
+                border-left: 2px solid #FDBA74; 
+                padding-left: 20px; 
+                line-height: 1.2;">
         Sala de Recursos & Eliminação de Barreiras
     </div>
 </div>
@@ -257,12 +435,12 @@ aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_a
 serie_aluno = aluno.get('serie', '').lower()
 is_ei = "infantil" in serie_aluno or "creche" in serie_aluno or "pré" in serie_aluno
 
-# --- HEADER DO ALUNO (CORES AZUIS) ---
+# --- HEADER DO ALUNO (CORES LARANJAS) ---
 st.markdown(f"""
-    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px 30px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-        <div><div style="font-size: 0.8rem; color: #718096; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Nome</div><div style="font-size: 1.2rem; color: #2D3748; font-weight: 800;">{aluno.get('nome')}</div></div>
-        <div><div style="font-size: 0.8rem; color: #718096; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Série</div><div style="font-size: 1.2rem; color: #2D3748; font-weight: 800;">{aluno.get('serie', '-')}</div></div>
-        <div><div style="font-size: 0.8rem; color: #718096; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Hiperfoco</div><div style="font-size: 1.2rem; color: #0F52BA; font-weight: 800;">{aluno.get('hiperfoco', '-')}</div></div>
+    <div style="background-color: #FFF7ED; border: 1px solid #FDBA74; border-radius: 16px; padding: 20px 30px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+        <div><div style="font-size: 0.8rem; color: #F97316; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Nome</div><div style="font-size: 1.2rem; color: #2D3748; font-weight: 800;">{aluno.get('nome')}</div></div>
+        <div><div style="font-size: 0.8rem; color: #F97316; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Série</div><div style="font-size: 1.2rem; color: #2D3748; font-weight: 800;">{aluno.get('serie', '-')}</div></div>
+        <div><div style="font-size: 0.8rem; color: #F97316; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Hiperfoco</div><div style="font-size: 1.2rem; color: #F97316; font-weight: 800;">{aluno.get('hiperfoco', '-')}</div></div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -276,7 +454,7 @@ with st.expander("📄 Ver Resumo do PEI (Base para o PAEE)", expanded=False):
 if 'OPENAI_API_KEY' in st.secrets: api_key = st.secrets['OPENAI_API_KEY']
 else: api_key = st.sidebar.text_input("Chave OpenAI:", type="password")
 
-# --- FUNÇÕES DE IA ---
+# --- FUNÇÕES DE IA (MANTIDAS IGUAIS) ---
 
 def gerar_diagnostico_barreiras(api_key, aluno, obs_prof):
     client = OpenAI(api_key=api_key)
@@ -365,16 +543,16 @@ def gerar_documento_articulacao(api_key, aluno, frequencia, acoes):
     except Exception as e: return str(e)
 
 # ==============================================================================
-# LÓGICA CONDICIONAL DE ABAS (O CORAÇÃO DA MUDANÇA)
+# ABAS DO PAEE (MESMO PADRÃO DO PEI - TEXTO EM MAIÚSCULAS, SEM EMOJIS)
 # ==============================================================================
 
 if is_ei:
     # --- ABAS ESPECÍFICAS PARA EDUCAÇÃO INFANTIL ---
     tab_barreiras, tab_projetos, tab_rotina, tab_ponte = st.tabs([
-        "🔍 Barreiras no Brincar", 
-        "🧸 Banco de Experiências", 
-        "🏠 Rotina & Adaptação", 
-        "🌉 Articulação"
+        "BARREIRAS NO BRINCAR", 
+        "BANCO DE EXPERIÊNCIAS", 
+        "ROTINA & ADAPTAÇÃO", 
+        "ARTICULAÇÃO"
     ])
     
     # 1. BARREIRAS (EI)
@@ -414,10 +592,10 @@ if is_ei:
 else:
     # --- ABAS PADRÃO (FUNDAMENTAL / MÉDIO) ---
     tab_barreiras, tab_plano, tab_tec, tab_ponte = st.tabs([
-        "🔍 Mapear Barreiras", 
-        "🎯 Plano de Habilidades", 
-        "🛠️ Tec. Assistiva", 
-        "🌉 Cronograma & Articulação"
+        "MAPEAR BARREIRAS", 
+        "PLANO DE HABILIDADES", 
+        "TEC. ASSISTIVA", 
+        "CRONOGRAMA & ARTICULAÇÃO"
     ])
 
     # 1. BARREIRAS
