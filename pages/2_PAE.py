@@ -1,5 +1,5 @@
 # ==============================================================================
-# PARTE 1/4: CONFIGURAÇÕES, CONEXÃO E CARREGAMENTO DE DADOS
+# PARTE 1/4: CONFIGURAÇÕES, ESTILOS E AUTENTICAÇÃO
 # ==============================================================================
 
 import streamlit as st
@@ -81,6 +81,10 @@ st.markdown(f"""
     .mod-card-rect:hover .mod-title {{ color: #4F46E5; }}
     .mod-desc {{ font-size: 0.8rem; color: #64748B; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
 
+    /* CORES */
+    .c-purple {{ background: #8B5CF6 !important; }}
+    .bg-purple-soft {{ background: transparent !important; color: #8B5CF6 !important; }}
+
     /* ABAS */
     .stTabs [data-baseweb="tab-list"] {{ gap: 4px !important; background-color: transparent !important; padding: 0 !important; border-radius: 0 !important; margin-top: 24px !important; border-bottom: none !important; flex-wrap: wrap !important; }}
     .stTabs [data-baseweb="tab"] {{ height: 36px !important; white-space: nowrap !important; background-color: transparent !important; border-radius: 20px !important; padding: 0 16px !important; color: #64748B !important; font-weight: 600 !important; font-size: 0.72rem !important; text-transform: uppercase !important; letter-spacing: 0.3px !important; transition: all 0.2s ease !important; border: 1px solid #E2E8F0 !important; margin: 0 !important; }}
@@ -90,40 +94,56 @@ st.markdown(f"""
     .stTabs [data-baseweb="tab"]::after, .stTabs [aria-selected="true"]::after, .stTabs [data-baseweb="tab"]::before, .stTabs [aria-selected="true"]::before {{ display: none !important; }}
     .stTabs [data-baseweb="tab-list"] {{ border-bottom: none !important; }}
 
-    /* STYLES ESPECÍFICOS PARA PAEE */
+    /* PEDAGOGIA BOX */
     .pedagogia-box {{ background-color: #F8FAFC; border-left: 4px solid #CBD5E1; padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; font-size: 0.95rem; color: #4A5568; }}
-    
-    .prog-bar-bg {{ width: 100%; height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden; margin-top: 8px; }}
-    .prog-bar-fill {{ height: 100%; background: linear-gradient(90deg, #8B5CF6, #6D28D9); transition: width 1s; }}
-    
-    /* CARD DE ATIVIDADE */
-    .activity-card {{ 
-        background: white; 
+
+    /* RESOURCE BOX */
+    .resource-box {{ 
+        background: #F8FAFC; 
         border: 1px solid #E2E8F0; 
         border-radius: 12px; 
-        padding: 16px; 
-        margin: 10px 0;
-        transition: all 0.3s;
+        padding: 20px; 
+        margin: 15px 0; 
     }}
-    .activity-card:hover {{ 
-        border-color: #8B5CF6; 
-        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
-        transform: translateY(-2px);
-    }}
-    .activity-status-done {{ border-left: 5px solid #10B981; }}
-    .activity-status-progress {{ border-left: 5px solid #F59E0B; }}
-    .activity-status-pending {{ border-left: 5px solid #EF4444; }}
     
-    /* CHIP DE HABILIDADE */
-    .skill-chip {{
-        display: inline-block;
-        background: #EDE9FE;
-        color: #7C3AED;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        margin: 3px;
-        font-weight: 600;
+    /* ACTION BUTTONS */
+    .action-buttons {{ 
+        display: flex; 
+        gap: 10px; 
+        margin-top: 20px; 
+        flex-wrap: wrap; 
+    }}
+    
+    /* TIMELINE STYLES */
+    .timeline-header {{ 
+        background: white; 
+        border-radius: 12px; 
+        padding: 20px;
+        margin-bottom: 20px; 
+        border: 1px solid #E2E8F0;
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between; 
+    }}
+    .prog-bar-bg {{ 
+        width: 100%; 
+        height: 8px; 
+        background: #E2E8F0; 
+        border-radius: 4px; 
+        overflow: hidden; 
+        margin-top: 8px; 
+    }}
+    .prog-bar-fill {{ 
+        height: 100%; 
+        background: linear-gradient(90deg, #8B5CF6, #6D28D9); 
+        transition: width 1s; 
+    }}
+    
+    /* RESPONSIVIDADE */
+    @media (max-width: 768px) {{ 
+        .mod-card-rect {{ height: auto; flex-direction: column; padding: 16px; }} 
+        .mod-icon-area {{ width: 100%; height: 60px; border-right: none; border-bottom: 1px solid #F1F5F9; }} 
+        .mod-content {{ padding: 16px 0 0 0; }} 
     }}
 </style>
 
@@ -133,9 +153,6 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ==============================================================================
-# VERIFICAÇÃO DE ACESSO
-# ==============================================================================
 def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
@@ -145,56 +162,26 @@ def verificar_acesso():
 verificar_acesso()
 
 # ==============================================================================
-# SIDEBAR - MOTORES DE IA
+# SIDEBAR
 # ==============================================================================
 with st.sidebar:
     try: 
         st.image("ominisfera.png", width=150)
     except: 
         st.write("🌐 OMNISFERA")
-    
     st.markdown("---")
-    
     if st.button("🏠 Voltar para Home", use_container_width=True): 
         st.switch_page("Home.py")
-    
     st.markdown("---")
     
-    # MOTORES DE IA
-    st.markdown("### 🤖 Motores de IA")
-    
-    # OpenAI
+    # GESTÃO DE CHAVES
     if 'OPENAI_API_KEY' in st.secrets: 
-        api_key_openai = st.secrets['OPENAI_API_KEY']
-        st.success("🔑 OpenAI configurada")
+        api_key = st.secrets['OPENAI_API_KEY']
+        st.success("🔑 Chave OpenAI configurada")
     else: 
-        api_key_openai = st.text_input("Chave OpenAI:", type="password", key="openai_key")
-        if api_key_openai:
-            st.success("✅ OpenAI configurada")
-    
-    # DeepSeek
-    if 'DEEPSEEK_API_KEY' in st.secrets: 
-        api_key_deepseek = st.secrets['DEEPSEEK_API_KEY']
-        st.success("🔑 DeepSeek configurada")
-    else: 
-        api_key_deepseek = st.text_input("Chave DeepSeek:", type="password", key="deepseek_key")
-        if api_key_deepseek:
-            st.success("✅ DeepSeek configurada")
-    
-    st.markdown("---")
-    
-    # SELEÇÃO DE MOTOR PRINCIPAL
-    st.markdown("### ⚙️ Configurações")
-    motor_principal = st.selectbox(
-        "Motor principal para análise:",
-        ["DeepSeek (Recomendado para análise)", "OpenAI (Recomendado para criatividade)"],
-        help="DeepSeek é melhor para análise cruzada de dados, OpenAI para criatividade em atividades"
-    )
-    
-    # SALVAR NAS SESSÕES
-    st.session_state['api_key_openai'] = api_key_openai
-    st.session_state['api_key_deepseek'] = api_key_deepseek
-    st.session_state['motor_principal'] = motor_principal
+        api_key = st.text_input("Chave OpenAI:", type="password")
+        if api_key:
+            st.success("✅ Chave configurada")
 
 # ==============================================================================
 # CARD HERO PRINCIPAL
@@ -208,16 +195,16 @@ st.markdown(
     f"""
     <div class="mod-card-wrapper">
         <div class="mod-card-rect">
-            <div class="mod-bar" style="background: #8B5CF6;"></div>
-            <div class="mod-icon-area" style="color: #8B5CF6;">
-                <i class="ri-calendar-todo-fill"></i>
+            <div class="mod-bar c-purple"></div>
+            <div class="mod-icon-area bg-purple-soft">
+                <i class="ri-settings-5-fill"></i>
             </div>
             <div class="mod-content">
-                <div class="mod-title">Execução e Monitoramento do PAEE</div>
+                <div class="mod-title">Atendimento Educacional Especializado (AEE) & Tecnologia Assistiva</div>
                 <div class="mod-desc">
-                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Gerencie a execução do plano do aluno, 
-                    acompanhe o progresso e faça ajustes em tempo real no workspace <strong>{WORKSPACE_NAME}</strong>.
-                    Conecte planejamento, execução e avaliação em um só lugar.
+                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Planeje e implemente estratégias de AEE para eliminação de barreiras 
+                    no workspace <strong>{WORKSPACE_NAME}</strong>. Desenvolva recursos, adaptações e tecnologias assistivas 
+                    para promover acessibilidade e participação plena.
                 </div>
             </div>
         </div>
@@ -227,7 +214,11 @@ st.markdown(
 )
 
 # ==============================================================================
-# FUNÇÕES DE CONEXÃO COM SUPABASE
+# PARTE 2/4: CONEXÃO COM BANCO DE DADOS E CARREGAMENTO DE ALUNOS
+# ==============================================================================
+
+# ==============================================================================
+# FUNÇÕES SUPABASE (REST)
 # ==============================================================================
 def _sb_url() -> str:
     url = str(st.secrets.get("SUPABASE_URL", "")).strip()
@@ -275,19 +266,6 @@ def carregar_estudantes_supabase():
     
     for item in dados:
         pei_completo = item.get('pei_data') or {}
-        
-        # Extrair data de revisão do PEI
-        data_revisao_str = pei_completo.get('data_revisao', '')
-        data_revisao = None
-        if data_revisao_str:
-            try:
-                data_revisao = datetime.strptime(data_revisao_str, "%Y-%m-%d").date()
-            except:
-                try:
-                    data_revisao = datetime.strptime(data_revisao_str, "%d/%m/%Y").date()
-                except:
-                    data_revisao = None
-        
         contexto_ia = pei_completo.get('ia_sugestao', '')
         
         if not contexto_ia:
@@ -301,8 +279,7 @@ def carregar_estudantes_supabase():
             'hiperfoco': item.get('diagnosis', ''),
             'ia_sugestao': contexto_ia,
             'id': item.get('id', ''),
-            'pei_data': pei_completo,
-            'data_revisao_pei': data_revisao
+            'pei_data': pei_completo
         }
         if estudante['nome']:
             estudantes.append(estudante)
@@ -323,15 +300,10 @@ if not st.session_state.banco_estudantes:
     st.stop()
 
 # --- SELEÇÃO DE ALUNO ---
-st.markdown("### 👨‍🎓 Selecione o Aluno para Execução")
-
+lista_alunos = [a['nome'] for a in st.session_state.banco_estudantes]
 col_sel, col_info = st.columns([1, 2])
 with col_sel:
-    nome_aluno = st.selectbox(
-        "📂 Estudante:",
-        [a['nome'] for a in st.session_state.banco_estudantes],
-        key="select_aluno_paee"
-    )
+    nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista_alunos)
 
 aluno = next((a for a in st.session_state.banco_estudantes if a.get('nome') == nome_aluno), None)
 
@@ -344,1302 +316,1166 @@ serie_aluno = aluno.get('serie', '').lower()
 is_ei = any(term in serie_aluno for term in ["infantil", "creche", "pré", "maternal", "berçario", "jardim"])
 
 # --- HEADER DO ALUNO ---
-# Calcular dias até a revisão
-hoje = date.today()
-dias_para_revisao = None
-if aluno.get('data_revisao_pei'):
-    dias_para_revisao = (aluno['data_revisao_pei'] - hoje).days
-
 st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); color: white; border-radius: 16px; padding: 25px 30px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);">
-        <div>
-            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.8); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Aluno</div>
-            <div style="font-size: 1.4rem; color: white; font-weight: 800;">{aluno.get('nome')}</div>
-        </div>
-        <div>
-            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.8); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Série</div>
-            <div style="font-size: 1.2rem; color: white; font-weight: 800;">{aluno.get('serie')}</div>
-        </div>
-        <div>
-            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.8); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Próxima Revisão</div>
-            <div style="font-size: 1.2rem; color: white; font-weight: 800;">
-                {aluno.get('data_revisao_pei').strftime('%d/%m/%Y') if aluno.get('data_revisao_pei') else 'Não definida'}
-                {f"<br><span style='font-size:0.9rem;'>({dias_para_revisao} dias)</span>" if dias_para_revisao and dias_para_revisao > 0 else ''}
-            </div>
-        </div>
-        <div>
-            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.8); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Status</div>
-            <div style="font-size: 1.2rem; color: white; font-weight: 800;">
-                { '🧸 Educação Infantil' if is_ei else '📚 Ensino Regular' }
-            </div>
-        </div>
+    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px 30px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Nome</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('nome')}</div></div>
+        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Série</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('serie')}</div></div>
+        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Diagnóstico</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('hiperfoco', '-')}</div></div>
     </div>
 """, unsafe_allow_html=True)
 
 if is_ei:
     st.info("🧸 **Modo Educação Infantil:** Foco em Campos de Experiência (BNCC).")
 
-# BOTÃO PARA VER PEI COMPLETO
-with st.expander("📄 Ver PEI Completo e Contexto", expanded=False):
+with st.expander("📄 Ver Dados Completos do PEI", expanded=False):
     st.write(aluno.get('ia_sugestao', 'Sem dados detalhados.'))
-    
-    # Extrair metas do PEI
-    if "metas_extraidas" not in st.session_state:
-        st.session_state.metas_extraidas = extrair_metas_do_pei(aluno.get('ia_sugestao', ''))
-    
-    if st.session_state.metas_extraidas:
-        st.markdown("### 🎯 Metas Extraídas do PEI")
-        for meta in st.session_state.metas_extraidas[:5]:  # Mostrar apenas 5 principais
-            st.markdown(f"- **{meta['tipo']}**: {meta['descricao']}")
-
 
 # ==============================================================================
-# FUNÇÕES AUXILIARES
+# PARTE 3/4: FUNÇÕES DE IA E SISTEMA DE ESTADOS
 # ==============================================================================
 
-def extrair_metas_do_pei(texto_pei):
-    """
-    Extrai metas de um texto de PEI formatado.
-    Retorna lista de dicionários com 'tipo' e 'descricao'
-    """
-    if not texto_pei:
-        return []
+# ==============================================================================
+# FUNÇÕES DE IA ATUALIZADAS
+# ==============================================================================
+def gerar_diagnostico_barreiras(api_key, aluno, obs_prof, feedback=None):
+    client = OpenAI(api_key=api_key)
+    contexto = aluno.get('ia_sugestao', '')
     
-    metas = []
-    linhas = texto_pei.split('\n')
+    prompt = f"""
+    ATUAR COMO: Especialista em AEE.
+    ALUNO: {aluno['nome']} | DIAGNÓSTICO: {aluno.get('hiperfoco')}
+    CONTEXTO DO PEI: {contexto[:2500]}
+    OBSERVAÇÃO ATUAL: {obs_prof}
+    """
     
-    tipos_meta = [
-        "HABILIDADES SOCIAIS",
-        "COMUNICAÇÃO", 
-        "ACADÊMICO",
-        "COMPORTAMENTAL",
-        "COGNITIVO",
-        "MOTOR",
-        "AUTONOMIA"
+    if feedback:
+        prompt += f"\nFEEDBACK PARA AJUSTE (revisão do professor): {feedback}\n"
+    
+    prompt += """
+    CLASSIFIQUE AS BARREIRAS (LBI):
+    1. **Barreiras Comunicacionais** - dificuldades na comunicação e linguagem
+    2. **Barreiras Metodológicas** - métodos de ensino inadequados
+    3. **Barreiras Atitudinais** - atitudes e preconceitos
+    4. **Barreiras Tecnológicas** - falta de recursos tecnológicos adequados
+    5. **Barreiras Arquitetônicas** - espaço físico inadequado
+    
+    Para cada barreira, forneça:
+    - Descrição específica
+    - Impacto na aprendizagem
+    - Sugestões de intervenção imediata
+    - Recursos necessários
+    
+    SAÍDA: Tabela Markdown organizada e clara.
+    """
+    
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[{"role": "user", "content": prompt}], 
+            temperature=0.5
+        )
+        return resp.choices[0].message.content
+    except Exception as e: 
+        return f"Erro: {str(e)}"
+
+def gerar_projetos_ei_bncc(api_key, aluno, campo_exp, feedback=None):
+    client = OpenAI(api_key=api_key)
+    contexto = aluno.get('ia_sugestao', '')
+    
+    prompt = f"""
+    ATUAR COMO: Especialista em Ed. Infantil Inclusiva.
+    ALUNO: {aluno['nome']} | CONTEXTO PEI: {contexto[:2000]}
+    CAMPO DE EXPERIÊNCIA: "{campo_exp}".
+    """
+    
+    if feedback:
+        prompt += f"\nFEEDBACK PARA AJUSTE (revisão do professor): {feedback}\n"
+    
+    prompt += """
+    Crie 3 EXPERIÊNCIAS LÚDICAS (Atividades) com estrutura completa:
+    
+    Para cada experiência, inclua:
+    1. **Título da Atividade**
+    2. **Objetivos de aprendizagem** (alinhados com BNCC)
+    3. **Materiais necessários** (acessíveis e de baixo custo)
+    4. **Passo a passo detalhado**
+    5. **Adaptações específicas** para o aluno
+    6. **Avaliação formativa** (como observar o progresso)
+    7. **Dicas para o professor**
+    
+    FOQUE em:
+    - Uso de interesses do aluno como motivação
+    - Eliminação de barreiras sensoriais e comunicacionais
+    - Atividades sensoriais e concretas
+    - Inclusão de todos os alunos da turma
+    """
+    
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[{"role": "user", "content": prompt}], 
+            temperature=0.7
+        )
+        return resp.choices[0].message.content
+    except Exception as e: 
+        return str(e)
+
+def gerar_plano_habilidades(api_key, aluno, foco_treino, feedback=None):
+    client = OpenAI(api_key=api_key)
+    contexto = aluno.get('ia_sugestao', '')
+    
+    prompt = f"""
+    CRIE PLANO DE INTERVENÇÃO AEE.
+    FOCO: {foco_treino}.
+    ALUNO: {aluno['nome']} | CONTEXTO PEI: {contexto[:2000]}
+    """
+    
+    if feedback:
+        prompt += f"\nFEEDBACK PARA AJUSTE (revisão do professor): {feedback}\n"
+    
+    prompt += """
+    GERE 3 METAS SMART (Curto, Médio, Longo prazo) com estrutura completa:
+    
+    Para cada meta, inclua:
+    1. **Meta Específica** (o que será alcançado)
+    2. **Indicadores de Progresso** (como medir)
+    3. **Estratégias de Ensino** (como ensinar)
+    4. **Recursos e Materiais**
+    5. **Frequência de Intervenção**
+    6. **Responsáveis** (AEE, sala regular, família)
+    7. **Critérios de Sucesso**
+    
+    TEMPORALIDADE:
+    - CURTO PRAZO (1-2 meses): Habilidades básicas
+    - MÉDIO PRAZO (3-6 meses): Consolidação
+    - LONGO PRAZO (6-12 meses): Generalização
+    
+    Inclua também:
+    - Registro de observações
+    - Sistema de monitoramento
+    - Estratégias de generalização para outros contextos
+    """
+    
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[{"role": "user", "content": prompt}], 
+            temperature=0.7
+        )
+        return resp.choices[0].message.content
+    except Exception as e: 
+        return str(e)
+
+def sugerir_tecnologia_assistiva(api_key, aluno, dificuldade, feedback=None):
+    client = OpenAI(api_key=api_key)
+    contexto = aluno.get('ia_sugestao', '')
+    
+    prompt = f"""
+    SUGESTÃO DE TECNOLOGIA ASSISTIVA.
+    Aluno: {aluno['nome']} | Dificuldade: {dificuldade}.
+    Contexto PEI: {contexto[:1500]}
+    """
+    
+    if feedback:
+        prompt += f"\nFEEDBACK PARA AJUSTE (revisão do professor): {feedback}\n"
+    
+    prompt += """
+    Sugira recursos em 3 níveis:
+    
+    1. **BAIXA TECNOLOGIA (DIY - Faça Você Mesmo)**
+       - Materiais simples e de baixo custo
+       - Instruções passo a passo
+       - Tempo de confecção
+       - Custo estimado
+    
+    2. **MÉDIA TECNOLOGIA**
+       - Recursos prontos disponíveis no mercado
+       - Aplicativos gratuitos ou de baixo custo
+       - Adaptações simples de materiais existentes
+       - Onde encontrar/comprar
+    
+    3. **ALTA TECNOLOGIA**
+       - Equipamentos especializados
+       - Softwares específicos
+       - Recursos de acessibilidade avançados
+       - Processo de solicitação/viabilidade
+    
+    Para cada sugestão, inclua:
+    - Nome do recurso
+    - Finalidade específica
+    - Como usar na prática
+    - Benefícios para o aluno
+    - Dificuldades possíveis e soluções
+    - Referências para aprofundamento
+    """
+    
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[{"role": "user", "content": prompt}], 
+            temperature=0.7
+        )
+        return resp.choices[0].message.content
+    except Exception as e: 
+        return str(e)
+
+def gerar_documento_articulacao(api_key, aluno, frequencia, acoes, feedback=None):
+    client = OpenAI(api_key=api_key)
+    
+    prompt = f"""
+    CARTA DE ARTICULAÇÃO (AEE -> SALA REGULAR).
+    Aluno: {aluno['nome']}. 
+    Frequência no AEE: {frequencia}.
+    Ações desenvolvidas no AEE: {acoes}.
+    """
+    
+    if feedback:
+        prompt += f"\nFEEDBACK PARA AJUSTE (revisão do professor): {feedback}\n"
+    
+    prompt += """
+    ESTRUTURA DO DOCUMENTO:
+    
+    1. **Cabeçalho Institucional**
+       - Nome da escola
+       - Data
+       - Destinatário (Professor Regente)
+    
+    2. **Resumo das Habilidades Desenvolvidas**
+       - Competências trabalhadas
+       - Progressos observados
+       - Dificuldades persistentes
+    
+    3. **Estratégias de Generalização** (para sala regular)
+       - Como transferir as habilidades
+       - Adaptações necessárias
+       - Sinais de alerta
+    
+    4. **Orientações Práticas** (3 dicas principais)
+       - Para atividades em grupo
+       - Para avaliações
+       - Para gestão comportamental
+    
+    5. **Plano de Ação Conjunto**
+       - Responsabilidades do AEE
+       - Responsabilidades da sala regular
+       - Envolvimento da família
+    
+    6. **Próximos Passos**
+       - Reuniões de alinhamento
+       - Avaliações periódicas
+       - Ajustes necessários
+    
+    7. **Contatos e Suporte**
+       - Horários de atendimento
+       - Canal de comunicação
+       - Emergências
+    
+    Formato: Documento formal mas acolhedor, com linguagem clara e objetiva.
+    """
+    
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[{"role": "user", "content": prompt}], 
+            temperature=0.7
+        )
+        return resp.choices[0].message.content
+    except Exception as e: 
+        return str(e)
+
+def gerar_cronograma_aee(api_key, aluno, semanas, frequencia, foco):
+    """Gera um cronograma de execução do AEE"""
+    client = OpenAI(api_key=api_key)
+    contexto = aluno.get('ia_sugestao', '')
+    
+    prompt = f"""
+    Crie um cronograma de execução para o AEE.
+    Aluno: {aluno['nome']}
+    Foco principal: {foco}
+    Número de semanas: {semanas}
+    Frequência de atendimento: {frequencia}
+    Contexto do PEI: {contexto[:2000]}
+
+    Estruture o cronograma em fases, cada fase com semanas específicas.
+    Para cada semana, defina:
+    - Tema da semana
+    - Atividade principal
+    - Recursos necessários
+    - Objetivo específico
+    - Duração estimada
+
+    Formato de saída JSON:
+    {{
+        "fases": [
+            {{
+                "nome_fase": "Nome da fase",
+                "descricao": "Descrição da fase",
+                "semanas": [
+                    {{
+                        "semana": 1,
+                        "tema": "Tema da semana",
+                        "atividade": "Descrição da atividade",
+                        "recurso": "Recursos necessários",
+                        "objetivo": "Objetivo da semana",
+                        "duracao": "60 minutos"
+                    }}
+                ]
+            }}
+        ]
+    }}
+    """
+    
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
+        )
+        texto = resp.choices[0].message.content
+        
+        # Extrair JSON
+        if "```json" in texto:
+            texto = texto.split("```json")[1].split("```")[0]
+        elif "```" in texto:
+            texto = texto.split("```")[1].split("```")[0]
+        
+        return json.loads(texto.strip())
+    except Exception as e:
+        return {"erro": str(e)}
+
+# ==============================================================================
+# SISTEMA DE GESTÃO DE RECURSOS (ESTADOS)
+# ==============================================================================
+def inicializar_estados():
+    """Inicializa os estados para todos os recursos"""
+    recursos = [
+        'diagnostico_barreiras',
+        'projetos_ei',
+        'plano_habilidades',
+        'tecnologia_assistiva',
+        'documento_articulacao'
     ]
     
-    for linha in linhas:
-        linha = linha.strip()
-        for tipo in tipos_meta:
-            if linha.startswith(tipo + ":") or linha.startswith(tipo + ":"):
-                # Extrair a descrição após os dois pontos
-                partes = linha.split(":", 1)
-                if len(partes) == 2:
-                    metas.append({
-                        'tipo': tipo,
-                        'descricao': partes[1].strip()
-                    })
-    
-    # Se não encontrou metas estruturadas, tenta extrair de outra forma
-    if not metas:
-        # Tenta encontrar metas em formato de lista
-        for linha in linhas:
-            linha = linha.strip()
-            if linha.startswith("- ") or linha.startswith("* "):
-                # Remove o marcador
-                descricao = linha[2:].strip()
-                if descricao:
-                    # Tenta inferir o tipo
-                    tipo_inferido = "GERAL"
-                    for tipo in tipos_meta:
-                        if tipo.lower() in descricao.lower():
-                            tipo_inferido = tipo
-                            break
-                    
-                    metas.append({
-                        'tipo': tipo_inferido,
-                        'descricao': descricao
-                    })
-    
-    # Se ainda não encontrou, usa o texto completo como uma meta
-    if not metas and texto_pei:
-        # Limita o texto a um tamanho razoável
-        texto_limitado = texto_pei[:500] + ("..." if len(texto_pei) > 500 else "")
-        metas.append({
-            'tipo': 'PEI COMPLETO',
-            'descricao': texto_limitado
-        })
-    
-    return metas            
+    for recurso in recursos:
+        if f'status_{recurso}' not in st.session_state:
+            st.session_state[f'status_{recurso}'] = 'rascunho'
+        if f'conteudo_{recurso}' not in st.session_state:
+            st.session_state[f'conteudo_{recurso}'] = ''
+        if f'feedback_{recurso}' not in st.session_state:
+            st.session_state[f'feedback_{recurso}'] = ''
+        if f'input_original_{recurso}' not in st.session_state:
+            st.session_state[f'input_original_{recurso}'] = {}
+
+inicializar_estados()
+
+# Inicializar estados do cronograma
+if 'cronograma_aee' not in st.session_state:
+    st.session_state.cronograma_aee = None
+if 'semanas_concluidas' not in st.session_state:
+    st.session_state.semanas_concluidas = set()
 
 # ==============================================================================
-# FUNÇÕES DE EXTRACTION (SIMPLIFICADAS PARA AGORA)
+# FUNÇÕES DE DOWNLOAD
 # ==============================================================================
-def extrair_metas_do_pei(texto_pei):
-    """Extrai metas do texto do PEI (simplificado por enquanto)"""
-    metas = []
+def criar_documento_txt(conteudo, nome_aluno, tipo_recurso):
+    """Cria arquivo TXT para download"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    nome_arquivo = f"{tipo_recurso}_{nome_aluno}_{timestamp}.txt"
+    return nome_arquivo, conteudo
+
+def criar_documento_html(conteudo, nome_aluno, tipo_recurso):
+    """Cria arquivo HTML estilizado para download"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    nome_arquivo = f"{tipo_recurso}_{nome_aluno}_{timestamp}.html"
     
-    # Procurar por padrões comuns
-    if "metas" in texto_pei.lower() or "objetivos" in texto_pei.lower():
-        # Dividir por linhas e procurar itens
-        linhas = texto_pei.split('\n')
-        for linha in linhas:
-            linha_lower = linha.lower()
-            if any(termo in linha_lower for termo in ['meta', 'objetivo', 'habilidade', 'competência']):
-                # Classificar tipo
-                if 'curto' in linha_lower or '1-2' in linha_lower:
-                    tipo = 'Curto Prazo'
-                elif 'médio' in linha_lower or '3-6' in linha_lower:
-                    tipo = 'Médio Prazo'
-                elif 'longo' in linha_lower or '6-12' in linha_lower:
-                    tipo = 'Longo Prazo'
-                else:
-                    tipo = 'Meta'
-                
-                metas.append({
-                    'tipo': tipo,
-                    'descricao': linha.strip(),
-                    'categoria': 'Não categorizada'
-                })
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{tipo_recurso} - {nome_aluno}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }}
+            .header {{ border-bottom: 2px solid #8B5CF6; padding-bottom: 20px; margin-bottom: 30px; }}
+            .content {{ margin-top: 30px; white-space: pre-line; }}
+            .footer {{ margin-top: 50px; font-size: 0.8em; color: #666; border-top: 1px solid #ddd; padding-top: 20px; }}
+            table {{ border-collapse: collapse; width: 100%; margin: 20px 0; }}
+            th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+            th {{ background-color: #f8f9fa; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>{tipo_recurso}</h1>
+            <h2>Aluno: {nome_aluno}</h2>
+            <p>Data: {datetime.now().strftime("%d/%m/%Y %H:%M")}</p>
+        </div>
+        <div class="content">
+            {conteudo.replace('**', '<strong>').replace('**', '</strong>')}
+        </div>
+        <div class="footer">
+            <p>Documento gerado pelo Sistema Omnisfera PAEE</p>
+        </div>
+    </body>
+    </html>
+    """
     
-    # Se não encontrou, criar algumas genéricas
-    if not metas:
-        metas = [
-            {'tipo': 'Curto Prazo', 'descricao': 'Melhorar engajamento nas atividades', 'categoria': 'Socioemocional'},
-            {'tipo': 'Médio Prazo', 'descricao': 'Desenvolver autonomia na rotina', 'categoria': 'Autonomia'},
-            {'tipo': 'Longo Prazo', 'descricao': 'Generalizar habilidades para outros contextos', 'categoria': 'Generalização'}
-        ]
-    
-    return metas
+    return nome_arquivo, html_content
 
 # ==============================================================================
-# PARTE 2/4: SISTEMA DE MOTORES DE IA E PLANEJAMENTO
+# PARTE 4/4: INTERFACE PRINCIPAL E COMPONENTES
 # ==============================================================================
 
 # ==============================================================================
-# SISTEMA DUAL DE MOTORES DE IA
+# COMPONENTE DE VALIDAÇÃO/AJUSTE (HUB DE RECURSOS)
 # ==============================================================================
-class SistemaIA:
-    """Sistema dual para usar OpenAI e DeepSeek de forma inteligente"""
+def renderizar_hub_recurso(tipo_recurso, conteudo_gerado, aluno_nome, dados_entrada=None):
+    """Renderiza o hub de recursos com validação, ajuste e download"""
     
-    @staticmethod
-    def get_cliente_openai():
-        """Retorna cliente OpenAI"""
-        api_key = st.session_state.get('api_key_openai')
-        if not api_key:
-            raise ValueError("Chave OpenAI não configurada")
-        return OpenAI(api_key=api_key)
+    # Estados do recurso
+    status = st.session_state.get(f'status_{tipo_recurso}', 'rascunho')
     
-    @staticmethod
-    def get_cliente_deepseek():
-        """Retorna cliente DeepSeek"""
-        api_key = st.session_state.get('api_key_deepseek')
-        if not api_key:
-            raise ValueError("Chave DeepSeek não configurada")
-        return OpenAI(
-            api_key=api_key,
-            base_url="https://api.deepseek.com"
-        )
-    
-    @staticmethod
-    def escolher_motor(tipo_tarefa):
-        """
-        Escolhe o motor ideal para cada tipo de tarefa
+    # Container principal
+    with st.container():
+        st.markdown(f"<div class='resource-box'>", unsafe_allow_html=True)
         
-        DeepSeek: Melhor para análise, raciocínio, dados estruturados
-        OpenAI: Melhor para criatividade, textos narrativos, ideias
-        """
-        motor_config = st.session_state.get('motor_principal', 'DeepSeek')
+        # TÍTULO DO RECURSO
+        titulos = {
+            'diagnostico_barreiras': '📋 Diagnóstico de Barreiras',
+            'projetos_ei': '🎨 Banco de Experiências (BNCC)',
+            'plano_habilidades': '📈 Plano de Habilidades',
+            'tecnologia_assistiva': '🛠️ Tecnologia Assistiva',
+            'documento_articulacao': '📄 Documento de Articulação'
+        }
         
-        if "deepseek" in motor_config.lower():
-            motor_base = "deepseek"
-        else:
-            motor_base = "openai"
+        st.subheader(titulos.get(tipo_recurso, 'Recurso Gerado'))
         
-        # Ajustes baseados no tipo de tarefa
-        tarefas_deepseek = [
-            'analise_cruzada', 'diagnostico', 'planejamento_estrategico',
-            'cronograma', 'metas_smart', 'analise_progresso', 'ajustes_roteiro'
-        ]
-        
-        tarefas_openai = [
-            'atividades_criativas', 'narrativa', 'relatorios_descritivos',
-            'sugestoes_praticas', 'comunicacao_familiar', 'atividades_ludicas'
-        ]
-        
-        if tipo_tarefa in tarefas_deepseek:
-            return "deepseek"
-        elif tipo_tarefa in tarefas_openai:
-            return "openai"
-        else:
-            return motor_base
-    
-    @staticmethod
-    def gerar_com_ia(prompt, tipo_tarefa, temperatura=0.7):
-        """Gera conteúdo usando o motor apropriado"""
-        motor = SistemaIA.escolher_motor(tipo_tarefa)
-        
-        try:
-            if motor == "openai":
-                cliente = SistemaIA.get_cliente_openai()
-                modelo = "gpt-4o-mini"
-            else:  # deepseek
-                cliente = SistemaIA.get_cliente_deepseek()
-                modelo = "deepseek-chat"
+        # 1. MODO REVISÃO (após geração inicial)
+        if status == 'revisao':
+            # Mostra o conteúdo gerado
+            st.markdown("### 📝 Conteúdo Gerado")
+            st.markdown(conteudo_gerado)
             
-            resposta = cliente.chat.completions.create(
-                model=modelo,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperatura,
-                max_tokens=2000
+            st.markdown("---")
+            st.markdown("### 🔧 Ações Disponíveis")
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                if st.button("✅ **Validar e Finalizar**", key=f"validar_{tipo_recurso}", 
+                           use_container_width=True, type="primary"):
+                    st.session_state[f'status_{tipo_recurso}'] = 'aprovado'
+                    st.success("Recurso validado com sucesso!")
+                    time.sleep(1)
+                    st.rerun()
+            
+            with col2:
+                if st.button("🔄 **Solicitar Ajustes**", key=f"ajustar_{tipo_recurso}",
+                           use_container_width=True):
+                    st.session_state[f'status_{tipo_recurso}'] = 'ajustando'
+                    st.rerun()
+            
+            with col3:
+                if st.button("🗑️ **Descartar e Regenerar**", key=f"descartar_{tipo_recurso}",
+                           use_container_width=True):
+                    st.session_state[f'status_{tipo_recurso}'] = 'rascunho'
+                    st.session_state[f'conteudo_{tipo_recurso}'] = ''
+                    st.info("Recurso descartado. Você pode gerar novamente.")
+                    st.rerun()
+        
+        # 2. MODO AJUSTANDO (professor solicitou ajustes)
+        elif status == 'ajustando':
+            st.warning("✏️ **Modo de Ajuste Ativo**")
+            
+            # Campo para feedback detalhado
+            feedback = st.text_area(
+                "**Descreva os ajustes necessários:**",
+                placeholder="Exemplo: 'Preciso de mais exemplos práticos...'\n'Inclua atividades para trabalho em grupo...'\n'Foque mais na comunicação alternativa...'",
+                height=150,
+                key=f"feedback_input_{tipo_recurso}"
             )
             
-            return resposta.choices[0].message.content, motor
+            col1, col2 = st.columns(2)
             
-        except Exception as e:
-            # Fallback para o outro motor
-            try:
-                motor_fallback = "openai" if motor == "deepseek" else "deepseek"
-                
-                if motor_fallback == "openai":
-                    cliente = SistemaIA.get_cliente_openai()
-                    modelo = "gpt-4o-mini"
-                else:
-                    cliente = SistemaIA.get_cliente_deepseek()
-                    modelo = "deepseek-chat"
-                
-                resposta = cliente.chat.completions.create(
-                    model=modelo,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=temperatura,
-                    max_tokens=2000
+            with col1:
+                if st.button("🔄 **Regerar com Ajustes**", 
+                           key=f"regerar_{tipo_recurso}",
+                           use_container_width=True, type="primary"):
+                    if feedback:
+                        st.session_state[f'feedback_{tipo_recurso}'] = feedback
+                        st.info("Regerando com os ajustes solicitados...")
+                        st.session_state[f'status_{tipo_recurso}'] = 'regerando'
+                        st.rerun()
+                    else:
+                        st.error("Por favor, descreva os ajustes desejados.")
+            
+            with col2:
+                if st.button("↩️ **Cancelar Ajustes**", 
+                           key=f"cancelar_{tipo_recurso}",
+                           use_container_width=True):
+                    st.session_state[f'status_{tipo_recurso}'] = 'revisao'
+                    st.rerun()
+        
+        # 3. MODO APROVADO (recurso validado)
+        elif status == 'aprovado':
+            st.success("✅ **Recurso Validado e Pronto para Uso**")
+            
+            # Mostra o conteúdo final
+            st.markdown("### 📋 Conteúdo Final")
+            st.markdown(conteudo_gerado)
+            
+            st.markdown("---")
+            st.markdown("### 💾 Opções de Download")
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                # Download TXT
+                nome_txt, conteudo_txt = criar_documento_txt(
+                    conteudo_gerado, aluno_nome, tipo_recurso
                 )
-                
-                return resposta.choices[0].message.content, motor_fallback + " (fallback)"
-                
-            except Exception as e2:
-                return f"Erro em ambos os motores: {str(e2)}", "erro"
+                st.download_button(
+                    label="📥 **Baixar TXT**",
+                    data=conteudo_txt,
+                    file_name=nome_txt,
+                    mime="text/plain",
+                    use_container_width=True
+                )
+            
+            with col2:
+                # Download HTML
+                nome_html, conteudo_html = criar_documento_html(
+                    conteudo_gerado, aluno_nome, tipo_recurso
+                )
+                st.download_button(
+                    label="🌐 **Baixar HTML**",
+                    data=conteudo_html,
+                    file_name=nome_html,
+                    mime="text/html",
+                    use_container_width=True
+                )
+            
+            with col3:
+                if st.button("✏️ **Editar Novamente**", 
+                           key=f"reeditar_{tipo_recurso}",
+                           use_container_width=True):
+                    st.session_state[f'status_{tipo_recurso}'] = 'revisao'
+                    st.rerun()
+        
+        # 4. MODO REGERANDO (processando ajustes)
+        elif status == 'regerando':
+            st.info("🔄 **Processando ajustes solicitados...**")
+            # Este estado é transitório, será tratado na função principal
+        
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # ==============================================================================
-# SISTEMA DE PLANEJAMENTO SEMANAL INTELIGENTE
+# CLASSE DE REGISTRO E EXECUÇÃO
 # ==============================================================================
-class PlanejadorPAEE:
-    """Sistema de planejamento semanal inteligente"""
-    
-    def __init__(self, aluno):
-        self.aluno = aluno
-        self.hoje = date.today()
-        
-    def gerar_cronograma_inteligente(self, duracao_semanas=8):
-        """Gera cronograma inteligente baseado no PEI"""
-        
-        if not st.session_state.get('api_key_deepseek') and not st.session_state.get('api_key_openai'):
-            return {"erro": "Configure pelo menos uma chave de IA na sidebar"}
-        
-        # Preparar prompt
-        contexto_pei = self.aluno.get('ia_sugestao', '')[:3000]
-        data_revisao = self.aluno.get('data_revisao_pei', self.hoje + timedelta(days=60))
-        
-        # Se tem data de revisão, ajustar duração
-        if data_revisao:
-            dias_totais = (data_revisao - self.hoje).days
-            duracao_semanas = max(4, min(duracao_semanas, dias_totais // 7))
-        
-        prompt = f"""
-        VOCÊ É: Um especialista em planejamento pedagógico para AEE.
-        
-        CONTEXTO:
-        - Aluno: {self.aluno['nome']}
-        - Série: {self.aluno['serie']}
-        - Diagnóstico: {self.aluno.get('hiperfoco', 'Não especificado')}
-        - Período: {duracao_semanas} semanas (até {data_revisao.strftime('%d/%m/%Y') if data_revisao else 'revisão'})
-        - Educação Infantil: {'SIM' if is_ei else 'NÃO'}
-        
-        PEI DO ALUNO (resumo):
-        {contexto_pei}
-        
-        SUA TAREFA: Criar um CRONOGRAMA DE EXECUÇÃO semanal detalhado.
-        
-        ESTRUTURA DO CRONOGRAMA:
-        1. **FASES DO PLANO** (divida em 2-3 fases progressivas)
-        2. **SEMANAS DETALHADAS** (para cada semana):
-           - Tema central da semana
-           - Habilidades trabalhadas
-           - Atividades principais (2-3 por semana)
-           - Recursos necessários
-           - Indicadores de sucesso
-           - Adaptações específicas
-        
-        3. **MATRIZ DE ACOMPANHAMENTO**:
-           - O que observar em cada fase
-           - Pontos de atenção
-           - Sinais de progresso
-        
-        4. **ROTEIRO DE AJUSTES**:
-           - Quando e como ajustar o plano
-           - Gatilhos para mudança de estratégia
-        
-        IMPORTANTE:
-        - Sequência lógica e progressiva
-        - Atividades práticas e viáveis
-        - Inclua tanto trabalho individual quanto em grupo
-        - Considere a frequência real do AEE (1-2x por semana)
-        
-        Formato de saída JSON:
-        {{
-            "periodo": "de X a Y",
-            "total_semanas": {duracao_semanas},
-            "fases": [
-                {{
-                    "nome": "Nome da fase",
-                    "descricao": "Descrição",
-                    "objetivo_principal": "O que se espera",
-                    "semanas": [1, 2, 3],
-                    "habilidades_foco": ["habilidade1", "habilidade2"],
-                    "recursos_principais": ["recurso1", "recurso2"]
-                }}
-            ],
-            "semanas": [
-                {{
-                    "numero": 1,
-                    "tema": "Tema da semana",
-                    "habilidades": ["habilidade1", "habilidade2"],
-                    "atividades": [
-                        {{
-                            "titulo": "Título da atividade",
-                            "descricao": "Descrição detalhada",
-                            "materiais": ["material1", "material2"],
-                            "duracao": "30-40 minutos",
-                            "adaptacoes": "Adaptações específicas",
-                            "indicadores_sucesso": ["indicador1", "indicador2"]
-                        }}
-                    ],
-                    "observacoes_importantes": "O que observar nesta semana",
-                    "meta_semanal": "Meta específica para a semana"
-                }}
-            ],
-            "sistema_acompanhamento": {{
-                "indicadores_chave": ["indicador1", "indicador2"],
-                "frequencia_observacao": "Diária/semanal",
-                "instrumentos_avaliacao": ["observação", "registro fotográfico", "checklist"]
-            }}
-        }}
-        """
-        
-        # Usar DeepSeek para análise (melhor para estruturação)
-        resultado, motor_usado = SistemaIA.gerar_com_ia(prompt, "planejamento_estrategico", temperatura=0.5)
-        
-        if "Erro" in resultado:
-            return {"erro": resultado}
-        
-        # Extrair JSON da resposta
-        try:
-            if "```json" in resultado:
-                json_str = resultado.split("```json")[1].split("```")[0]
-            elif "```" in resultado:
-                json_str = resultado.split("```")[1].split("```")[0]
-            else:
-                json_str = resultado
-            
-            cronograma = json.loads(json_str)
-            cronograma["motor_geracao"] = motor_usado
-            cronograma["data_geracao"] = self.hoje.strftime("%Y-%m-%d")
-            
-            return cronograma
-            
-        except Exception as e:
-            # Se não conseguiu parsear, retornar como texto
-            return {
-                "texto_bruto": resultado,
-                "motor_geracao": motor_usado,
-                "erro_parse": str(e),
-                "data_geracao": self.hoje.strftime("%Y-%m-%d")
-            }
-    
-    def calcular_semanas_restantes(self, cronograma):
-        """Calcula semanas restantes até a revisão"""
-        if not cronograma or "total_semanas" not in cronograma:
-            return 0
-        
-        total_semanas = cronograma["total_semanas"]
-        
-        # Verificar semanas já executadas
-        semanas_executadas = st.session_state.get('semanas_executadas', {}).get(self.aluno['id'], [])
-        
-        return max(0, total_semanas - len(semanas_executadas))
+class RegistroAEE:
+    def __init__(self, aluno_nome):
+        self.aluno_nome = aluno_nome
+        # Cria banco de dados na sessão se não existir
+        if "registros_aee" not in st.session_state:
+            st.session_state.registros_aee = []
 
-# ==============================================================================
-# SISTEMA DE EXECUÇÃO EM TEMPO REAL
-# ==============================================================================
-class SistemaExecucao:
-    """Sistema de execução e correção de rota em tempo real"""
-    
-    def __init__(self, aluno_id, cronograma):
-        self.aluno_id = aluno_id
-        self.cronograma = cronograma
-        self.hoje = date.today()
+    def interface_registro_diario(self):
+        st.markdown("#### 📝 Diário de Bordo do AEE")
         
-        # Inicializar estados de execução
-        if f'execucao_{aluno_id}' not in st.session_state:
-            st.session_state[f'execucao_{aluno_id}'] = {
-                'semanas_concluidas': [],
-                'atividades_realizadas': [],
-                'engajamento_semanal': {},
-                'ajustes_realizados': [],
-                'dificuldades_registradas': []
-            }
-        
-        self.estado = st.session_state[f'execucao_{aluno_id}']
-    
-    def registrar_atividade(self, semana_num, atividade_idx, dados):
-        """Registra uma atividade realizada"""
-        registro = {
-            'data': self.hoje.strftime("%Y-%m-%d"),
-            'semana': semana_num,
-            'atividade_idx': atividade_idx,
-            'engajamento': dados.get('engajamento', 3),
-            'conseguiu_realizar': dados.get('conseguiu_realizar', True),
-            'observacoes': dados.get('observacoes', ''),
-            'dificuldades': dados.get('dificuldades', ''),
-            'ajustes_feitos': dados.get('ajustes_feitos', ''),
-            'evidencias': dados.get('evidencias', [])
-        }
-        
-        self.estado['atividades_realizadas'].append(registro)
-        
-        # Atualizar engajamento semanal
-        if semana_num not in self.estado['engajamento_semanal']:
-            self.estado['engajamento_semanal'][semana_num] = []
-        self.estado['engajamento_semanal'][semana_num].append(dados.get('engajamento', 3))
-        
-        # Registrar dificuldades se houver
-        if dados.get('dificuldades'):
-            self.estado['dificuldades_registradas'].append({
-                'data': self.hoje.strftime("%Y-%m-%d"),
-                'semana': semana_num,
-                'dificuldade': dados['dificuldades']
-            })
-        
-        return registro
-    
-    def concluir_semana(self, semana_num):
-        """Marca uma semana como concluída"""
-        if semana_num not in self.estado['semanas_concluidas']:
-            self.estado['semanas_concluidas'].append(semana_num)
+        with st.container(border=True):
+            c1, c2 = st.columns([2, 1])
+            descricao = c1.text_area("O que foi trabalhado hoje?", height=100, 
+                                   placeholder="Descreva a atividade, reação do aluno e adaptações...",
+                                   key=f"desc_{self.aluno_nome}")
             
-            # Calcular engajamento médio da semana
-            engajamentos = self.estado['engajamento_semanal'].get(semana_num, [])
-            engajamento_medio = sum(engajamentos) / len(engajamentos) if engajamentos else 0
-            
-            return {
-                'semana': semana_num,
-                'data_conclusao': self.hoje.strftime("%Y-%m-%d"),
-                'engajamento_medio': engajamento_medio,
-                'total_atividades': len([a for a in self.estado['atividades_realizadas'] if a['semana'] == semana_num])
-            }
-        return None
-    
-    def sugerir_ajustes_automaticos(self, semana_atual):
-        """Sugere ajustes baseado no desempenho"""
-        
-        # Coletar dados da semana
-        atividades_semana = [a for a in self.estado['atividades_realizadas'] if a['semana'] == semana_atual]
-        
-        if not atividades_semana:
-            return None
-        
-        # Calcular métricas
-        total_atividades = len(atividades_semana)
-        atividades_concluidas = len([a for a in atividades_semana if a['conseguiu_realizar']])
-        engajamento_medio = sum(a['engajamento'] for a in atividades_semana) / total_atividades
-        
-        # Análise de dificuldades
-        dificuldades = [a['dificuldades'] for a in atividades_semana if a['dificuldades']]
-        
-        # Determinar se precisa de ajustes
-        precisa_ajuste = False
-        motivos = []
-        
-        if atividades_concluidas / total_atividades < 0.5:
-            precisa_ajuste = True
-            motivos.append("Baixa taxa de conclusão de atividades")
-        
-        if engajamento_medio < 2.5:
-            precisa_ajuste = True
-            motivos.append("Baixo engajamento do aluno")
-        
-        if dificuldades:
-            precisa_ajuste = True
-            motivos.append(f"Dificuldades identificadas: {', '.join(set(dificuldades)[:3])}")
-        
-        if not precisa_ajuste:
-            return {
-                'status': 'OK',
-                'mensagem': 'O plano está funcionando bem! Continue assim.',
-                'engajamento_medio': engajamento_medio,
-                'taxa_conclusao': atividades_concluidas / total_atividades
-            }
-        
-        # Se precisa de ajuste, gerar sugestões
-        prompt = f"""
-        CONTEXTO: AEE para aluno {aluno['nome']}
-        SEMANA: {semana_atual}
-        PROBLEMAS IDENTIFICADOS: {', '.join(motivos)}
-        DIFICULDADES ESPECÍFICAS: {', '.join(dificuldades[:5]) if dificuldades else 'Nenhuma específica'}
-        ENGENJAMENTO MÉDIO: {engajamento_medio}/5
-        TAXA DE CONCLUSÃO: {atividades_concluidas}/{total_atividades} atividades
-        
-        SUGIRA 3 AJUSTES PRÁTICOS para a próxima semana:
-        1. Ajuste na complexidade das atividades
-        2. Ajuste nos recursos/materiais
-        3. Ajuste na abordagem pedagógica
-        
-        Para cada ajuste, explique:
-        - O que mudar
-        - Por que mudar
-        - Como implementar
-        - Resultado esperado
-        
-        Formato: Lista concisa e prática.
-        """
-        
-        sugestoes, motor = SistemaIA.gerar_com_ia(prompt, "ajustes_roteiro", temperatura=0.6)
-        
-        return {
-            'status': 'PRECISA_AJUSTE',
-            'motivos': motivos,
-            'engajamento_medio': engajamento_medio,
-            'taxa_conclusao': atividades_concluidas / total_atividades,
-            'sugestoes_ajuste': sugestoes,
-            'motor_sugestao': motor
-        }
-    
-    def gerar_relatorio_semanal(self, semana_num):
-        """Gera relatório semanal automático"""
-        atividades_semana = [a for a in self.estado['atividades_realizadas'] if a['semana'] == semana_num]
-        
-        if not atividades_semana:
-            return None
-        
-        # Preparar dados para a IA
-        dados_semana = {
-            'total_atividades': len(atividades_semana),
-            'concluidas': len([a for a in atividades_semana if a['conseguiu_realizar']]),
-            'engajamento_medio': sum(a['engajamento'] for a in atividades_semana) / len(atividades_semana),
-            'dificuldades_comuns': list(set([a['dificuldades'] for a in atividades_semana if a['dificuldades']])),
-            'observacoes_chave': [a['observacoes'] for a in atividades_semana if a['observacoes']][:3]
-        }
-        
-        prompt = f"""
-        RELATÓRIO SEMANAL DE EXECUÇÃO DO AEE
-        
-        ALUNO: {aluno['nome']}
-        SEMANA: {semana_num}
-        DATA: {self.hoje.strftime('%d/%m/%Y')}
-        
-        DADOS DA SEMANA:
-        - Atividades planejadas: {dados_semana['total_atividades']}
-        - Atividades concluídas: {dados_semana['concluidas']}
-        - Taxa de conclusão: {(dados_semana['concluidas']/dados_semana['total_atividades'])*100:.1f}%
-        - Engajamento médio: {dados_semana['engajamento_medio']:.1f}/5
-        
-        DIFICULDADES IDENTIFICADAS:
-        {chr(10).join(f"- {d}" for d in dados_semana['dificuldades_comuns'])}
-        
-        OBSERVAÇÕES IMPORTANTES:
-        {chr(10).join(f"- {o}" for o in dados_semana['observacoes_chave'])}
-        
-        GERE UM RELATÓRIO CONCISO (máximo 300 palavras) com:
-        1. RESUMO DA SEMANA (o que foi trabalhado)
-        2. PROGRESSOS OBSERVADOS
-        3. DIFICULDADES PERSISTENTES
-        4. RECOMENDAÇÕES PARA A PRÓXIMA SEMANA
-        5. AJUSTES SUGERIDOS (se necessário)
-        
-        Use linguagem profissional mas acessível.
-        """
-        
-        relatorio, motor = SistemaIA.gerar_com_ia(prompt, "analise_progresso", temperatura=0.3)
-        
-        return {
-            'relatorio': relatorio,
-            'dados': dados_semana,
-            'motor_geracao': motor,
-            'data': self.hoje.strftime("%Y-%m-%d")
-        }
+            with c2:
+                data_reg = st.date_input("Data", date.today(), key=f"data_{self.aluno_nome}")
+                engajamento = st.slider("Engajamento do Aluno", 1, 5, 3, key=f"eng_{self.aluno_nome}")
+                tipo = st.selectbox("Tipo", ["Individual", "Grupo", "Observação em Sala"], 
+                                  key=f"tipo_{self.aluno_nome}")
 
-# ==============================================================================
-# INICIALIZAÇÃO DOS SISTEMAS
-# ==============================================================================
+            # Upload de Evidência
+            evidencia = st.file_uploader("📸 Anexar Foto/Atividade", 
+                                        type=["png", "jpg", "pdf"], 
+                                        key=f"up_{self.aluno_nome}")
 
-# Inicializar planejador
-planejador = PlanejadorPAEE(aluno)
-
-# Inicializar sistema de execução (será usado depois que tiver cronograma)
-sistema_execucao = None
-
-# ==============================================================================
-# PARTE 3/4: INTERFACE PRINCIPAL - ABAS E PLANEJAMENTO
-# ==============================================================================
-
-# ==============================================================================
-# CRIAÇÃO DAS ABAS PRINCIPAIS
-# ==============================================================================
-tab1, tab2, tab3 = st.tabs([
-    "📅 PLANEJAMENTO DO CICLO",
-    "⚡ EXECUÇÃO EM TEMPO REAL",
-    "📊 DASHBOARD DE PROGRESSO"
-])
-
-# ==============================================================================
-# ABA 1: PLANEJAMENTO DO CICLO
-# ==============================================================================
-with tab1:
-    st.markdown("### 📅 Planejamento do Ciclo de AEE")
-    
-    col_config, col_info = st.columns([1, 1])
-    
-    with col_config:
-        st.markdown("<div class='pedagogia-box'><strong>Configuração do Ciclo:</strong> Defina o período de execução do plano.</div>", unsafe_allow_html=True)
-        
-        # Duração do ciclo
-        duracao_semanas = st.slider(
-            "Duração do ciclo (semanas):",
-            min_value=4,
-            max_value=16,
-            value=8,
-            help="Quantas semanas de execução do plano"
-        )
-        
-        # Frequência do AEE
-        frequencia = st.selectbox(
-            "Frequência do AEE:",
-            ["1 vez por semana", "2 vezes por semana", "3 vezes por semana", "Diário"],
-            index=0
-        )
-        
-        # Foco principal
-        foco_principal = st.text_input(
-            "Foco principal do ciclo:",
-            value=aluno.get('hiperfoco', 'Desenvolvimento de habilidades específicas'),
-            help="Qual o objetivo principal deste ciclo?"
-        )
-        
-        # Botão para gerar cronograma
-        if st.button("✨ Gerar Cronograma Inteligente", type="primary", use_container_width=True):
-            if not st.session_state.get('api_key_deepseek') and not st.session_state.get('api_key_openai'):
-                st.error("⚠️ Configure pelo menos uma chave de IA na sidebar")
-            else:
-                with st.spinner("🤖 IA planejando cronograma personalizado..."):
-                    try:
-                        cronograma = planejador.gerar_cronograma_inteligente(duracao_semanas)
-                        
-                        if "erro" in cronograma:
-                            st.error(f"Erro: {cronograma['erro']}")
-                        else:
-                            st.session_state['cronograma_atual'] = cronograma
-                            st.session_state['aluno_cronograma'] = aluno['id']
-                            
-                            # Inicializar sistema de execução no session_state
-                            st.session_state['sistema_execucao'] = SistemaExecucao(aluno['id'], cronograma)
-                            
-                            st.success(f"✅ Cronograma gerado com {duracao_semanas} semanas!")
-                            st.rerun()
-                    except Exception as e:
-                        st.error(f"Erro ao gerar cronograma: {str(e)}")
-    
-    with col_info:
-        st.markdown("<div class='pedagogia-box'><strong>Informações do Ciclo:</strong> Contexto para planejamento.</div>", unsafe_allow_html=True)
-        
-        # Mostrar data de revisão do PEI
-        if aluno.get('data_revisao_pei'):
-            st.info(f"**📅 Próxima revisão do PEI:** {aluno['data_revisao_pei'].strftime('%d/%m/%Y')}")
-            dias_restantes = (aluno['data_revisao_pei'] - hoje).days
-            if dias_restantes > 0:
-                st.metric("Dias até a revisão", dias_restantes)
-            else:
-                st.warning("A data de revisão do PEI já passou")
-        
-        # Mostrar metas extraídas
-        if st.session_state.metas_extraidas:
-            st.markdown("#### 🎯 Metas do PEI")
-            for meta in st.session_state.metas_extraidas[:3]:
-                st.markdown(f"**{meta['tipo']}:** {meta['descricao'][:100]}...")
-    
-    # SEÇÃO: CRONOGRAMA GERADO
-    if ('cronograma_atual' in st.session_state and 
-        'aluno_cronograma' in st.session_state and 
-        st.session_state['aluno_cronograma'] == aluno['id']):
-        
-        cronograma = st.session_state['cronograma_atual']
-        
-        # Obter sistema de execução do session_state
-        sistema_execucao = st.session_state.get('sistema_execucao')
-        
-        st.markdown("---")
-        st.markdown(f"### 🗓️ Cronograma Gerado ({cronograma.get('total_semanas', 0)} semanas)")
-        
-        # Informações do cronograma
-        col_stats, col_motor = st.columns([2, 1])
-        
-        with col_stats:
-            st.caption(f"📅 Período: {cronograma.get('periodo', 'Não definido')}")
-            st.caption(f"🎯 Foco: {foco_principal}")
-            
-            # Calcular progresso
-            if sistema_execucao:
-                semanas_executadas = len(sistema_execucao.estado['semanas_concluidas'])
-            else:
-                semanas_executadas = 0
-                
-            total_semanas = cronograma.get('total_semanas', 1)
-            progresso_pct = (semanas_executadas / total_semanas) * 100 if total_semanas > 0 else 0
-            
-            st.progress(min(progresso_pct / 100, 1.0))
-            st.caption(f"📊 Progresso: {semanas_executadas}/{total_semanas} semanas ({progresso_pct:.1f}%)")
-        
-        with col_motor:
-            motor = cronograma.get('motor_geracao', 'Desconhecido')
-            st.info(f"🤖 Gerado com: {motor}")
-        
-        # Mostrar fases
-        if 'fases' in cronograma:
-            st.markdown("#### 🚩 Fases do Plano")
-            
-            for fase in cronograma['fases']:
-                with st.expander(f"**{fase.get('nome', 'Fase')}** - {fase.get('descricao', '')}", expanded=True):
-                    col_f1, col_f2 = st.columns(2)
-                    
-                    with col_f1:
-                        st.markdown(f"**Objetivo:** {fase.get('objetivo_principal', '')}")
-                        if fase.get('habilidades_foco'):
-                            st.markdown("**Habilidades:**")
-                            for hab in fase['habilidades_foco'][:3]:
-                                st.markdown(f"- {hab}")
-                    
-                    with col_f2:
-                        semanas_fase = fase.get('semanas', [])
-                        if isinstance(semanas_fase, list):
-                            st.markdown(f"**Semanas:** {semanas_fase}")
-                        else:
-                            st.markdown(f"**Semanas:** {semanas_fase}")
-                        
-                        if fase.get('recursos_principais'):
-                            st.markdown("**Recursos:**")
-                            for rec in fase['recursos_principais'][:3]:
-                                st.markdown(f"- {rec}")
-        
-        # Mostrar semanas detalhadas
-        if 'semanas' in cronograma and isinstance(cronograma['semanas'], list):
-            st.markdown("#### 📋 Semanas Detalhadas")
-            
-            for semana in cronograma['semanas']:
-                if not isinstance(semana, dict):
-                    continue
-                    
-                semana_num = semana.get('numero', 0)
-                
-                if sistema_execucao:
-                    concluida = semana_num in sistema_execucao.estado.get('semanas_concluidas', [])
-                else:
-                    concluida = False
-                
-                status_class = "activity-status-done" if concluida else "activity-status-pending"
-                
-                st.markdown(f"""
-                <div class="activity-card {status_class}">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong style="font-size: 1.1rem;">Semana {semana_num}: {semana.get('tema', '')}</strong>
-                            {'✅ <span style="color: #10B981; font-size: 0.9rem;">Concluída</span>' if concluida else '⏳ <span style="color: #F59E0B; font-size: 0.9rem;">Pendente</span>'}
-                        </div>
-                        <div>
-                            <span class="skill-chip">{len(semana.get('atividades', []))} atividades</span>
-                        </div>
-                    </div>
-                    <div style="margin-top: 10px; color: #4B5563;">
-                        {semana.get('meta_semanal', '')}
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Mostrar atividades da semana
-                if st.checkbox(f"Ver atividades da Semana {semana_num}", key=f"ver_semana_{semana_num}"):
-                    atividades = semana.get('atividades', [])
-                    
-                    for idx, atividade in enumerate(atividades):
-                        if not isinstance(atividade, dict):
-                            continue
-                            
-                        col_a1, col_a2 = st.columns([3, 1])
-                        
-                        with col_a1:
-                            st.markdown(f"**{atividade.get('titulo', 'Atividade')}**")
-                            descricao = atividade.get('descricao', '')
-                            if descricao:
-                                st.markdown(f"{descricao[:150]}...")
-                            
-                            # Materiais
-                            if atividade.get('materiais'):
-                                materiais = atividade['materiais']
-                                if isinstance(materiais, list):
-                                    st.caption(f"📦 Materiais: {', '.join(materiais[:3])}")
-                        
-                        with col_a2:
-                            st.caption(f"⏱️ {atividade.get('duracao', '')}")
-                            
-                            # Botão rápido para executar (irá para aba 2)
-                            if st.button("▶️ Executar", key=f"exec_{semana_num}_{idx}", use_container_width=True):
-                                st.session_state['atividade_selecionada'] = {
-                                    'semana': semana_num,
-                                    'indice': idx,
-                                    'atividade': atividade
-                                }
-                                st.switch_page("pages/2_PAE.py")  # Ou use a navegação apropriada
-        
-        # Botão para exportar cronograma
-        st.markdown("---")
-        col_exp1, col_exp2 = st.columns(2)
-        
-        with col_exp1:
-            if st.button("📥 Exportar Cronograma (JSON)", use_container_width=True):
-                try:
-                    import json
-                    cronograma_json = json.dumps(cronograma, indent=2, ensure_ascii=False, default=str)
-                    st.download_button(
-                        label="Clique para baixar",
-                        data=cronograma_json,
-                        file_name=f"Cronograma_{aluno['nome']}_{hoje.strftime('%Y%m%d')}.json",
-                        mime="application/json"
-                    )
-                except Exception as e:
-                    st.error(f"Erro ao exportar: {str(e)}")
-        
-        with col_exp2:
-            if st.button("🔄 Regenerar Cronograma", use_container_width=True):
-                # Limpar estados relacionados
-                keys_to_clear = ['cronograma_atual', 'aluno_cronograma', 'sistema_execucao']
-                for key in keys_to_clear:
-                    if key in st.session_state:
-                        del st.session_state[key]
+            if st.button("💾 Salvar Registro de Hoje", use_container_width=True, 
+                        key=f"salvar_{self.aluno_nome}"):
+                novo_registro = {
+                    "data": data_reg,
+                    "aluno": self.aluno_nome,
+                    "descricao": descricao,
+                    "engajamento": engajamento,
+                    "tipo": tipo,
+                    "tem_evidencia": evidencia is not None
+                }
+                st.session_state.registros_aee.append(novo_registro)
+                st.success("Registro salvo no histórico!")
+                time.sleep(1)
                 st.rerun()
+
+    def exibir_historico(self):
+        # Filtra registros deste aluno
+        regs = [r for r in st.session_state.registros_aee if r['aluno'] == self.aluno_nome]
+        
+        if not regs:
+            st.info("Nenhum registro encontrado.")
+            return
+
+        # Gráfico simples de engajamento
+        df = pd.DataFrame(regs)
+        if not df.empty:
+            st.markdown("##### 📈 Evolução do Engajamento")
+            # Converter datas para string para evitar problemas
+            df['data_str'] = df['data'].astype(str)
+            st.line_chart(df.set_index("data_str")["engajamento"], color="#8B5CF6")
+
+        st.markdown("##### 🗂️ Histórico Recente")
+        for r in reversed(regs[-5:]): # Últimos 5
+            icon = "📸" if r['tem_evidencia'] else "📝"
+            st.markdown(
+                f"""
+                <div style="background:white; padding:15px; border-radius:10px; border:1px solid #E2E8F0; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#64748B;">
+                        <strong>{r['data'].strftime('%d/%m/%Y')}</strong>
+                        <span>{icon} {r['tipo']}</span>
+                    </div>
+                    <div style="margin-top:5px; color:#1E293B;">{r['descricao'][:200]}{'...' if len(r['descricao']) > 200 else ''}</div>
+                    <div style="margin-top:5px; font-size:0.8rem;">Engajamento: {"⭐"*r['engajamento']}</div>
+                </div>
+                """, unsafe_allow_html=True
+            )
+
+# ==============================================================================
+# CRIAR AS ABAS PRINCIPAIS
+# ==============================================================================
+
+# Criar abas diferentes para EI e não-EI
+if is_ei:
+    tab_barreiras, tab_projetos, tab_rotina, tab_ponte, tab_planejamento = st.tabs([
+        "BARREIRAS NO BRINCAR", "BANCO DE EXPERIÊNCIAS", "ROTINA & ADAPTAÇÃO", 
+        "ARTICULAÇÃO", "EXECUÇÃO & MONITORAMENTO"
+    ])
+else:
+    tab_barreiras, tab_plano, tab_tec, tab_ponte, tab_planejamento = st.tabs([
+        "MAPEAR BARREIRAS", "PLANO DE HABILIDADES", "TEC. ASSISTIVA", 
+        "CRONOGRAMA & ARTICULAÇÃO", "EXECUÇÃO & MONITORAMENTO"
+    ])
+
+# ==============================================================================
+# ABA 1: BARREIRAS NO BRINCAR (EI) / MAPEAR BARREIRAS (NÃO EI)
+# ==============================================================================
+if is_ei:
+    with tab_barreiras:
+        st.markdown("<div class='pedagogia-box'><strong>Diagnóstico do Brincar:</strong> Identifique barreiras na interação e no brincar.</div>", unsafe_allow_html=True)
+        
+        status_atual = st.session_state.get('status_diagnostico_barreiras', 'rascunho')
+        
+        if status_atual == 'rascunho':
+            # Modo inicial - coleta de dados
+            obs_aee = st.text_area(
+                "Observação do Brincar:", 
+                height=100,
+                placeholder="Descreva as observações sobre o brincar do aluno: interações, preferências, dificuldades..."
+            )
+            
+            if st.button("🔍 Mapear Barreiras", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI na sidebar.")
+                elif not obs_aee:
+                    st.warning("Por favor, descreva suas observações antes de mapear.")
+                else:
+                    with st.spinner("Analisando barreiras no brincar..."):
+                        resultado = gerar_diagnostico_barreiras(api_key, aluno, obs_aee)
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_diagnostico_barreiras = resultado
+                            st.session_state.status_diagnostico_barreiras = 'revisao'
+                            st.session_state.input_original_diagnostico_barreiras = {'obs': obs_aee}
+                            st.success("Diagnóstico gerado com sucesso!")
+                            st.rerun()
+        
+        else:
+            # Modo hub de recursos - já tem conteúdo gerado
+            renderizar_hub_recurso(
+                tipo_recurso='diagnostico_barreiras',
+                conteudo_gerado=st.session_state.conteudo_diagnostico_barreiras,
+                aluno_nome=aluno['nome']
+            )
+            
+            # Tratamento especial para regeração com feedback
+            if st.session_state.status_diagnostico_barreiras == 'regerando':
+                feedback = st.session_state.get('feedback_diagnostico_barreiras', '')
+                input_original = st.session_state.get('input_original_diagnostico_barreiras', {})
+                obs_original = input_original.get('obs', '')
+                
+                with st.spinner("Aplicando ajustes solicitados..."):
+                    resultado = gerar_diagnostico_barreiras(
+                        api_key, aluno, obs_original, feedback
+                    )
+                    st.session_state.conteudo_diagnostico_barreiras = resultado
+                    st.session_state.status_diagnostico_barreiras = 'revisao'
+                    st.rerun()
+else:
+    with tab_barreiras:
+        st.markdown("<div class='pedagogia-box'><strong>Diagnóstico de Acessibilidade:</strong> O que impede a participação plena do aluno?</div>", unsafe_allow_html=True)
+        
+        status_atual = st.session_state.get('status_diagnostico_barreiras', 'rascunho')
+        
+        if status_atual == 'rascunho':
+            obs_aee = st.text_area(
+                "Observações Iniciais do AEE:", 
+                height=100,
+                placeholder="Descreva suas observações sobre as barreiras encontradas..."
+            )
+            
+            if st.button("🔍 Analisar Barreiras", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI na sidebar.")
+                elif not obs_aee:
+                    st.warning("Por favor, descreva suas observações antes de analisar.")
+                else:
+                    with st.spinner("Analisando barreiras de acessibilidade..."):
+                        resultado = gerar_diagnostico_barreiras(api_key, aluno, obs_aee)
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_diagnostico_barreiras = resultado
+                            st.session_state.status_diagnostico_barreiras = 'revisao'
+                            st.session_state.input_original_diagnostico_barreiras = {'obs': obs_aee}
+                            st.success("Análise de barreiras concluída!")
+                            st.rerun()
+        
+        else:
+            renderizar_hub_recurso(
+                tipo_recurso='diagnostico_barreiras',
+                conteudo_gerado=st.session_state.conteudo_diagnostico_barreiras,
+                aluno_nome=aluno['nome']
+            )
+            
+            if st.session_state.status_diagnostico_barreiras == 'regerando':
+                feedback = st.session_state.get('feedback_diagnostico_barreiras', '')
+                input_original = st.session_state.get('input_original_diagnostico_barreiras', {})
+                obs_original = input_original.get('obs', '')
+                
+                with st.spinner("Aplicando ajustes..."):
+                    resultado = gerar_diagnostico_barreiras(
+                        api_key, aluno, obs_original, feedback
+                    )
+                    st.session_state.conteudo_diagnostico_barreiras = resultado
+                    st.session_state.status_diagnostico_barreiras = 'revisao'
+                    st.rerun()
+
+# ==============================================================================
+# ABA 2: BANCO DE EXPERIÊNCIAS (EI) / PLANO DE HABILIDADES (NÃO EI)
+# ==============================================================================
+if is_ei:
+    with tab_projetos:
+        st.markdown("<div class='pedagogia-box'><strong>Banco de Experiências (BNCC):</strong> Atividades lúdicas alinhadas aos Campos de Experiência.</div>", unsafe_allow_html=True)
+        
+        status_atual = st.session_state.get('status_projetos_ei', 'rascunho')
+        
+        if status_atual == 'rascunho':
+            campo_bncc = st.selectbox(
+                "Selecione o Campo de Experiência:",
+                ["O eu, o outro e o nós", "Corpo, gestos e movimentos", 
+                 "Traços, sons, cores e formas", "Escuta, fala, pensamento e imaginação", 
+                 "Espaços, tempos, quantidades, relações e transformações"],
+                key="campo_bncc_ei"
+            )
+            
+            if st.button("✨ Gerar Atividades", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI na sidebar.")
+                else:
+                    with st.spinner("Criando banco de experiências..."):
+                        resultado = gerar_projetos_ei_bncc(api_key, aluno, campo_bncc)
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_projetos_ei = resultado
+                            st.session_state.status_projetos_ei = 'revisao'
+                            st.session_state.input_original_projetos_ei = {'campo': campo_bncc}
+                            st.success("Banco de experiências gerado!")
+                            st.rerun()
+        
+        else:
+            renderizar_hub_recurso(
+                tipo_recurso='projetos_ei',
+                conteudo_gerado=st.session_state.conteudo_projetos_ei,
+                aluno_nome=aluno['nome']
+            )
+            
+            if st.session_state.status_projetos_ei == 'regerando':
+                feedback = st.session_state.get('feedback_projetos_ei', '')
+                input_original = st.session_state.get('input_original_projetos_ei', {})
+                campo_original = input_original.get('campo', 'O eu, o outro e o nós')
+                
+                with st.spinner("Aplicando ajustes..."):
+                    resultado = gerar_projetos_ei_bncc(
+                        api_key, aluno, campo_original, feedback
+                    )
+                    st.session_state.conteudo_projetos_ei = resultado
+                    st.session_state.status_projetos_ei = 'revisao'
+                    st.rerun()
+else:
+    with tab_plano:
+        st.markdown("<div class='pedagogia-box'><strong>Treino de Habilidades:</strong> Desenvolvimento de competências específicas no AEE.</div>", unsafe_allow_html=True)
+        
+        status_atual = st.session_state.get('status_plano_habilidades', 'rascunho')
+        
+        if status_atual == 'rascunho':
+            foco = st.selectbox(
+                "Foco do Atendimento:",
+                ["Funções Executivas", "Autonomia", "Coordenação Motora", 
+                 "Comunicação", "Habilidades Sociais", "Leitura e Escrita",
+                 "Matemática", "Tecnologias Assistivas", "Organização e Planejamento"],
+                key="foco_plano_naoei"
+            )
+            
+            if st.button("📋 Gerar Plano", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI na sidebar.")
+                else:
+                    with st.spinner("Elaborando plano de intervenção..."):
+                        resultado = gerar_plano_habilidades(api_key, aluno, foco)
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_plano_habilidades = resultado
+                            st.session_state.status_plano_habilidades = 'revisao'
+                            st.session_state.input_original_plano_habilidades = {'foco': foco}
+                            st.success("Plano de habilidades gerado!")
+                            st.rerun()
+        
+        else:
+            renderizar_hub_recurso(
+                tipo_recurso='plano_habilidades',
+                conteudo_gerado=st.session_state.conteudo_plano_habilidades,
+                aluno_nome=aluno['nome']
+            )
+            
+            if st.session_state.status_plano_habilidades == 'regerando':
+                feedback = st.session_state.get('feedback_plano_habilidades', '')
+                input_original = st.session_state.get('input_original_plano_habilidades', {})
+                foco_original = input_original.get('foco', 'Funções Executivas')
+                
+                with st.spinner("Aplicando ajustes..."):
+                    resultado = gerar_plano_habilidades(
+                        api_key, aluno, foco_original, feedback
+                    )
+                    st.session_state.conteudo_plano_habilidades = resultado
+                    st.session_state.status_plano_habilidades = 'revisao'
+                    st.rerun()
+
+# ==============================================================================
+# ABA 3: ROTINA & ADAPTAÇÃO (EI) / TEC. ASSISTIVA (NÃO EI)
+# ==============================================================================
+if is_ei:
+    with tab_rotina:
+        st.markdown("<div class='pedagogia-box'><strong>Adaptação de Rotina:</strong> Recursos visuais e sensoriais para rotina da Educação Infantil.</div>", unsafe_allow_html=True)
+        
+        status_atual = st.session_state.get('status_tecnologia_assistiva', 'rascunho')
+        
+        if status_atual == 'rascunho':
+            dif_rotina = st.text_input(
+                "Dificuldade Específica na Rotina:",
+                placeholder="Ex: Transições entre atividades, organização do material, comunicação de necessidades...",
+                key="dif_rotina_ei"
+            )
+            
+            if st.button("🛠️ Sugerir Adaptação", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI na sidebar.")
+                elif not dif_rotina:
+                    st.warning("Por favor, descreva a dificuldade específica.")
+                else:
+                    with st.spinner("Buscando recursos de adaptação..."):
+                        resultado = sugerir_tecnologia_assistiva(
+                            api_key, aluno, f"Rotina EI: {dif_rotina}"
+                        )
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_tecnologia_assistiva = resultado
+                            st.session_state.status_tecnologia_assistiva = 'revisao'
+                            st.session_state.input_original_tecnologia_assistiva = {'dificuldade': dif_rotina}
+                            st.success("Sugestões de adaptação geradas!")
+                            st.rerun()
+        
+        else:
+            renderizar_hub_recurso(
+                tipo_recurso='tecnologia_assistiva',
+                conteudo_gerado=st.session_state.conteudo_tecnologia_assistiva,
+                aluno_nome=aluno['nome']
+            )
+            
+            if st.session_state.status_tecnologia_assistiva == 'regerando':
+                feedback = st.session_state.get('feedback_tecnologia_assistiva', '')
+                input_original = st.session_state.get('input_original_tecnologia_assistiva', {})
+                dif_original = input_original.get('dificuldade', '')
+                
+                with st.spinner("Aplicando ajustes..."):
+                    resultado = sugerir_tecnologia_assistiva(
+                        api_key, aluno, f"Rotina EI: {dif_original}", feedback
+                    )
+                    st.session_state.conteudo_tecnologia_assistiva = resultado
+                    st.session_state.status_tecnologia_assistiva = 'revisao'
+                    st.rerun()
+else:
+    with tab_tec:
+        st.markdown("<div class='pedagogia-box'><strong>Tecnologia Assistiva:</strong> Recursos para promover autonomia e participação.</div>", unsafe_allow_html=True)
+        
+        status_atual = st.session_state.get('status_tecnologia_assistiva', 'rascunho')
+        
+        if status_atual == 'rascunho':
+            dif_especifica = st.text_input(
+                "Dificuldade Específica:",
+                placeholder="Ex: Dificuldade na escrita, comunicação, mobilidade, organização...",
+                key="dif_especifica_naoei"
+            )
+            
+            if st.button("🔧 Sugerir Recursos", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI na sidebar.")
+                elif not dif_especifica:
+                    st.warning("Por favor, descreva a dificuldade específica.")
+                else:
+                    with st.spinner("Buscando tecnologias assistivas..."):
+                        resultado = sugerir_tecnologia_assistiva(api_key, aluno, dif_especifica)
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_tecnologia_assistiva = resultado
+                            st.session_state.status_tecnologia_assistiva = 'revisao'
+                            st.session_state.input_original_tecnologia_assistiva = {'dificuldade': dif_especifica}
+                            st.success("Sugestões de TA geradas!")
+                            st.rerun()
+        
+        else:
+            renderizar_hub_recurso(
+                tipo_recurso='tecnologia_assistiva',
+                conteudo_gerado=st.session_state.conteudo_tecnologia_assistiva,
+                aluno_nome=aluno['nome']
+            )
+            
+            if st.session_state.status_tecnologia_assistiva == 'regerando':
+                feedback = st.session_state.get('feedback_tecnologia_assistiva', '')
+                input_original = st.session_state.get('input_original_tecnologia_assistiva', {})
+                dif_original = input_original.get('dificuldade', '')
+                
+                with st.spinner("Aplicando ajustes..."):
+                    resultado = sugerir_tecnologia_assistiva(
+                        api_key, aluno, dif_original, feedback
+                    )
+                    st.session_state.conteudo_tecnologia_assistiva = resultado
+                    st.session_state.status_tecnologia_assistiva = 'revisao'
+                    st.rerun()
+
+# ==============================================================================
+# ABA 4: ARTICULAÇÃO (para EI e não EI)
+# ==============================================================================
+with tab_ponte:
+    st.markdown("<div class='pedagogia-box'><strong>Ponte com a Sala Regular:</strong> Documento colaborativo para articulação entre AEE e sala de aula.</div>", unsafe_allow_html=True)
+    
+    status_atual = st.session_state.get('status_documento_articulacao', 'rascunho')
+    
+    if status_atual == 'rascunho':
+        c1, c2 = st.columns(2)
+        with c1:
+            freq = st.selectbox(
+                "Frequência no AEE:",
+                ["1x/sem", "2x/sem", "3x/sem", "Diário"],
+                key='freq_articulacao'
+            )
+        with c2:
+            turno = st.selectbox(
+                "Turno:",
+                ["Manhã", "Tarde", "Integral"],
+                key='turno_articulacao'
+            )
+        
+        acoes_resumo = st.text_area(
+            "Trabalho Desenvolvido no AEE:",
+            height=100,
+            placeholder="Descreva as principais ações, estratégias e recursos utilizados no AEE...",
+            key='acoes_articulacao'
+        )
+        
+        if st.button("📄 Gerar Documento", type="primary", use_container_width=True):
+            if not api_key:
+                st.error("Insira a chave OpenAI na sidebar.")
+            elif not acoes_resumo:
+                st.warning("Por favor, descreva o trabalho desenvolvido no AEE.")
+            else:
+                with st.spinner("Gerando documento de articulação..."):
+                    resultado = gerar_documento_articulacao(
+                        api_key, aluno, f"{freq} ({turno})", acoes_resumo
+                    )
+                    if "Erro:" in resultado:
+                        st.error(resultado)
+                    else:
+                        st.session_state.conteudo_documento_articulacao = resultado
+                        st.session_state.status_documento_articulacao = 'revisao'
+                        st.session_state.input_original_documento_articulacao = {
+                            'freq': freq,
+                            'turno': turno,
+                            'acoes': acoes_resumo
+                        }
+                        st.success("Documento de articulação gerado!")
+                        st.rerun()
     
     else:
-        # Se não tem cronograma, mostrar instruções
-        st.markdown("---")
-        st.info("""
-        ### 📋 Como funciona o planejamento:
+        renderizar_hub_recurso(
+            tipo_recurso='documento_articulacao',
+            conteudo_gerado=st.session_state.conteudo_documento_articulacao,
+            aluno_nome=aluno['nome']
+        )
         
-        1. **Configure o ciclo** acima (duração, frequência, foco)
-        2. **Clique em 'Gerar Cronograma Inteligente'** para a IA criar um plano personalizado
-        3. **Revise o cronograma** gerado automaticamente
-        4. **Execute as atividades** na aba "Execução em Tempo Real"
-        5. **Acompanhe o progresso** na aba "Dashboard"
-        
-        O sistema usará o **DeepSeek** para análise estratégica e o **OpenAI** para criatividade nas atividades, 
-        cruzando os dados do PEI com as melhores práticas de AEE.
-        """)
+        if st.session_state.status_documento_articulacao == 'regerando':
+            feedback = st.session_state.get('feedback_documento_articulacao', '')
+            input_original = st.session_state.get('input_original_documento_articulacao', {})
+            freq_original = input_original.get('freq', '1x/sem')
+            turno_original = input_original.get('turno', 'Manhã')
+            acoes_original = input_original.get('acoes', '')
+            
+            with st.spinner("Aplicando ajustes..."):
+                resultado = gerar_documento_articulacao(
+                    api_key, aluno, 
+                    f"{freq_original} ({turno_original})", 
+                    acoes_original, 
+                    feedback
+                )
+                st.session_state.conteudo_documento_articulacao = resultado
+                st.session_state.status_documento_articulacao = 'revisao'
+                st.rerun()
 
 # ==============================================================================
-# PARTE 4/4: EXECUÇÃO, DASHBOARD E SISTEMA COMPLETO
+# ABA 5: EXECUÇÃO E MONITORAMENTO (INTEGRADA)
 # ==============================================================================
-
-# ==============================================================================
-# ABA 2: EXECUÇÃO EM TEMPO REAL
-# ==============================================================================
-with tab2:
-    st.markdown("### ⚡ Execução em Tempo Real")
+with tab_planejamento:
+    st.markdown("### 🗓️ Execução e Monitoramento do AEE")
     
-    # Verificar se tem cronograma
-    if 'cronograma_atual' not in st.session_state or st.session_state['aluno_cronograma'] != aluno['id']:
-        st.warning("⚠️ Primeiro gere um cronograma na aba 'Planejamento do Ciclo'")
-        st.stop()
-    
-    cronograma = st.session_state['cronograma_atual']
-    
-    # Verificar sistema de execução
-    if not sistema_execucao:
-        sistema_execucao = SistemaExecucao(aluno['id'], cronograma)
-    
-    # SEÇÃO 1: ATIVIDADE SELECIONADA PARA EXECUÇÃO
-    if 'atividade_selecionada' in st.session_state:
-        atividade_sel = st.session_state['atividade_selecionada']
-        semana_num = atividade_sel['semana']
-        atividade_idx = atividade_sel['indice']
-        atividade = atividade_sel['atividade']
+    # 1. Dashboard de Progresso
+    if st.session_state.cronograma_aee:
+        total_semanas = sum(len(fase['semanas']) for fase in st.session_state.cronograma_aee.get('fases', []))
+        semanas_concluidas = len(st.session_state.semanas_concluidas)
+        progresso_pct = int((semanas_concluidas / total_semanas) * 100) if total_semanas > 0 else 0
         
         st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%); color: white; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h3 style="margin: 0; color: white;">▶️ Executando Atividade</h3>
-                    <p style="margin: 5px 0 0 0; opacity: 0.9;">Semana {semana_num} • {atividade.get('titulo', 'Atividade')}</p>
+        <div class="timeline-header">
+            <div style="flex-grow: 1; padding-right: 20px;">
+                <h3 style="margin:0; color: #1E293B;">📊 Progresso da Execução: {aluno.get('nome')}</h3>
+                <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">
+                    Total de semanas: <strong>{total_semanas}</strong> | Concluídas: <strong>{semanas_concluidas}</strong>
                 </div>
-                <div>
-                    <span style="background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;">
-                        {atividade.get('duracao', '30 min')}
-                    </span>
+                <div class="prog-bar-bg">
+                    <div class="prog-bar-fill" style="width: {progresso_pct}%"></div>
                 </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 1.5rem; font-weight: 800; color: #8B5CF6;">{progresso_pct}%</div>
+                <div style="font-size: 0.7rem; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Concluído</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
-        
-        # Detalhes da atividade
-        col_det1, col_det2 = st.columns([2, 1])
-        
-        with col_det1:
-            st.markdown("#### 📝 Detalhes da Atividade")
-            st.markdown(f"**Descrição:** {atividade.get('descricao', '')}")
-            
-            if atividade.get('adaptacoes'):
-                st.markdown("#### 🛠️ Adaptações Sugeridas")
-                st.info(atividade.get('adaptacoes'))
-            
-            if atividade.get('indicadores_sucesso'):
-                st.markdown("#### 🎯 Indicadores de Sucesso")
-                for indicador in atividade.get('indicadores_sucesso', []):
-                    st.markdown(f"- {indicador}")
-        
-        with col_det2:
-            st.markdown("#### 📦 Materiais")
-            if atividade.get('materiais'):
-                for material in atividade.get('materiais', []):
-                    st.markdown(f"• {material}")
-            else:
-                st.info("Sem materiais específicos")
-        
-        # FORMULÁRIO DE EXECUÇÃO
-        st.markdown("---")
-        st.markdown("#### 📋 Registro da Execução")
-        
-        with st.form(f"exec_form_{semana_num}_{atividade_idx}"):
-            col_exec1, col_exec2 = st.columns(2)
-            
-            with col_exec1:
-                conseguiu = st.radio(
-                    "O aluno conseguiu realizar a atividade?",
-                    ["Sim, completamente", "Parcialmente", "Não conseguiu"],
-                    horizontal=True
-                )
-                
-                engajamento = st.slider(
-                    "Nível de engajamento do aluno:",
-                    1, 5, 3,
-                    help="1 = Muito baixo, 5 = Excelente"
-                )
-            
-            with col_exec2:
-                # Dificuldades encontradas
-                dificuldades = st.text_area(
-                    "Dificuldades encontradas:",
-                    height=80,
-                    placeholder="Descreva quaisquer dificuldades..."
-                )
-                
-                # Ajustes realizados
-                ajustes = st.text_area(
-                    "Ajustes realizados durante a atividade:",
-                    height=80,
-                    placeholder="O que você adaptou durante a execução?"
-                )
-            
-            # Observações detalhadas
-            observacoes = st.text_area(
-                "Observações detalhadas:",
-                height=120,
-                placeholder="Descreva como foi a atividade, reações do aluno, surpresas, aprendizados..."
-            )
-            
-            # Upload de evidências
-            evidencias = st.file_uploader(
-                "📸 Anexar evidências (opcional):",
-                type=['png', 'jpg', 'jpeg', 'pdf'],
-                accept_multiple_files=True
-            )
-            
-            # Botões de ação
-            col_btn1, col_btn2, col_btn3 = st.columns(3)
-            
-            with col_btn1:
-                submit = st.form_submit_button(
-                    "💾 Salvar e Concluir Atividade",
-                    type="primary",
-                    use_container_width=True
-                )
-            
-            with col_btn2:
-                salvar_sem_concluir = st.form_submit_button(
-                    "💾 Salvar e Continuar",
-                    use_container_width=True
-                )
-            
-            with col_btn3:
-                cancelar = st.form_submit_button(
-                    "❌ Cancelar",
-                    use_container_width=True
-                )
-            
-            if submit or salvar_sem_concluir:
-                # Preparar dados
-                dados_execucao = {
-                    'engajamento': engajamento,
-                    'conseguiu_realizar': "Não" not in conseguiu,
-                    'observacoes': observacoes,
-                    'dificuldades': dificuldades,
-                    'ajustes_feitos': ajustes,
-                    'evidencias': [e.name for e in evidencias] if evidencias else []
-                }
-                
-                # Registrar atividade
-                registro = sistema_execucao.registrar_atividade(
-                    semana_num, atividade_idx, dados_execucao
-                )
-                
-                if submit:
-                    st.success("✅ Atividade concluída e registrada!")
-                    time.sleep(1)
-                    
-                    # Remover atividade selecionada
-                    del st.session_state['atividade_selecionada']
-                    
-                    # Verificar se concluiu a semana
-                    atividades_semana = [a for a in sistema_execucao.estado['atividades_realizadas'] 
-                                       if a['semana'] == semana_num]
-                    total_atividades_semana = len([s for s in cronograma['semanas'] 
-                                                 if s['numero'] == semana_num][0]['atividades'])
-                    
-                    if len(atividades_semana) >= total_atividades_semana * 0.7:  # 70% concluídas
-                        if st.checkbox("✅ Marcar semana como concluída"):
-                            resultado = sistema_execucao.concluir_semana(semana_num)
-                            if resultado:
-                                st.success(f"🎉 Semana {semana_num} concluída!")
-                
-                elif salvar_sem_concluir:
-                    st.success("✅ Progresso salvo! Continue com a atividade.")
-                
-                st.rerun()
-            
-            if cancelar:
-                del st.session_state['atividade_selecionada']
-                st.rerun()
-    
     else:
-        # SEÇÃO 2: VISÃO GERAL DA EXECUÇÃO
-        col_over1, col_over2 = st.columns([2, 1])
-        
-        with col_over1:
-            st.markdown("#### 📊 Progresso da Execução")
-            
-            # Calcular métricas
-            total_atividades = sum(len(s.get('atividades', [])) for s in cronograma.get('semanas', []))
-            atividades_realizadas = len(sistema_execucao.estado['atividades_realizadas'])
-            semanas_concluidas = len(sistema_execucao.estado['semanas_concluidas'])
-            
-            # Gráfico de progresso
-            fig = px.bar(
-                x=['Atividades', 'Semanas'],
-                y=[atividades_realizadas/total_atividades*100 if total_atividades > 0 else 0, 
-                   semanas_concluidas/cronograma.get('total_semanas', 1)*100],
-                color=['Atividades', 'Semanas'],
-                color_discrete_map={'Atividades': '#8B5CF6', 'Semanas': '#10B981'},
-                labels={'x': 'Categoria', 'y': 'Progresso (%)'},
-                title='Progresso Geral'
-            )
-            fig.update_layout(showlegend=False, height=300)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col_over2:
-            st.markdown("#### 📈 Métricas Chave")
-            
-            st.metric(
-                "Atividades Realizadas",
-                f"{atividades_realizadas}/{total_atividades}",
-                f"{((atividades_realizadas/total_atividades)*100 if total_atividades > 0 else 0):.1f}%"
-            )
-            
-            st.metric(
-                "Semanas Concluídas",
-                f"{semanas_concluidas}/{cronograma.get('total_semanas', 0)}",
-                f"{((semanas_concluidas/cronograma.get('total_semanas', 1))*100 if cronograma.get('total_semanas', 1) > 0 else 0):.1f}%"
-            )
-            
-            # Engajamento médio
-            if sistema_execucao.estado['atividades_realizadas']:
-                engajamento_medio = sum(a['engajamento'] for a in sistema_execucao.estado['atividades_realizadas']) / len(sistema_execucao.estado['atividades_realizadas'])
-                st.metric("Engajamento Médio", f"{engajamento_medio:.1f}/5")
-        
-        # SEÇÃO 3: ATIVIDADES DISPONÍVEIS PARA EXECUÇÃO
-        st.markdown("---")
-        st.markdown("#### 🎯 Atividades Disponíveis")
-        
-        # Filtrar semanas não concluídas
-        semanas_nao_concluidas = [s for s in cronograma.get('semanas', []) 
-                                 if s['numero'] not in sistema_execucao.estado['semanas_concluidas']]
-        
-        if not semanas_nao_concluidas:
-            st.success("🎉 Todas as semanas foram concluídas!")
-        else:
-            for semana in semanas_nao_concluidas[:3]:  # Mostrar até 3 semanas
-                st.markdown(f"##### 📅 Semana {semana['numero']}: {semana.get('tema', '')}")
-                
-                col_sem1, col_sem2 = st.columns([3, 1])
-                
-                with col_sem1:
-                    st.markdown(f"**Meta semanal:** {semana.get('meta_semanal', '')}")
-                    
-                    # Mostrar primeiras 2 atividades
-                    for idx, atividade in enumerate(semana.get('atividades', [])[:2]):
-                        st.markdown(f"**{atividade['titulo']}** - {atividade.get('duracao', '')}")
-                
-                with col_sem2:
-                    if st.button("🔍 Ver todas", key=f"ver_sem_{semana['numero']}", use_container_width=True):
-                        # Ir para a semana específica
-                        st.session_state['semana_ativa'] = semana['numero']
-                        st.rerun()
-        
-        # SEÇÃO 4: SUGESTÕES DE AJUSTE AUTOMÁTICO
-        if sistema_execucao.estado['atividades_realizadas']:
-            st.markdown("---")
-            st.markdown("#### 🔧 Análise de Ajustes Automática")
-            
-            semana_atual = max([a['semana'] for a in sistema_execucao.estado['atividades_realizadas']], default=1)
-            analise = sistema_execucao.sugerir_ajustes_automaticos(semana_atual)
-            
-            if analise:
-                if analise['status'] == 'OK':
-                    st.success("✅ O plano está funcionando bem!")
-                    st.info(f"Engajamento médio: {analise['engajamento_medio']:.1f}/5 | Conclusão: {analise['taxa_conclusao']*100:.1f}%")
-                else:
-                    st.warning("⚠️ Ajustes recomendados:")
-                    st.write(analise['sugestoes_ajuste'])
-                    
-                    if st.button("🔄 Aplicar ajustes automaticamente", type="secondary"):
-                        st.info("Ajustes serão aplicados nas próximas atividades")
-                        # Aqui você poderia implementar a lógica de aplicar ajustes
+        st.info("⚠️ Gere um cronograma abaixo para começar o acompanhamento.")
+    
+    # 2. Sistema de Registro Diário
+    sistema_registro = RegistroAEE(aluno['nome'])
+    
+    col_reg, col_cron = st.columns([1, 1.5], gap="large")
+    
+    with col_reg:
+        st.markdown("#### 📝 Registro Diário")
+        sistema_registro.interface_registro_diario()
+        st.divider()
+        sistema_registro.exibir_historico()
 
-# ==============================================================================
-# ABA 3: DASHBOARD DE PROGRESSO
-# ==============================================================================
-with tab3:
-    st.markdown("### 📊 Dashboard de Progresso")
-    
-    if 'cronograma_atual' not in st.session_state or not sistema_execucao:
-        st.warning("Gere e execute atividades para ver o dashboard")
-        st.stop()
-    
-    # SEÇÃO 1: VISÃO GERAL
-    col_dash1, col_dash2, col_dash3, col_dash4 = st.columns(4)
-    
-    with col_dash1:
-        total_atividades = sum(len(s.get('atividades', [])) for s in cronograma.get('semanas', []))
-        realizadas = len(sistema_execucao.estado['atividades_realizadas'])
-        st.metric("Atividades", f"{realizadas}/{total_atividades}", f"{(realizadas/total_atividades*100 if total_atividades>0 else 0):.0f}%")
-    
-    with col_dash2:
-        semanas_totais = cronograma.get('total_semanas', 0)
-        semanas_concluidas = len(sistema_execucao.estado['semanas_concluidas'])
-        st.metric("Semanas", f"{semanas_concluidas}/{semanas_totais}", f"{(semanas_concluidas/semanas_totais*100 if semanas_totais>0 else 0):.0f}%")
-    
-    with col_dash3:
-        if sistema_execucao.estado['atividades_realizadas']:
-            engajamento_medio = sum(a['engajamento'] for a in sistema_execucao.estado['atividades_realizadas']) / len(sistema_execucao.estado['atividades_realizadas'])
-            st.metric("Engajamento", f"{engajamento_medio:.1f}/5.0")
+    with col_cron:
+        st.markdown("#### 🗓️ Planejamento do Ciclo")
+        
+        # Se não tiver cronograma, mostra o gerador
+        if not st.session_state.cronograma_aee:
+            c1, c2 = st.columns(2)
+            semanas = c1.number_input("Duração (semanas)", min_value=4, max_value=16, value=8)
+            frequencia = c2.selectbox("Frequência", ["1x/semana", "2x/semana", "3x/semana", "Diário"])
+            
+            # Extrair foco do diagnóstico ou usar padrão
+            foco_default = aluno.get('hiperfoco', 'Desenvolvimento de habilidades específicas')
+            
+            if st.button("✨ Gerar Cronograma", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("⚠️ Insira a chave OpenAI na sidebar.")
+                else:
+                    with st.spinner("Criando cronograma personalizado..."):
+                        plano = gerar_cronograma_aee(api_key, aluno, semanas, frequencia, foco_default)
+                        if "erro" not in plano:
+                            st.session_state.cronograma_aee = plano
+                            st.success("Cronograma gerado com sucesso!")
+                            st.rerun()
+                        else:
+                            st.error(f"Erro ao gerar: {plano['erro']}")
+        
+        # Visualização do Cronograma (se existir)
         else:
-            st.metric("Engajamento", "0/5")
-    
-    with col_dash4:
-        sucesso_rate = len([a for a in sistema_execucao.estado['atividades_realizadas'] if a['conseguiu_realizar']]) / len(sistema_execucao.estado['atividades_realizadas']) if sistema_execucao.estado['atividades_realizadas'] else 0
-        st.metric("Taxa de Sucesso", f"{(sucesso_rate*100):.0f}%")
-    
-    # SEÇÃO 2: GRÁFICOS DETALHADOS
-    col_chart1, col_chart2 = st.columns(2)
-    
-    with col_chart1:
-        # Gráfico de engajamento por semana
-        if sistema_execucao.estado['engajamento_semanal']:
-            semanas = list(sistema_execucao.estado['engajamento_semanal'].keys())
-            medias = [sum(vals)/len(vals) for vals in sistema_execucao.estado['engajamento_semanal'].values()]
+            cronograma = st.session_state.cronograma_aee
             
-            fig = px.line(
-                x=semanas,
-                y=medias,
-                markers=True,
-                title='Engajamento por Semana',
-                labels={'x': 'Semana', 'y': 'Engajamento (1-5)'}
-            )
-            fig.update_traces(line_color='#8B5CF6', marker_color='#7C3AED')
-            fig.update_layout(height=300)
-            st.plotly_chart(fig, use_container_width=True)
-    
-    with col_chart2:
-        # Gráfico de atividades concluídas vs não concluídas
-        if sistema_execucao.estado['atividades_realizadas']:
-            concluidas = len([a for a in sistema_execucao.estado['atividades_realizadas'] if a['conseguiu_realizar']])
-            nao_concluidas = len(sistema_execucao.estado['atividades_realizadas']) - concluidas
+            # Botão para limpar
+            if st.button("🔄 Gerar Novo Cronograma", type="secondary", use_container_width=True):
+                st.session_state.cronograma_aee = None
+                st.session_state.semanas_concluidas = set()
+                st.rerun()
             
-            fig = px.pie(
-                values=[concluidas, nao_concluidas],
-                names=['Concluídas', 'Não Concluídas'],
-                title='Conclusão de Atividades',
-                color_discrete_sequence=['#10B981', '#EF4444']
-            )
-            fig.update_layout(height=300, showlegend=True)
-            st.plotly_chart(fig, use_container_width=True)
-    
-    # SEÇÃO 3: RELATÓRIO SEMANAL AUTOMÁTICO
-    st.markdown("---")
-    st.markdown("#### 📋 Relatório Automático de Progresso")
-    
-    if sistema_execucao.estado['atividades_realizadas']:
-        semana_mais_recente = max([a['semana'] for a in sistema_execucao.estado['atividades_realizadas']])
-        
-        if st.button("📄 Gerar Relatório da Semana", use_container_width=True):
-            with st.spinner("Gerando relatório com IA..."):
-                relatorio = sistema_execucao.gerar_relatorio_semanal(semana_mais_recente)
+            # Exibir fases e semanas
+            for fase_idx, fase in enumerate(cronograma.get('fases', [])):
+                st.markdown(f"##### 🚩 **{fase['nome_fase']}**")
+                if fase.get('descricao'):
+                    st.caption(fase['descricao'])
                 
-                if relatorio:
-                    st.markdown("#### 📊 Relatório Gerado")
-                    st.markdown(relatorio['relatorio'])
+                for semana in fase['semanas']:
+                    semana_key = f"sem_{fase_idx}_{semana['semana']}"
+                    concluida = semana_key in st.session_state.semanas_concluidas
                     
-                    st.download_button(
-                        "📥 Baixar Relatório",
-                        relatorio['relatorio'],
-                        file_name=f"Relatorio_Semana_{semana_mais_recente}_{aluno['nome']}.txt",
-                        mime="text/plain"
-                    )
-    else:
-        st.info("Execute algumas atividades para gerar relatórios automáticos")
-    
-    # SEÇÃO 4: HISTÓRICO DE EXECUÇÃO
-    st.markdown("---")
-    st.markdown("#### 📝 Histórico de Execução")
-    
-    if sistema_execucao.estado['atividades_realizadas']:
-        historico_recente = sorted(
-            sistema_execucao.estado['atividades_realizadas'],
-            key=lambda x: x['data'],
-            reverse=True
-        )[:10]
-        
-        for registro in historico_recente:
-            # Encontrar atividade no cronograma
-            semana_cron = next((s for s in cronograma['semanas'] if s['numero'] == registro['semana']), None)
-            atividade = None
-            if semana_cron and registro['atividade_idx'] < len(semana_cron['atividades']):
-                atividade = semana_cron['atividades'][registro['atividade_idx']]
+                    # Card da semana
+                    with st.expander(f"**Semana {semana['semana']}:** {semana['tema']}", 
+                                   expanded=not concluida):
+                        
+                        col_info, col_status = st.columns([3, 1])
+                        
+                        with col_info:
+                            st.markdown(f"**Atividade:** {semana['atividade']}")
+                            st.markdown(f"**Recursos:** {semana.get('recurso', 'Não especificado')}")
+                            st.markdown(f"**Objetivo:** {semana.get('objetivo', '')}")
+                            if semana.get('duracao'):
+                                st.markdown(f"**Duração:** {semana['duracao']}")
+                        
+                        with col_status:
+                            status = st.checkbox(
+                                "Concluída", 
+                                value=concluida,
+                                key=f"check_{semana_key}"
+                            )
+                            
+                            if status and not concluida:
+                                st.session_state.semanas_concluidas.add(semana_key)
+                                st.rerun()
+                            elif not status and concluida:
+                                st.session_state.semanas_concluidas.remove(semana_key)
+                                st.rerun()
             
-            st.markdown(f"""
-            <div class="activity-card">
-                <div style="display: flex; justify-content: space-between;">
-                    <div>
-                        <strong>📅 {registro['data']}</strong> - Semana {registro['semana']}
-                        {f" - {atividade['titulo']}" if atividade else ""}
-                    </div>
-                    <div>
-                        <span style="background: {'#10B981' if registro['conseguiu_realizar'] else '#EF4444'}; 
-                                   color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">
-                            {'✅ Concluída' if registro['conseguiu_realizar'] else '❌ Não concluída'}
-                        </span>
-                    </div>
-                </div>
-                <div style="margin-top: 8px;">
-                    <span style="font-size: 0.9rem;">Engajamento: {"⭐" * registro['engajamento']}</span>
-                    {f"<br><span style='font-size: 0.85rem; color: #6B7280;'>{registro['observacoes'][:100]}...</span>" if registro['observacoes'] else ""}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-    else:
-        st.info("Nenhuma atividade registrada ainda")
+            # Opção de download do cronograma
+            st.divider()
+            if st.button("📥 Baixar Cronograma Completo", use_container_width=True):
+                cronograma_texto = json.dumps(cronograma, indent=2, ensure_ascii=False)
+                st.download_button(
+                    label="Clique para baixar JSON",
+                    data=cronograma_texto,
+                    file_name=f"Cronograma_AEE_{aluno['nome']}_{date.today()}.json",
+                    mime="application/json"
+                )
 
 # ==============================================================================
 # RODAPÉ E INFORMAÇÕES
@@ -1647,9 +1483,9 @@ with tab3:
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #64748B; font-size: 0.9rem; padding: 20px;">
-    <p>🚀 <strong>Fluxo Completo Omnisfera:</strong> PEI → Planejamento PAEE → Execução → Ajustes → Avaliação</p>
-    <p>🤖 <strong>IA Inteligente:</strong> DeepSeek para análise + OpenAI para criatividade</p>
-    <p>📊 <strong>Dados em Tempo Real:</strong> Acompanhe e ajuste o plano conforme o progresso do aluno</p>
+    <p>💡 <strong>Dica:</strong> Cada recurso gerado pode ser validado, ajustado e baixado em múltiplos formatos.</p>
+    <p>📚 <strong>Lembrete:</strong> Os documentos gerados são sugestões pedagógicas que devem ser adaptadas à realidade do aluno.</p>
+    <p>🔄 <strong>Fluxo completo:</strong> PEI → Planejamento AEE → Execução → Registro → Avaliação → Revisão</p>
 </div>
 """, unsafe_allow_html=True)
 
