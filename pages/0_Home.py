@@ -6,7 +6,7 @@ import os
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v2.1 - Guia de Inclusão"
+APP_VERSION = "v2.2 - Guia de Inclusão"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV", "PRODUCAO") == "TESTE"
@@ -109,7 +109,7 @@ footer {
     border-radius: 20px;
     padding: 3rem;
     color: white;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
     position: relative;
     overflow: hidden;
     box-shadow: 0 20px 40px -10px rgba(30, 58, 138, 0.3);
@@ -172,67 +172,73 @@ footer {
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
 }
 
-/* --- BOTÕES DE MÓDULO (ESTILO RECURSO COMPACTO) --- */
-.mod-btn-wrapper {
+/* --- NAV CARD (BOTÕES DE MÓDULO ESTILO RECURSO) --- */
+/* Wrapper para o truque do botão overlay */
+.nav-card-container {
+    position: relative;
+    height: 70px; /* Altura fixa para alinhar */
+    margin-bottom: 10px;
+}
+
+.nav-card {
     background: white;
     border-radius: 12px;
-    padding: 12px 16px;
+    padding: 8px 12px;
     border: 1px solid #E2E8F0;
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* Ícone esquerda, Texto direita */
     align-items: center;
     gap: 10px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
     height: 100%;
-    min-height: 110px;
-    text-align: center;
-    cursor: pointer;
+    width: 100%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
-.mod-btn-wrapper:hover {
+/* Efeito de hover aplicado quando o container (que tem o botão) recebe hover */
+.nav-card-container:hover .nav-card {
     transform: translateY(-3px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
-    border-color: transparent;
+    border-color: #7C3AED; /* Borda roxa no hover */
 }
 
-.mod-btn-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
+/* Ícone */
+.nav-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     flex-shrink: 0;
-    margin-bottom: 4px;
+    /* Padrão Roxo */
+    background: #F5F3FF; 
+    color: #7C3AED; 
+    border: 1px solid #C4B5FD;
 }
 
-.mod-btn-title {
+/* Texto */
+.nav-title {
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #1E293B;
-    line-height: 1.2;
+    line-height: 1.1;
+    text-align: left;
 }
 
-/* --- CORES DOS MÓDULOS (BASEADAS NO RECURSO) --- */
-.mod-indigo .mod-btn-icon { background: #EEF2FF; color: #4F46E5; border: 1px solid #A5B4FC; }
-.mod-indigo:hover { border-color: #A5B4FC !important; }
-
-.mod-blue .mod-btn-icon { background: #EFF6FF; color: #2563EB; border: 1px solid #93C5FD; }
-.mod-blue:hover { border-color: #93C5FD !important; }
-
-.mod-purple .mod-btn-icon { background: #F5F3FF; color: #7C3AED; border: 1px solid #C4B5FD; }
-.mod-purple:hover { border-color: #C4B5FD !important; }
-
-.mod-teal .mod-btn-icon { background: #F0FDFA; color: #0D9488; border: 1px solid #5EEAD4; }
-.mod-teal:hover { border-color: #5EEAD4 !important; }
-
-.mod-rose .mod-btn-icon { background: #FFF1F2; color: #BE123C; border: 1px solid #FDA4AF; }
-.mod-rose:hover { border-color: #FDA4AF !important; }
-
-.mod-sky .mod-btn-icon { background: #F0F9FF; color: #0369A1; border: 1px solid #BAE6FD; }
-.mod-sky:hover { border-color: #BAE6FD !important; }
+/* --- BOTÃO INVISÍVEL (OVERLAY) --- */
+/* Isso estica o botão do Streamlit para cobrir o card visual e ficar transparente */
+div[data-testid="column"] button {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 70px !important; /* Mesma altura do card */
+    opacity: 0 !important;
+    z-index: 5 !important;
+    cursor: pointer !important;
+}
 
 /* --- RECURSOS --- */
 .res-card-link {
@@ -703,64 +709,44 @@ def render_topbar():
     )
 
 
-def render_module_buttons_row():
-    """Renderiza os botões de módulo em uma linha única (estilo recurso compacto)"""
+def render_nav_cards():
+    """Renderiza os cartões de navegação em linha única"""
+    # Definição dos módulos (incluindo Início)
     modules_data = [
-        {"title": "Estudantes", "icon": "ri-group-fill", "color_cls": "mod-indigo", "page": "pages/Alunos.py", "key": "m_aluno"},
-        {"title": "Estratégias & PEI", "icon": "ri-book-open-fill", "color_cls": "mod-blue", "page": "pages/1_PEI.py", "key": "m_pei"},
-        {"title": "Plano de Ação / PAEE", "icon": "ri-settings-5-fill", "color_cls": "mod-purple", "page": "pages/2_PAE.py", "key": "m_pae"},
-        {"title": "Hub de Recursos", "icon": "ri-rocket-2-fill", "color_cls": "mod-teal", "page": "pages/3_Hub_Inclusao.py", "key": "m_hub"},
-        {"title": "Diário de Bordo", "icon": "ri-file-list-3-fill", "color_cls": "mod-rose", "page": "pages/4_Diario_de_Bordo.py", "key": "m_diario"},
-        {"title": "Evolução & Dados", "icon": "ri-bar-chart-box-fill", "color_cls": "mod-sky", "page": "pages/5_Monitoramento_Avaliacao.py", "key": "m_dados"},
+        {"title": "Início", "icon": "ri-home-smile-2-fill", "page": "pages/0_Home.py", "key": "m_home"},
+        {"title": "Estudantes", "icon": "ri-group-fill", "page": "pages/Alunos.py", "key": "m_aluno"},
+        {"title": "Estratégias PEI", "icon": "ri-book-open-fill", "page": "pages/1_PEI.py", "key": "m_pei"},
+        {"title": "PAEE", "icon": "ri-settings-5-fill", "page": "pages/2_PAE.py", "key": "m_pae"},
+        {"title": "Hub", "icon": "ri-rocket-2-fill", "page": "pages/3_Hub_Inclusao.py", "key": "m_hub"},
+        {"title": "Diário", "icon": "ri-file-list-3-fill", "page": "pages/4_Diario_de_Bordo.py", "key": "m_diario"},
+        {"title": "Dados", "icon": "ri-bar-chart-box-fill", "page": "pages/5_Monitoramento_Avaliacao.py", "key": "m_dados"},
     ]
 
+    # Grid de 7 colunas
     cols = st.columns(len(modules_data), gap="small")
     
     for i, mod in enumerate(modules_data):
         with cols[i]:
-            # Botão invisível do Streamlit cobrindo o card visual
-            if st.button(mod["title"], key=mod["key"], use_container_width=True):
-                st.switch_page(mod["page"])
-            
-            # Card visual renderizado via Markdown (hack visual: o botão acima é funcional mas o estilo vem do CSS)
-            # O truque aqui é que o st.button padrão não permite HTML interno complexo.
-            # Então usamos st.button para a ação e Markdown para o visual? Não, o st.button vai ficar em cima ou embaixo.
-            # MELHOR ABORDAGEM: Renderizar o HTML visual e usar um botão invisível ou um botão estilizado.
-            # Como queremos que pareça o card de recurso, vamos simplificar:
-            # Usar HTML com link direto (se possível) ou st.button estilizado.
-            
-            # Vou usar a abordagem de renderizar o HTML visualmente ABAIXO de um botão invisível? Não.
-            # Vou renderizar o HTML visual e assumir que o usuário clica no botão gerado pelo Streamlit que estilizamos via CSS.
-            # O CSS .stButton > button foi ajustado para ter aparência clean, mas para ter o ícone colorido dentro,
-            # precisamos injetar o HTML dentro do botão? Streamlit não deixa.
-            
-            # SOLUÇÃO HÍBRIDA: Renderizar o card como HTML clicável não funciona bem com st.switch_page.
-            # VAMOS USAR: Container + Markdown para o visual e um botão "Acessar" discreto abaixo, 
-            # OU tentar emular o visual completo com HTML e JavaScript para navegação (mais complexo).
-            
-            # VOU USAR A ABORDAGEM VISUAL: Renderizar o card bonito e um botão "Abrir" dentro dele?
-            # Não, vamos usar a estrutura de colunas e botões do Streamlit, mas com um truque:
-            # Renderizamos o ícone e título via Markdown, e um botão "Acessar" logo abaixo.
-            
-            # EDIT: O usuário pediu "como os botões de neurociência".
-            # Aqueles são HTML <a> links. Links externos funcionam bem. Links internos (páginas) recarregam o app.
-            # Para manter a SPA (Single Page App) rápida, precisamos usar st.switch_page.
-            
-            # Vamos fazer assim: Renderizar o visual (ícone + título) e o botão do Streamlit ficará "invisível" sobre ele 
-            # ou logo abaixo. Para simplificar e garantir funcionamento, farei o card visual e o botão "Entrar" estilizado.
-            
+            # 1. Renderiza o Card Visual (HTML/CSS)
             st.markdown(
                 f"""
-                <div class="mod-btn-wrapper {mod['color_cls']}">
-                    <div class="mod-btn-icon"><i class="{mod['icon']}"></i></div>
-                    <div class="mod-btn-title">{mod['title']}</div>
+                <div class="nav-card-container">
+                    <div class="nav-card">
+                        <div class="nav-icon-box"><i class="{mod['icon']}"></i></div>
+                        <div class="nav-title">{mod['title']}</div>
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
-            # Botão funcional "invisível" ou pequeno para ação
-            # Infelizmente não dá para colocar o botão DENTRO da div HTML facilmente.
-            # Vou colocar um botão "Acessar" logo abaixo, com estilo minimalista.
+            
+            # 2. Renderiza o Botão Invisível (Overlay)
+            # Este botão usa a classe CSS definida acima para cobrir o card visualmente
+            if st.button(" ", key=mod["key"], use_container_width=True):
+                if mod["title"] == "Início":
+                    st.rerun()
+                else:
+                    st.switch_page(mod["page"])
 
 
 def render_info_cards():
@@ -773,13 +759,6 @@ def render_info_cards():
             "content": """
                 <p><strong>Foco:</strong> O primeiro passo para a inclusão efetiva.</p>
                 <p><strong>Conceito:</strong> Receber o aluno com deficiência não garante a inclusão automática; é necessário integrar plenamente por meio de práticas pedagógicas significativas.</p>
-                <p><strong>Pilares do Acolhimento:</strong></p>
-                <ul>
-                    <li><strong>Políticas Claras:</strong> Adoção de um Projeto Político-Pedagógico (PPP) que contemple a diversidade.</li>
-                    <li><strong>Acessibilidade:</strong> Adaptação da infraestrutura (rampas, banheiros, tecnologias assistivas).</li>
-                    <li><strong>Mediação:</strong> Gestores devem atuar proativamente contra preconceitos e oferecer apoio emocional aos educadores.</li>
-                </ul>
-                <p><strong>Ação Prática:</strong> Criar um plano de acolhimento personalizado envolvendo a família e realizar atividades de integração.</p>
             """
         },
         {
@@ -789,13 +768,6 @@ def render_info_cards():
             "content": """
                 <p><strong>Foco:</strong> Organização macro da escola para a inclusão.</p>
                 <p><strong>O que é:</strong> O Plano Geral de Educação Inclusiva (PGEI) organiza ações para diferentes perfis (deficiências, transtornos, altas habilidades).</p>
-                <p><strong>Dimensionamento:</strong> É crucial analisar o número total de alunos versus profissionais disponíveis para definir a carga horária e a alocação de recursos.</p>
-                <p><strong>Check-list do Gestor:</strong></p>
-                <ul>
-                    <li>Levantar perfis específicos dos alunos.</li>
-                    <li>Dimensionar a equipe de inclusão.</li>
-                    <li>Planejar ações coletivas e individuais alinhadas ao PPP.</li>
-                </ul>
             """
         },
         {
@@ -805,10 +777,8 @@ def render_info_cards():
             "content": """
                 <p><strong>Foco:</strong> Papéis e responsabilidades dos profissionais.</p>
                 <ul>
-                    <li><strong>Orientador Educacional:</strong> Atua na convivência, integração social e pontes entre currículo e desempenho.</li>
-                    <li><strong>Psicólogo Escolar:</strong> Acompanha estudos de caso, supervisiona ATs e APs e orienta famílias (não faz terapia clínica na escola).</li>
-                    <li><strong>Atendente Terapêutico (AT):</strong> Profissional externo (custeado pela família/Estado) com foco no atendimento individual e exclusivo (ex: autismo).</li>
-                    <li><strong>Atendente Pedagógico (AP):</strong> Vínculo com a escola; auxilia na locomoção, higiene, organização de materiais e interação em atividades coletivas.</li>
+                    <li><strong>Orientador Educacional:</strong> Convivência e integração.</li>
+                    <li><strong>Psicólogo Escolar:</strong> Estudos de caso e orientação.</li>
                 </ul>
             """
         },
@@ -818,10 +788,7 @@ def render_info_cards():
             "color": "info-card-teal",
             "content": """
                 <p><strong>Foco:</strong> O roteiro de aprendizagem do aluno.</p>
-                <p><strong>Definição:</strong> O Plano Educacional Individualizado (PEI) ou Plano de Desenvolvimento Individual (PDI) é um roteiro flexível e obrigatório para nortear a aprendizagem.</p>
-                <p><strong>Elaboração:</strong> Feito pela equipe multidisciplinar em parceria com a família e profissionais externos, devendo ser atualizado sistematicamente.</p>
-                <p><strong>Conteúdo Essencial:</strong> Identidade, necessidades específicas, dados de autonomia, desenvolvimento escolar e necessidade de tecnologias assistivas.</p>
-                <p><strong>Avaliação:</strong> Baseada no progresso individual em relação ao conhecimento inicial, e não comparativa com a turma.</p>
+                <p><strong>Definição:</strong> O PEI é um roteiro flexível e obrigatório para nortear a aprendizagem, elaborado pela equipe multi.</p>
             """
         },
         {
@@ -831,10 +798,8 @@ def render_info_cards():
             "content": """
                 <p><strong>Foco:</strong> Estratégias para sala de aula.</p>
                 <ul>
-                    <li><strong>Flexibilidade:</strong> Ajuste no tempo para execução de tarefas e avaliações.</li>
-                    <li><strong>Avaliação:</strong> Diversificar instrumentos (orais, adaptados) e considerar toda produção do aluno como avaliativa.</li>
-                    <li><strong>Ambiente:</strong> Organizar a sala para reduzir estímulos ou facilitar o contato com o professor.</li>
-                    <li><strong>Materiais:</strong> Uso de recursos visuais, materiais concretos, fontes ampliadas e tecnologia assistiva.</li>
+                    <li><strong>Flexibilidade:</strong> Tempo estendido.</li>
+                    <li><strong>Avaliação:</strong> Instrumentos diversificados.</li>
                 </ul>
             """
         },
@@ -845,19 +810,17 @@ def render_info_cards():
             "content": """
                 <p><strong>Foco:</strong> Resumo técnico das necessidades.</p>
                 <ul>
-                    <li><strong>Física:</strong> Foco em acessibilidade arquitetônica, mobiliário adaptado e apoio para mobilidade.</li>
-                    <li><strong>Auditiva:</strong> Uso de Libras, leitura labial, legendas e aparelhos auditivos. Varia de leve a profunda.</li>
-                    <li><strong>Visual:</strong> Desde baixa visão até cegueira. Requer Braille, audiodescrição, pisos táteis e leitores de tela.</li>
-                    <li><strong>Intelectual:</strong> Limitações no raciocínio e comportamento adaptativo. Requer linguagem simples, rotina e apoio no desenvolvimento de habilidades de vida.</li>
+                    <li><strong>Física:</strong> Acessibilidade e mobilidade.</li>
+                    <li><strong>Auditiva:</strong> Libras e recursos visuais.</li>
                 </ul>
             """
         }
     ]
     
-    # Primeira linha de cards
+    # Grid responsivo para cards informativos
     cols = st.columns(3, gap="medium")
-    for idx, card in enumerate(info_cards_data[:3]):
-        with cols[idx]:
+    for i, card in enumerate(info_cards_data):
+        with cols[i % 3]:
             st.markdown(
                 f"""
                 <div class="info-card {card['color']}">
@@ -874,62 +837,17 @@ def render_info_cards():
                 """,
                 unsafe_allow_html=True,
             )
-    
-    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-    
-    # Segunda linha de cards
-    cols = st.columns(3, gap="medium")
-    for idx, card in enumerate(info_cards_data[3:]):
-        with cols[idx]:
-            st.markdown(
-                f"""
-                <div class="info-card {card['color']}">
-                    <div class="info-card-header">
-                        <div class="info-card-icon">
-                            <i class="{card['icon']}"></i>
-                        </div>
-                        <h3 class="info-card-title">{card['title']}</h3>
-                    </div>
-                    <div class="info-card-content">
-                        {card['content']}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            # Pequeno espaçamento vertical se houver quebra de linha
+            st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 
 
 def render_resources():
     """Renderiza os recursos externos"""
     resources_data = [
-        {
-            "title": "Lei da Inclusão",
-            "desc": "LBI e diretrizes",
-            "icon": "ri-government-fill",
-            "theme": "rc-sky",
-            "link": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm"
-        },
-        {
-            "title": "Base Nacional",
-            "desc": "Competências BNCC",
-            "icon": "ri-compass-3-fill",
-            "theme": "rc-green",
-            "link": "http://basenacionalcomum.mec.gov.br/"
-        },
-        {
-            "title": "Neurociência",
-            "desc": "Artigos e estudos",
-            "icon": "ri-brain-fill",
-            "theme": "rc-rose",
-            "link": "https://institutoneurosaber.com.br/"
-        },
-        {
-            "title": "Ajuda Omnisfera",
-            "desc": "Tutoriais e suporte",
-            "icon": "ri-question-fill",
-            "theme": "rc-orange",
-            "link": "#"
-        },
+        {"title": "Lei da Inclusão", "desc": "LBI e diretrizes", "icon": "ri-government-fill", "theme": "rc-sky", "link": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm"},
+        {"title": "Base Nacional", "desc": "Competências BNCC", "icon": "ri-compass-3-fill", "theme": "rc-green", "link": "http://basenacionalcomum.mec.gov.br/"},
+        {"title": "Neurociência", "desc": "Artigos e estudos", "icon": "ri-brain-fill", "theme": "rc-rose", "link": "https://institutoneurosaber.com.br/"},
+        {"title": "Ajuda Omnisfera", "desc": "Tutoriais e suporte", "icon": "ri-question-fill", "theme": "rc-orange", "link": "#"},
     ]
     
     cols = st.columns(4, gap="medium")
@@ -1019,40 +937,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Módulos da Plataforma (AGORA COM BOTÕES COMPACTOS EM LINHA)
-st.markdown("### 🚀 Módulos da Plataforma")
-
-# Esta função renderiza os 6 módulos em uma linha, com estilo compacto (tipo recurso)
-# OBS: Devido à limitação do Streamlit em aninhar botões funcionais dentro de HTML customizado,
-# a abordagem visual pode ter uma leve separação entre o card visual e a área clicável se não usarmos hacks.
-# Aqui, usamos uma estrutura de colunas onde cada célula tem o card visual e a ação.
-modules_data_compact = [
-    {"title": "Estudantes", "icon": "ri-group-fill", "color_cls": "mod-indigo", "page": "pages/Alunos.py", "key": "m_aluno"},
-    {"title": "Estratégias & PEI", "icon": "ri-book-open-fill", "color_cls": "mod-blue", "page": "pages/1_PEI.py", "key": "m_pei"},
-    {"title": "Plano de Ação / PAEE", "icon": "ri-settings-5-fill", "color_cls": "mod-purple", "page": "pages/2_PAE.py", "key": "m_pae"},
-    {"title": "Hub de Recursos", "icon": "ri-rocket-2-fill", "color_cls": "mod-teal", "page": "pages/3_Hub_Inclusao.py", "key": "m_hub"},
-    {"title": "Diário de Bordo", "icon": "ri-file-list-3-fill", "color_cls": "mod-rose", "page": "pages/4_Diario_de_Bordo.py", "key": "m_diario"},
-    {"title": "Evolução & Dados", "icon": "ri-bar-chart-box-fill", "color_cls": "mod-sky", "page": "pages/5_Monitoramento_Avaliacao.py", "key": "m_dados"},
-]
-
-cols_mod = st.columns(6, gap="small")
-
-for i, mod in enumerate(modules_data_compact):
-    with cols_mod[i]:
-        # Renderiza o visual
-        st.markdown(
-            f"""
-            <div class="mod-btn-wrapper {mod['color_cls']}">
-                <div class="mod-btn-icon"><i class="{mod['icon']}"></i></div>
-                <div class="mod-btn-title">{mod['title']}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        # Renderiza o botão funcional (invisível/discreto) para navegação
-        # O botão do Streamlit ocupa o espaço abaixo do visual.
-        if st.button("Acessar", key=mod["key"], use_container_width=True):
-            st.switch_page(mod["page"])
+# Módulos da Plataforma (NAV CARDS)
+st.markdown("### 🚀 Acesso Rápido")
+render_nav_cards()
 
 st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
 
