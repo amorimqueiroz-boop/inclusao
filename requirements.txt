@@ -8,7 +8,4 @@ streamlit-cropper
 requests
 supabase
 pandas
-
-
-
-
+plotly
