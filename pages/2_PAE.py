@@ -1,3 +1,7 @@
+# ==============================================================================
+# PARTE 1/4: CONFIGURAÇÕES, ESTILOS E AUTENTICAÇÃO
+# ==============================================================================
+
 import streamlit as st
 import os
 from openai import OpenAI
@@ -8,8 +12,8 @@ import base64
 import requests
 import time
 from io import BytesIO
-import plotly.express as px  # Para os gráficos novos
-import altair as alt         # Para a timeline
+import plotly.express as px
+import altair as alt
 from datetime import timedelta
 
 # ==============================================================================
@@ -23,7 +27,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA (MESMO PADRÃO PEI)
+# BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA
 # ==============================================================================
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -110,8 +114,37 @@ st.markdown(f"""
         flex-wrap: wrap; 
     }}
     
+    /* TIMELINE STYLES */
+    .timeline-header {{ 
+        background: white; 
+        border-radius: 12px; 
+        padding: 20px;
+        margin-bottom: 20px; 
+        border: 1px solid #E2E8F0;
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between; 
+    }}
+    .prog-bar-bg {{ 
+        width: 100%; 
+        height: 8px; 
+        background: #E2E8F0; 
+        border-radius: 4px; 
+        overflow: hidden; 
+        margin-top: 8px; 
+    }}
+    .prog-bar-fill {{ 
+        height: 100%; 
+        background: linear-gradient(90deg, #8B5CF6, #6D28D9); 
+        transition: width 1s; 
+    }}
+    
     /* RESPONSIVIDADE */
-    @media (max-width: 768px) {{ .mod-card-rect {{ height: auto; flex-direction: column; padding: 16px; }} .mod-icon-area {{ width: 100%; height: 60px; border-right: none; border-bottom: 1px solid #F1F5F9; }} .mod-content {{ padding: 16px 0 0 0; }} }}
+    @media (max-width: 768px) {{ 
+        .mod-card-rect {{ height: auto; flex-direction: column; padding: 16px; }} 
+        .mod-icon-area {{ width: 100%; height: 60px; border-right: none; border-bottom: 1px solid #F1F5F9; }} 
+        .mod-content {{ padding: 16px 0 0 0; }} 
+    }}
 </style>
 
 <div class="omni-badge">
@@ -128,6 +161,9 @@ def verificar_acesso():
 
 verificar_acesso()
 
+# ==============================================================================
+# SIDEBAR
+# ==============================================================================
 with st.sidebar:
     try: 
         st.image("ominisfera.png", width=150)
@@ -137,9 +173,18 @@ with st.sidebar:
     if st.button("🏠 Voltar para Home", use_container_width=True): 
         st.switch_page("Home.py")
     st.markdown("---")
+    
+    # GESTÃO DE CHAVES
+    if 'OPENAI_API_KEY' in st.secrets: 
+        api_key = st.secrets['OPENAI_API_KEY']
+        st.success("🔑 Chave OpenAI configurada")
+    else: 
+        api_key = st.text_input("Chave OpenAI:", type="password")
+        if api_key:
+            st.success("✅ Chave configurada")
 
 # ==============================================================================
-# CARD HERO
+# CARD HERO PRINCIPAL
 # ==============================================================================
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
@@ -169,6 +214,10 @@ st.markdown(
 )
 
 # ==============================================================================
+# PARTE 2/4: CONEXÃO COM BANCO DE DADOS E CARREGAMENTO DE ALUNOS
+# ==============================================================================
+
+# ==============================================================================
 # FUNÇÕES SUPABASE (REST)
 # ==============================================================================
 def _sb_url() -> str:
@@ -188,7 +237,7 @@ def _headers() -> dict:
     return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
 
 # ==============================================================================
-# CARREGAR ESTUDANTES (AGORA LENDO O PEI_DATA)
+# CARREGAR ESTUDANTES DO SUPABASE
 # ==============================================================================
 @st.cache_data(ttl=10, show_spinner=False)
 def list_students_rest():
@@ -206,7 +255,8 @@ def list_students_rest():
         )
         r = requests.get(base, headers=_headers(), timeout=20)
         return r.json() if r.status_code == 200 else []
-    except:
+    except Exception as e:
+        st.error(f"Erro ao carregar alunos: {str(e)}")
         return []
 
 def carregar_estudantes_supabase():
@@ -237,7 +287,7 @@ def carregar_estudantes_supabase():
     return estudantes
 
 # ==============================================================================
-# CARREGAMENTO DOS DADOS
+# CARREGAMENTO DOS DADOS DOS ALUNOS
 # ==============================================================================
 if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
     with st.spinner("🔄 Lendo dados da nuvem..."):
@@ -258,6 +308,7 @@ with col_sel:
 aluno = next((a for a in st.session_state.banco_estudantes if a.get('nome') == nome_aluno), None)
 
 if not aluno: 
+    st.error("Aluno não encontrado")
     st.stop()
 
 # --- DETECTOR DE EDUCAÇÃO INFANTIL ---
@@ -279,11 +330,9 @@ if is_ei:
 with st.expander("📄 Ver Dados Completos do PEI", expanded=False):
     st.write(aluno.get('ia_sugestao', 'Sem dados detalhados.'))
 
-# --- GESTÃO DE CHAVES ---
-if 'OPENAI_API_KEY' in st.secrets: 
-    api_key = st.secrets['OPENAI_API_KEY']
-else: 
-    api_key = st.sidebar.text_input("Chave OpenAI:", type="password")
+# ==============================================================================
+# PARTE 3/4: FUNÇÕES DE IA E SISTEMA DE ESTADOS
+# ==============================================================================
 
 # ==============================================================================
 # FUNÇÕES DE IA ATUALIZADAS
@@ -534,6 +583,66 @@ def gerar_documento_articulacao(api_key, aluno, frequencia, acoes, feedback=None
     except Exception as e: 
         return str(e)
 
+def gerar_cronograma_aee(api_key, aluno, semanas, frequencia, foco):
+    """Gera um cronograma de execução do AEE"""
+    client = OpenAI(api_key=api_key)
+    contexto = aluno.get('ia_sugestao', '')
+    
+    prompt = f"""
+    Crie um cronograma de execução para o AEE.
+    Aluno: {aluno['nome']}
+    Foco principal: {foco}
+    Número de semanas: {semanas}
+    Frequência de atendimento: {frequencia}
+    Contexto do PEI: {contexto[:2000]}
+
+    Estruture o cronograma em fases, cada fase com semanas específicas.
+    Para cada semana, defina:
+    - Tema da semana
+    - Atividade principal
+    - Recursos necessários
+    - Objetivo específico
+    - Duração estimada
+
+    Formato de saída JSON:
+    {{
+        "fases": [
+            {{
+                "nome_fase": "Nome da fase",
+                "descricao": "Descrição da fase",
+                "semanas": [
+                    {{
+                        "semana": 1,
+                        "tema": "Tema da semana",
+                        "atividade": "Descrição da atividade",
+                        "recurso": "Recursos necessários",
+                        "objetivo": "Objetivo da semana",
+                        "duracao": "60 minutos"
+                    }}
+                ]
+            }}
+        ]
+    }}
+    """
+    
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
+        )
+        texto = resp.choices[0].message.content
+        
+        # Extrair JSON
+        if "```json" in texto:
+            texto = texto.split("```json")[1].split("```")[0]
+        elif "```" in texto:
+            texto = texto.split("```")[1].split("```")[0]
+        
+        return json.loads(texto.strip())
+    except Exception as e:
+        return {"erro": str(e)}
+
 # ==============================================================================
 # SISTEMA DE GESTÃO DE RECURSOS (ESTADOS)
 # ==============================================================================
@@ -554,8 +663,16 @@ def inicializar_estados():
             st.session_state[f'conteudo_{recurso}'] = ''
         if f'feedback_{recurso}' not in st.session_state:
             st.session_state[f'feedback_{recurso}'] = ''
+        if f'input_original_{recurso}' not in st.session_state:
+            st.session_state[f'input_original_{recurso}'] = {}
 
 inicializar_estados()
+
+# Inicializar estados do cronograma
+if 'cronograma_aee' not in st.session_state:
+    st.session_state.cronograma_aee = None
+if 'semanas_concluidas' not in st.session_state:
+    st.session_state.semanas_concluidas = set()
 
 # ==============================================================================
 # FUNÇÕES DE DOWNLOAD
@@ -580,7 +697,7 @@ def criar_documento_html(conteudo, nome_aluno, tipo_recurso):
         <style>
             body {{ font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }}
             .header {{ border-bottom: 2px solid #8B5CF6; padding-bottom: 20px; margin-bottom: 30px; }}
-            .content {{ margin-top: 30px; }}
+            .content {{ margin-top: 30px; white-space: pre-line; }}
             .footer {{ margin-top: 50px; font-size: 0.8em; color: #666; border-top: 1px solid #ddd; padding-top: 20px; }}
             table {{ border-collapse: collapse; width: 100%; margin: 20px 0; }}
             th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
@@ -594,7 +711,7 @@ def criar_documento_html(conteudo, nome_aluno, tipo_recurso):
             <p>Data: {datetime.now().strftime("%d/%m/%Y %H:%M")}</p>
         </div>
         <div class="content">
-            {conteudo.replace('\n', '<br>').replace('**', '<strong>').replace('**', '</strong>')}
+            {conteudo.replace('**', '<strong>').replace('**', '</strong>')}
         </div>
         <div class="footer">
             <p>Documento gerado pelo Sistema Omnisfera PAEE</p>
@@ -604,6 +721,10 @@ def criar_documento_html(conteudo, nome_aluno, tipo_recurso):
     """
     
     return nome_arquivo, html_content
+
+# ==============================================================================
+# PARTE 4/4: INTERFACE PRINCIPAL E COMPONENTES
+# ==============================================================================
 
 # ==============================================================================
 # COMPONENTE DE VALIDAÇÃO/AJUSTE (HUB DE RECURSOS)
@@ -683,7 +804,6 @@ def renderizar_hub_recurso(tipo_recurso, conteudo_gerado, aluno_nome, dados_entr
                     if feedback:
                         st.session_state[f'feedback_{tipo_recurso}'] = feedback
                         st.info("Regerando com os ajustes solicitados...")
-                        # O botão de regeração real será tratado na função principal
                         st.session_state[f'status_{tipo_recurso}'] = 'regerando'
                         st.rerun()
                     else:
@@ -750,26 +870,105 @@ def renderizar_hub_recurso(tipo_recurso, conteudo_gerado, aluno_nome, dados_entr
         st.markdown("</div>", unsafe_allow_html=True)
 
 # ==============================================================================
-# INTERFACE PRINCIPAL
+# CLASSE DE REGISTRO E EXECUÇÃO
+# ==============================================================================
+class RegistroAEE:
+    def __init__(self, aluno_nome):
+        self.aluno_nome = aluno_nome
+        # Cria banco de dados na sessão se não existir
+        if "registros_aee" not in st.session_state:
+            st.session_state.registros_aee = []
+
+    def interface_registro_diario(self):
+        st.markdown("#### 📝 Diário de Bordo do AEE")
+        
+        with st.container(border=True):
+            c1, c2 = st.columns([2, 1])
+            descricao = c1.text_area("O que foi trabalhado hoje?", height=100, 
+                                   placeholder="Descreva a atividade, reação do aluno e adaptações...",
+                                   key=f"desc_{self.aluno_nome}")
+            
+            with c2:
+                data_reg = st.date_input("Data", date.today(), key=f"data_{self.aluno_nome}")
+                engajamento = st.slider("Engajamento do Aluno", 1, 5, 3, key=f"eng_{self.aluno_nome}")
+                tipo = st.selectbox("Tipo", ["Individual", "Grupo", "Observação em Sala"], 
+                                  key=f"tipo_{self.aluno_nome}")
+
+            # Upload de Evidência
+            evidencia = st.file_uploader("📸 Anexar Foto/Atividade", 
+                                        type=["png", "jpg", "pdf"], 
+                                        key=f"up_{self.aluno_nome}")
+
+            if st.button("💾 Salvar Registro de Hoje", use_container_width=True, 
+                        key=f"salvar_{self.aluno_nome}"):
+                novo_registro = {
+                    "data": data_reg,
+                    "aluno": self.aluno_nome,
+                    "descricao": descricao,
+                    "engajamento": engajamento,
+                    "tipo": tipo,
+                    "tem_evidencia": evidencia is not None
+                }
+                st.session_state.registros_aee.append(novo_registro)
+                st.success("Registro salvo no histórico!")
+                time.sleep(1)
+                st.rerun()
+
+    def exibir_historico(self):
+        # Filtra registros deste aluno
+        regs = [r for r in st.session_state.registros_aee if r['aluno'] == self.aluno_nome]
+        
+        if not regs:
+            st.info("Nenhum registro encontrado.")
+            return
+
+        # Gráfico simples de engajamento
+        df = pd.DataFrame(regs)
+        if not df.empty:
+            st.markdown("##### 📈 Evolução do Engajamento")
+            # Converter datas para string para evitar problemas
+            df['data_str'] = df['data'].astype(str)
+            st.line_chart(df.set_index("data_str")["engajamento"], color="#8B5CF6")
+
+        st.markdown("##### 🗂️ Histórico Recente")
+        for r in reversed(regs[-5:]): # Últimos 5
+            icon = "📸" if r['tem_evidencia'] else "📝"
+            st.markdown(
+                f"""
+                <div style="background:white; padding:15px; border-radius:10px; border:1px solid #E2E8F0; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#64748B;">
+                        <strong>{r['data'].strftime('%d/%m/%Y')}</strong>
+                        <span>{icon} {r['tipo']}</span>
+                    </div>
+                    <div style="margin-top:5px; color:#1E293B;">{r['descricao'][:200]}{'...' if len(r['descricao']) > 200 else ''}</div>
+                    <div style="margin-top:5px; font-size:0.8rem;">Engajamento: {"⭐"*r['engajamento']}</div>
+                </div>
+                """, unsafe_allow_html=True
+            )
+
+# ==============================================================================
+# CRIAR AS ABAS PRINCIPAIS
 # ==============================================================================
 
+# Criar abas diferentes para EI e não-EI
 if is_ei:
-    tab_barreiras, tab_projetos, tab_rotina, tab_ponte = st.tabs([
-        "BARREIRAS NO BRINCAR", "BANCO DE EXPERIÊNCIAS", "ROTINA & ADAPTAÇÃO", "ARTICULAÇÃO"
-    ])
-    if is_ei:
     tab_barreiras, tab_projetos, tab_rotina, tab_ponte, tab_planejamento = st.tabs([
-        "BARREIRAS NO BRINCAR", "BANCO DE EXPERIÊNCIAS", "ROTINA & ADAPTAÇÃO", "ARTICULAÇÃO", "EXECUÇÃO & MONITORAMENTO"
+        "BARREIRAS NO BRINCAR", "BANCO DE EXPERIÊNCIAS", "ROTINA & ADAPTAÇÃO", 
+        "ARTICULAÇÃO", "EXECUÇÃO & MONITORAMENTO"
     ])
 else:
     tab_barreiras, tab_plano, tab_tec, tab_ponte, tab_planejamento = st.tabs([
-        "MAPEAR BARREIRAS", "PLANO DE HABILIDADES", "TEC. ASSISTIVA", "CRONOGRAMA & ARTICULAÇÃO", "EXECUÇÃO & MONITORAMENTO"
+        "MAPEAR BARREIRAS", "PLANO DE HABILIDADES", "TEC. ASSISTIVA", 
+        "CRONOGRAMA & ARTICULAÇÃO", "EXECUÇÃO & MONITORAMENTO"
     ])
-    # ABA 1: BARREIRAS NO BRINCAR (EI)
+
+# ==============================================================================
+# ABA 1: BARREIRAS NO BRINCAR (EI) / MAPEAR BARREIRAS (NÃO EI)
+# ==============================================================================
+if is_ei:
     with tab_barreiras:
         st.markdown("<div class='pedagogia-box'><strong>Diagnóstico do Brincar:</strong> Identifique barreiras na interação e no brincar.</div>", unsafe_allow_html=True)
         
-        # Verifica estado atual
         status_atual = st.session_state.get('status_diagnostico_barreiras', 'rascunho')
         
         if status_atual == 'rascunho':
@@ -793,6 +992,7 @@ else:
                         else:
                             st.session_state.conteudo_diagnostico_barreiras = resultado
                             st.session_state.status_diagnostico_barreiras = 'revisao'
+                            st.session_state.input_original_diagnostico_barreiras = {'obs': obs_aee}
                             st.success("Diagnóstico gerado com sucesso!")
                             st.rerun()
         
@@ -807,120 +1007,17 @@ else:
             # Tratamento especial para regeração com feedback
             if st.session_state.status_diagnostico_barreiras == 'regerando':
                 feedback = st.session_state.get('feedback_diagnostico_barreiras', '')
+                input_original = st.session_state.get('input_original_diagnostico_barreiras', {})
+                obs_original = input_original.get('obs', '')
+                
                 with st.spinner("Aplicando ajustes solicitados..."):
                     resultado = gerar_diagnostico_barreiras(
-                        api_key, aluno, 
-                        st.session_state.get('obs_aee_ei', ''), 
-                        feedback
+                        api_key, aluno, obs_original, feedback
                     )
                     st.session_state.conteudo_diagnostico_barreiras = resultado
                     st.session_state.status_diagnostico_barreiras = 'revisao'
                     st.rerun()
-    
-    # ABA 2: BANCO DE EXPERIÊNCIAS (EI)
-    with tab_projetos:
-        st.markdown("<div class='pedagogia-box'><strong>Banco de Experiências (BNCC):</strong> Atividades lúdicas alinhadas aos Campos de Experiência.</div>", unsafe_allow_html=True)
-        
-        status_atual = st.session_state.get('status_projetos_ei', 'rascunho')
-        
-        if status_atual == 'rascunho':
-            campo_bncc = st.selectbox(
-                "Selecione o Campo de Experiência:",
-                ["O eu, o outro e o nós", "Corpo, gestos e movimentos", 
-                 "Traços, sons, cores e formas", "Escuta, fala, pensamento e imaginação", 
-                 "Espaços, tempos, quantidades, relações e transformações"]
-            )
-            
-            if st.button("✨ Gerar Atividades", type="primary", use_container_width=True):
-                if not api_key:
-                    st.error("Insira a chave OpenAI na sidebar.")
-                else:
-                    with st.spinner("Criando banco de experiências..."):
-                        resultado = gerar_projetos_ei_bncc(api_key, aluno, campo_bncc)
-                        if "Erro:" in resultado:
-                            st.error(resultado)
-                        else:
-                            st.session_state.conteudo_projetos_ei = resultado
-                            st.session_state.status_projetos_ei = 'revisao'
-                            st.success("Banco de experiências gerado!")
-                            st.rerun()
-        
-        else:
-            renderizar_hub_recurso(
-                tipo_recurso='projetos_ei',
-                conteudo_gerado=st.session_state.conteudo_projetos_ei,
-                aluno_nome=aluno['nome']
-            )
-            
-            if st.session_state.status_projetos_ei == 'regerando':
-                feedback = st.session_state.get('feedback_projetos_ei', '')
-                with st.spinner("Aplicando ajustes..."):
-                    # Nota: campo_bncc não está armazenado, seria necessário armazenar
-                    resultado = gerar_projetos_ei_bncc(
-                        api_key, aluno, 
-                        "O eu, o outro e o nós",  # Valor padrão
-                        feedback
-                    )
-                    st.session_state.conteudo_projetos_ei = resultado
-                    st.session_state.status_projetos_ei = 'revisao'
-                    st.rerun()
-    
-    # ABA 3: ROTINA & ADAPTAÇÃO (EI)
-    with tab_rotina:
-        st.markdown("<div class='pedagogia-box'><strong>Adaptação de Rotina:</strong> Recursos visuais e sensoriais para rotina da Educação Infantil.</div>", unsafe_allow_html=True)
-        
-        status_atual = st.session_state.get('status_tecnologia_assistiva', 'rascunho')
-        
-        if status_atual == 'rascunho':
-            dif_rotina = st.text_input(
-                "Dificuldade Específica na Rotina:",
-                placeholder="Ex: Transições entre atividades, organização do material, comunicação de necessidades..."
-            )
-            
-            if st.button("🛠️ Sugerir Adaptação", type="primary", use_container_width=True):
-                if not api_key:
-                    st.error("Insira a chave OpenAI na sidebar.")
-                elif not dif_rotina:
-                    st.warning("Por favor, descreva a dificuldade específica.")
-                else:
-                    with st.spinner("Buscando recursos de adaptação..."):
-                        resultado = sugerir_tecnologia_assistiva(
-                            api_key, aluno, f"Rotina EI: {dif_rotina}"
-                        )
-                        if "Erro:" in resultado:
-                            st.error(resultado)
-                        else:
-                            st.session_state.conteudo_tecnologia_assistiva = resultado
-                            st.session_state.status_tecnologia_assistiva = 'revisao'
-                            st.success("Sugestões de adaptação geradas!")
-                            st.rerun()
-        
-        else:
-            renderizar_hub_recurso(
-                tipo_recurso='tecnologia_assistiva',
-                conteudo_gerado=st.session_state.conteudo_tecnologia_assistiva,
-                aluno_nome=aluno['nome']
-            )
-            
-            if st.session_state.status_tecnologia_assistiva == 'regerando':
-                feedback = st.session_state.get('feedback_tecnologia_assistiva', '')
-                with st.spinner("Aplicando ajustes..."):
-                    resultado = sugerir_tecnologia_assistiva(
-                        api_key, aluno, 
-                        st.session_state.get('dif_rotina_ei', ''), 
-                        feedback
-                    )
-                    st.session_state.conteudo_tecnologia_assistiva = resultado
-                    st.session_state.status_tecnologia_assistiva = 'revisao'
-                    st.rerun()
-
 else:
-    # MODO NÃO EDUCAÇÃO INFANTIL
-    tab_barreiras, tab_plano, tab_tec, tab_ponte = st.tabs([
-        "MAPEAR BARREIRAS", "PLANO DE HABILIDADES", "TEC. ASSISTIVA", "CRONOGRAMA & ARTICULAÇÃO"
-    ])
-    
-    # ABA 1: MAPEAR BARREIRAS (NÃO EI)
     with tab_barreiras:
         st.markdown("<div class='pedagogia-box'><strong>Diagnóstico de Acessibilidade:</strong> O que impede a participação plena do aluno?</div>", unsafe_allow_html=True)
         
@@ -946,6 +1043,7 @@ else:
                         else:
                             st.session_state.conteudo_diagnostico_barreiras = resultado
                             st.session_state.status_diagnostico_barreiras = 'revisao'
+                            st.session_state.input_original_diagnostico_barreiras = {'obs': obs_aee}
                             st.success("Análise de barreiras concluída!")
                             st.rerun()
         
@@ -958,17 +1056,70 @@ else:
             
             if st.session_state.status_diagnostico_barreiras == 'regerando':
                 feedback = st.session_state.get('feedback_diagnostico_barreiras', '')
+                input_original = st.session_state.get('input_original_diagnostico_barreiras', {})
+                obs_original = input_original.get('obs', '')
+                
                 with st.spinner("Aplicando ajustes..."):
                     resultado = gerar_diagnostico_barreiras(
-                        api_key, aluno, 
-                        st.session_state.get('obs_aee', ''), 
-                        feedback
+                        api_key, aluno, obs_original, feedback
                     )
                     st.session_state.conteudo_diagnostico_barreiras = resultado
                     st.session_state.status_diagnostico_barreiras = 'revisao'
                     st.rerun()
-    
-    # ABA 2: PLANO DE HABILIDADES (NÃO EI)
+
+# ==============================================================================
+# ABA 2: BANCO DE EXPERIÊNCIAS (EI) / PLANO DE HABILIDADES (NÃO EI)
+# ==============================================================================
+if is_ei:
+    with tab_projetos:
+        st.markdown("<div class='pedagogia-box'><strong>Banco de Experiências (BNCC):</strong> Atividades lúdicas alinhadas aos Campos de Experiência.</div>", unsafe_allow_html=True)
+        
+        status_atual = st.session_state.get('status_projetos_ei', 'rascunho')
+        
+        if status_atual == 'rascunho':
+            campo_bncc = st.selectbox(
+                "Selecione o Campo de Experiência:",
+                ["O eu, o outro e o nós", "Corpo, gestos e movimentos", 
+                 "Traços, sons, cores e formas", "Escuta, fala, pensamento e imaginação", 
+                 "Espaços, tempos, quantidades, relações e transformações"],
+                key="campo_bncc_ei"
+            )
+            
+            if st.button("✨ Gerar Atividades", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI na sidebar.")
+                else:
+                    with st.spinner("Criando banco de experiências..."):
+                        resultado = gerar_projetos_ei_bncc(api_key, aluno, campo_bncc)
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_projetos_ei = resultado
+                            st.session_state.status_projetos_ei = 'revisao'
+                            st.session_state.input_original_projetos_ei = {'campo': campo_bncc}
+                            st.success("Banco de experiências gerado!")
+                            st.rerun()
+        
+        else:
+            renderizar_hub_recurso(
+                tipo_recurso='projetos_ei',
+                conteudo_gerado=st.session_state.conteudo_projetos_ei,
+                aluno_nome=aluno['nome']
+            )
+            
+            if st.session_state.status_projetos_ei == 'regerando':
+                feedback = st.session_state.get('feedback_projetos_ei', '')
+                input_original = st.session_state.get('input_original_projetos_ei', {})
+                campo_original = input_original.get('campo', 'O eu, o outro e o nós')
+                
+                with st.spinner("Aplicando ajustes..."):
+                    resultado = gerar_projetos_ei_bncc(
+                        api_key, aluno, campo_original, feedback
+                    )
+                    st.session_state.conteudo_projetos_ei = resultado
+                    st.session_state.status_projetos_ei = 'revisao'
+                    st.rerun()
+else:
     with tab_plano:
         st.markdown("<div class='pedagogia-box'><strong>Treino de Habilidades:</strong> Desenvolvimento de competências específicas no AEE.</div>", unsafe_allow_html=True)
         
@@ -979,7 +1130,8 @@ else:
                 "Foco do Atendimento:",
                 ["Funções Executivas", "Autonomia", "Coordenação Motora", 
                  "Comunicação", "Habilidades Sociais", "Leitura e Escrita",
-                 "Matemática", "Tecnologias Assistivas", "Organização e Planejamento"]
+                 "Matemática", "Tecnologias Assistivas", "Organização e Planejamento"],
+                key="foco_plano_naoei"
             )
             
             if st.button("📋 Gerar Plano", type="primary", use_container_width=True):
@@ -993,6 +1145,7 @@ else:
                         else:
                             st.session_state.conteudo_plano_habilidades = resultado
                             st.session_state.status_plano_habilidades = 'revisao'
+                            st.session_state.input_original_plano_habilidades = {'foco': foco}
                             st.success("Plano de habilidades gerado!")
                             st.rerun()
         
@@ -1005,17 +1158,72 @@ else:
             
             if st.session_state.status_plano_habilidades == 'regerando':
                 feedback = st.session_state.get('feedback_plano_habilidades', '')
+                input_original = st.session_state.get('input_original_plano_habilidades', {})
+                foco_original = input_original.get('foco', 'Funções Executivas')
+                
                 with st.spinner("Aplicando ajustes..."):
                     resultado = gerar_plano_habilidades(
-                        api_key, aluno, 
-                        st.session_state.get('foco_plano', ''), 
-                        feedback
+                        api_key, aluno, foco_original, feedback
                     )
                     st.session_state.conteudo_plano_habilidades = resultado
                     st.session_state.status_plano_habilidades = 'revisao'
                     st.rerun()
-    
-    # ABA 3: TECNOLOGIA ASSISTIVA (NÃO EI)
+
+# ==============================================================================
+# ABA 3: ROTINA & ADAPTAÇÃO (EI) / TEC. ASSISTIVA (NÃO EI)
+# ==============================================================================
+if is_ei:
+    with tab_rotina:
+        st.markdown("<div class='pedagogia-box'><strong>Adaptação de Rotina:</strong> Recursos visuais e sensoriais para rotina da Educação Infantil.</div>", unsafe_allow_html=True)
+        
+        status_atual = st.session_state.get('status_tecnologia_assistiva', 'rascunho')
+        
+        if status_atual == 'rascunho':
+            dif_rotina = st.text_input(
+                "Dificuldade Específica na Rotina:",
+                placeholder="Ex: Transições entre atividades, organização do material, comunicação de necessidades...",
+                key="dif_rotina_ei"
+            )
+            
+            if st.button("🛠️ Sugerir Adaptação", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI na sidebar.")
+                elif not dif_rotina:
+                    st.warning("Por favor, descreva a dificuldade específica.")
+                else:
+                    with st.spinner("Buscando recursos de adaptação..."):
+                        resultado = sugerir_tecnologia_assistiva(
+                            api_key, aluno, f"Rotina EI: {dif_rotina}"
+                        )
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_tecnologia_assistiva = resultado
+                            st.session_state.status_tecnologia_assistiva = 'revisao'
+                            st.session_state.input_original_tecnologia_assistiva = {'dificuldade': dif_rotina}
+                            st.success("Sugestões de adaptação geradas!")
+                            st.rerun()
+        
+        else:
+            renderizar_hub_recurso(
+                tipo_recurso='tecnologia_assistiva',
+                conteudo_gerado=st.session_state.conteudo_tecnologia_assistiva,
+                aluno_nome=aluno['nome']
+            )
+            
+            if st.session_state.status_tecnologia_assistiva == 'regerando':
+                feedback = st.session_state.get('feedback_tecnologia_assistiva', '')
+                input_original = st.session_state.get('input_original_tecnologia_assistiva', {})
+                dif_original = input_original.get('dificuldade', '')
+                
+                with st.spinner("Aplicando ajustes..."):
+                    resultado = sugerir_tecnologia_assistiva(
+                        api_key, aluno, f"Rotina EI: {dif_original}", feedback
+                    )
+                    st.session_state.conteudo_tecnologia_assistiva = resultado
+                    st.session_state.status_tecnologia_assistiva = 'revisao'
+                    st.rerun()
+else:
     with tab_tec:
         st.markdown("<div class='pedagogia-box'><strong>Tecnologia Assistiva:</strong> Recursos para promover autonomia e participação.</div>", unsafe_allow_html=True)
         
@@ -1024,7 +1232,8 @@ else:
         if status_atual == 'rascunho':
             dif_especifica = st.text_input(
                 "Dificuldade Específica:",
-                placeholder="Ex: Dificuldade na escrita, comunicação, mobilidade, organização..."
+                placeholder="Ex: Dificuldade na escrita, comunicação, mobilidade, organização...",
+                key="dif_especifica_naoei"
             )
             
             if st.button("🔧 Sugerir Recursos", type="primary", use_container_width=True):
@@ -1040,6 +1249,7 @@ else:
                         else:
                             st.session_state.conteudo_tecnologia_assistiva = resultado
                             st.session_state.status_tecnologia_assistiva = 'revisao'
+                            st.session_state.input_original_tecnologia_assistiva = {'dificuldade': dif_especifica}
                             st.success("Sugestões de TA geradas!")
                             st.rerun()
         
@@ -1052,17 +1262,20 @@ else:
             
             if st.session_state.status_tecnologia_assistiva == 'regerando':
                 feedback = st.session_state.get('feedback_tecnologia_assistiva', '')
+                input_original = st.session_state.get('input_original_tecnologia_assistiva', {})
+                dif_original = input_original.get('dificuldade', '')
+                
                 with st.spinner("Aplicando ajustes..."):
                     resultado = sugerir_tecnologia_assistiva(
-                        api_key, aluno, 
-                        st.session_state.get('dif_especifica', ''), 
-                        feedback
+                        api_key, aluno, dif_original, feedback
                     )
                     st.session_state.conteudo_tecnologia_assistiva = resultado
                     st.session_state.status_tecnologia_assistiva = 'revisao'
                     st.rerun()
 
-# ABA COMUM: ARTICULAÇÃO (para EI e não EI)
+# ==============================================================================
+# ABA 4: ARTICULAÇÃO (para EI e não EI)
+# ==============================================================================
 with tab_ponte:
     st.markdown("<div class='pedagogia-box'><strong>Ponte com a Sala Regular:</strong> Documento colaborativo para articulação entre AEE e sala de aula.</div>", unsafe_allow_html=True)
     
@@ -1105,6 +1318,11 @@ with tab_ponte:
                     else:
                         st.session_state.conteudo_documento_articulacao = resultado
                         st.session_state.status_documento_articulacao = 'revisao'
+                        st.session_state.input_original_documento_articulacao = {
+                            'freq': freq,
+                            'turno': turno,
+                            'acoes': acoes_resumo
+                        }
                         st.success("Documento de articulação gerado!")
                         st.rerun()
     
@@ -1117,11 +1335,16 @@ with tab_ponte:
         
         if st.session_state.status_documento_articulacao == 'regerando':
             feedback = st.session_state.get('feedback_documento_articulacao', '')
+            input_original = st.session_state.get('input_original_documento_articulacao', {})
+            freq_original = input_original.get('freq', '1x/sem')
+            turno_original = input_original.get('turno', 'Manhã')
+            acoes_original = input_original.get('acoes', '')
+            
             with st.spinner("Aplicando ajustes..."):
                 resultado = gerar_documento_articulacao(
                     api_key, aluno, 
-                    f"{st.session_state.get('freq_articulacao', '1x/sem')} ({st.session_state.get('turno_articulacao', 'Manhã')})", 
-                    st.session_state.get('acoes_articulacao', ''), 
+                    f"{freq_original} ({turno_original})", 
+                    acoes_original, 
                     feedback
                 )
                 st.session_state.conteudo_documento_articulacao = resultado
@@ -1129,193 +1352,130 @@ with tab_ponte:
                 st.rerun()
 
 # ==============================================================================
-# FUNÇÕES DE DASHBOARD E VISUALIZAÇÃO (NOVO)
+# ABA 5: EXECUÇÃO E MONITORAMENTO (INTEGRADA)
 # ==============================================================================
-def renderizar_dashboard_execucao(aluno, data_revisao, progresso_pct):
-    """
-    Renderiza o cabeçalho visual de progresso.
-    """
-    html = f"""
-    <style>
-        .timeline-header {{
-            background: white; border-radius: 12px; padding: 20px;
-            margin-bottom: 20px; border: 1px solid #E2E8F0;
-            display: flex; align-items: center; justify-content: space-between;
-        }}
-        .prog-bar-bg {{
-            width: 100%; height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden; margin-top: 8px;
-        }}
-        .prog-bar-fill {{
-            height: 100%; background: linear-gradient(90deg, #8B5CF6, #6D28D9); width: {progresso_pct}%; transition: width 1s;
-        }}
-    </style>
-    
-    <div class="timeline-header">
-        <div style="flex-grow: 1; padding-right: 20px;">
-            <h3 style="margin:0; color: #1E293B;">📊 Execução do Plano: {aluno.get('nome')}</h3>
-            <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">
-                Revisão prevista: <strong>{data_revisao}</strong>
-            </div>
-            <div class="prog-bar-bg">
-                <div class="prog-bar-fill"></div>
-            </div>
-        </div>
-        <div style="text-align: right;">
-            <div style="font-size: 1.5rem; font-weight: 800; color: #8B5CF6;">{progresso_pct}%</div>
-            <div style="font-size: 0.7rem; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Concluído</div>
-        </div>
-    </div>
-    """
-    return html
-
-# Helpers para extração (Simulação para funcionar sem o PEI completo agora)
-def extrair_metas_mock(texto_ia):
-    # Tenta extrair metas se houver texto, senão retorna genérico
-    return ["Melhorar foco", "Ampliar vocabulário", "Autonomia na rotina"]
-
-def transformar_em_plano_executavel(aluno_dados, semanas=4):
-    """Gera estrutura de dados para o dashboard"""
-    hoje = date.today()
-    plano = []
-    for i in range(semanas):
-        inicio = hoje + timedelta(days=i*7)
-        fim = inicio + timedelta(days=6)
-        plano.append({
-            "semana": i + 1,
-            "inicio": inicio,
-            "fim": fim,
-            "status": "Pendente" if i > 0 else "Em Andamento",
-            "atividades": [
-                {"titulo": "Atividade de Vínculo", "feita": False},
-                {"titulo": "Treino Cognitivo", "feita": False}
-            ]
-        })
-    return plano
-
-# ==============================================================================
-# CLASSE DE REGISTRO E EXECUÇÃO
-# ==============================================================================
-class RegistroAEE:
-    def __init__(self, aluno_nome):
-        self.aluno_nome = aluno_nome
-        # Cria banco de dados na sessão se não existir
-        if "registros_aee" not in st.session_state:
-            st.session_state.registros_aee = []
-
-    def interface_registro_diario(self):
-        st.markdown("#### 📝 Diário de Bordo do AEE")
-        
-        with st.container(border=True):
-            c1, c2 = st.columns([2, 1])
-            descricao = c1.text_area("O que foi trabalhado hoje?", height=100, placeholder="Descreva a atividade, reação do aluno e adaptações...")
-            
-            with c2:
-                data_reg = st.date_input("Data", date.today())
-                engajamento = st.slider("Engajamento do Aluno", 1, 5, 3)
-                tipo = st.selectbox("Tipo", ["Individual", "Grupo", "Observação em Sala"])
-
-            # Upload de Evidência
-            evidencia = st.file_uploader("📸 Anexar Foto/Atividade", type=["png", "jpg", "pdf"], key="up_evidencia")
-
-            if st.button("💾 Salvar Registro de Hoje", use_container_width=True):
-                novo_registro = {
-                    "data": data_reg,
-                    "aluno": self.aluno_nome,
-                    "descricao": descricao,
-                    "engajamento": engajamento,
-                    "tipo": tipo,
-                    "tem_evidencia": evidencia is not None
-                }
-                st.session_state.registros_aee.append(novo_registro)
-                st.success("Registro salvo no histórico!")
-                time.sleep(1)
-                st.rerun()
-
-    def exibir_historico(self):
-        # Filtra registros deste aluno
-        regs = [r for r in st.session_state.registros_aee if r['aluno'] == self.aluno_nome]
-        
-        if not regs:
-            st.info("Nenhum registro encontrado.")
-            return
-
-        # Gráfico simples de engajamento
-        df = pd.DataFrame(regs)
-        if not df.empty:
-            st.markdown("##### 📈 Evolução do Engajamento")
-            st.line_chart(df.set_index("data")["engajamento"], color="#8B5CF6")
-
-        st.markdown("##### 🗂️ Histórico Recente")
-        for r in reversed(regs[-5:]): # Últimos 5
-            icon = "📸" if r['tem_evidencia'] else "📝"
-            st.markdown(
-                f"""
-                <div style="background:white; padding:15px; border-radius:10px; border:1px solid #E2E8F0; margin-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#64748B;">
-                        <strong>{r['data'].strftime('%d/%m/%Y')}</strong>
-                        <span>{icon} {r['tipo']}</span>
-                    </div>
-                    <div style="margin-top:5px; color:#1E293B;">{r['descricao']}</div>
-                    <div style="margin-top:5px; font-size:0.8rem;">Engajamento: {"⭐"*r['engajamento']}</div>
-                </div>
-                """, unsafe_allow_html=True
-            )
-    
- # -----------------------------------------------------------------------------
-# ABA 1: EXECUÇÃO E MONITORAMENTO (INTEGRADA)
-# -----------------------------------------------------------------------------
 with tab_planejamento:
-    # 1. Dashboard de Topo
-    if 'cronograma_aee' in st.session_state:
-        # Se já tem cronograma, calcula progresso real
-        total_semanas = len(st.session_state['cronograma_aee'].get('fases', [])[0].get('semanas', [])) * len(st.session_state['cronograma_aee'].get('fases', []))
-        # (Mock de progresso para visualização)
-        st.markdown(renderizar_dashboard_execucao(aluno, "30/Dez", 25), unsafe_allow_html=True)
+    st.markdown("### 🗓️ Execução e Monitoramento do AEE")
+    
+    # 1. Dashboard de Progresso
+    if st.session_state.cronograma_aee:
+        total_semanas = sum(len(fase['semanas']) for fase in st.session_state.cronograma_aee.get('fases', []))
+        semanas_concluidas = len(st.session_state.semanas_concluidas)
+        progresso_pct = int((semanas_concluidas / total_semanas) * 100) if total_semanas > 0 else 0
+        
+        st.markdown(f"""
+        <div class="timeline-header">
+            <div style="flex-grow: 1; padding-right: 20px;">
+                <h3 style="margin:0; color: #1E293B;">📊 Progresso da Execução: {aluno.get('nome')}</h3>
+                <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">
+                    Total de semanas: <strong>{total_semanas}</strong> | Concluídas: <strong>{semanas_concluidas}</strong>
+                </div>
+                <div class="prog-bar-bg">
+                    <div class="prog-bar-fill" style="width: {progresso_pct}%"></div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 1.5rem; font-weight: 800; color: #8B5CF6;">{progresso_pct}%</div>
+                <div style="font-size: 0.7rem; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Concluído</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     else:
-        st.info("Gere um cronograma abaixo para ativar o painel de execução.")
-
-    # 2. Área de Registro Diário (A novidade do DeepSeek)
+        st.info("⚠️ Gere um cronograma abaixo para começar o acompanhamento.")
+    
+    # 2. Sistema de Registro Diário
     sistema_registro = RegistroAEE(aluno['nome'])
     
     col_reg, col_cron = st.columns([1, 1.5], gap="large")
     
     with col_reg:
+        st.markdown("#### 📝 Registro Diário")
         sistema_registro.interface_registro_diario()
         st.divider()
         sistema_registro.exibir_historico()
 
     with col_cron:
-        st.markdown("### 🗓️ Planejamento do Ciclo")
+        st.markdown("#### 🗓️ Planejamento do Ciclo")
         
         # Se não tiver cronograma, mostra o gerador
-        if 'cronograma_aee' not in st.session_state:
+        if not st.session_state.cronograma_aee:
             c1, c2 = st.columns(2)
-            dt_inicio = c1.date_input("Início", date.today())
-            dt_fim = c2.date_input("Revisão", date.today() + timedelta(days=60))
-            if st.button("✨ Gerar Novo Ciclo", use_container_width=True):
-                with st.spinner("IA criando roadmap..."):
-                    # Chama a função de IA que já existia no seu código
-                    plano = gerar_cronograma_aee(api_key, aluno, st.session_state.dados, 8, "2x", aluno.get("hiperfoco"))
-                    if "erro" not in plano:
-                        st.session_state['cronograma_aee'] = plano
-                        st.rerun()
+            semanas = c1.number_input("Duração (semanas)", min_value=4, max_value=16, value=8)
+            frequencia = c2.selectbox("Frequência", ["1x/semana", "2x/semana", "3x/semana", "Diário"])
+            
+            # Extrair foco do diagnóstico ou usar padrão
+            foco_default = aluno.get('hiperfoco', 'Desenvolvimento de habilidades específicas')
+            
+            if st.button("✨ Gerar Cronograma", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("⚠️ Insira a chave OpenAI na sidebar.")
+                else:
+                    with st.spinner("Criando cronograma personalizado..."):
+                        plano = gerar_cronograma_aee(api_key, aluno, semanas, frequencia, foco_default)
+                        if "erro" not in plano:
+                            st.session_state.cronograma_aee = plano
+                            st.success("Cronograma gerado com sucesso!")
+                            st.rerun()
+                        else:
+                            st.error(f"Erro ao gerar: {plano['erro']}")
         
-        # Visualização do Cronograma (Timeline)
-        if 'cronograma_aee' in st.session_state:
-            cronograma = st.session_state['cronograma_aee']
-            for fase in cronograma.get('fases', []):
-                st.markdown(f"#### 🚩 {fase['nome_fase']}")
-                for sem in fase['semanas']:
-                    # Card da Semana
-                    with st.expander(f"Semana {sem['semana']}: {sem['tema']}", expanded=True):
-                        st.markdown(f"**Atividade:** {sem['atividade']}")
-                        st.caption(f"Recurso: {sem['recurso']}")
+        # Visualização do Cronograma (se existir)
+        else:
+            cronograma = st.session_state.cronograma_aee
+            
+            # Botão para limpar
+            if st.button("🔄 Gerar Novo Cronograma", type="secondary", use_container_width=True):
+                st.session_state.cronograma_aee = None
+                st.session_state.semanas_concluidas = set()
+                st.rerun()
+            
+            # Exibir fases e semanas
+            for fase_idx, fase in enumerate(cronograma.get('fases', [])):
+                st.markdown(f"##### 🚩 **{fase['nome_fase']}**")
+                if fase.get('descricao'):
+                    st.caption(fase['descricao'])
+                
+                for semana in fase['semanas']:
+                    semana_key = f"sem_{fase_idx}_{semana['semana']}"
+                    concluida = semana_key in st.session_state.semanas_concluidas
+                    
+                    # Card da semana
+                    with st.expander(f"**Semana {semana['semana']}:** {semana['tema']}", 
+                                   expanded=not concluida):
                         
-                        # Checkbox de conclusão da semana
-                        check = st.checkbox("Concluída", key=f"check_sem_{sem['semana']}")
-                        if check:
-                            st.success("Semana finalizada!")
-             
+                        col_info, col_status = st.columns([3, 1])
+                        
+                        with col_info:
+                            st.markdown(f"**Atividade:** {semana['atividade']}")
+                            st.markdown(f"**Recursos:** {semana.get('recurso', 'Não especificado')}")
+                            st.markdown(f"**Objetivo:** {semana.get('objetivo', '')}")
+                            if semana.get('duracao'):
+                                st.markdown(f"**Duração:** {semana['duracao']}")
+                        
+                        with col_status:
+                            status = st.checkbox(
+                                "Concluída", 
+                                value=concluida,
+                                key=f"check_{semana_key}"
+                            )
+                            
+                            if status and not concluida:
+                                st.session_state.semanas_concluidas.add(semana_key)
+                                st.rerun()
+                            elif not status and concluida:
+                                st.session_state.semanas_concluidas.remove(semana_key)
+                                st.rerun()
+            
+            # Opção de download do cronograma
+            st.divider()
+            if st.button("📥 Baixar Cronograma Completo", use_container_width=True):
+                cronograma_texto = json.dumps(cronograma, indent=2, ensure_ascii=False)
+                st.download_button(
+                    label="Clique para baixar JSON",
+                    data=cronograma_texto,
+                    file_name=f"Cronograma_AEE_{aluno['nome']}_{date.today()}.json",
+                    mime="application/json"
+                )
 
 # ==============================================================================
 # RODAPÉ E INFORMAÇÕES
@@ -1325,5 +1485,8 @@ st.markdown("""
 <div style="text-align: center; color: #64748B; font-size: 0.9rem; padding: 20px;">
     <p>💡 <strong>Dica:</strong> Cada recurso gerado pode ser validado, ajustado e baixado em múltiplos formatos.</p>
     <p>📚 <strong>Lembrete:</strong> Os documentos gerados são sugestões pedagógicas que devem ser adaptadas à realidade do aluno.</p>
+    <p>🔄 <strong>Fluxo completo:</strong> PEI → Planejamento AEE → Execução → Registro → Avaliação → Revisão</p>
 </div>
 """, unsafe_allow_html=True)
+
+# FIM DO CÓDIGO COMPLETO
