@@ -3022,7 +3022,7 @@ with tab8:
 # ABA — JORNADA GAMIFICADA (BLOCO COMPLETO)
 # ==============================================================================
 
-with tab_mapa:
+with tab_9:
     render_progresso()
 
     nome_aluno = st.session_state.dados.get("nome") or "Estudante"
