@@ -6,7 +6,7 @@ import os
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
 # ==============================================================================
-APP_VERSION = "v3.1 - UI Integrada"
+APP_VERSION = "v3.2 - UI Split Compact"
 
 try:
     IS_TEST_ENV = st.secrets.get("ENV", "PRODUCAO") == "TESTE"
@@ -20,12 +20,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Inicializa estado da aba
 if "aba_ativa" not in st.session_state:
     st.session_state.aba_ativa = "INÍCIO"
 
 # ==============================================================================
-# 2. CSS & DESIGN SYSTEM (UI INTEGRADA)
+# 2. CSS & DESIGN SYSTEM (UI ACHATADA / SPLIT)
 # ==============================================================================
 st.markdown(
     """
@@ -39,12 +38,10 @@ html, body, [class*="css"] {
     background-color: #F8FAFC !important;
 }
 
-/* Ocultar nativos */
 [data-testid="stSidebarNav"], [data-testid="stHeader"], [data-testid="stToolbar"], footer {
     display: none !important;
 }
 
-/* Ajuste topo */
 .block-container {
     padding-top: 100px !important;
     padding-bottom: 4rem !important;
@@ -65,10 +62,10 @@ html, body, [class*="css"] {
 .brand-logo { height: 45px; width: auto; }
 .user-badge { background: #F1F5F9; border: 1px solid #E2E8F0; padding: 6px 14px; border-radius: 99px; font-size: 0.8rem; font-weight: 700; color: #64748B; }
 
-/* --- HERO CARD (Fundo Azul/Roxo) --- */
+/* --- HERO CARD --- */
 .hero-wrapper {
     background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-    border-radius: 20px; padding: 2rem; color: white; margin-bottom: 30px; margin-top: 10px;
+    border-radius: 20px; padding: 2rem; color: white; margin-bottom: 30px; margin-top: 5px;
     position: relative; overflow: hidden;
     box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.3);
     display: flex; align-items: center; justify-content: space-between;
@@ -84,52 +81,80 @@ html, body, [class*="css"] {
 .hero-text { font-size: 0.95rem; opacity: 0.95; max-width: 800px; font-weight: 500; }
 .hero-icon { opacity: 0.8; font-size: 3rem; z-index: 1; position: relative; }
 
-/* --- BOTÕES QUADRADOS UNIFICADOS --- */
-/* O card visual */
-.nav-square {
+/* --- NOVO MENU ACHATADO (SPLIT) --- */
+.nav-split-container {
+    position: relative;
+    height: 55px; /* Altura achatada */
+    margin-bottom: 12px;
+}
+
+.nav-split-card {
     background: white;
-    border-radius: 12px;
+    border-radius: 10px; /* Bordas levemente arredondadas */
     border: 1px solid #E2E8F0;
+    
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* Ícone | Texto */
     align-items: center;
-    justify-content: center;
-    gap: 6px;
-    height: 75px; /* Altura exata */
-    width: 100%;
+    
+    padding: 4px; /* Padding interno pequeno */
+    gap: 8px;
+    width: 100%; height: 100%;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-}
-
-.nav-sq-icon { font-size: 1.4rem; color: #64748B; transition: color 0.2s; }
-.nav-sq-title { font-size: 0.65rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; line-height: 1; }
-
-/* ESTADO ATIVO (ROXO PREENCHIDO) */
-.nav-active {
-    background: #7C3AED !important; /* Roxo */
-    border-color: #7C3AED !important;
-    box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3) !important;
-}
-.nav-active .nav-sq-icon { color: white !important; }
-.nav-active .nav-sq-title { color: white !important; }
-
-/* TRUQUE DE INTEGRAÇÃO (Margem Negativa) */
-div[data-testid="column"] button {
-    background-color: transparent !important;
-    border: none !important;
-    color: transparent !important;
-    height: 75px !important; /* Mesma altura do card visual */
-    width: 100% !important;
-    margin-top: -82px !important; /* PUXA O BOTÃO PRA CIMA DO HTML */
-    position: relative;
-    z-index: 5;
     cursor: pointer;
 }
 
-/* Hover no botão invisível afeta o visual (hack opcional, mas o active já resolve) */
-div[data-testid="column"]:hover .nav-square {
-    border-color: #C4B5FD;
+.nav-split-card:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-color: #C4B5FD;
+}
+
+/* O quadrado do ícone (A "divisão" visual) */
+.nav-icon-box {
+    width: 45px; height: 45px;
+    background: #F8FAFC;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #64748B;
+    font-size: 1.2rem;
+    transition: all 0.2s;
+}
+
+/* O texto */
+.nav-split-title {
+    font-size: 0.7rem; font-weight: 800; color: #64748B; 
+    text-transform: uppercase; letter-spacing: 0.5px; 
+    line-height: 1; flex-grow: 1; text-align: center;
+    padding-right: 4px;
+}
+
+/* --- ESTADO ATIVO (ROXO) --- */
+.nav-active {
+    background: white !important;
+    border-color: #7C3AED !important;
+    box-shadow: 0 4px 10px rgba(124, 58, 237, 0.15) !important;
+}
+
+/* Quando ativo, o ícone fica roxo preenchido */
+.nav-active .nav-icon-box {
+    background: #7C3AED !important;
+    color: white !important;
+}
+
+/* Quando ativo, o texto fica roxo */
+.nav-active .nav-split-title {
+    color: #7C3AED !important;
+}
+
+/* --- TRUQUE DO BOTÃO INVISÍVEL (INTEGRAÇÃO PERFEITA) --- */
+div[data-testid="column"] button {
+    position: absolute !important; top: 0 !important; left: 0 !important;
+    width: 100% !important; height: 55px !important; /* Mesma altura do card */
+    margin-top: -62px !important; /* PUXA O BOTÃO PRA CIMA (55px + margens) */
+    opacity: 0 !important; z-index: 5 !important;
+    border: none !important;
 }
 </style>
     """,
@@ -159,7 +184,7 @@ def get_user_initials(nome: str):
 # ==============================================================================
 # 4. COMPONENTE: HEADER & MENU UNIFICADO
 # ==============================================================================
-def render_layout_unificado():
+def render_header_unified():
     # --- 1. TOPBAR FIXA ---
     icone_b64 = get_base64_image("omni_icone.png")
     texto_b64 = get_base64_image("omni_texto.png")
@@ -188,42 +213,41 @@ def render_layout_unificado():
     
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
-    # --- 2. MENU QUADRADO (COM LÓGICA DE INTEGRAÇÃO) ---
+    # --- 2. MENU ACHATADO (SPLIT) ---
     menu_items = [
         {"id": "INÍCIO", "icon": "ri-home-smile-2-fill", "label": "Início"},
-        {"id": "ESTUDANTE", "icon": "ri-user-smile-fill", "label": "Estudante"},
-        {"id": "EVIDÊNCIAS", "icon": "ri-search-eye-line", "label": "Evidências"},
+        {"id": "ESTUDANTE", "icon": "ri-user-smile-fill", "label": "Aluno"},
+        {"id": "EVIDÊNCIAS", "icon": "ri-search-eye-line", "label": "Evid."},
         {"id": "REDE", "icon": "ri-team-fill", "label": "Rede"},
         {"id": "MAPEAMENTO", "icon": "ri-radar-line", "label": "Mapa"},
         {"id": "AÇÃO", "icon": "ri-tools-fill", "label": "Ação"},
-        {"id": "MONITOR", "icon": "ri-line-chart-fill", "label": "Monitor"},
-        {"id": "IA", "icon": "ri-robot-2-fill", "label": "Consultoria"},
+        {"id": "MONITOR", "icon": "ri-line-chart-fill", "label": "Monit."},
+        {"id": "IA", "icon": "ri-robot-2-fill", "label": "IA"},
         {"id": "DASH", "icon": "ri-file-chart-fill", "label": "Docs"},
         {"id": "GAME", "icon": "ri-gamepad-fill", "label": "Game"},
     ]
     
-    # Grid de 10 colunas (uma linha)
     cols = st.columns(10, gap="small")
     
     for i, item in enumerate(menu_items):
         with cols[i]:
-            # Verifica se é a aba ativa
             is_active = (st.session_state.aba_ativa == item["id"])
             active_class = "nav-active" if is_active else ""
             
-            # 1. O Desenho (HTML)
+            # HTML Visual (Card Achatado)
             st.markdown(
                 f"""
-                <div class="nav-square {active_class}">
-                    <i class="{item['icon']} nav-sq-icon"></i>
-                    <div class="nav-sq-title">{item['label']}</div>
+                <div class="nav-split-container">
+                    <div class="nav-split-card {active_class}">
+                        <div class="nav-icon-box"><i class="{item['icon']}"></i></div>
+                        <div class="nav-split-title">{item['label']}</div>
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
             
-            # 2. O Botão (Funcional)
-            # O CSS 'margin-top: -82px' puxa este botão para cima do desenho acima
+            # Botão Funcional Invisível (Overlay puxado com margin-top negativo)
             if st.button(" ", key=f"nav_{item['id']}", use_container_width=True):
                 st.session_state.aba_ativa = item["id"]
                 st.rerun()
@@ -261,17 +285,14 @@ def render_layout_unificado():
 # 5. EXECUÇÃO DO CONTEÚDO (ROTEAMENTO)
 # ==============================================================================
 
-# 1. Renderiza Topo (Header + Navegação + Hero)
-render_layout_unificado()
+render_header_unified()
 
-# 2. Renderiza o conteúdo da aba selecionada
 aba = st.session_state.aba_ativa
 
-# CONTAINER PRINCIPAL PARA O CONTEÚDO
+# CONTAINER PRINCIPAL
 with st.container():
     if aba == "INÍCIO":
-        st.info("Aqui entram os fundamentos do PEI e gestão de backups.")
-        # Coloque o código da aba Início aqui
+        st.info("Conteúdo da aba Início.")
         
     elif aba == "ESTUDANTE":
         st.write("### 👤 Identificação")
