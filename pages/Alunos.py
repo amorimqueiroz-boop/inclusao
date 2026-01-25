@@ -86,120 +86,309 @@ def render_thin_topbar_with_spinning_logo():
 # ==============================================================================
 # BLOCO B — MENU DE ACESSO RÁPIDO COM CORES (MODIFICADO)
 # ==============================================================================
-def render_colored_quick_access_bar():
-    """
-    Menu compacto com botões coloridos logo abaixo do topo.
-    Cada botão tem uma cor de fundo sólida (não apenas borda).
-    """
-    # CSS com cores sólidas para os botões
-    st.markdown("""
-    <style>
-        .qa-btn-colored button {
-            font-weight: 800 !important;
-            border-radius: 8px !important;
-            padding: 8px 0 !important;
-            font-size: 0.75rem !important;
-            text-transform: uppercase !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-            min-height: 36px !important;
-            height: auto !important;
-            border: none !important;
-            color: white !important;
-            transition: all 0.2s ease !important;
-        }
+def _ui_compact_design():
+    st.markdown(
+        """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url("https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css");
 
-        .qa-btn-colored button:hover {
-            transform: translateY(-2px) !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
-        }
+/* ===== RESET & BASE ===== */
+html, body, [class*="css"] {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    color: #1E293B !important;
+    background-color: #F8FAFC !important;
+}
 
-        /* 1. INÍCIO - Cinza escuro */
-        div[data-testid="column"]:nth-of-type(1) .qa-btn-colored button { 
-            background: linear-gradient(135deg, #475569, #334155) !important;
-        }
-        div[data-testid="column"]:nth-of-type(1) .qa-btn-colored button:hover { 
-            background: linear-gradient(135deg, #334155, #1E293B) !important;
-        }
+/* --- OCULTAR HEADER NATIVO DO STREAMLIT --- */
+[data-testid="stSidebarNav"],
+[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="collapsedControl"],
+footer {
+    display: none !important;
+}
 
-        /* 2. ESTUDANTES - Índigo */
-        div[data-testid="column"]:nth-of-type(2) .qa-btn-colored button { 
-            background: linear-gradient(135deg, #4F46E5, #4338CA) !important;
-        }
-        div[data-testid="column"]:nth-of-type(2) .qa-btn-colored button:hover { 
-            background: linear-gradient(135deg, #4338CA, #3730A3) !important;
-        }
+/* --- TOPBAR FINA (55px) - MUITO MAIS COMPACTA --- */
+.topbar-thin {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 55px !important; /* REDUZIDA DRAMATICAMENTE */
+    background: rgba(255, 255, 255, 0.99) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border-bottom: 1px solid #E2E8F0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.2rem !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    margin-bottom: 0 !important;
+}
 
-        /* 3. PEI - Azul */
-        div[data-testid="column"]:nth-of-type(3) .qa-btn-colored button { 
-            background: linear-gradient(135deg, #2563EB, #1D4ED8) !important;
-        }
-        div[data-testid="column"]:nth-of-type(3) .qa-btn-colored button:hover { 
-            background: linear-gradient(135deg, #1D4ed8, #1E40AF) !important;
-        }
+.brand-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
-        /* 4. AEE - Roxo */
-        div[data-testid="column"]:nth-of-type(4) .qa-btn-colored button { 
-            background: linear-gradient(135deg, #7C3AED, #6D28D9) !important;
-        }
-        div[data-testid="column"]:nth-of-type(4) .qa-btn-colored button:hover { 
-            background: linear-gradient(135deg, #6D28D9, #5B21B6) !important;
-        }
+.brand-logo {
+    height: 32px !important; /* MENOR */
+    width: auto !important;
+    animation: spin 40s linear infinite;
+    filter: brightness(1.1);
+}
 
-        /* 5. RECURSOS - Verde água */
-        div[data-testid="column"]:nth-of-type(5) .qa-btn-colored button { 
-            background: linear-gradient(135deg, #0D9488, #0F766E) !important;
-        }
-        div[data-testid="column"]:nth-of-type(5) .qa-btn-colored button:hover { 
-            background: linear-gradient(135deg, #0F766E, #115E59) !important;
-        }
+.brand-img-text {
+    height: 18px !important; /* MENOR */
+    width: auto;
+    margin-left: 6px;
+}
 
-        /* 6. DIÁRIO - Rosa */
-        div[data-testid="column"]:nth-of-type(6) .qa-btn-colored button { 
-            background: linear-gradient(135deg, #E11D48, #BE123C) !important;
-        }
-        div[data-testid="column"]:nth-of-type(6) .qa-btn-colored button:hover { 
-            background: linear-gradient(135deg, #BE123C, #9F1239) !important;
-        }
+.user-badge-thin {
+    background: #F1F5F9;
+    border: 1px solid #E2E8F0;
+    padding: 3px 8px !important;
+    border-radius: 12px;
+    font-size: 0.65rem !important;
+    font-weight: 700;
+    color: #475569;
+    letter-spacing: 0.2px;
+}
 
-        /* 7. DADOS - Azul claro */
-        div[data-testid="column"]:nth-of-type(7) .qa-btn-colored button { 
-            background: linear-gradient(135deg, #0284C7, #0369A1) !important;
-        }
-        div[data-testid="column"]:nth-of-type(7) .qa-btn-colored button:hover { 
-            background: linear-gradient(135deg, #0369A1, #075985) !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
+.apple-avatar-thin {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.7rem !important;
+    box-shadow: 0 1px 4px rgba(79, 70, 229, 0.2);
+}
 
-    # 7 colunas do menu
-    c1, c2, c3, c4, c5, c6, c7 = st.columns(7, gap="small")
+/* Ajustar padding para compensar a topbar fixa - MÍNIMO */
+.block-container {
+    padding-top: 60px !important; /* MÍNIMO POSSÍVEL */
+    padding-bottom: 1.5rem !important;
+    max-width: 98% !important;
+    padding-left: 0.8rem !important;
+    padding-right: 0.8rem !important;
+}
 
-    def _wrap_button(label: str, on_click):
-        """Wrapper para botões com cores sólidas"""
-        st.markdown('<div class="qa-btn-colored">', unsafe_allow_html=True)
-        st.button(label, use_container_width=True, on_click=on_click)
-        st.markdown('</div>', unsafe_allow_html=True)
+/* REMOVER TODOS OS ESPAÇOS DESNECESSÁRIOS */
+.main > div:first-child {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
 
-    with c1:
-        _wrap_button("INÍCIO", on_click=lambda: st.switch_page("pages/0_Home.py"))
+/* ===== MENU DE PÍLULAS - SUPER COMPACTO ===== */
+.pill-nav-container {
+    display: flex;
+    justify-content: center;
+    margin: 2px auto 5px auto !important; /* ESPAÇO MÍNIMO */
+    padding: 0 10px !important;
+    max-width: 1200px;
+    width: 100%;
+}
 
-    with c2:
-        _wrap_button("ESTUDANTES", on_click=lambda: st.rerun())
+.pill-nav-btn button {
+    border-radius: 50px !important;
+    font-weight: 700 !important;
+    font-size: 0.65rem !important; /* MENOR */
+    padding: 4px 10px !important; /* MENOR */
+    min-height: 26px !important; /* MENOR */
+    height: auto !important;
+    border: none !important;
+    color: white !important;
+    transition: all 0.15s ease !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important;
+    margin: 0 2px !important; /* MENOR ESPAÇAMENTO */
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+    line-height: 1.2 !important;
+}
 
-    with c3:
-        _wrap_button("PEI", on_click=lambda: st.switch_page("pages/1_PEI.py"))
+.pill-nav-btn button:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15) !important;
+}
 
-    with c4:
-        _wrap_button("AEE", on_click=lambda: st.switch_page("pages/2_PAE.py"))
+/* Cores das pílulas - MAIS VIVAS */
+div[data-testid="column"]:nth-of-type(1) .pill-nav-btn button { 
+    background: linear-gradient(135deg, #64748B, #475569) !important;
+}
+div[data-testid="column"]:nth-of-type(2) .pill-nav-btn button { 
+    background: linear-gradient(135deg, #4F46E5, #4338CA) !important;
+}
+div[data-testid="column"]:nth-of-type(3) .pill-nav-btn button { 
+    background: linear-gradient(135deg, #2563EB, #1D4ED8) !important;
+}
+div[data-testid="column"]:nth-of-type(4) .pill-nav-btn button { 
+    background: linear-gradient(135deg, #7C3AED, #6D28D9) !important;
+}
+div[data-testid="column"]:nth-of-type(5) .pill-nav-btn button { 
+    background: linear-gradient(135deg, #0D9488, #0F766E) !important;
+}
+div[data-testid="column"]:nth-of-type(6) .pill-nav-btn button { 
+    background: linear-gradient(135deg, #E11D48, #BE123C) !important;
+}
+div[data-testid="column"]:nth-of-type(7) .pill-nav-btn button { 
+    background: linear-gradient(135deg, #0284C7, #0369A1) !important;
+}
 
-    with c5:
-        _wrap_button("RECURSOS", on_click=lambda: st.switch_page("pages/3_Hub_Inclusao.py"))
+/* ===== CARD HERO - COMPACTO ===== */
+.mod-card-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 8px !important; /* MÍNIMO */
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    margin-top: 3px !important; /* PRÓXIMO DO MENU */
+}
 
-    with c6:
-        _wrap_button("DIÁRIO", on_click=lambda: st.switch_page("pages/4_Diario_de_Bordo.py"))
+.mod-card-rect {
+    background: white;
+    border-radius: 12px 12px 0 0;
+    padding: 0;
+    border: 1px solid #E2E8F0;
+    border-bottom: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 100px !important; /* MUITO MAIS BAIXO */
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
 
-    with c7:
-        _wrap_button("DADOS", on_click=lambda: st.switch_page("pages/5_Monitoramento_Avaliacao.py"))
+.mod-card-rect:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.06);
+    border-color: #CBD5E1;
+}
+
+.mod-bar {
+    width: 5px;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+.mod-icon-area {
+    width: 70px !important; /* MENOR */
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem !important; /* MENOR */
+    flex-shrink: 0;
+    background: #FAFAFA;
+    border-right: 1px solid #F1F5F9;
+    transition: all 0.2s ease;
+}
+
+.mod-card-rect:hover .mod-icon-area {
+    background: white;
+    transform: scale(1.03);
+}
+
+.mod-content {
+    flex-grow: 1;
+    padding: 0 18px !important; /* MENOR */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.mod-title {
+    font-weight: 800;
+    font-size: 0.95rem !important; /* MENOR */
+    color: #1E293B;
+    margin-bottom: 4px !important; /* MENOR */
+    letter-spacing: -0.2px;
+}
+
+.mod-card-rect:hover .mod-title {
+    color: #4F46E5;
+}
+
+.mod-desc {
+    font-size: 0.75rem !important; /* MENOR */
+    color: #64748B;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* CORES DOS CARDS */
+.c-sky { background: #0284C7 !important; }
+.bg-sky-soft { 
+    background: #F0F9FF !important;
+    color: #0284C7 !important;
+}
+
+/* --- ANIMAÇÕES --- */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+    .topbar-thin { 
+        padding: 0 0.8rem !important; 
+        height: 50px !important;
+    }
+    .brand-logo { height: 28px !important; }
+    .brand-img-text { display: none; }
+    .user-badge-thin { 
+        font-size: 0.6rem !important; 
+        padding: 2px 6px !important;
+        display: none; /* Oculta badges em mobile */
+    }
+    .apple-avatar-thin { 
+        width: 26px !important; 
+        height: 26px !important; 
+        font-size: 0.65rem !important;
+    }
+    .block-container { 
+        padding-top: 55px !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+    
+    .pill-nav-btn button {
+        font-size: 0.6rem !important;
+        padding: 3px 8px !important;
+        min-height: 24px !important;
+        margin: 0 1px !important;
+    }
+    
+    .mod-card-rect { 
+        height: 90px !important;
+    }
+    .mod-icon-area { 
+        width: 60px !important;
+        font-size: 1.2rem !important;
+    }
+    .mod-content { padding: 0 12px !important; }
+    .mod-title { font-size: 0.85rem !important; }
+    .mod-desc { font-size: 0.7rem !important; }
+}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # ==============================================================================
 # 🔷 DESIGN SYSTEM COM TOPBAR FINA E MENU COLORIDO
