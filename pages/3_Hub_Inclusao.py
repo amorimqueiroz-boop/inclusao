@@ -1535,15 +1535,12 @@ else:
         """, unsafe_allow_html=True)
         
         # --- BNCC DROPDOWNS (NOVO) ---
-        st.markdown("### 📚 Selecione pela BNCC")
-        ano_bncc, disciplina_bncc, objeto_bncc = criar_dropdowns_simples()
+        st.markdown("#### 📚 Dados da BNCC")
+        ano_bncc, disciplina_bncc, objeto_bncc = criar_dropdowns_bncc_corrigido()
 
-        # Usar os valores selecionados
-        mat_c = disciplina_bncc
-        obj_c = objeto_bncc
-
-        # Criar 4 colunas para os dropdowns
-        col_ano, col_disc, col_obj, col_hab = st.columns(4)
+       # Usar os valores selecionados
+       mat_c = disciplina_bncc
+       obj_c = objeto_bncc
 
         cc3, cc4 = st.columns(2)
         qtd_c = cc3.slider("Qtd Questões", 1, 10, 5, key="cq")
