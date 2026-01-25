@@ -1,46 +1,262 @@
 import streamlit as st
+import requests
+from datetime import datetime, date
+import base64
 import os
 
-# Tenta importar a biblioteca do menu. Se falhar, mostra o erro na tela.
-try:
-    from streamlit_option_menu import option_menu
-except ImportError:
-    st.error("ERRO CRÍTICO: A biblioteca 'streamlit-option-menu' não está instalada.")
-    st.stop()
+# BIBLIOTECA DE MENU (Essencial)
+# Certifique-se de que 'streamlit-option-menu' está no requirements.txt
+from streamlit_option_menu import option_menu 
 
-# 1. Configuração Básica
-st.set_page_config(page_title="Teste Menu", layout="wide")
-
-# 2. Renderização do Menu (Código Mínimo)
-st.markdown("### Teste de Renderização do Menu")
-
-selected = option_menu(
-    menu_title=None,  # Esconde o título
-    options=["Início", "Estudantes", "PEI", "Hub"],  # Opções
-    icons=["house", "people", "book", "rocket"],     # Ícones Bootstrap
-    default_index=3,  # Começa no Hub (índice 3)
-    orientation="horizontal",
-    styles={
-        "container": {"padding": "5px", "background-color": "#f0f2f6"},
-        "nav-link": {"font-size": "14px", "text-align": "center", "margin": "0px"},
-        "nav-link-selected": {"background-color": "#0D9488"},
-    }
+# ==============================================================================
+# 1. CONFIGURAÇÃO
+# ==============================================================================
+st.set_page_config(
+    page_title="Omnisfera • Estudantes",
+    page_icon="👥",
+    layout="wide",
+    initial_sidebar_state="collapsed",
 )
 
-# 3. Feedback Visual (Para saber se funcionou)
-st.success(f"O menu está funcionando! Você clicou em: **{selected}**")
+APP_VERSION = "v3.0 - Menu OptionMenu Completo"
 
-if selected == "Início":
-    st.write("Tentando voltar para Home...")
-    # Lógica de navegação segura
-    if os.path.exists("pages/0_Home.py"):
-        if st.button("Ir para Home (pages/0_Home.py)"):
-            st.switch_page("pages/0_Home.py")
-    elif os.path.exists("0_Home.py"):
-        if st.button("Ir para Home (0_Home.py)"):
-            st.switch_page("0_Home.py")
-    else:
-        st.error("Arquivo de Home não encontrado.")
+# ==============================================================================
+# 2. DESIGN & CSS
+# ==============================================================================
+st.markdown("""
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+    /* Ajuste de Espaçamento Superior */
+    .block-container { padding-top: 1rem !important; padding-bottom: 3rem; }
+    
+    /* Esconder elementos nativos */
+    [data-testid="stSidebarNav"], footer { display: none !important; }
 
-elif selected == "Hub":
-    st.info("Você está na página do Hub.")
+    /* CARD HERO */
+    .mod-card-wrapper { display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin-top: 10px;}
+    .mod-card-rect { background: white; padding: 0; display: flex; align-items: center; height: 90px; position: relative; }
+    .mod-bar { width: 6px; height: 100%; position: absolute; left: 0; background-color: #0284C7; }
+    .mod-icon-area { width: 80px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; background: #F0F9FF; color: #0284C7; margin-left: 6px; }
+    .mod-content { flex-grow: 1; padding: 0 20px; display: flex; flex-direction: column; justify-content: center; }
+    .mod-title { font-weight: 800; font-size: 1.1rem; color: #1E293B; margin-bottom: 4px; }
+    .mod-desc { font-size: 0.8rem; color: #64748B; }
+
+    /* TABELA DE ALUNOS */
+    .student-table { background: white; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-top: 20px; }
+    .student-header { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; background: #F8FAFC; padding: 12px 20px; border-bottom: 1px solid #E2E8F0; font-weight: 800; color: #475569; font-size: 0.8rem; text-transform: uppercase; }
+    .student-row { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; padding: 12px 20px; border-bottom: 1px solid #F1F5F9; align-items: center; background: white; }
+    .student-row:hover { background: #F8FAFC; }
+    
+    /* BADGES */
+    .badge-grade { background: #F0F9FF; color: #0369A1; padding: 2px 8px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; border: 1px solid #BAE6FD; }
+    .badge-class { background: #F0FDF4; color: #15803D; padding: 2px 8px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; border: 1px solid #BBF7D0; }
+    
+    /* MODAL DELETAR */
+    .delete-confirm-banner { background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; padding: 8px 12px; margin-top: 4px; font-size: 0.8rem; color: #92400E; display: flex; align-items: center; gap: 8px; }
+</style>
+""", unsafe_allow_html=True)
+
+# ==============================================================================
+# 3. NAVEGAÇÃO (COM NOMES COMPLETOS)
+# ==============================================================================
+def render_navbar():
+    # Lista exata dos seus menus
+    opcoes = [
+        "Início", 
+        "Estudantes", 
+        "Estratégias & PEI", 
+        "Plano de Ação (AEE)", 
+        "Hub de Recursos", 
+        "Diário de Bordo", 
+        "Evolução & Dados"
+    ]
+    
+    icones = [
+        "house", 
+        "people", 
+        "book", 
+        "puzzle", 
+        "rocket", 
+        "journal", 
+        "bar-chart"
+    ]
+
+    selected = option_menu(
+        menu_title=None, 
+        options=opcoes,
+        icons=icones,
+        default_index=1, # Índice 1 = Estudantes (Começa em 0)
+        orientation="horizontal",
+        styles={
+            "container": {"padding": "0!important", "background-color": "#ffffff", "border": "1px solid #E2E8F0", "border-radius": "10px"},
+            "icon": {"color": "#64748B", "font-size": "14px"}, 
+            "nav-link": {"font-size": "11px", "text-align": "center", "margin": "0px", "--hover-color": "#F1F5F9", "color": "#475569", "white-space": "nowrap"},
+            "nav-link-selected": {"background-color": "#0284C7", "color": "white", "font-weight": "600"},
+        }
+    )
+    
+    # Navegação Segura
+    if selected == "Início":
+        target = "pages/0_Home.py" if os.path.exists("pages/0_Home.py") else "0_Home.py"
+        if not os.path.exists(target): target = "Home.py"
+        st.switch_page(target)
+    elif selected == "Estratégias & PEI": st.switch_page("pages/1_PEI.py")
+    elif selected == "Plano de Ação (AEE)": st.switch_page("pages/2_PAE.py")
+    elif selected == "Hub de Recursos": st.switch_page("pages/3_Hub_Inclusao.py")
+    elif selected == "Diário de Bordo": st.switch_page("pages/4_Diario_de_Bordo.py")
+    elif selected == "Evolução & Dados": st.switch_page("pages/5_Monitoramento_Avaliacao.py")
+    # Se for "Estudantes", fica aqui.
+
+render_navbar()
+
+# ==============================================================================
+# 4. LÓGICA DE DADOS (SUPABASE)
+# ==============================================================================
+
+# Autenticação Básica
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
+
+if not st.session_state.autenticado:
+    st.warning("🔒 Acesso restrito.")
+    st.stop()
+
+# Helpers
+def get_user_initials(nome):
+    if not nome: return "U"
+    parts = nome.strip().split()
+    return f"{parts[0][0]}{parts[-1][0]}".upper() if len(parts) >= 2 else parts[0][:2].upper()
+
+def _sb_headers():
+    try:
+        key = st.secrets.get("SUPABASE_SERVICE_KEY") or st.secrets.get("SUPABASE_ANON_KEY")
+        return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    except: return {}
+
+# Funções de API
+@st.cache_data(ttl=10, show_spinner=False)
+def list_students_rest(workspace_id):
+    try:
+        url = st.secrets.get("SUPABASE_URL").rstrip("/") + "/rest/v1/students"
+        params = f"?select=id,name,grade,class_group,diagnosis&workspace_id=eq.{workspace_id}&order=created_at.desc"
+        r = requests.get(url + params, headers=_sb_headers(), timeout=10)
+        return r.json() if r.status_code == 200 else []
+    except: return []
+
+def delete_student_rest(sid, wid):
+    try:
+        url = st.secrets.get("SUPABASE_URL").rstrip("/") + f"/rest/v1/students?id=eq.{sid}&workspace_id=eq.{wid}"
+        requests.delete(url, headers=_sb_headers())
+        return True
+    except: return False
+
+# ==============================================================================
+# 5. ÁREA DE TRABALHO
+# ==============================================================================
+
+# Variáveis de Sessão
+ws_id = st.session_state.get("workspace_id")
+user_name = st.session_state.get("usuario_nome", "Visitante")
+user_first = user_name.split()[0]
+saudacao = "Bom dia" if 5 <= datetime.now().hour < 12 else "Boa tarde"
+
+# Refresh manual ou automático
+if st.session_state.get("force_refresh"):
+    list_students_rest.clear()
+    st.session_state["force_refresh"] = False
+
+# Carregar Alunos
+if not ws_id:
+    st.error("Nenhum workspace selecionado.")
+    st.stop()
+
+alunos = list_students_rest(ws_id)
+
+# Card Hero
+st.markdown(f"""
+    <div class="mod-card-wrapper">
+        <div class="mod-card-rect">
+            <div class="mod-bar"></div>
+            <div class="mod-icon-area"><i class="ri-group-fill"></i></div>
+            <div class="mod-content">
+                <div class="mod-title">Gestão de Estudantes</div>
+                <div class="mod-desc">{saudacao}, <strong>{user_first}</strong>! Gerencie os dados dos alunos vinculados aos PEIs neste workspace.</div>
+            </div>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
+
+# Controles
+c1, c2 = st.columns([3, 1])
+with c1:
+    q = st.text_input("Buscar por nome", placeholder="Digite o nome...", label_visibility="collapsed")
+with c2:
+    if st.button("🔄 Atualizar Lista", use_container_width=True):
+        st.session_state["force_refresh"] = True
+        st.rerun()
+
+# Filtragem
+if q:
+    alunos = [a for a in alunos if q.lower() in (a.get("name") or "").lower()]
+
+# ==============================================================================
+# 6. TABELA DE ALUNOS
+# ==============================================================================
+if not alunos:
+    st.info("Nenhum estudante encontrado.")
+else:
+    st.markdown("""
+    <div class="student-table">
+        <div class="student-header"><div>Nome</div><div>Série</div><div>Turma</div><div>Diagnóstico</div><div>Ações</div></div>
+    """, unsafe_allow_html=True)
+    
+    for a in alunos:
+        sid = a.get("id")
+        nome = a.get("name", "—")
+        serie = a.get("grade", "—")
+        turma = a.get("class_group", "—")
+        diag = a.get("diagnosis", "—")
+        
+        # Chave única para o estado de exclusão deste aluno
+        confirm_key = f"confirm_del_{sid}"
+        if confirm_key not in st.session_state:
+            st.session_state[confirm_key] = False
+        
+        # Linha HTML (Estática)
+        st.markdown(f"""
+        <div class="student-row">
+            <div style="font-weight:700; color:#1E293B;">{nome}</div>
+            <div><span class="badge-grade">{serie}</span></div>
+            <div><span class="badge-class">{turma}</span></div>
+            <div style="font-size:0.8rem; color:#64748B;">{diag}</div>
+            <div>
+        """, unsafe_allow_html=True)
+        
+        # Lógica de Botões (Streamlit)
+        if not st.session_state[confirm_key]:
+            col_btn, _ = st.columns([1, 4])
+            with col_btn:
+                if st.button("🗑️", key=f"btn_del_{sid}", help="Excluir"):
+                    st.session_state[confirm_key] = True
+                    st.rerun()
+        else:
+            # Estado de Confirmação
+            st.markdown(f"""<div class="delete-confirm-banner"><i class="ri-alert-fill"></i> Excluir <b>{nome}</b>?</div>""", unsafe_allow_html=True)
+            c_sim, c_nao = st.columns(2)
+            with c_sim:
+                if st.button("✅", key=f"yes_{sid}", type="primary"):
+                    delete_student_rest(sid, ws_id)
+                    list_students_rest.clear()
+                    st.session_state[confirm_key] = False
+                    st.rerun()
+            with c_nao:
+                if st.button("❌", key=f"no_{sid}"):
+                    st.session_state[confirm_key] = False
+                    st.rerun()
+
+        st.markdown("</div></div>", unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# Rodapé
+st.markdown(f"<div style='text-align:center;color:#94A3B8;font-size:0.7rem;padding:20px;margin-top:20px;'>{len(alunos)} estudantes • {APP_VERSION}</div>", unsafe_allow_html=True)
