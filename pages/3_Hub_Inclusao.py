@@ -1708,176 +1708,122 @@ with tabs[2]:
     </div>
     """, unsafe_allow_html=True)
     
-    # --- BNCC DROPDOWNS (NOVO) ---
+    # --- BNCC DROPDOWNS COMPLETOS (NOVO) ---
     st.markdown("### 📚 Selecione pela BNCC")
     
-    # Criar 3 colunas para os dropdowns (Ano, Disciplina, Objeto)
-    col_ano, col_disc, col_obj = st.columns(3)
+    # Chamar a função com todos os dropdowns
+    ano_bncc, disciplina_bncc, unidade_bncc, objeto_bncc, habilidade_bncc = criar_dropdowns_bncc_completos()
     
-    with col_ano:
-        ano_bncc = st.selectbox("Ano", ["1", "2", "3", "4", "5", "6", "7", "8", "9", "1EM", "2EM", "3EM"], 
-                               key="ano_criar_zero")
+    # Mostrar resumo das seleções
+    if unidade_bncc and objeto_bncc:
+        with st.expander("📋 Resumo da seleção BNCC"):
+            st.write(f"**Ano:** {ano_bncc}")
+            st.write(f"**Disciplina:** {disciplina_bncc}")
+            st.write(f"**Unidade Temática:** {unidade_bncc}")
+            st.write(f"**Objeto do Conhecimento:** {objeto_bncc}")
+            if habilidade_bncc:
+                st.write(f"**Habilidade:** {habilidade_bncc}")
     
-    with col_disc:
-        # Lista de disciplinas (mantendo a original do seu código)
-        discip = ["Matemática", "Português", "Ciências", "História", "Geografia", 
-                 "Artes", "Ed. Física", "Inglês", "Filosofia", "Sociologia"]
-        disciplina_bncc = st.selectbox("Disciplina", discip, key="disc_criar_zero")
-    
-    with col_obj:
-        # Campo para objeto do conhecimento
-        objeto_bncc = st.text_input("Objeto do Conhecimento", 
-                                   placeholder="Ex: Frações, Verbos no passado...", 
-                                   key="obj_criar_zero")
-    
-    # Usar os valores selecionados nas variáveis existentes
+    # Usar os valores selecionados
     mat_c = disciplina_bncc
     obj_c = objeto_bncc
     
-    # --- CONFIGURAÇÃO DA ATIVIDADE ---
-    st.markdown("---")
-    st.markdown("### ⚙️ Configuração da Atividade")
-    
+    # --- RESTO DO CÓDIGO DA ABA CONTINUA IGUAL ---
     cc3, cc4 = st.columns(2)
-    with cc3:
-        qtd_c = st.slider("Quantidade de Questões", 1, 10, 5, key="cq")
+    qtd_c = cc3.slider("Qtd Questões", 1, 10, 5, key="cq")
     
-    with cc4:
-        tipo_quest = st.selectbox("Tipo de Questão", ["Objetiva", "Discursiva"], key="ctq")
+    # --- MUDANÇA: REMOVIDA OPÇÃO 'MISTA' ---
+    tipo_quest = cc4.selectbox("Tipo", ["Objetiva", "Discursiva"], key="ctq")
     
-    # --- CONFIGURAÇÃO DE IMAGENS ---
-    st.markdown("#### 🖼️ Imagens (Opcional)")
     col_img_opt, col_img_pct = st.columns([1, 2])
+    usar_img = col_img_opt.checkbox("📸 Incluir Imagens?", value=True)
     
-    with col_img_opt:
-        usar_img = st.checkbox("Incluir Imagens?", value=True, key="usar_img")
+    # MUDANÇA: Slider numérico (0 até Qtd Questões)
+    qtd_img_sel = col_img_pct.slider("Quantas questões terão imagens?", 0, qtd_c, int(qtd_c/2), disabled=not usar_img)
     
-    with col_img_pct:
-        qtd_img_sel = st.slider("Quantas questões terão imagens?", 0, qtd_c, 
-                               int(qtd_c/2) if qtd_c > 1 else 0, 
-                               disabled=not usar_img,
-                               key="qtd_img_slider")
-    
-    # --- TAXONOMIA DE BLOOM ---
-    st.markdown("---")
+    # --- BLOOM SECTION ---
+    st.write("---")
     st.markdown("#### 🧠 Intencionalidade Pedagógica (Taxonomia de Bloom)")
-    
-    usar_bloom = st.checkbox("🎯 Usar Taxonomia de Bloom (Revisada)", key="usar_bloom")
+    usar_bloom = st.checkbox("🎯 Usar Taxonomia de Bloom (Revisada)")
     
     # Inicializa memória de seleção no session state se não existir
     if 'bloom_memoria' not in st.session_state:
         st.session_state.bloom_memoria = {cat: [] for cat in TAXONOMIA_BLOOM.keys()}
-    
+
     verbos_finais_para_ia = []
-    
+
     if usar_bloom:
         col_b1, col_b2 = st.columns(2)
         
         # 1. Seleciona a Categoria (Gaveta)
-        with col_b1:
-            cat_atual = st.selectbox("Categoria Cognitiva:", list(TAXONOMIA_BLOOM.keys()),
-                                    key="cat_bloom")
+        cat_atual = col_b1.selectbox("Categoria Cognitiva:", list(TAXONOMIA_BLOOM.keys()))
         
-        # 2. Mostra Multiselect apenas para essa categoria
-        with col_b2:
-            selecao_atual = st.multiselect(
-                f"Verbos de '{cat_atual}':", 
-                TAXONOMIA_BLOOM[cat_atual],
-                default=st.session_state.bloom_memoria[cat_atual],
-                key=f"ms_bloom_{cat_atual}"
-            )
-            
-            # 3. Atualiza a memória com o que o usuário acabou de mexer
-            st.session_state.bloom_memoria[cat_atual] = selecao_atual
+        # 2. Mostra Multiselect apenas para essa categoria, carregando o que já estava na memória
+        selecao_atual = col_b2.multiselect(
+            f"Verbos de '{cat_atual}':", 
+            TAXONOMIA_BLOOM[cat_atual],
+            default=st.session_state.bloom_memoria[cat_atual],
+            key=f"ms_bloom_{cat_atual}" # Chave única para o widget
+        )
+        
+        # 3. Atualiza a memória com o que o usuário acabou de mexer
+        st.session_state.bloom_memoria[cat_atual] = selecao_atual
         
         # 4. Agrega tudo para mostrar ao usuário e enviar para a IA
         for cat in st.session_state.bloom_memoria:
             verbos_finais_para_ia.extend(st.session_state.bloom_memoria[cat])
         
         if verbos_finais_para_ia:
-            st.info(f"**Verbos Selecionados:** {', '.join(verbos_finais_para_ia)}")
+            st.info(f"**Verbos Tagueados (Total):** {', '.join(verbos_finais_para_ia)}")
         else:
             st.caption("Nenhum verbo selecionado ainda.")
-    
-    # --- BOTÃO PARA GERAR ---
-    st.markdown("---")
-    col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 1])
-    
-    with col_btn2:
-        if st.button("✨ CRIAR ATIVIDADE", type="primary", key="btn_c", use_container_width=True):
-            if not api_key:
-                st.error("❌ Insira a chave da OpenAI no sidebar")
-            else:
-                with st.spinner("Elaborando atividade..."):
-                    qtd_final = qtd_img_sel if usar_img else 0
-                    
-                    # Passamos a lista agregada 'verbos_finais_para_ia'
-                    rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, 
-                                                 qtd_final, verbos_bloom=verbos_finais_para_ia if usar_bloom else None)
-                    
-                    # Processar imagens se houver
-                    novo_map = {}
-                    count = 0
-                    tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', txt)
-                    
-                    for p in tags:
-                        count += 1
-                        # Prioridade BANCO, depois IA
-                        url = gerar_imagem_inteligente(api_key, p, unsplash_key, prioridade="BANCO")
-                        if url:
-                            io = baixar_imagem_url(url)
-                            if io: 
-                                novo_map[count] = io.getvalue()
-                    
-                    # Substituir tags GEN_IMG por IMG_G
-                    txt_fin = txt
-                    for i in range(1, count + 1): 
-                        txt_fin = re.sub(r'\[\[GEN_IMG: .*?\]\]', f"[[IMG_G{i}]]", txt_fin, count=1)
-                    
-                    # Salvar no session state
-                    st.session_state['res_create'] = {
-                        'rac': rac, 
-                        'txt': txt_fin, 
-                        'map': novo_map, 
-                        'valid': False,
-                        'mat_c': mat_c,
-                        'obj_c': obj_c
-                    }
-                    st.rerun()
-    
-    # --- EXIBIÇÃO DO RESULTADO ---
+    # ---------------------
+
+    if st.button("✨ CRIAR ATIVIDADE", type="primary", key="btn_c"):
+        with st.spinner("Elaborando..."):
+            qtd_final = qtd_img_sel if usar_img else 0
+            
+            # Passamos a lista agregada 'verbos_finais_para_ia'
+            rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, verbos_bloom=verbos_finais_para_ia if usar_bloom else None)
+            
+            novo_map = {}; count = 0
+            tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', txt)
+            for p in tags:
+                count += 1
+                # MUDANÇA: Prioridade BANCO, depois IA
+                url = gerar_imagem_inteligente(api_key, p, unsplash_key, prioridade="BANCO")
+                if url:
+                    io = baixar_imagem_url(url)
+                    if io: novo_map[count] = io.getvalue()
+            txt_fin = txt
+            for i in range(1, count + 1): 
+                txt_fin = re.sub(r'\[\[GEN_IMG: .*?\]\]', f"[[IMG_G{i}]]", txt_fin, count=1)
+            st.session_state['res_create'] = {'rac': rac, 'txt': txt_fin, 'map': novo_map, 'valid': False}
+            st.rerun()
+
     if 'res_create' in st.session_state:
         res = st.session_state['res_create']
-        
-        st.markdown("---")
-        st.markdown(f"### 📋 Atividade Criada: {res.get('mat_c', '')} - {res.get('obj_c', '')}")
-        
-        # Barra de status
         if res.get('valid'):
-            st.success("✅ **ATIVIDADE VALIDADA E PRONTA PARA USO**")
+            st.markdown("<div class='validado-box'>✅ VALIDADO!</div>", unsafe_allow_html=True)
         else:
-            col_val, col_ajust, col_desc = st.columns(3)
-            with col_val:
-                if st.button("✅ Validar Atividade", key="val_c", use_container_width=True):
-                    st.session_state['res_create']['valid'] = True
-                    st.rerun()
-            with col_ajust:
-                if st.button("🔄 Refazer com Ajustes", key="redo_c", use_container_width=True):
+            col_v, col_r = st.columns([1, 1])
+            if col_v.button("✅ Validar", key="val_c"): st.session_state['res_create']['valid'] = True; st.rerun()
+            if col_r.button("🧠 Refazer (+Profundo)", key="redo_c"):
+                with st.spinner("Refazendo..."):
+                    qtd_final = qtd_img_sel if usar_img else 0
+                    # Mesmo aqui, passamos a lista agregada atualizada
+                    verbos_profundos = []
+                    if usar_bloom:
+                         for cat in st.session_state.bloom_memoria:
+                            verbos_profundos.extend(st.session_state.bloom_memoria[cat])
+
+                    rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, verbos_bloom=verbos_profundos if usar_bloom else None, modo_profundo=True)
+                    st.session_state['res_create']['rac'] = rac
+                    st.session_state['res_create']['txt'] = txt
                     st.session_state['res_create']['valid'] = False
-                    # Aqui você poderia adicionar lógica para ajustes
-                    st.info("Para ajustes, modifique os parâmetros acima e clique em 'CRIAR ATIVIDADE' novamente.")
-            with col_desc:
-                if st.button("🗑️ Descartar", key="del_c", use_container_width=True):
-                    del st.session_state['res_create']
                     st.rerun()
-        
-        # Análise Pedagógica
-        if res.get('rac'):
-            with st.expander("🧠 Análise Pedagógica (clique para expandir)"):
-                st.markdown(res['rac'])
-        
-        # Atividade Gerada
-        st.markdown("#### 📝 Atividade Gerada")
+
+        st.markdown(f"<div class='analise-box'><div class='analise-title'>🧠 Análise Pedagógica</div>{res['rac']}</div>", unsafe_allow_html=True)
         with st.container(border=True):
             partes = re.split(r'(\[\[IMG_G\d+\]\])', res['txt'])
             for p in partes:
@@ -1885,111 +1831,15 @@ with tabs[2]:
                 if tag:
                     i = int(tag.group(1))
                     im = res['map'].get(i)
-                    if im: 
-                        st.image(im, width=300)
-                elif p.strip(): 
-                    st.markdown(p.strip())
+                    if im: st.image(im, width=300)
+                elif p.strip(): st.markdown(p.strip())
         
-        # Botões de Download
-        st.markdown("---")
-        st.markdown("### 📥 Download")
-        col_down1, col_down2, col_down3 = st.columns(3)
+        c_down1, c_down2 = st.columns(2)
+        docx = construir_docx_final(res['txt'], aluno, mat_c, {}, None, "Criada")
+        c_down1.download_button("📥 DOCX", docx, "Criada.docx", "primary")
         
-        with col_down1:
-            # DOCX com atividade
-            docx = construir_docx_final(res['txt'], aluno, mat_c, {}, None, "Criada")
-            st.download_button(
-                label="📄 Baixar DOCX",
-                data=docx,
-                file_name=f"Atividade_{mat_c}_{date.today().strftime('%Y%m%d')}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True
-            )
-        
-        with col_down2:
-            # PDF
-            pdf_bytes = criar_pdf_generico(res['txt'])
-            st.download_button(
-                label="📕 Baixar PDF",
-                data=pdf_bytes,
-                file_name=f"Atividade_{mat_c}_{date.today().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-        
-        with col_down3:
-            # Apenas o texto
-            st.download_button(
-                label="📝 Baixar Texto",
-                data=res['txt'],
-                file_name=f"Atividade_{mat_c}_{date.today().strftime('%Y%m%d')}.txt",
-                mime="text/plain",
-                use_container_width=True
-            )
-        # ---------------------
-
-        if st.button("✨ CRIAR ATIVIDADE", type="primary", key="btn_c"):
-            with st.spinner("Elaborando..."):
-                qtd_final = qtd_img_sel if usar_img else 0
-                
-                # Passamos a lista agregada 'verbos_finais_para_ia'
-                rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, verbos_bloom=verbos_finais_para_ia if usar_bloom else None)
-                
-                novo_map = {}; count = 0
-                tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', txt)
-                for p in tags:
-                    count += 1
-                    # MUDANÇA: Prioridade BANCO, depois IA
-                    url = gerar_imagem_inteligente(api_key, p, unsplash_key, prioridade="BANCO")
-                    if url:
-                        io = baixar_imagem_url(url)
-                        if io: novo_map[count] = io.getvalue()
-                txt_fin = txt
-                for i in range(1, count + 1): 
-                    txt_fin = re.sub(r'\[\[GEN_IMG: .*?\]\]', f"[[IMG_G{i}]]", txt_fin, count=1)
-                st.session_state['res_create'] = {'rac': rac, 'txt': txt_fin, 'map': novo_map, 'valid': False}
-                st.rerun()
-
-        if 'res_create' in st.session_state:
-            res = st.session_state['res_create']
-            if res.get('valid'):
-                st.markdown("<div class='validado-box'>✅ VALIDADO!</div>", unsafe_allow_html=True)
-            else:
-                col_v, col_r = st.columns([1, 1])
-                if col_v.button("✅ Validar", key="val_c"): st.session_state['res_create']['valid'] = True; st.rerun()
-                if col_r.button("🧠 Refazer (+Profundo)", key="redo_c"):
-                    with st.spinner("Refazendo..."):
-                        qtd_final = qtd_img_sel if usar_img else 0
-                        # Mesmo aqui, passamos a lista agregada atualizada
-                        verbos_profundos = []
-                        if usar_bloom:
-                             for cat in st.session_state.bloom_memoria:
-                                verbos_profundos.extend(st.session_state.bloom_memoria[cat])
-
-                        rac, txt = criar_profissional(api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final, verbos_bloom=verbos_profundos if usar_bloom else None, modo_profundo=True)
-                        st.session_state['res_create']['rac'] = rac
-                        st.session_state['res_create']['txt'] = txt
-                        st.session_state['res_create']['valid'] = False
-                        st.rerun()
-
-            st.markdown(f"<div class='analise-box'><div class='analise-title'>🧠 Análise Pedagógica</div>{res['rac']}</div>", unsafe_allow_html=True)
-            with st.container(border=True):
-                partes = re.split(r'(\[\[IMG_G\d+\]\])', res['txt'])
-                for p in partes:
-                    tag = re.search(r'\[\[IMG_G(\d+)\]\]', p)
-                    if tag:
-                        i = int(tag.group(1))
-                        im = res['map'].get(i)
-                        if im: st.image(im, width=300)
-                    elif p.strip(): st.markdown(p.strip())
-            
-            c_down1, c_down2 = st.columns(2)
-            docx = construir_docx_final(res['txt'], aluno, mat_c, {}, None, "Criada")
-            c_down1.download_button("📥 DOCX", docx, "Criada.docx", "primary")
-            
-            pdf_bytes = criar_pdf_generico(res['txt'])
-            c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Criada.pdf", mime="application/pdf", type="secondary")
-
+        pdf_bytes = criar_pdf_generico(res['txt'])
+        c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Criada.pdf", mime="application/pdf", type="secondary")
     # 4. ESTÚDIO VISUAL (ATUALIZADO COM FEEDBACK)
     with tabs[3]:
         st.markdown("""
