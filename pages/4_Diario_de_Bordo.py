@@ -25,214 +25,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# CABEÇALHO + MENU FIXO (ADICIONADO)
-# ==============================================================================
-import streamlit as st
-import base64
-import os
-from streamlit_option_menu import option_menu
-
-# FUNÇÃO DO CABEÇALHO
-def _render_header():
-    def _get_img_b64(filename): 
-        if os.path.exists(filename):
-            with open(filename, "rb") as f:
-                return base64.b64encode(f.read()).decode()
-        return ""
-    
-    def _get_initials(nome): 
-        if not nome: return "U"
-        parts = nome.strip().split()
-        if len(parts) >= 2:
-            return f"{parts[0][0]}{parts[-1][0]}".upper()
-        return parts[0][:2].upper()
-    
-    def _get_ws_short(max_len=20): 
-        ws = st.session_state.get("workspace_name", "") or "Workspace"
-        return (ws[:max_len] + "...") if len(ws) > max_len else ws
-    
-    # CSS DO CABEÇALHO
-    st.markdown("""
-    <style>
-        /* TOPBAR FIXA */
-        .topbar-thin {
-            position: fixed; top: 0; left: 0; right: 0; height: 50px;
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid #E2E8F0;
-            z-index: 9999;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 2rem;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-        
-        /* ELEMENTOS DA MARCA */
-        .brand-box { display: flex; align-items: center; gap: 8px; }
-        .brand-logo { 
-            height: 28px !important; width: auto !important; 
-            animation: spin-logo 60s linear infinite; 
-        }
-        .brand-img-text { height: 16px !important; width: auto; margin-left: 6px; }
-
-        /* BADGES DO USUÁRIO */
-        .user-badge-thin { 
-            background: #F1F5F9; border: 1px solid #E2E8F0; 
-            padding: 2px 8px; border-radius: 10px; 
-            font-size: 0.65rem; font-weight: 700; color: #64748B; 
-        }
-        .apple-avatar-thin { 
-            width: 26px; height: 26px; border-radius: 50%; 
-            background: linear-gradient(135deg, #4F46E5, #7C3AED); 
-            color: white; display: flex; align-items: center; 
-            justify-content: center; font-weight: 700; font-size: 0.65rem; 
-        }
-
-        /* ANIMAÇÃO */
-        @keyframes spin-logo { 100% { transform: rotate(360deg); } }
-        
-        /* AJUSTE RESPONSIVO */
-        @media (max-width: 768px) { .topbar-thin { padding: 0 1rem; } }
-        
-        /* AJUSTE DO CONTEÚDO DA PÁGINA PARA NÃO FICAR ESCONDIDO ATRÁS DA BARRA */
-        .block-container { 
-            padding-top: 3rem !important; /* ESPAÇO PARA O CABEÇALHO + MENU */
-            padding-bottom: 3rem; 
-        }
-        
-        /* Remove a barra de topo padrão do Streamlit visualmente */
-        header[data-testid="stHeader"] {
-            background-color: transparent !important;
-            z-index: 1;
-        }
-        
-        /* Esconder elementos nativos desnecessários */
-        [data-testid="stSidebarNav"], footer { display: none !important; }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # DADOS DINÂMICOS
-    icone = _get_img_b64("omni_icone.png")
-    texto = _get_img_b64("omni_texto.png")
-    ws_name = _get_ws_short()
-    user_name = st.session_state.get("usuario_nome", "Visitante")
-    
-    # FALLBACKS PARA IMAGENS
-    img_logo = f'<img src="data:image/png;base64,{icone}" class="brand-logo">' if icone else "🌐"
-    img_text = f'<img src="data:image/png;base64,{texto}" class="brand-img-text">' if texto else "<span style='font-weight:800;color:#2B3674;'>OMNISFERA</span>"
-
-    # RENDERIZAÇÃO
-    st.markdown(f"""
-        <div class="topbar-thin">
-            <div class="brand-box">
-                {img_logo}
-                {img_text}
-            </div>
-            <div class="brand-box">
-                <div class="user-badge-thin">{ws_name}</div>
-                <div class="apple-avatar-thin">{_get_initials(user_name)}</div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-# FUNÇÃO DO MENU
-def _render_navbar(selected_idx):
-    """
-    selected_idx: 0=Início, 1=Estudantes, 2=Estratégias&PEI, 3=PlanoAção, 4=Hub, 5=Diário, 6=Evolução
-    """
-    # ÍCONES
-    st.markdown('<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">', unsafe_allow_html=True)
-    
-    # OPÇÕES DO MENU
-    selected = option_menu(
-        menu_title=None,
-        options=[
-            "Início", 
-            "Estudantes", 
-            "Estratégias & PEI", 
-            "Plano de Ação (AEE)", 
-            "Hub de Recursos", 
-            "Diário de Bordo", 
-            "Evolução & Dados"
-        ],
-        icons=[
-            "house", 
-            "people", 
-            "book", 
-            "puzzle", 
-            "rocket", 
-            "journal", 
-            "bar-chart"
-        ],
-        default_index=selected_idx,
-        orientation="horizontal",
-        styles={
-            "container": {
-                "padding": "0!important", 
-                "background-color": "#ffffff", 
-                "border": "1px solid #E2E8F0", 
-                "border-radius": "10px", 
-                "margin-bottom": "10px"
-            },
-            "icon": {"color": "#64748B", "font-size": "14px"}, 
-            "nav-link": {
-                "font-size": "11px", 
-                "text-align": "center", 
-                "margin": "0px", 
-                "--hover-color": "#F1F5F9", 
-                "color": "#475569", 
-                "white-space": "nowrap"
-            },
-            "nav-link-selected": {
-                "background-color": "#0284C7", 
-                "color": "white", 
-                "font-weight": "600"
-            },
-        }
-    )
-    
-    # NAVEGAÇÃO
-    if selected == "Início":
-        target = "pages/0_Home.py" if os.path.exists("pages/0_Home.py") else "0_Home.py"
-        if not os.path.exists(target): 
-            target = "Home.py"
-        st.switch_page(target)
-    elif selected == "Estudantes": 
-        st.switch_page("pages/Alunos.py")
-    elif selected == "Estratégias & PEI": 
-        st.switch_page("pages/1_PEI.py")
-    elif selected == "Plano de Ação (AEE)": 
-        st.switch_page("pages/2_PAE.py")
-    elif selected == "Hub de Recursos": 
-        st.switch_page("pages/3_Hub_Inclusao.py")
-    elif selected == "Diário de Bordo": 
-        st.switch_page("pages/4_Diario_de_Bordo.py")
-    elif selected == "Evolução & Dados": 
-        st.switch_page("pages/5_Monitoramento_Avaliacao.py")
-
-# VERIFICAÇÃO DE AUTENTICAÇÃO (PARA PÁGINAS QUE PRECISAM)
-def _check_auth():
-    if "autenticado" not in st.session_state:
-        st.session_state.autenticado = False
-    
-    if not st.session_state.autenticado:
-        st.warning("🔒 Acesso restrito. Faça login na Home.")
-        st.stop()
-
-# CHAMADAS PRINCIPAIS (AJUSTE O ÍNDICE!)
-# ==============================================================================
-# PASSO 1: Renderizar cabeçalho
-_render_header()
-
-# PASSO 2: Renderizar menu (AJUSTE ESTE ÍNDICE!)
-# 0=Início, 1=Estudantes, 2=Estratégias&PEI, 3=PlanoAção, 4=Hub, 5=Diário, 6=Evolução
-_render_navbar(5)  # ← ÍNDICE 5 PARA "Diário de Bordo"
-
-# PASSO 3: Verificar autenticação (REMOVA ESTA LINHA PARA A PÁGINA DE LOGIN!)
-_check_auth()  # ← MANTENHA PARA DIÁRIO DE BORDO
-
-# ==============================================================================
-# BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA (MODIFICADO)
+# BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA
 # ==============================================================================
 try:
     IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
@@ -256,12 +49,24 @@ else:
     card_bg = "rgba(255, 255, 255, 0.85)"
     card_border = "rgba(255, 255, 255, 0.6)"
 
-# REMOVEMOS O OLD OMNIBADGE QUE FICAVA NO TOPO
-# AGORA TEMOS APENAS O CSS RESTANTE
 st.markdown(f"""
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 
 <style>
+    /* CARD FLUTUANTE (OMNISFERA) */
+    .omni-badge {{
+        position: fixed; top: 15px; right: 15px;
+        background: {card_bg}; border: 1px solid {card_border};
+        backdrop-filter: blur(8px); padding: 4px 30px;
+        min-width: 260px; justify-content: center;
+        border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        z-index: 999990; display: flex; align-items: center; gap: 10px;
+        pointer-events: none;
+    }}
+    .omni-text {{ font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 0.9rem; color: #2D3748; letter-spacing: 1px; text-transform: uppercase; }}
+    @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
+    .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
+
     /* CARD HERO */
     .mod-card-wrapper {{ display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); }}
     .mod-card-rect {{ background: white; border-radius: 16px 16px 0 0; padding: 0; border: 1px solid #E2E8F0; border-bottom: none; display: flex; flex-direction: row; align-items: center; height: 130px; width: 100%; position: relative; overflow: hidden; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }}
@@ -364,10 +169,15 @@ st.markdown(f"""
         padding: 15px;
     }}
 </style>
+
+<div class="omni-badge">
+    <img src="{src_logo_giratoria}" class="omni-logo-spin">
+    <span class="omni-text">OMNISFERA PAEE</span>
+</div>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# FUNÇÃO DE VERIFICAÇÃO DE ACESSO (ORIGINAL)
+# FUNÇÃO DE VERIFICAÇÃO DE ACESSO
 # ==============================================================================
 def verificar_acesso():
     if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
@@ -378,7 +188,7 @@ def verificar_acesso():
 verificar_acesso()
 
 # ==============================================================================
-# CARD HERO PRINCIPAL (CONTINUA IGUAL)
+# CARD HERO PRINCIPAL
 # ==============================================================================
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
@@ -408,7 +218,7 @@ st.markdown(
 )
 
 # ==============================================================================
-# FUNÇÕES SUPABASE (REST) - CONTINUA IGUAL
+# FUNÇÕES SUPABASE (REST)
 # ==============================================================================
 def _sb_url() -> str:
     url = str(st.secrets.get("SUPABASE_URL", "")).strip()
@@ -427,10 +237,8 @@ def _headers() -> dict:
     return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
 
 # ==============================================================================
-# O RESTO DO CÓDIGO CONTINUA EXATAMENTE IGUAL A PARTIR DAQUI
-# ==============================================================================
-
 # FUNÇÕES DO DIÁRIO DE BORDO
+# ==============================================================================
 def carregar_alunos_workspace():
     """Carrega alunos do workspace atual"""
     WORKSPACE_ID = st.session_state.get("workspace_id")
@@ -538,7 +346,7 @@ def excluir_registro_diario(registro_id):
         return False
 
 # ==============================================================================
-# SIDEBAR - FILTROS E NAVEGAÇÃO (CONTINUA IGUAL)
+# SIDEBAR - FILTROS E NAVEGAÇÃO
 # ==============================================================================
 with st.sidebar:
     try: 
@@ -617,7 +425,7 @@ with st.sidebar:
         st.info("Nenhum registro encontrado.")
 
 # ==============================================================================
-# ABA PRINCIPAL - DIÁRIO DE BORDO (CONTINUA IGUAL)
+# ABA PRINCIPAL - DIÁRIO DE BORDO
 # ==============================================================================
 
 # Criar abas
@@ -626,7 +434,7 @@ tab_novo, tab_lista, tab_relatorios, tab_config = st.tabs([
 ])
 
 # ==============================================================================
-# ABA 1: NOVO REGISTRO (CONTINUA IGUAL)
+# ABA 1: NOVO REGISTRO
 # ==============================================================================
 with tab_novo:
     st.markdown("### 📝 Nova Sessão de AEE")
@@ -865,7 +673,7 @@ with tab_novo:
                         st.error(f"❌ Erro ao salvar: {resultado.get('erro', 'Erro desconhecido')}")
 
 # ==============================================================================
-# ABA 2: LISTA DE REGISTROS (CONTINUA IGUAL)
+# ABA 2: LISTA DE REGISTROS
 # ==============================================================================
 with tab_lista:
     st.markdown("### 📋 Registros de Atendimento")
@@ -985,7 +793,7 @@ with tab_lista:
             st.markdown(f"**Mostrando {min(10, len(registros_filtrados))} de {len(registros_filtrados)} registros**")
 
 # ==============================================================================
-# ABA 3: RELATÓRIOS (CONTINUA IGUAL)
+# ABA 3: RELATÓRIOS
 # ==============================================================================
 with tab_relatorios:
     st.markdown("### 📊 Relatórios e Análises")
@@ -1151,7 +959,7 @@ with tab_relatorios:
                     st.json(relatorio)
 
 # ==============================================================================
-# ABA 4: CONFIGURAÇÕES (CONTINUA IGUAL)
+# ABA 4: CONFIGURAÇÕES
 # ==============================================================================
 with tab_config:
     st.markdown("### ⚙️ Configurações do Diário")
@@ -1263,7 +1071,7 @@ with tab_config:
             """)
 
 # ==============================================================================
-# RODAPÉ (CONTINUA IGUAL)
+# RODAPÉ
 # ==============================================================================
 st.markdown("---")
 st.markdown("""
