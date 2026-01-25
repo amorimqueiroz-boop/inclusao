@@ -147,6 +147,45 @@ with st.sidebar:
         st.switch_page("Home.py")
     st.markdown("---")
 
+
+st.markdown("""
+<div class="header-hub">
+    <div style="font-size:42px; color:#0D9488;">
+        <i class="ri-compass-3-line"></i>
+    </div>
+    <div>
+        <div style="
+            font-size:0.75rem;
+            font-weight:800;
+            letter-spacing:1px;
+            text-transform:uppercase;
+            color:#64748B;
+        ">
+            Hub de Inclusão • Omnisfera
+        </div>
+        <div style="
+            font-size:1.4rem;
+            font-weight:900;
+            color:#0F172A;
+            line-height:1.2;
+            margin-top:4px;
+        ">
+            Estratégias, Recursos Visuais e Adaptações Pedagógicas
+        </div>
+        <div style="
+            font-size:0.95rem;
+            color:#475569;
+            margin-top:6px;
+            max-width:720px;
+        ">
+            Este módulo transforma o PEI em ação prática: atividades adaptadas, experiências lúdicas,
+            recursos visuais, comunicação alternativa (CAA) e estratégias inclusivas alinhadas à BNCC e ao DUA.
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+
 # ==============================================================================
 # 2. O CÓDIGO DO HUB DE INCLUSÃO
 # ==============================================================================
