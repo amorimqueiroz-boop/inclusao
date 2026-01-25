@@ -267,121 +267,87 @@ st.markdown(
 
 
 # ==============================================================================
-# BLOCO BNCC - VERSÃO CORRIGIDA (COM NOMES EXATOS DAS COLUNAS)
+# BLOCO BNCC - VERSÃO SIMPLES E FUNCIONAL
 # ==============================================================================
 import pandas as pd
 import os
 
 def carregar_bncc():
-    """Carrega o CSV da BNCC usando os nomes exatos das colunas"""
+    """Carrega o CSV da BNCC - versão mais simples possível"""
     try:
         # Verificar se o arquivo existe
         if not os.path.exists('bncc.csv'):
             return None
         
-        # Ler o CSV - tentar diferentes delimitadores
-        try:
-            df = pd.read_csv('bncc.csv', delimiter=',', encoding='utf-8')
-        except:
-            try:
-                df = pd.read_csv('bncc.csv', delimiter=';', encoding='utf-8')
-            except:
-                return None
+        # Ler o CSV
+        df = pd.read_csv('bncc.csv', delimiter=',', encoding='utf-8')
         
-        # Mostrar as colunas carregadas para debug
-        st.sidebar.info(f"📋 Colunas carregadas: {list(df.columns)}")
-        
-        # Padronizar nomes das colunas (remover espaços extras)
-        df.columns = [col.strip() for col in df.columns]
-        
-        # Verificar se as colunas necessárias existem
-        colunas_necessarias = ['Ano', 'Disciplina', 'Objeto do Conhecimento']
-        for col in colunas_necessarias:
-            if col not in df.columns:
-                st.sidebar.error(f"❌ Coluna '{col}' não encontrada no CSV")
-                return None
-        
-        st.sidebar.success(f"✅ BNCC carregada: {len(df)} registros")
+        # Retornar dados brutos
         return df
     
-    except Exception as e:
-        st.sidebar.error(f"❌ Erro ao carregar: {str(e)[:100]}")
+    except:
         return None
 
-def criar_dropdowns_bncc_corrigido():
-    """Cria dropdowns hierárquicos com nomes de colunas corrigidos"""
+def criar_dropdowns_simples():
+    """Cria dropdowns hierárquicos simples"""
     
-    # Carregar dados se necessário
-    if 'bncc_data' not in st.session_state:
+    # Carregar dados
+    if 'dados_bncc' not in st.session_state:
         df = carregar_bncc()
-        st.session_state.bncc_data = df if df is not None else None
+        if df is not None:
+            st.session_state.dados_bncc = df
+        else:
+            st.session_state.dados_bncc = None
     
-    dados = st.session_state.bncc_data
+    dados = st.session_state.dados_bncc
     
-    # Se não tem dados, mostrar campos básicos
+    # Se não tem dados, mostrar campos simples
     if dados is None or dados.empty:
         col1, col2, col3 = st.columns(3)
         with col1:
-            ano = st.selectbox("Ano", ["1", "2", "3", "4", "5", "6", "7", "8", "9", "1EM", "2EM", "3EM"], 
-                              key="ano_fallback")
+            ano = st.selectbox("Ano", ["5", "6", "7", "8", "9"], key="ano_simples")
         with col2:
             disciplina = st.selectbox("Disciplina", 
-                ["Matemática", "Português", "Ciências", "História", "Geografia", 
-                 "Artes", "Ed. Física", "Inglês", "Filosofia", "Sociologia"], 
-                key="disc_fallback")
+                ["Matemática", "Português", "Ciências", "História", "Geografia"], 
+                key="disc_simples")
         with col3:
-            objeto = st.text_input("Objeto do Conhecimento", placeholder="Ex: Frações", 
-                                  key="obj_fallback")
+            objeto = st.text_input("Objeto", placeholder="Digite o objeto", key="obj_simples")
         return ano, disciplina, objeto
     
-    # TEMOS DADOS - criar dropdowns conectados
+    # Se tem dados, criar dropdowns conectados
     col1, col2, col3 = st.columns(3)
     
     with col1:
         # Anos disponíveis
-        anos = sorted(dados['Ano'].dropna().astype(str).unique())
-        ano_selecionado = st.selectbox("Ano", anos, key="ano_bncc_main")
+        anos = sorted(dados['Ano'].dropna().unique().astype(str))
+        ano_selecionado = st.selectbox("Ano", anos, key="ano_bncc")
     
     with col2:
         # Disciplinas para o ano selecionado
         if ano_selecionado:
-            # Converter para string para comparação
-            dados_filtrados = dados[dados['Ano'].astype(str) == str(ano_selecionado)]
-            disciplinas = sorted(dados_filtrados['Disciplina'].dropna().unique())
-            
-            if len(disciplinas) > 0:
-                disciplina_selecionada = st.selectbox("Disciplina", disciplinas, key="disc_bncc_main")
-            else:
-                disciplina_selecionada = st.selectbox("Disciplina", ["Nenhuma encontrada"], 
-                                                     key="disc_bncc_empty")
-        else:
-            disciplina_selecionada = None
+            disc_df = dados[dados['Ano'].astype(str) == str(ano_selecionado)]
+            disciplinas = sorted(disc_df['Disciplina'].dropna().unique())
+            disciplina_selecionada = st.selectbox("Disciplina", disciplinas, key="disc_bncc")
     
     with col3:
         # Objetos para ano e disciplina selecionados
-        if ano_selecionado and disciplina_selecionada and disciplina_selecionada != "Nenhuma encontrada":
-            # Filtrar por ano E disciplina
-            dados_filtrados = dados[
+        if ano_selecionado and 'disciplina_selecionada' in locals():
+            obj_df = dados[
                 (dados['Ano'].astype(str) == str(ano_selecionado)) & 
                 (dados['Disciplina'] == disciplina_selecionada)
             ]
+            objetos = sorted(obj_df['Objeto do Conhecimento'].dropna().unique())
             
-            # A coluna se chama 'Objeto do Conhecimento' (com espaço e acento)
-            objetos = sorted(dados_filtrados['Objeto do Conhecimento'].dropna().unique())
-            
-            if len(objetos) > 0:
-                objeto_selecionado = st.selectbox("Objeto do Conhecimento", objetos, 
-                                                 key="obj_bncc_main")
+            if objetos:
+                objeto_selecionado = st.selectbox("Objeto do Conhecimento", objetos, key="obj_bncc")
             else:
-                objeto_selecionado = st.text_input("Objeto do Conhecimento", 
-                                                  placeholder="Digite o objeto", 
-                                                  key="obj_input_bncc")
-        else:
-            objeto_selecionado = st.text_input("Objeto do Conhecimento", 
-                                              placeholder="Selecione ano e disciplina primeiro", 
-                                              key="obj_waiting")
+                objeto_selecionado = st.text_input("Objeto", placeholder="Digite o objeto", key="obj_input_bncc")
     
-    return ano_selecionado, disciplina_selecionada, objeto_selecionado
+            return ano_selecionado, disciplina_selecionada, objeto_selecionado
+
+
+
+
    
 # ==============================================================================
 # 2. O CÓDIGO DO HUB DE INCLUSÃO
