@@ -27,17 +27,8 @@ def get_base64_image(filename: str) -> str:
             return base64.b64encode(f.read()).decode()
     return ""
 
-def get_logo_base64():
-    """Fallback para a logo giratória"""
-    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
-    for c in caminhos:
-        if os.path.exists(c):
-            with open(c, "rb") as f:
-                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
-    return ""
-
 # ==============================================================================
-# BLOCO A — TOPBAR COM LOGO GIRANDO
+# BLOCO A — TOPBAR FIXA FINA COM LOGO GIRANDO (OCULTA HEADER NATIVO)
 # ==============================================================================
 def get_user_initials(nome: str) -> str:
     """Extrai as iniciais do nome do usuário"""
@@ -57,26 +48,13 @@ def get_workspace_short(max_len: int = 20) -> str:
     ws = st.session_state.get("workspace_name", "") or ""
     return (ws[:max_len] + "...") if len(ws) > max_len else ws
 
-def escola_vinculada() -> str:
-    """Retorna nome da escola formatado"""
-    workspace_name = st.session_state.get("workspace_name", "")
-    workspace_id = st.session_state.get("workspace_id", "")
-    
-    if workspace_name:
-        return workspace_name[:20] + "..." if len(workspace_name) > 20 else workspace_name
-    elif workspace_id:
-        return f"ID: {workspace_id[:8]}..."
-    return "Sem Escola"
-
-def render_topbar_with_spinning_logo():
-    """Renderiza a barra superior fixa com logo giratória"""
+def render_thin_topbar_with_spinning_logo():
+    """Renderiza a barra superior fixa FINA (65px) com logo giratória"""
     icone_b64 = get_base64_image("omni_icone.png")
     texto_b64 = get_base64_image("omni_texto.png")
-    workspace = escola_vinculada()
-    nome_user = get_user_first_name()
-    
-    # Avatar com iniciais
-    user_initials = get_user_initials(st.session_state.get("usuario_nome", "Visitante"))
+    ws_name = get_workspace_short()
+    user_first = get_user_first_name()
+    initials = get_user_initials(st.session_state.get("usuario_nome", "Visitante"))
     
     img_logo = (
         f'<img src="data:image/png;base64,{icone_b64}" class="brand-logo" alt="Omnisfera Logo">'
@@ -85,39 +63,20 @@ def render_topbar_with_spinning_logo():
     
     img_text = (
         f'<img src="data:image/png;base64,{texto_b64}" class="brand-img-text" alt="Omnisfera">'
-        if texto_b64 else "<span style='font-weight:800; font-size:1.2rem; color:#2B3674;'>OMNISFERA</span>"
+        if texto_b64 else "<span style='font-weight:800; color:#2B3674;'>OMNISFERA</span>"
     )
     
     st.markdown(
         f"""
-        <div class="topbar">
+        <div class="topbar-thin">
             <div class="brand-box">
                 {img_logo}
                 {img_text}
             </div>
-            <div class="brand-box" style="gap: 16px;">
-                <div class="user-badge">{workspace}</div>
-                <div style="
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    font-weight: 700;
-                    color: #334155;
-                ">
-                    <div style="
-                        width: 40px;
-                        height: 40px;
-                        border-radius: 50%;
-                        background: linear-gradient(135deg, #4F46E5, #7C3AED);
-                        color: white;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-weight: 800;
-                        font-size: 0.9rem;
-                    ">{user_initials}</div>
-                    <div>{nome_user}</div>
-                </div>
+            <div class="brand-box" style="gap: 12px;">
+                <div class="user-badge-thin">{ws_name}</div>
+                <div class="user-badge-thin">{user_first}</div>
+                <div class="apple-avatar-thin">{initials}</div>
             </div>
         </div>
         """,
@@ -125,55 +84,90 @@ def render_topbar_with_spinning_logo():
     )
 
 # ==============================================================================
-# BLOCO B — MENU DE ACESSO RÁPIDO
+# BLOCO B — MENU DE ACESSO RÁPIDO COM CORES (MODIFICADO)
 # ==============================================================================
-def render_quick_access_bar():
+def render_colored_quick_access_bar():
     """
     Menu compacto com botões coloridos logo abaixo do topo.
-    Observação: o CSS usa nth-of-type por coluna (1..7).
+    Cada botão tem uma cor de fundo sólida (não apenas borda).
     """
-    # CSS EXCLUSIVO DO MENU RÁPIDO
+    # CSS com cores sólidas para os botões
     st.markdown("""
     <style>
-        .qa-btn button {
+        .qa-btn-colored button {
             font-weight: 800 !important;
-            border-radius: 6px !important;
-            padding: 4px 0 !important;
-            font-size: 0.7rem !important;
+            border-radius: 8px !important;
+            padding: 8px 0 !important;
+            font-size: 0.75rem !important;
             text-transform: uppercase !important;
-            box-shadow: none !important;
-            min-height: 32px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            min-height: 36px !important;
             height: auto !important;
-            border-width: 1px !important;
+            border: none !important;
+            color: white !important;
+            transition: all 0.2s ease !important;
         }
 
-        /* 1. Início (Cinza) */
-        div[data-testid="column"]:nth-of-type(1) .qa-btn button { border-color:#64748B !important; color:#64748B !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(1) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+        .qa-btn-colored button:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+        }
 
-        /* 2. Estudantes (Indigo) */
-        div[data-testid="column"]:nth-of-type(2) .qa-btn button { border-color:#4F46E5 !important; color:#4F46E5 !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(2) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+        /* 1. INÍCIO - Cinza escuro */
+        div[data-testid="column"]:nth-of-type(1) .qa-btn-colored button { 
+            background: linear-gradient(135deg, #475569, #334155) !important;
+        }
+        div[data-testid="column"]:nth-of-type(1) .qa-btn-colored button:hover { 
+            background: linear-gradient(135deg, #334155, #1E293B) !important;
+        }
 
-        /* 3. PEI (Blue) */
-        div[data-testid="column"]:nth-of-type(3) .qa-btn button { border-color:#2563EB !important; color:#2563EB !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(3) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+        /* 2. ESTUDANTES - Índigo */
+        div[data-testid="column"]:nth-of-type(2) .qa-btn-colored button { 
+            background: linear-gradient(135deg, #4F46E5, #4338CA) !important;
+        }
+        div[data-testid="column"]:nth-of-type(2) .qa-btn-colored button:hover { 
+            background: linear-gradient(135deg, #4338CA, #3730A3) !important;
+        }
 
-        /* 4. AEE (Purple) */
-        div[data-testid="column"]:nth-of-type(4) .qa-btn button { border-color:#7C3AED !important; color:#7C3AED !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(4) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+        /* 3. PEI - Azul */
+        div[data-testid="column"]:nth-of-type(3) .qa-btn-colored button { 
+            background: linear-gradient(135deg, #2563EB, #1D4ED8) !important;
+        }
+        div[data-testid="column"]:nth-of-type(3) .qa-btn-colored button:hover { 
+            background: linear-gradient(135deg, #1D4ed8, #1E40AF) !important;
+        }
 
-        /* 5. Recursos (Teal) */
-        div[data-testid="column"]:nth-of-type(5) .qa-btn button { border-color:#0D9488 !important; color:#0D9488 !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(5) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+        /* 4. AEE - Roxo */
+        div[data-testid="column"]:nth-of-type(4) .qa-btn-colored button { 
+            background: linear-gradient(135deg, #7C3AED, #6D28D9) !important;
+        }
+        div[data-testid="column"]:nth-of-type(4) .qa-btn-colored button:hover { 
+            background: linear-gradient(135deg, #6D28D9, #5B21B6) !important;
+        }
 
-        /* 6. Diário (Rose) */
-        div[data-testid="column"]:nth-of-type(6) .qa-btn button { border-color:#E11D48 !important; color:#E11D48 !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(6) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+        /* 5. RECURSOS - Verde água */
+        div[data-testid="column"]:nth-of-type(5) .qa-btn-colored button { 
+            background: linear-gradient(135deg, #0D9488, #0F766E) !important;
+        }
+        div[data-testid="column"]:nth-of-type(5) .qa-btn-colored button:hover { 
+            background: linear-gradient(135deg, #0F766E, #115E59) !important;
+        }
 
-        /* 7. Dados (Sky) */
-        div[data-testid="column"]:nth-of-type(7) .qa-btn button { border-color:#0284C7 !important; color:#0284C7 !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(7) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+        /* 6. DIÁRIO - Rosa */
+        div[data-testid="column"]:nth-of-type(6) .qa-btn-colored button { 
+            background: linear-gradient(135deg, #E11D48, #BE123C) !important;
+        }
+        div[data-testid="column"]:nth-of-type(6) .qa-btn-colored button:hover { 
+            background: linear-gradient(135deg, #BE123C, #9F1239) !important;
+        }
+
+        /* 7. DADOS - Azul claro */
+        div[data-testid="column"]:nth-of-type(7) .qa-btn-colored button { 
+            background: linear-gradient(135deg, #0284C7, #0369A1) !important;
+        }
+        div[data-testid="column"]:nth-of-type(7) .qa-btn-colored button:hover { 
+            background: linear-gradient(135deg, #0369A1, #075985) !important;
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -181,8 +175,8 @@ def render_quick_access_bar():
     c1, c2, c3, c4, c5, c6, c7 = st.columns(7, gap="small")
 
     def _wrap_button(label: str, on_click):
-        """Wrapper padrão para garantir que o CSS da classe qa-btn funcione."""
-        st.markdown('<div class="qa-btn">', unsafe_allow_html=True)
+        """Wrapper para botões com cores sólidas"""
+        st.markdown('<div class="qa-btn-colored">', unsafe_allow_html=True)
         st.button(label, use_container_width=True, on_click=on_click)
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -208,9 +202,9 @@ def render_quick_access_bar():
         _wrap_button("DADOS", on_click=lambda: st.switch_page("pages/5_Monitoramento_Avaliacao.py"))
 
 # ==============================================================================
-# 🔷 DESIGN SYSTEM COM TOPBAR, MENU RÁPIDO E SIDEBAR
+# 🔷 DESIGN SYSTEM COM TOPBAR FINA E MENU COLORIDO
 # ==============================================================================
-def _ui_home_block():
+def _ui_thin_topbar_design():
     st.markdown(
         """
 <style>
@@ -224,65 +218,94 @@ html, body, [class*="css"] {
     background-color: #F8FAFC !important;
 }
 
-/* --- TOPBAR FIXA COM LOGO GRANDE --- */
-.topbar {
+/* --- OCULTAR HEADER NATIVO DO STREAMLIT --- */
+[data-testid="stSidebarNav"],
+[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="collapsedControl"],
+footer {
+    display: none !important;
+}
+
+/* --- TOPBAR FINA (65px) COM LOGO GRANDE --- */
+.topbar-thin {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 80px;
-    background: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
+    height: 65px !important; /* MAIS FINA */
+    background: rgba(255, 255, 255, 0.97) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
     border-bottom: 1px solid #E2E8F0;
     z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 2.5rem;
+    padding: 0 1.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .brand-box {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .brand-logo {
-    height: 55px !important;
+    height: 40px !important; /* Ajustado para barra fina */
     width: auto !important;
-    animation: spin 45s linear infinite;
+    animation: spin 40s linear infinite;
     filter: brightness(1.1);
 }
 
 .brand-img-text {
-    height: 35px !important;
+    height: 22px !important; /* Ajustado para barra fina */
     width: auto;
-    margin-left: 10px;
+    margin-left: 8px;
 }
 
-.user-badge {
+.user-badge-thin {
     background: #F1F5F9;
     border: 1px solid #E2E8F0;
-    padding: 6px 14px;
-    border-radius: 99px;
-    font-size: 0.8rem;
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-size: 0.75rem;
     font-weight: 700;
-    color: #64748B;
-    letter-spacing: 0.5px;
+    color: #475569;
+    letter-spacing: 0.3px;
+}
+
+.apple-avatar-thin {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
 }
 
 /* Ajustar padding para compensar a topbar fixa */
 .block-container {
-    padding-top: 100px !important;
-    padding-bottom: 4rem !important;
+    padding-top: 85px !important; /* Ajustado para barra fina */
+    padding-bottom: 3rem !important;
     max-width: 95% !important;
     padding-left: 1rem !important;
     padding-right: 1rem !important;
 }
 
-/* ===== CARD HERO (ESTILO EXATO DA HOME) ===== */
+/* --- MENU RÁPIDO (abaixo da topbar) --- */
+.quick-access-container {
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+/* ===== CARD HERO ===== */
 .mod-card-wrapper {
     display: flex;
     flex-direction: column;
@@ -369,14 +392,14 @@ html, body, [class*="css"] {
     overflow: hidden;
 }
 
-/* CORES DOS CARDS - MESMA DA HOME */
+/* CORES DOS CARDS */
 .c-sky { background: #0284C7 !important; }
 .bg-sky-soft { 
     background: #F0F9FF !important;
     color: #0284C7 !important;
 }
 
-/* ===== BOTÕES ESTILIZADOS (SINCRONIZAR E LIXEIRA) ===== */
+/* ===== BOTÕES ===== */
 .btn-refresh {
     background: white !important;
     border: 1px solid #E2E8F0 !important;
@@ -424,41 +447,7 @@ html, body, [class*="css"] {
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15) !important;
 }
 
-.btn-confirm {
-    background: #DCFCE7 !important;
-    border: 1px solid #BBF7D0 !important;
-    color: #16A34A !important;
-    border-radius: 10px !important;
-    font-weight: 700 !important;
-    font-size: 0.8rem !important;
-    padding: 6px 12px !important;
-    transition: all 0.2s ease !important;
-}
-
-.btn-confirm:hover {
-    background: #BBF7D0 !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15) !important;
-}
-
-.btn-cancel {
-    background: #FEF3C7 !important;
-    border: 1px solid #FDE68A !important;
-    color: #D97706 !important;
-    border-radius: 10px !important;
-    font-weight: 700 !important;
-    font-size: 0.8rem !important;
-    padding: 6px 12px !important;
-    transition: all 0.2s ease !important;
-}
-
-.btn-cancel:hover {
-    background: #FDE68A !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15) !important;
-}
-
-/* ===== STUDENT TABLE (MELHORADA) ===== */
+/* ===== STUDENT TABLE ===== */
 .student-table {
     background: white;
     border-radius: 16px;
@@ -575,7 +564,7 @@ html, body, [class*="css"] {
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1) !important;
 }
 
-/* ===== BANNER DE CONFIRMAÇÃO DE EXCLUSÃO ===== */
+/* ===== BANNER DE CONFIRMAÇÃO ===== */
 .delete-confirm-banner {
     background: #FEF3C7;
     border: 1px solid #FDE68A;
@@ -600,10 +589,16 @@ html, body, [class*="css"] {
     .student-header, .student-row { grid-template-columns: 2.5fr 1fr 1fr 2fr 1fr; }
     .mod-card-rect { height: 120px; }
     .mod-icon-area { width: 80px; }
-    .topbar { padding: 0 1.5rem; }
 }
 
 @media (max-width: 768px) {
+    .topbar-thin { padding: 0 1rem; height: 60px !important; }
+    .brand-logo { height: 34px !important; }
+    .brand-img-text { display: none; }
+    .user-badge-thin { font-size: 0.7rem; padding: 4px 8px; }
+    .apple-avatar-thin { width: 32px; height: 32px; font-size: 0.75rem; }
+    .block-container { padding-top: 75px !important; }
+    
     .student-header, .student-row { grid-template-columns: 1fr; gap: 12px; }
     .student-header { display: none; }
     .mod-card-rect { 
@@ -620,9 +615,6 @@ html, body, [class*="css"] {
         border-bottom: 1px solid #F1F5F9;
     }
     .mod-content { padding: 16px 0 0 0; }
-    .topbar { padding: 0 1rem; }
-    .brand-img-text { display: none; }
-    .user-badge { display: none; }
 }
 </style>
         """,
@@ -630,7 +622,7 @@ html, body, [class*="css"] {
     )
 
 
-_ui_home_block()
+_ui_thin_topbar_design()
 
 # ==============================================================================
 # 🔒 VERIFICAÇÃO DE ACESSO
@@ -697,8 +689,8 @@ USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
 # ==============================================================================
 # ✅ RENDERIZAÇÃO DOS BLOCOS A e B
 # ==============================================================================
-render_topbar_with_spinning_logo()  # Bloco A - Topbar com logo girando
-render_quick_access_bar()  # Bloco B - Menu de acesso rápido
+render_thin_topbar_with_spinning_logo()  # Bloco A - Topbar fina com logo girando
+render_colored_quick_access_bar()  # Bloco B - Menu com cores sólidas
 
 # ==============================================================================
 # SIDEBAR PERSONALIZADA
@@ -750,7 +742,7 @@ with st.sidebar:
         st.switch_page("streamlit_app.py")
 
 # ==============================================================================
-# CARD HERO (ESTILO EXATO DA HOME COM HOVER)
+# CARD HERO
 # ==============================================================================
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
@@ -777,7 +769,7 @@ st.markdown(
 )
 
 # ==============================================================================
-# CONTROLES SUPERIORES COM BOTÃO ESTILIZADO
+# CONTROLES SUPERIORES
 # ==============================================================================
 col1, col2 = st.columns([3, 1], gap="medium")
 
@@ -791,12 +783,10 @@ with col1:
 
 with col2:
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-    # Botão estilizado usando CSS class personalizada
     if st.button("**🔄 Atualizar Lista**", key="btn_refresh", use_container_width=True):
         st.session_state["force_refresh"] = True
         st.rerun()
 
-# 🔥 Refresh automático se veio do PEI ou força manual
 force_refresh = st.session_state.pop("force_refresh", False) or st.session_state.pop("students_dirty", False)
 
 # ==============================================================================
@@ -808,7 +798,6 @@ def _sb_url() -> str:
         raise RuntimeError("SUPABASE_URL não encontrado nos secrets.")
     return url.rstrip("/")
 
-
 def _sb_key() -> str:
     key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "")).strip()
     if not key:
@@ -816,7 +805,6 @@ def _sb_key() -> str:
     if not key:
         raise RuntimeError("SUPABASE_SERVICE_KEY/ANON_KEY não encontrado nos secrets.")
     return key
-
 
 def _headers() -> dict:
     key = _sb_key()
@@ -826,10 +814,8 @@ def _headers() -> dict:
         "Content-Type": "application/json",
     }
 
-
 def _http_error(prefix: str, r: requests.Response):
     raise RuntimeError(f"{prefix}: {r.status_code} {r.text}")
-
 
 @st.cache_data(ttl=10, show_spinner=False)
 def list_students_rest(workspace_id: str):
@@ -845,7 +831,6 @@ def list_students_rest(workspace_id: str):
     data = r.json()
     return data if isinstance(data, list) else []
 
-
 def delete_student_rest(student_id: str, workspace_id: str):
     url = f"{_sb_url()}/rest/v1/students?id=eq.{student_id}&workspace_id=eq.{workspace_id}"
     h = _headers()
@@ -856,7 +841,7 @@ def delete_student_rest(student_id: str, workspace_id: str):
     return r.json()
 
 # ==============================================================================
-# CARREGAMENTO DOS DADOS COM CLEAR CACHE SE NECESSÁRIO
+# CARREGAMENTO DOS DADOS
 # ==============================================================================
 if force_refresh:
     try:
@@ -871,13 +856,12 @@ with st.spinner("Carregando estudantes..."):
         st.error(f"Erro ao carregar do Supabase: {e}")
         st.stop()
 
-# Filtro
 if q and q.strip():
     qq = q.strip().lower()
     alunos = [a for a in alunos if (a.get("name") or "").lower().find(qq) >= 0]
 
 # ==============================================================================
-# RENDERIZAÇÃO DOS ESTUDANTES
+# RENDERIZAÇÃO
 # ==============================================================================
 if not alunos:
     st.markdown(
@@ -886,7 +870,7 @@ if not alunos:
             <div class="empty-icon"><i class="ri-user-search-line"></i></div>
             <div class="empty-title">Nenhum estudante encontrado</div>
             <div class="empty-desc">
-                Este workspace ainda não possui estudantes cadastrados. 
+                Este workspace ainda não possui estudantes cadastrados.
                 Crie um PEI para começar a adicionar alunos.
             </div>
         </div>
@@ -895,9 +879,8 @@ if not alunos:
     )
     st.stop()
 
-# Header da tabela
 st.markdown(
-    f"""
+    """
     <div class="student-table">
         <div class="student-header">
             <div>Nome</div>
@@ -910,22 +893,19 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Contador
 st.caption(f"**{len(alunos)}** estudante(s) encontrado(s)")
 
-# Linhas dos estudantes
 for a in alunos:
     sid = a.get("id")
     nome = a.get("name") or "—"
     serie = a.get("grade") or "—"
     turma = a.get("class_group") or "—"
     diag = a.get("diagnosis") or "—"
-    
+
     confirm_key = f"confirm_del_{sid}"
     if confirm_key not in st.session_state:
         st.session_state[confirm_key] = False
-    
-    # Renderiza a linha
+
     st.markdown(
         f"""
         <div class="student-row">
@@ -937,29 +917,27 @@ for a in alunos:
         """,
         unsafe_allow_html=True,
     )
-    
-    # Controles de ação com botões estilizados
+
     if not st.session_state[confirm_key]:
-        col1, _ = st.columns([1, 5])
-        with col1:
-            # Botão de lixeira estilizado
-            if st.button("🗑️", key=f"del_{sid}", help="Apagar estudante", 
-                         use_container_width=True):
+        colx, _ = st.columns([1, 5])
+        with colx:
+            if st.button("🗑️", key=f"del_{sid}", help="Apagar estudante", use_container_width=True):
                 st.session_state[confirm_key] = True
                 st.rerun()
     else:
-        # Modal de confirmação com botões estilizados
-        st.markdown(f"""
-        <div class="delete-confirm-banner">
-            <i class="ri-alert-fill"></i>
-            <div>Confirmar exclusão de <strong>{nome}</strong>?</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("✅ Sim", key=f"yes_{sid}", use_container_width=True, 
-                        type="primary"):
+        st.markdown(
+            f"""
+            <div class="delete-confirm-banner">
+                <i class="ri-alert-fill"></i>
+                <div>Confirmar exclusão de <strong>{nome}</strong>?</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("✅ Sim", key=f"yes_{sid}", use_container_width=True, type="primary"):
                 try:
                     delete_student_rest(sid, WORKSPACE_ID)
                     list_students_rest.clear()
@@ -969,15 +947,15 @@ for a in alunos:
                 except Exception as e:
                     st.session_state[confirm_key] = False
                     st.error(f"Erro ao apagar: {e}")
-        
-        with col2:
+
+        with c2:
             if st.button("❌ Não", key=f"no_{sid}", use_container_width=True):
                 st.session_state[confirm_key] = False
                 st.rerun()
-    
+
     st.markdown("</div></div>", unsafe_allow_html=True)
 
-st.markdown("</div>", unsafe_allow_html=True)  # Fecha student-table
+st.markdown("</div>", unsafe_allow_html=True)
 
 # ==============================================================================
 # RODAPÉ
@@ -992,8 +970,8 @@ st.markdown(
         border-top: 1px solid #E2E8F0;
         margin-top: 40px;
     '>
-        <strong>Omnisfera {APP_VERSION}</strong> • Gestão de Estudantes • 
-        Workspace: {WORKSPACE_NAME[:30]} • 
+        <strong>Omnisfera {APP_VERSION}</strong> • Gestão de Estudantes •
+        Workspace: {WORKSPACE_NAME[:30]} •
         {datetime.now().strftime("%d/%m/%Y %H:%M")}
     </div>
     """,
