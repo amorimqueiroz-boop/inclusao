@@ -20,14 +20,113 @@ st.set_page_config(
 APP_VERSION = "v3.2 - Menu Ajustado (Mais Baixo)"
 
 # ==============================================================================
-# 2. DESIGN & CSS (AJUSTE DE POSIÇÃO)
+# 2. CABEÇALHO FIXO (TOP BAR)
+# ==============================================================================
+def render_omnisfera_header():
+    """
+    Renderiza o cabeçalho fixo (Topbar) com CSS injetado localmente.
+    """
+    
+    # Funções auxiliares internas
+    def _get_img_b64(filename: str) -> str:
+        if os.path.exists(filename):
+            with open(filename, "rb") as f:
+                return base64.b64encode(f.read()).decode()
+        return ""
+
+    def _get_initials(nome: str) -> str:
+        if not nome: return "U"
+        parts = nome.strip().split()
+        return f"{parts[0][0]}{parts[-1][0]}".upper() if len(parts) >= 2 else parts[0][:2].upper()
+
+    def _get_ws_short(max_len: int = 20) -> str:
+        ws = st.session_state.get("workspace_name", "") or "Workspace"
+        return (ws[:max_len] + "...") if len(ws) > max_len else ws
+
+    # CSS específico do Header
+    st.markdown("""
+    <style>
+        /* TOPBAR FIXA */
+        .topbar-thin {
+            position: fixed; top: 0; left: 0; right: 0; height: 50px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #E2E8F0;
+            z-index: 9999;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 2rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        
+        /* ELEMENTOS DA MARCA */
+        .brand-box { display: flex; align-items: center; gap: 8px; }
+        .brand-logo { 
+            height: 28px !important; width: auto !important; 
+            animation: spin-logo 60s linear infinite; 
+        }
+        .brand-img-text { height: 16px !important; width: auto; margin-left: 6px; }
+
+        /* BADGES DO USUÁRIO */
+        .user-badge-thin { 
+            background: #F1F5F9; border: 1px solid #E2E8F0; 
+            padding: 2px 8px; border-radius: 10px; 
+            font-size: 0.65rem; font-weight: 700; color: #64748B; 
+        }
+        .apple-avatar-thin { 
+            width: 26px; height: 26px; border-radius: 50%; 
+            background: linear-gradient(135deg, #4F46E5, #7C3AED); 
+            color: white; display: flex; align-items: center; 
+            justify-content: center; font-weight: 700; font-size: 0.65rem; 
+        }
+
+        /* ANIMAÇÃO */
+        @keyframes spin-logo { 100% { transform: rotate(360deg); } }
+        
+        /* AJUSTE RESPONSIVO */
+        @media (max-width: 768px) { .topbar-thin { padding: 0 1rem; } }
+        
+        /* AJUSTE DO CONTEÚDO DA PÁGINA PARA NÃO FICAR ESCONDIDO ATRÁS DA BARRA */
+        .block-container { padding-top: 100px !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Lógica de dados
+    icone = _get_img_b64("omni_icone.png")
+    texto = _get_img_b64("omni_texto.png")
+    ws_name = _get_ws_short()
+    user_name = st.session_state.get("usuario_nome", "Visitante")
+    
+    # Fallbacks caso não tenha imagem
+    img_logo = f'<img src="data:image/png;base64,{icone}" class="brand-logo">' if icone else "🌐"
+    img_text = f'<img src="data:image/png;base64,{texto}" class="brand-img-text">' if texto else "<span style='font-weight:800;color:#2B3674;'>OMNISFERA</span>"
+
+    # Renderização HTML
+    st.markdown(f"""
+        <div class="topbar-thin">
+            <div class="brand-box">
+                {img_logo}
+                {img_text}
+            </div>
+            <div class="brand-box">
+                <div class="user-badge-thin">{ws_name}</div>
+                <div class="apple-avatar-thin">{_get_initials(user_name)}</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+# Renderizar o cabeçalho fixo
+render_omnisfera_header()
+
+# ==============================================================================
+# 3. DESIGN & CSS (AJUSTE DE POSIÇÃO)
 # ==============================================================================
 st.markdown("""
 <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 <style>
-    /* --- AJUSTE DE POSIÇÃO DO MENU --- */
+    /* --- REMOVE O PADDING TOP ORIGINAL E APENAS USA O DO HEADER --- */
     .block-container { 
-        padding-top: 5rem !important; /* Aumentado para 5rem para descer o menu */
+        padding-top: 50px !important; /* Ajustado para compensar apenas o cabeçalho fixo */
         padding-bottom: 3rem; 
     }
     
@@ -65,7 +164,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. NAVEGAÇÃO
+# 4. NAVEGAÇÃO (MENU HORIZONTAL)
 # ==============================================================================
 def render_navbar():
     opcoes = [
@@ -95,7 +194,7 @@ def render_navbar():
         default_index=1, # Aba 'Estudantes' selecionada
         orientation="horizontal",
         styles={
-            "container": {"padding": "0!important", "background-color": "#ffffff", "border": "1px solid #E2E8F0", "border-radius": "10px", "margin-bottom": "10px"},
+            "container": {"padding": "0!important", "background-color": "#ffffff", "border": "1px solid #E2E8F0", "border-radius": "10px", "margin-bottom": "10px", "margin-top": "60px"}, # Adicionado margin-top para descer o menu
             "icon": {"color": "#64748B", "font-size": "14px"}, 
             "nav-link": {"font-size": "11px", "text-align": "center", "margin": "0px", "--hover-color": "#F1F5F9", "color": "#475569", "white-space": "nowrap"},
             "nav-link-selected": {"background-color": "#0284C7", "color": "white", "font-weight": "600"},
@@ -116,7 +215,7 @@ def render_navbar():
 render_navbar()
 
 # ==============================================================================
-# 4. LÓGICA DE DADOS (SUPABASE)
+# 5. LÓGICA DE DADOS (SUPABASE)
 # ==============================================================================
 
 # Autenticação
@@ -152,7 +251,7 @@ def delete_student_rest(sid, wid):
     except: return False
 
 # ==============================================================================
-# 5. ÁREA DE TRABALHO
+# 6. ÁREA DE TRABALHO
 # ==============================================================================
 
 # Variáveis
@@ -200,7 +299,7 @@ if q:
     alunos = [a for a in alunos if q.lower() in (a.get("name") or "").lower()]
 
 # ==============================================================================
-# 6. TABELA DE ALUNOS
+# 7. TABELA DE ALUNOS
 # ==============================================================================
 if not alunos:
     st.info("Nenhum estudante encontrado.")
