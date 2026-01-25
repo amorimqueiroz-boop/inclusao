@@ -4,8 +4,7 @@ from datetime import datetime, date
 import base64
 import os
 
-# BIBLIOTECA DE MENU (Essencial)
-# Certifique-se de que 'streamlit-option-menu' está no requirements.txt
+# BIBLIOTECA DE MENU
 from streamlit_option_menu import option_menu 
 
 # ==============================================================================
@@ -18,22 +17,32 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-APP_VERSION = "v3.0 - Menu OptionMenu Completo"
+APP_VERSION = "v3.1 - Menu Seguro"
 
 # ==============================================================================
-# 2. DESIGN & CSS
+# 2. DESIGN & CSS (CORREÇÃO DO ESPAÇAMENTO)
 # ==============================================================================
 st.markdown("""
 <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 <style>
-    /* Ajuste de Espaçamento Superior */
-    .block-container { padding-top: 1rem !important; padding-bottom: 3rem; }
+    /* CORREÇÃO CRÍTICA: Espaço seguro para o menu não ficar escondido */
+    .block-container { 
+        padding-top: 2rem !important; /* Espaço suficiente para o menu */
+        padding-bottom: 3rem; 
+    }
     
-    /* Esconder elementos nativos */
+    /* Remove a barra de topo padrão do Streamlit para não cobrir o menu */
+    header[data-testid="stHeader"] {
+        background-color: transparent !important;
+        z-index: 1 !important; /* Fica atrás do nosso menu se houver sobreposição */
+        height: 0px !important; /* Tenta reduzir a altura */
+    }
+    
+    /* Esconder elementos nativos desnecessários */
     [data-testid="stSidebarNav"], footer { display: none !important; }
 
     /* CARD HERO */
-    .mod-card-wrapper { display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin-top: 10px;}
+    .mod-card-wrapper { display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin-top: 15px;}
     .mod-card-rect { background: white; padding: 0; display: flex; align-items: center; height: 90px; position: relative; }
     .mod-bar { width: 6px; height: 100%; position: absolute; left: 0; background-color: #0284C7; }
     .mod-icon-area { width: 80px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; background: #F0F9FF; color: #0284C7; margin-left: 6px; }
@@ -57,10 +66,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. NAVEGAÇÃO (COM NOMES COMPLETOS)
+# 3. NAVEGAÇÃO
 # ==============================================================================
 def render_navbar():
-    # Lista exata dos seus menus
     opcoes = [
         "Início", 
         "Estudantes", 
@@ -85,17 +93,17 @@ def render_navbar():
         menu_title=None, 
         options=opcoes,
         icons=icones,
-        default_index=1, # Índice 1 = Estudantes (Começa em 0)
+        default_index=1, # Aba 'Estudantes' selecionada
         orientation="horizontal",
         styles={
-            "container": {"padding": "0!important", "background-color": "#ffffff", "border": "1px solid #E2E8F0", "border-radius": "10px"},
+            "container": {"padding": "0!important", "background-color": "#ffffff", "border": "1px solid #E2E8F0", "border-radius": "10px", "margin-bottom": "10px"},
             "icon": {"color": "#64748B", "font-size": "14px"}, 
             "nav-link": {"font-size": "11px", "text-align": "center", "margin": "0px", "--hover-color": "#F1F5F9", "color": "#475569", "white-space": "nowrap"},
             "nav-link-selected": {"background-color": "#0284C7", "color": "white", "font-weight": "600"},
         }
     )
     
-    # Navegação Segura
+    # Navegação
     if selected == "Início":
         target = "pages/0_Home.py" if os.path.exists("pages/0_Home.py") else "0_Home.py"
         if not os.path.exists(target): target = "Home.py"
@@ -105,7 +113,6 @@ def render_navbar():
     elif selected == "Hub de Recursos": st.switch_page("pages/3_Hub_Inclusao.py")
     elif selected == "Diário de Bordo": st.switch_page("pages/4_Diario_de_Bordo.py")
     elif selected == "Evolução & Dados": st.switch_page("pages/5_Monitoramento_Avaliacao.py")
-    # Se for "Estudantes", fica aqui.
 
 render_navbar()
 
@@ -113,27 +120,23 @@ render_navbar()
 # 4. LÓGICA DE DADOS (SUPABASE)
 # ==============================================================================
 
-# Autenticação Básica
+# Autenticação
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
 if not st.session_state.autenticado:
-    st.warning("🔒 Acesso restrito.")
+    # Mostra aviso visual em vez de apenas parar, para você saber se é erro de auth
+    st.warning("🔒 Acesso restrito. Faça login na Home.")
     st.stop()
 
 # Helpers
-def get_user_initials(nome):
-    if not nome: return "U"
-    parts = nome.strip().split()
-    return f"{parts[0][0]}{parts[-1][0]}".upper() if len(parts) >= 2 else parts[0][:2].upper()
-
 def _sb_headers():
     try:
         key = st.secrets.get("SUPABASE_SERVICE_KEY") or st.secrets.get("SUPABASE_ANON_KEY")
         return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     except: return {}
 
-# Funções de API
+# Funções API
 @st.cache_data(ttl=10, show_spinner=False)
 def list_students_rest(workspace_id):
     try:
@@ -154,18 +157,17 @@ def delete_student_rest(sid, wid):
 # 5. ÁREA DE TRABALHO
 # ==============================================================================
 
-# Variáveis de Sessão
+# Variáveis
 ws_id = st.session_state.get("workspace_id")
 user_name = st.session_state.get("usuario_nome", "Visitante")
 user_first = user_name.split()[0]
 saudacao = "Bom dia" if 5 <= datetime.now().hour < 12 else "Boa tarde"
 
-# Refresh manual ou automático
+# Refresh
 if st.session_state.get("force_refresh"):
     list_students_rest.clear()
     st.session_state["force_refresh"] = False
 
-# Carregar Alunos
 if not ws_id:
     st.error("Nenhum workspace selecionado.")
     st.stop()
@@ -217,12 +219,10 @@ else:
         turma = a.get("class_group", "—")
         diag = a.get("diagnosis", "—")
         
-        # Chave única para o estado de exclusão deste aluno
         confirm_key = f"confirm_del_{sid}"
         if confirm_key not in st.session_state:
             st.session_state[confirm_key] = False
         
-        # Linha HTML (Estática)
         st.markdown(f"""
         <div class="student-row">
             <div style="font-weight:700; color:#1E293B;">{nome}</div>
@@ -232,7 +232,6 @@ else:
             <div>
         """, unsafe_allow_html=True)
         
-        # Lógica de Botões (Streamlit)
         if not st.session_state[confirm_key]:
             col_btn, _ = st.columns([1, 4])
             with col_btn:
@@ -240,7 +239,6 @@ else:
                     st.session_state[confirm_key] = True
                     st.rerun()
         else:
-            # Estado de Confirmação
             st.markdown(f"""<div class="delete-confirm-banner"><i class="ri-alert-fill"></i> Excluir <b>{nome}</b>?</div>""", unsafe_allow_html=True)
             c_sim, c_nao = st.columns(2)
             with c_sim:
