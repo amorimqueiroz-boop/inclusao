@@ -187,46 +187,157 @@ if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estu
 
 # --- ESTILO VISUAL (CSS) ---
 st.markdown("""
-    <style>
-    html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; }
-    
-    .header-hub { 
-        background: white; padding: 20px 30px; border-radius: 12px; 
-        border-left: 6px solid #3182CE; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-        margin-bottom: 20px; display: flex; align-items: center; gap: 25px; 
-    }
-    
-    .student-header { background-color: #EBF8FF; border: 1px solid #BEE3F8; border-radius: 12px; padding: 15px 25px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
-    .student-label { font-size: 0.85rem; color: #718096; font-weight: 700; text-transform: uppercase; }
-    .student-value { font-size: 1.1rem; color: #2C5282; font-weight: 800; }
-    
-    .analise-box { background-color: #F0FFF4; border: 1px solid #C6F6D5; border-radius: 8px; padding: 20px; margin-bottom: 20px; color: #22543D; }
-    .analise-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-    
-    .crop-instruction { background: #FFF5F5; border-left: 4px solid #F56565; padding: 15px; color: #C53030; border-radius: 4px; margin-bottom: 10px; font-weight: 600; }
-    
-    .validado-box { background-color: #C6F6D5; color: #22543D; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; border: 1px solid #276749; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 
-    /* Caixas de Explicação Pedagógica */
-    .pedagogia-box { 
-        background-color: #F7FAFC; border-left: 4px solid #3182CE; 
-        padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px; 
-        font-size: 0.9rem; color: #4A5568; 
-    }
-    .pedagogia-title { color: #2C5282; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+<style>
+  html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', 'Nunito', sans-serif; color: #1E293B; }
 
-    /* Abas */
-    .stTabs [data-baseweb="tab-list"] { gap: 8px; flex-wrap: wrap; }
-    .stTabs [data-baseweb="tab"] { border-radius: 6px; padding: 8px 16px; background-color: white; border: 1px solid #E2E8F0; font-size: 0.9rem; transition: all 0.2s; }
-    .stTabs [aria-selected="true"] { background-color: #3182CE !important; color: white !important; border-color: #3182CE !important; }
+  /* ========================================================= */
+  /* HEADER / HERO (estilo PAEE) */
+  /* ========================================================= */
+  .header-hub{
+    background: white; padding: 20px 30px; border-radius: 16px;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    margin-bottom: 18px; display: flex; align-items: center; gap: 22px;
+  }
 
-    /* Botões */
-    div[data-testid="column"] .stButton button[kind="primary"] { border-radius: 10px !important; height: 50px; width: 100%; background-color: #3182CE !important; color: white !important; font-weight: 800 !important; border: none; transition: 0.3s; }
-    div[data-testid="column"] .stButton button[kind="primary"]:hover { background-color: #2B6CB0 !important; }
-    
-    div[data-testid="column"] .stButton button[kind="secondary"] { border-radius: 10px !important; height: 50px; width: 100%; border: 2px solid #CBD5E0 !important; color: #4A5568 !important; font-weight: bold; }
-    </style>
+  .student-header{
+    background-color: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 18px 24px;
+    margin-bottom: 18px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  }
+  .student-label{
+    font-size: 0.78rem; color: #64748B; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .student-value{ font-size: 1.15rem; color: #1E293B; font-weight: 800; }
+
+  .pedagogia-box{
+    background: #F8FAFC;
+    border-left: 4px solid #CBD5E1;
+    padding: 16px 18px;
+    border-radius: 0 12px 12px 0;
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+    color: #475569;
+  }
+
+  /* ========================================================= */
+  /* HUB RECURSO (visual PAEE) */
+  /* ========================================================= */
+  .resource-box{
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 18px;
+    margin: 14px 0;
+  }
+
+  .resource-title{
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: #0F172A;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin: 0 0 8px 0;
+  }
+
+  .resource-subtle{
+    color:#64748B;
+    font-size:0.9rem;
+    margin: 0 0 14px 0;
+  }
+
+  /* ========================================================= */
+  /* ABAS (PAEE style) */
+  /* ========================================================= */
+  .stTabs [data-baseweb="tab-list"] {
+    gap: 2px !important;
+    background-color: transparent !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    margin-top: 18px !important;
+    border-bottom: 2px solid #E2E8F0 !important;
+    flex-wrap: wrap !important;
+  }
+  .stTabs [data-baseweb="tab"] {
+    height: 36px !important;
+    white-space: nowrap !important;
+    background-color: transparent !important;
+    border-radius: 8px 8px 0 0 !important;
+    padding: 0 18px !important;
+    color: #64748B !important;
+    font-weight: 650 !important;
+    font-size: 0.83rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+    transition: all 0.2s ease !important;
+    border: none !important;
+    margin: 0 2px 0 0 !important;
+    position: relative !important;
+  }
+  .stTabs [aria-selected="true"] {
+    background-color: transparent !important;
+    color: #0D9488 !important;
+    font-weight: 800 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .stTabs [aria-selected="true"]::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 0; right: 0;
+    height: 3px;
+    background-color: #0D9488;
+    border-radius: 2px 2px 0 0;
+  }
+  .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {
+    background-color: #F1F5F9 !important;
+    color: #475569 !important;
+  }
+
+  /* ========================================================= */
+  /* BOTÕES (PAEE style) */
+  /* ========================================================= */
+  .stButton > button{
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    transition: all 0.2s ease !important;
+  }
+  .stButton > button[kind="primary"]{
+    background: linear-gradient(135deg, #0D9488, #14B8A6) !important;
+    border: none !important;
+  }
+  .stButton > button[kind="primary"]:hover{
+    background: linear-gradient(135deg, #0F766E, #0D9488) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 18px rgba(13, 148, 136, 0.18) !important;
+  }
+  .stButton > button[kind="secondary"]{
+    background: white !important;
+    color: #0D9488 !important;
+    border: 1px solid #0D9488 !important;
+  }
+  .stButton > button[kind="secondary"]:hover{
+    background: #F0FDFA !important;
+    border-color: #0D9488 !important;
+  }
+
+  @media (max-width: 768px){
+    .student-header{ flex-direction: column; align-items:flex-start; gap: 12px; }
+  }
+</style>
 """, unsafe_allow_html=True)
+
+
+
+
 
 # --- FUNÇÕES DE UTILIDADE ---
 
