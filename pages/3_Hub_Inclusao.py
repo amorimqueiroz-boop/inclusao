@@ -1586,37 +1586,17 @@ else:
 
     # 3. CRIAR DO ZERO
     with tabs[2]:
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-magic-line"></i> Criação com DUA</div>
-        Crie atividades do zero alinhadas ao PEI. A IA gera questões contextualizadas, 
-        usa o hiperfoco para engajamento e cria imagens ilustrativas automaticamente.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # NOVA SEÇÃO BNCC
-    st.markdown("#### 📚 Selecione pela BNCC")
-    col_ano, col_disc, col_obj, col_hab = st.columns(4)
-    
-    ano_bncc, disciplina_bncc, objeto_bncc, habilidade_bncc = criar_dropdowns_bncc(
-        col_ano, col_disc, col_obj, col_hab, 
-        chave_unica="criar_zero"
-    )
-    
-    # Atribuir às variáveis que serão usadas
-    mat_c = disciplina_bncc
-    obj_c = objeto_bncc
-    
-    # Restante do código da aba (não mudar)
-    cc3, cc4 = st.columns(2)
-    qtd_c = cc3.slider("Qtd Questões", 1, 10, 5, key="cq")
-    tipo_quest = cc4.selectbox("Tipo", ["Objetiva", "Discursiva"], key="ctq")
-    
-    col_img_opt, col_img_pct = st.columns([1, 2])
-    usar_img = col_img_opt.checkbox("📸 Incluir Imagens?", value=True)
-    qtd_img_sel = col_img_pct.slider("Quantas questões terão imagens?", 0, qtd_c, int(qtd_c/2), disabled=not usar_img)
-    
-  
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-magic-line"></i> Criação com DUA</div>
+            Crie atividades do zero alinhadas ao PEI. A IA gera questões contextualizadas, 
+            usa o hiperfoco para engajamento e cria imagens ilustrativas automaticamente.
+        </div>
+        """, unsafe_allow_html=True)
+        
+        cc1, cc2 = st.columns(2)
+        mat_c = cc1.selectbox("Componente", discip, key="cm")
+        obj_c = cc2.text_input("Assunto", key="co")
         
         cc3, cc4 = st.columns(2)
         qtd_c = cc3.slider("Qtd Questões", 1, 10, 5, key="cq")
