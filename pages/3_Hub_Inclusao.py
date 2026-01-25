@@ -443,6 +443,71 @@ def debug_bncc_simples():
             else:
                 st.warning("BNCC não carregada")
 
+
+                @st.cache_data
+def carregar_bncc_dropdown():
+    """Carrega o arquivo bncc.csv"""
+    import os
+    
+    # DEBUG: Mostrar pasta atual
+    st.sidebar.write("📂 Pasta atual:", os.getcwd())
+    st.sidebar.write("📄 Arquivos na pasta:", os.listdir())
+    
+    # Verificar se o arquivo existe
+    if not os.path.exists('bncc.csv'):
+        st.sidebar.error("❌ Arquivo 'bncc.csv' NÃO encontrado!")
+        st.sidebar.info("Por favor, coloque bncc.csv na mesma pasta do script.")
+        return None
+    
+    st.sidebar.success("✅ Arquivo bncc.csv encontrado!")
+    
+    try:
+        # Tentar ler o CSV de várias formas
+        import pandas as pd
+        
+        # Tentar ler e mostrar primeiras linhas
+        try:
+            df = pd.read_csv('bncc.csv', encoding='utf-8', delimiter=',')
+            st.sidebar.success("✅ CSV lido com UTF-8 e vírgula")
+        except:
+            try:
+                df = pd.read_csv('bncc.csv', encoding='latin-1', delimiter=',')
+                st.sidebar.success("✅ CSV lido com Latin-1 e vírgula")
+            except:
+                try:
+                    df = pd.read_csv('bncc.csv', encoding='utf-8', delimiter=';')
+                    st.sidebar.success("✅ CSV lido com UTF-8 e ponto-e-vírgula")
+                except Exception as e:
+                    st.sidebar.error(f"❌ Erro ao ler CSV: {str(e)}")
+                    return None
+        
+        # Mostrar informações do CSV
+        st.sidebar.write(f"📊 CSV: {len(df)} linhas, {len(df.columns)} colunas")
+        st.sidebar.write("📋 Colunas:", list(df.columns))
+        st.sidebar.write("👀 Primeiras linhas:")
+        st.sidebar.write(df.head(3))
+        
+        # Criar estrutura simples para dropdowns
+        # Assumindo colunas: Ano, Disciplina, Unidade Temática, Objeto do Conhecimento, Habilidade
+        estrutura = {
+            'anos': sorted(df['Ano'].unique().tolist()),
+            'disciplinas': {},
+            'objetos': {}
+        }
+        
+        # Para cada ano, coletar disciplinas
+        for ano in estrutura['anos']:
+            df_ano = df[df['Ano'] == ano]
+            disciplinas = sorted(df_ano['Disciplina'].dropna().unique().tolist())
+            estrutura['disciplinas'][str(ano)] = disciplinas
+        
+        st.sidebar.success(f"✅ BNCC carregada: {len(estrutura['anos'])} anos")
+        return estrutura
+        
+    except Exception as e:
+        st.sidebar.error(f"❌ Erro ao processar: {str(e)}")
+        return None
+
 # ==============================================================================
 # 2. O CÓDIGO DO HUB DE INCLUSÃO
 # ==============================================================================
