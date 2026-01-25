@@ -112,7 +112,7 @@ def render_colored_quick_access_bar():
         }
         
         /* Ajustar conteúdo principal para não ficar atrás do menu fixo */
-        .block-container {
+        .main .block-container {
             padding-top: 100px !important;
         }
         
@@ -201,45 +201,45 @@ def render_colored_quick_access_bar():
     # 7 colunas do menu DENTRO do container fixo
     c1, c2, c3, c4, c5, c6, c7 = st.columns(7, gap="small")
 
-    def _wrap_button(label: str, page_path: str, key_suffix: str):
+    def _wrap_button(label: str, page_path: str):
         """Wrapper para botões com navegação FUNCIONAL"""
         st.markdown('<div class="qa-btn-colored">', unsafe_allow_html=True)
         
-        # Botão com navegação correta
-        if st.button(label, 
-                    use_container_width=True, 
-                    key=f"nav_{key_suffix}"):
+        # Gerar uma chave única baseada no label
+        unique_key = f"top_nav_{label.lower().replace(' ', '_')}_{hash(page_path)}"
+        
+        # Botão com navegação correta - SEM on_click, usando st.rerun()
+        if st.button(label, use_container_width=True, key=unique_key):
             try:
                 st.switch_page(page_path)
-            except:
-                # Fallback em caso de erro
+            except Exception as e:
+                st.error(f"Erro ao navegar: {e}")
                 st.rerun()
                 
         st.markdown('</div>', unsafe_allow_html=True)
 
     with c1:
-        _wrap_button("INÍCIO", "pages/0_Home.py", "home")
+        _wrap_button("INÍCIO", "pages/0_Home.py")
 
     with c2:
-        _wrap_button("ESTUDANTES", "pages/Alunos.py", "estudantes")
+        _wrap_button("ESTUDANTES", "pages/Alunos.py")
 
     with c3:
-        _wrap_button("PEI", "pages/1_PEI.py", "pei")
+        _wrap_button("PEI", "pages/1_PEI.py")
 
     with c4:
-        _wrap_button("AEE", "pages/2_PAE.py", "aee")
+        _wrap_button("AEE", "pages/2_PAE.py")
 
     with c5:
-        _wrap_button("RECURSOS", "pages/3_Hub_Inclusao.py", "recursos")
+        _wrap_button("RECURSOS", "pages/3_Hub_Inclusao.py")
 
     with c6:
-        _wrap_button("DIÁRIO", "pages/4_Diario_de_Bordo.py", "diario")
+        _wrap_button("DIÁRIO", "pages/4_Diario_de_Bordo.py")
 
     with c7:
-        _wrap_button("DADOS", "pages/5_Monitoramento_Avaliacao.py", "dados")
+        _wrap_button("DADOS", "pages/5_Monitoramento_Avaliacao.py")
     
     st.markdown('</div>', unsafe_allow_html=True)
-
 # ==============================================================================
 # 🔷 DESIGN SYSTEM COM TOPBAR FINA E MENU COLORIDO
 # ==============================================================================
