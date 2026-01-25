@@ -344,6 +344,27 @@ def criar_dropdowns_simples():
                 objeto_selecionado = st.text_input("Objeto", placeholder="Digite o objeto", key="obj_input_bncc")
     
     return ano_selecionado, disciplina_selecionada, objeto_selecionado
+
+
+
+
+    with st.sidebar:
+    st.markdown("---")
+    
+    # Botão para recarregar
+    if st.button("🔄 Recarregar BNCC"):
+        if 'dados_bncc' in st.session_state:
+            del st.session_state.dados_bncc
+        st.rerun()
+    
+    # Verificar dados
+    if 'dados_bncc' in st.session_state:
+        dados = st.session_state.dados_bncc
+        if dados is not None:
+            st.success(f"✅ BNCC carregada: {len(dados)} registros")
+            st.caption(f"Anos: {sorted(dados['Ano'].dropna().unique().astype(str))}")
+        else:
+            st.warning("⚠️ BNCC não carregada")
 # ==============================================================================
 # 2. O CÓDIGO DO HUB DE INCLUSÃO
 # ==============================================================================
