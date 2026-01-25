@@ -42,25 +42,54 @@ def get_logo_base64():
 # ==============================================================================
 # BLOCO A — TOPBAR COMPLETA (Logo + Workspace + Usuário + Avatar)
 # ==============================================================================
+def get_user_initials(nome: str) -> str:
+    """Extrai as iniciais do nome do usuário"""
+    if not nome:
+        return "U"
+    parts = nome.strip().split()
+    if len(parts) >= 2:
+        return f"{parts[0][0]}{parts[-1][0]}".upper()
+    return parts[0][:2].upper()
 
-img_header = get_base64_image("omni_icone.png")
-text_header = get_base64_image("omni_texto.png") # Opcional
+def get_user_first_name() -> str:
+    """Extrai o primeiro nome do usuário"""
+    return (st.session_state.get("usuario_nome", "Visitante").strip().split() or ["Visitante"])[0]
 
-logo_html = f"<img src='data:image/png;base64,{img_header}' class='header-logo-img'>" if img_header else "🌐"
-# Se tiver imagem do texto, usa, senão texto puro
-nome_html = f"<img src='data:image/png;base64,{text_header}' style='height:30px; margin-left:10px;'>" if text_header else "<span style='font-weight:800; font-size:1.5rem; color:#0F52BA; margin-left:10px;'>OMNISFERA</span>"
+def get_workspace_short(max_len: int = 20) -> str:
+    """Formata o nome do workspace com truncagem se necessário"""
+    ws = st.session_state.get("workspace_name", "") or ""
+    return (ws[:max_len] + "...") if len(ws) > max_len else ws
 
-st.markdown(f"""
-<div class="header-bar">
-    <div class="header-left">
-        {logo_html}
-        {nome_html}
-        <div class="header-divider"></div>
-        <div class="header-slogan">Ecossistema de Inteligência Pedagógica e Inclusiva</div>
-    </div>
-    <div class="header-badge">OMNISFERA {APP_VERSION}</div>
-</div>
-""", unsafe_allow_html=True)
+def render_topbar():
+    """Renderiza a barra superior com logo, workspace e informações do usuário"""
+    icone_b64 = get_base64_image("omni_icone.png")
+    texto_b64 = get_base64_image("omni_texto.png")
+
+    img_logo = f'<img src="data:image/png;base64,{icone_b64}" class="brand-logo">' if icone_b64 else "🌐"
+    img_text = f'<img src="data:image/png;base64,{texto_b64}" class="brand-img-text">' if texto_b64 else "<span style='font-weight:800;color:#2B3674;'>OMNISFERA</span>"
+
+    user_full = st.session_state.get("usuario_nome", "Visitante")
+    user_first = get_user_first_name()
+    initials = get_user_initials(user_full)
+    ws_name = get_workspace_short()
+
+    st.markdown(
+        f"""
+        <div class="topbar">
+            <div class="brand-box">
+                {img_logo}
+                {img_text}
+            </div>
+
+            <div class="brand-box" style="gap:10px;">
+                <div class="user-badge">{ws_name}</div>
+                <div class="user-badge">{user_first}</div>
+                <div class="apple-avatar">{initials}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # ==============================================================================
 # BLOCO B — MENU DE ACESSO RÁPIDO
