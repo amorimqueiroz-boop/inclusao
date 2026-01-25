@@ -365,84 +365,194 @@ st.markdown(
 
 
 # ==============================================================================
-# BLOCO BNCC - VERSÃO SIMPLES E FUNCIONAL
+# BLOCO BNCC COMPLETA - 5 DROPDOWNS CONECTADOS
 # ==============================================================================
 import pandas as pd
 import os
 
-def carregar_bncc():
-    """Carrega o CSV da BNCC - versão mais simples possível"""
+@st.cache_data
+def carregar_bncc_completa():
+    """Carrega o CSV da BNCC com todas as colunas necessárias"""
     try:
-        # Verificar se o arquivo existe
+        # Verificar se arquivo existe
         if not os.path.exists('bncc.csv'):
+            st.sidebar.warning("📄 Arquivo 'bncc.csv' não encontrado na pasta do script")
             return None
         
-        # Ler o CSV
-        df = pd.read_csv('bncc.csv', delimiter=',', encoding='utf-8')
+        # Tentar ler o arquivo
+        try:
+            df = pd.read_csv('bncc.csv', delimiter=',', encoding='utf-8')
+        except:
+            try:
+                df = pd.read_csv('bncc.csv', delimiter=';', encoding='utf-8')
+            except Exception as e:
+                st.sidebar.error(f"❌ Erro ao ler CSV: {str(e)[:100]}")
+                return None
         
-        # Retornar dados brutos
+        # Mostrar informações de debug
+        st.sidebar.success(f"✅ CSV carregado: {len(df)} linhas")
+        st.sidebar.info(f"📋 Colunas: {list(df.columns)}")
+        
+        # Verificar colunas necessárias
+        colunas_necessarias = ['Ano', 'Disciplina', 'Unidade Temática', 
+                              'Objeto do Conhecimento', 'Habilidade']
+        
+        # Verificar se as colunas existem (com nomes exatos)
+        colunas_faltando = []
+        for col in colunas_necessarias:
+            if col not in df.columns:
+                colunas_faltando.append(col)
+        
+        if colunas_faltando:
+            st.sidebar.error(f"❌ Colunas faltando: {colunas_faltando}")
+            return None
+        
+        # Limpar dados
+        df = df.dropna(subset=['Ano', 'Disciplina', 'Objeto do Conhecimento'])
+        df['Ano'] = df['Ano'].astype(str).str.strip()
+        
         return df
     
-    except:
+    except Exception as e:
+        st.sidebar.error(f"❌ Erro: {str(e)[:100]}")
         return None
 
-def criar_dropdowns_simples():
-    """Cria dropdowns hierárquicos simples"""
+def criar_dropdowns_bncc_completos():
+    """
+    Cria 5 dropdowns hierárquicos conectados:
+    1. Ano
+    2. Disciplina (filtrado por Ano)
+    3. Unidade Temática (filtrado por Ano e Disciplina)
+    4. Objeto do Conhecimento (filtrado por Ano, Disciplina e Unidade)
+    5. Habilidade (filtrado pelos anteriores)
+    """
     
-    # Carregar dados
-    if 'dados_bncc' not in st.session_state:
-        df = carregar_bncc()
-        if df is not None:
-            st.session_state.dados_bncc = df
-        else:
-            st.session_state.dados_bncc = None
+    # Carregar dados se necessário
+    if 'bncc_df_completo' not in st.session_state:
+        st.session_state.bncc_df_completo = carregar_bncc_completa()
     
-    dados = st.session_state.dados_bncc
+    dados = st.session_state.bncc_df_completo
     
-    # Se não tem dados, mostrar campos simples
+    # Se não tem dados, mostrar campos básicos
     if dados is None or dados.empty:
+        st.warning("⚠️ BNCC não carregada. Usando campos básicos.")
+        
         col1, col2, col3 = st.columns(3)
         with col1:
-            ano = st.selectbox("Ano", ["5", "6", "7", "8", "9"], key="ano_simples")
+            ano = st.selectbox("Ano", ["5", "6", "7", "8", "9"], key="ano_basico")
         with col2:
             disciplina = st.selectbox("Disciplina", 
                 ["Matemática", "Português", "Ciências", "História", "Geografia"], 
-                key="disc_simples")
+                key="disc_basico")
         with col3:
-            objeto = st.text_input("Objeto", placeholder="Digite o objeto", key="obj_simples")
-        return ano, disciplina, objeto
+            objeto = st.text_input("Objeto do Conhecimento", placeholder="Ex: Frações", 
+                                  key="obj_basico")
+        
+        # Campos extras para unidade e habilidade
+        col4, col5 = st.columns(2)
+        with col4:
+            unidade = st.text_input("Unidade Temática (opcional)", placeholder="Ex: Números", 
+                                   key="unid_basico")
+        with col5:
+            habilidade = st.text_input("Habilidade (opcional)", placeholder="Código BNCC", 
+                                      key="hab_basico")
+        
+        return ano, disciplina, unidade, objeto, habilidade
     
-    # Se tem dados, criar dropdowns conectados
+    # TEMOS DADOS - criar dropdowns conectados
+    
+    # Linha 1: Ano, Disciplina, Unidade Temática
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        # Anos disponíveis
-        anos = sorted(dados['Ano'].dropna().unique().astype(str))
-        ano_selecionado = st.selectbox("Ano", anos, key="ano_bncc")
+        # 1. ANO
+        anos = sorted(dados['Ano'].dropna().unique())
+        ano_selecionado = st.selectbox("Ano", anos, key="ano_bncc_completo")
     
     with col2:
-        # Disciplinas para o ano selecionado
+        # 2. DISCIPLINA (filtrado por ano)
         if ano_selecionado:
-            disc_df = dados[dados['Ano'].astype(str) == str(ano_selecionado)]
-            disciplinas = sorted(disc_df['Disciplina'].dropna().unique())
-            disciplina_selecionada = st.selectbox("Disciplina", disciplinas, key="disc_bncc")
+            disc_filtradas = dados[dados['Ano'] == ano_selecionado]
+            disciplinas = sorted(disc_filtradas['Disciplina'].dropna().unique())
+            disciplina_selecionada = st.selectbox("Disciplina", disciplinas, 
+                                                 key="disc_bncc_completo")
+        else:
+            disciplina_selecionada = None
     
     with col3:
-        # Objetos para ano e disciplina selecionados
-        if ano_selecionado and 'disciplina_selecionada' in locals():
-            obj_df = dados[
-                (dados['Ano'].astype(str) == str(ano_selecionado)) & 
+        # 3. UNIDADE TEMÁTICA (filtrado por ano e disciplina)
+        if ano_selecionado and disciplina_selecionada:
+            unid_filtradas = dados[
+                (dados['Ano'] == ano_selecionado) & 
                 (dados['Disciplina'] == disciplina_selecionada)
             ]
-            objetos = sorted(obj_df['Objeto do Conhecimento'].dropna().unique())
+            unidades = sorted(unid_filtradas['Unidade Temática'].dropna().unique())
+            unidade_selecionada = st.selectbox("Unidade Temática", unidades, 
+                                              key="unid_bncc_completo")
+        else:
+            unidade_selecionada = None
+    
+    # Linha 2: Objeto do Conhecimento, Habilidade
+    col4, col5 = st.columns(2)
+    
+    with col4:
+        # 4. OBJETO DO CONHECIMENTO (filtrado por ano, disciplina e unidade)
+        if ano_selecionado and disciplina_selecionada and unidade_selecionada:
+            obj_filtrados = dados[
+                (dados['Ano'] == ano_selecionado) & 
+                (dados['Disciplina'] == disciplina_selecionada) & 
+                (dados['Unidade Temática'] == unidade_selecionada)
+            ]
+            objetos = sorted(obj_filtrados['Objeto do Conhecimento'].dropna().unique())
             
             if objetos:
-                objeto_selecionado = st.selectbox("Objeto do Conhecimento", objetos, key="obj_bncc")
+                objeto_selecionado = st.selectbox("Objeto do Conhecimento", objetos, 
+                                                 key="obj_bncc_completo")
             else:
-                objeto_selecionado = st.text_input("Objeto", placeholder="Digite o objeto", key="obj_input_bncc")
+                objeto_selecionado = st.text_input("Objeto do Conhecimento", 
+                                                  placeholder="Não encontrado, digite", 
+                                                  key="obj_input_bncc")
+        else:
+            objeto_selecionado = st.text_input("Objeto do Conhecimento", 
+                                              placeholder="Selecione primeiro", 
+                                              key="obj_wait_bncc")
     
-            return ano_selecionado, disciplina_selecionada, objeto_selecionado
-
+    with col5:
+        # 5. HABILIDADE (filtrado pelos 4 anteriores)
+        if (ano_selecionado and disciplina_selecionada and 
+            unidade_selecionada and objeto_selecionado and 
+            isinstance(objeto_selecionado, str) and not objeto_selecionado.startswith("Selecione")):
+            
+            hab_filtradas = dados[
+                (dados['Ano'] == ano_selecionado) & 
+                (dados['Disciplina'] == disciplina_selecionada) & 
+                (dados['Unidade Temática'] == unidade_selecionada) & 
+                (dados['Objeto do Conhecimento'] == objeto_selecionado)
+            ]
+            habilidades = sorted(hab_filtradas['Habilidade'].dropna().unique())
+            
+            if habilidades:
+                # Mostrar como selectbox se tiver poucas, senão como multiselect
+                if len(habilidades) <= 10:
+                    habilidade_selecionada = st.selectbox("Habilidade BNCC", habilidades, 
+                                                         key="hab_bncc_completo")
+                else:
+                    st.info(f"🔍 {len(habilidades)} habilidades encontradas")
+                    habilidades_selecionadas = st.multiselect("Selecione as habilidades", 
+                                                             habilidades, 
+                                                             key="hab_multi_bncc")
+                    habilidade_selecionada = ", ".join(habilidades_selecionadas) if habilidades_selecionadas else ""
+            else:
+                habilidade_selecionada = st.text_input("Habilidade (opcional)", 
+                                                      placeholder="Digite a habilidade", 
+                                                      key="hab_input_bncc")
+        else:
+            habilidade_selecionada = st.text_input("Habilidade (opcional)", 
+                                                  placeholder="Complete os campos acima", 
+                                                  key="hab_wait_bncc")
+    
+    return (ano_selecionado, disciplina_selecionada, unidade_selecionada, 
+            objeto_selecionado, habilidade_selecionada)
 
 
 
