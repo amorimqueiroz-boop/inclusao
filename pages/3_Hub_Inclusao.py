@@ -775,7 +775,22 @@ with st.sidebar:
             if key not in ['banco_estudantes', 'OPENAI_API_KEY', 'UNSPLASH_ACCESS_KEY', 'autenticado']: del st.session_state[key]
         st.rerun()
 
+# --- HEADER COM LOGO HUB E APENAS SUBTÍTULO ---
 
+img_hub_html = get_img_tag("hub.png", "220") 
+
+st.markdown(f"""
+    <div class="header-hub">
+        <div style="flex-shrink: 0;">
+            {img_hub_html}
+        </div>
+        <div style="flex-grow: 1; text-align: center;">
+            <p style="margin:0; color:#2C5282; font-size: 1.3rem; font-weight: 700;">
+                Adaptação de Materiais & Criação
+            </p>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
 
 if not st.session_state.banco_estudantes:
