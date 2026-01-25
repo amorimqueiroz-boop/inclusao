@@ -1589,49 +1589,23 @@ else:
             c_down2.download_button("📕 BAIXAR PDF (Só Atividade)", pdf_bytes, "Atividade.pdf", mime="application/pdf", type="secondary")
 
     # 3. CRIAR DO ZERO
-    with tabs[2]:  # "Criar do Zero"
-    # Container para BNCC
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title">
-            <i class="ri-magic-line"></i> Criação com DUA
+    with tabs[2]:
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-magic-line"></i> Criação com DUA</div>
+            Crie atividades do zero alinhadas ao PEI. A IA gera questões contextualizadas, 
+            usa o hiperfoco para engajamento e cria imagens ilustrativas automaticamente.
         </div>
-        Crie atividades do zero alinhadas ao PEI.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Container para dropdowns BNCC
-    st.markdown('<div class="bncc-dropdowns">', unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown('<div class="bncc-col">', unsafe_allow_html=True)
-        ano = st.selectbox("Ano", ["5", "6", "7", "8", "9"], key="ano_simples")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown('<div class="bncc-col">', unsafe_allow_html=True)
-        disciplina = st.selectbox("Disciplina", 
-            ["Matemática", "Português", "Ciências", "História", "Geografia"], 
-            key="disc_simples")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown('<div class="bncc-col">', unsafe_allow_html=True)
-        objeto = st.text_input("Objeto do Conhecimento", 
-                             placeholder="Ex: Frações",
-                             key="obj_simples")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)  # Fecha bncc-dropdowns
-    
-    # Usar os valores
-    mat_c = disciplina
-    obj_c = objeto
-    
-  
-    
+        """, unsafe_allow_html=True)
+        
+        # --- BNCC DROPDOWNS (NOVO) ---
+        st.markdown("### 📚 Selecione pela BNCC")
+        ano_bncc, disciplina_bncc, objeto_bncc = criar_dropdowns_simples()
+
+        # Usar os valores selecionados
+        mat_c = disciplina_bncc
+        obj_c = objeto_bncc
+
         # Criar 4 colunas para os dropdowns
         col_ano, col_disc, col_obj, col_hab = st.columns(4)
 
