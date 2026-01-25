@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-APP_VERSION = "v2.4 - Layout Ultra Compacto"
+APP_VERSION = "v2.5 - Botões Centrais & Compactos"
 
 # ==============================================================================
 # FUNÇÕES AUXILIARES
@@ -36,84 +36,104 @@ def get_workspace_short(max_len: int = 20) -> str:
     return (ws[:max_len] + "...") if len(ws) > max_len else ws
 
 # ==============================================================================
-# CSS E DESIGN SYSTEM (AJUSTE FINO DE ESPAÇAMENTO)
+# CSS (ESTILOS REFINADOS)
 # ==============================================================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import url("https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css");
 
-/* RESET */
+/* RESET GERAL */
 html, body, [class*="css"] {
     font-family: 'Plus Jakarta Sans', sans-serif !important;
     color: #1E293B !important;
     background-color: #F8FAFC !important;
 }
 
-/* OCULTAR NATIVOS */
+/* OCULTAR ELEMENTOS PADRÃO */
 [data-testid="stSidebarNav"], [data-testid="stHeader"], footer { display: none !important; }
 
-/* --- AJUSTE CRÍTICO DE ESPAÇAMENTO (O SEGREDO) --- */
+/* --- ESPAÇAMENTO DA PÁGINA (Colado no Topo) --- */
 .block-container {
-    padding-top: 60px !important; /* Reduzido ao máximo (altura da topbar) */
+    padding-top: 60px !important; /* Altura exata da barra fixa */
     padding-bottom: 2rem !important;
     max-width: 98% !important;
     padding-left: 0.5rem !important;
     padding-right: 0.5rem !important;
 }
 
-/* TOPBAR FINA E DELICADA */
+/* TOPBAR FIXA */
 .topbar-thin {
     position: fixed; top: 0; left: 0; right: 0; height: 60px;
     background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
     border-bottom: 1px solid #E2E8F0;
     z-index: 9999;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 1.5rem;
+    padding: 0 2rem;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
-.brand-box { display: flex; align-items: center; gap: 10px; }
-.brand-logo { height: 32px !important; width: auto !important; animation: spin 60s linear infinite; }
-.brand-img-text { height: 20px !important; width: auto; margin-left: 6px; }
+.brand-box { display: flex; align-items: center; gap: 8px; }
+.brand-logo { height: 30px !important; width: auto !important; animation: spin 60s linear infinite; }
+.brand-img-text { height: 18px !important; width: auto; margin-left: 6px; }
 
-/* BADGES TOPO */
-.user-badge-thin { background: #F1F5F9; border: 1px solid #E2E8F0; padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; color: #64748B; }
-.apple-avatar-thin { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; }
+/* BADGES DE USUÁRIO */
+.user-badge-thin { background: #F1F5F9; border: 1px solid #E2E8F0; padding: 3px 10px; border-radius: 12px; font-size: 0.65rem; font-weight: 700; color: #64748B; }
+.apple-avatar-thin { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.7rem; }
 
-/* BOTÕES DO MENU RÁPIDO (SOLID COLORS + MARGEM NEGATIVA) */
+/* --- BOTÕES DO MENU RÁPIDO (MENORES E CENTRALIZADOS) --- */
 .qa-container {
-    margin-top: -15px !important; /* PUXA OS BOTÕES PARA CIMA */
-    margin-bottom: 5px !important; /* REDUZ ESPAÇO PARA O CARD DE BAIXO */
+    margin-top: -15px !important; /* Cola no topo */
+    margin-bottom: 2px !important; /* Cola no card de baixo */
 }
 
+/* Estilo Base do Botão */
 .qa-btn-colored button {
-    font-weight: 800 !important; border-radius: 6px !important; padding: 4px 0 !important;
-    font-size: 0.65rem !important; text-transform: uppercase !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important; min-height: 28px !important; height: auto !important;
-    border: none !important; color: white !important; transition: all 0.2s ease !important;
+    font-weight: 800 !important;
+    border-radius: 6px !important;
+    padding: 2px 0 !important; /* Mais fino verticalmente */
+    font-size: 0.65rem !important; /* Fonte menor */
+    text-transform: uppercase !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08) !important;
+    min-height: 26px !important; /* Altura reduzida */
+    height: auto !important;
+    border: none !important;
+    color: white !important;
+    transition: all 0.2s ease !important;
+    letter-spacing: 0.3px !important;
 }
-.qa-btn-colored button:hover { transform: translateY(-1px) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important; }
+.qa-btn-colored button:hover { transform: translateY(-1px) !important; box-shadow: 0 2px 5px rgba(0,0,0,0.15) !important; filter: brightness(1.1); }
 
-/* Cores Específicas dos Botões */
-div[data-testid="column"]:nth-of-type(1) .qa-btn-colored button { background: linear-gradient(135deg, #64748B, #475569) !important; } /* Início */
-div[data-testid="column"]:nth-of-type(2) .qa-btn-colored button { background: linear-gradient(135deg, #4F46E5, #4338CA) !important; } /* Alunos */
-div[data-testid="column"]:nth-of-type(3) .qa-btn-colored button { background: linear-gradient(135deg, #2563EB, #1D4ED8) !important; } /* PEI */
-div[data-testid="column"]:nth-of-type(4) .qa-btn-colored button { background: linear-gradient(135deg, #7C3AED, #6D28D9) !important; } /* AEE */
-div[data-testid="column"]:nth-of-type(5) .qa-btn-colored button { background: linear-gradient(135deg, #0D9488, #0F766E) !important; } /* Recursos */
-div[data-testid="column"]:nth-of-type(6) .qa-btn-colored button { background: linear-gradient(135deg, #E11D48, #BE123C) !important; } /* Diário */
-div[data-testid="column"]:nth-of-type(7) .qa-btn-colored button { background: linear-gradient(135deg, #0284C7, #0369A1) !important; } /* Dados */
+/* Cores dos Botões (Gradient Suave) */
+/* Atenção: Os seletores div:nth-of-type agora mudam porque temos colunas vazias nas laterais */
+/* A coluna 2 é o primeiro botão, a 3 o segundo, etc... até a 8 */
 
-/* CARD HERO (IDENTIFICAÇÃO DA PÁGINA) */
+/* 1. Início (Cinza) */
+div[data-testid="column"]:nth-of-type(2) .qa-btn-colored button { background: linear-gradient(135deg, #64748B, #475569) !important; }
+/* 2. Estudantes (Indigo) */
+div[data-testid="column"]:nth-of-type(3) .qa-btn-colored button { background: linear-gradient(135deg, #4F46E5, #4338CA) !important; }
+/* 3. PEI (Blue) */
+div[data-testid="column"]:nth-of-type(4) .qa-btn-colored button { background: linear-gradient(135deg, #2563EB, #1D4ED8) !important; }
+/* 4. AEE (Purple) */
+div[data-testid="column"]:nth-of-type(5) .qa-btn-colored button { background: linear-gradient(135deg, #7C3AED, #6D28D9) !important; }
+/* 5. Recursos (Teal) */
+div[data-testid="column"]:nth-of-type(6) .qa-btn-colored button { background: linear-gradient(135deg, #0D9488, #0F766E) !important; }
+/* 6. Diário (Rose) */
+div[data-testid="column"]:nth-of-type(7) .qa-btn-colored button { background: linear-gradient(135deg, #E11D48, #BE123C) !important; }
+/* 7. Dados (Sky) */
+div[data-testid="column"]:nth-of-type(8) .qa-btn-colored button { background: linear-gradient(135deg, #0284C7, #0369A1) !important; }
+
+/* CARD HERO (COLADO NO MENU) */
 .mod-card-wrapper { 
-    display: flex; flex-direction: column; margin-bottom: 15px; border-radius: 12px; 
-    overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-top: 0px; 
+    display: flex; flex-direction: column; 
+    margin-bottom: 15px; margin-top: 0px; /* Sem margem topo */
+    border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
 }
-.mod-card-rect { background: white; padding: 0; border: 1px solid #E2E8F0; display: flex; align-items: center; height: 80px; }
+.mod-card-rect { background: white; padding: 0; border: 1px solid #E2E8F0; display: flex; align-items: center; height: 75px; /* Altura reduzida */ }
 .mod-bar { width: 5px; height: 100%; flex-shrink: 0; }
 .mod-icon-area { width: 60px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: #FAFAFA; border-right: 1px solid #F1F5F9; }
 .mod-content { flex-grow: 1; padding: 0 16px; }
-.mod-title { font-weight: 800; font-size: 0.95rem; color: #1E293B; margin-bottom: 2px; }
+.mod-title { font-weight: 800; font-size: 0.9rem; color: #1E293B; margin-bottom: 2px; }
 .mod-desc { font-size: 0.7rem; color: #64748B; }
 
 /* TABELA */
@@ -136,7 +156,7 @@ div[data-testid="column"]:nth-of-type(7) .qa-btn-colored button { background: li
 # RENDERIZAÇÃO
 # ==============================================================================
 
-# --- 1. TOPBAR FIXA (MAIS FINA) ---
+# --- 1. TOPBAR FIXA ---
 def render_thin_topbar():
     icone = get_base64_image("omni_icone.png")
     texto = get_base64_image("omni_texto.png")
@@ -158,45 +178,46 @@ def render_thin_topbar():
 
 render_thin_topbar()
 
-# --- 2. MENU DE ACESSO RÁPIDO COLORIDO (COLADO NO TOPO) ---
+# --- 2. MENU DE ACESSO RÁPIDO COLORIDO E CENTRALIZADO ---
 def render_menu():
-    c1, c2, c3, c4, c5, c6, c7 = st.columns(7, gap="small")
+    # Usamos colunas extras nas pontas (spacer_l e spacer_r) para empurrar o conteúdo pro meio
+    # Proporção: 1.5 (vazio) - 1 (btn) - 1 (btn) ... - 1.5 (vazio)
+    cols = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1, 1.5], gap="small")
     
-    # Cada botão em um container com classe .qa-container para aplicar margem negativa
-    with c1: 
+    # cols[0] e cols[8] são vazias para centralizar
+    
+    with cols[1]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        # Atenção aos links: Verifique se o nome do arquivo da Home é '0_Home.py' ou 'Home.py'
-        if st.button("INÍCIO", use_container_width=True): 
-             st.switch_page("0_Home.py" if os.path.exists("0_Home.py") else "Home.py")
+        if st.button("INÍCIO", use_container_width=True): st.switch_page("pages/0_Home.py")
         st.markdown('</div>', unsafe_allow_html=True)
-    with c2: 
+    with cols[2]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
         if st.button("ESTUDANTES", use_container_width=True): st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
-    with c3: 
+    with cols[3]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
         if st.button("PEI", use_container_width=True): st.switch_page("pages/1_PEI.py")
         st.markdown('</div>', unsafe_allow_html=True)
-    with c4: 
+    with cols[4]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
         if st.button("AEE", use_container_width=True): st.switch_page("pages/2_PAE.py")
         st.markdown('</div>', unsafe_allow_html=True)
-    with c5: 
+    with cols[5]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
         if st.button("RECURSOS", use_container_width=True): st.switch_page("pages/3_Hub_Inclusao.py")
         st.markdown('</div>', unsafe_allow_html=True)
-    with c6: 
+    with cols[6]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
         if st.button("DIÁRIO", use_container_width=True): st.switch_page("pages/4_Diario_de_Bordo.py")
         st.markdown('</div>', unsafe_allow_html=True)
-    with c7: 
+    with cols[7]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
         if st.button("DADOS", use_container_width=True): st.switch_page("pages/5_Monitoramento_Avaliacao.py")
         st.markdown('</div>', unsafe_allow_html=True)
 
 render_menu()
 
-# --- 3. CARD HERO (IDENTIFICAÇÃO) ---
+# --- 3. CARD HERO ---
 user_first = st.session_state.get("usuario_nome", "Visitante").split()[0]
 saudacao = "Bom dia" if 5 <= datetime.now().hour < 12 else "Boa tarde"
 st.markdown(f"""
@@ -206,7 +227,7 @@ st.markdown(f"""
             <div class="mod-icon-area bg-sky-soft"><i class="ri-group-fill"></i></div>
             <div class="mod-content">
                 <div class="mod-title">Gestão de Estudantes</div>
-                <div class="mod-desc">{saudacao}, <strong>{user_first}</strong>! Gerencie os dados dos alunos vinculados aos PEIs neste workspace.</div>
+                <div class="mod-desc">{saudacao}, <strong>{user_first}</strong>! Gerencie os dados dos alunos.</div>
             </div>
         </div>
     </div>
