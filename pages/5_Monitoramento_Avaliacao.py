@@ -18,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-APP_VERSION = "v3.3 - Menu Mais Baixo (Ajuste 8rem)"
+APP_VERSION = "v3.4 - Menu Ajustado Próximo à Barra"
 
 # ==============================================================================
 # 2. CABEÇALHO FIXO (TOP BAR)
@@ -87,8 +87,11 @@ def render_omnisfera_header():
         /* AJUSTE RESPONSIVO */
         @media (max-width: 768px) { .topbar-thin { padding: 0 1rem; } }
         
-        /* AJUSTE DO CONTEÚDO DA PÁGINA PARA NÃO FICAR ESCONDIDO ATRÁS DA BARRA */
-        /* VAMOS MANTER O 8rem QUE JÁ ESTAVA FUNCIONANDO */
+        /* MENU MAIS PRÓXIMO DA BARRA - CONTEÚDO DESCE MENOS */
+        .block-container { 
+            padding-top: 4.5rem !important; /* REDUZIDO: De 8rem para 4.5rem (72px) */
+            padding-bottom: 3rem; 
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -120,17 +123,12 @@ def render_omnisfera_header():
 render_omnisfera_header()
 
 # ==============================================================================
-# 3. DESIGN & CSS (AJUSTE DE POSIÇÃO)
+# 3. DESIGN & CSS (MANTENDO O RESTANTE DO CSS ORIGINAL)
 # ==============================================================================
 st.markdown("""
 <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 <style>
-    /* --- AJUSTE DE POSIÇÃO DO MENU --- */
-    .block-container { 
-        padding-top: 8rem !important; /* ALTERADO: De 5rem para 8rem - MANTIDO COMO ESTAVA! */
-        padding-bottom: 3rem; 
-    }
-    
+    /* --- REMOVENDO O PADDING-TOP AQUI POIS JÁ FOI DEFINIDO NO HEADER --- */
     /* Remove a barra de topo padrão do Streamlit visualmente */
     header[data-testid="stHeader"] {
         background-color: transparent !important;
