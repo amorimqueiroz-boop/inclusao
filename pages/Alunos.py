@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-APP_VERSION = "v2.8 - Menu Slim & Lowercase"
+APP_VERSION = "v2.3 - Layout Compacto"
 
 # ==============================================================================
 # FUNÇÕES AUXILIARES
@@ -36,7 +36,7 @@ def get_workspace_short(max_len: int = 20) -> str:
     return (ws[:max_len] + "...") if len(ws) > max_len else ws
 
 # ==============================================================================
-# CSS (ULTRA COMPACTO)
+# CSS E DESIGN SYSTEM (AJUSTE DE ESPAÇAMENTO MÁXIMO)
 # ==============================================================================
 st.markdown("""
 <style>
@@ -53,94 +53,74 @@ html, body, [class*="css"] {
 /* OCULTAR NATIVOS */
 [data-testid="stSidebarNav"], [data-testid="stHeader"], footer { display: none !important; }
 
-/* --- ESPAÇAMENTO GERAL --- */
+/* --- AJUSTE CRÍTICO DE ESPAÇAMENTO --- */
 .block-container {
-    padding-top: 55px !important; /* Colado na barra fixa */
+    padding-top: 75px !important; /* Subir todo o conteúdo */
     padding-bottom: 2rem !important;
     max-width: 98% !important;
     padding-left: 0.5rem !important;
     padding-right: 0.5rem !important;
 }
 
-/* TOPBAR FIXA */
+/* TOPBAR FINA */
 .topbar-thin {
-    position: fixed; top: 0; left: 0; right: 0; height: 50px; /* Barra mais fina (50px) */
+    position: fixed; top: 0; left: 0; right: 0; height: 60px; /* Mais fina */
     background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(10px);
     border-bottom: 1px solid #E2E8F0;
     z-index: 9999;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 2rem;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    padding: 0 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
-.brand-box { display: flex; align-items: center; gap: 8px; }
-.brand-logo { height: 28px !important; width: auto !important; animation: spin 60s linear infinite; }
-.brand-img-text { height: 16px !important; width: auto; margin-left: 6px; }
+.brand-box { display: flex; align-items: center; gap: 10px; }
+.brand-logo { height: 36px !important; width: auto !important; animation: spin 60s linear infinite; }
+.brand-img-text { height: 22px !important; width: auto; margin-left: 8px; }
 
 /* BADGES TOPO */
-.user-badge-thin { background: #F1F5F9; border: 1px solid #E2E8F0; padding: 2px 8px; border-radius: 10px; font-size: 0.65rem; font-weight: 700; color: #64748B; }
-.apple-avatar-thin { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.65rem; }
+.user-badge-thin { background: #F1F5F9; border: 1px solid #E2E8F0; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; color: #64748B; }
+.apple-avatar-thin { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; }
 
-/* --- BOTÕES SLIM (AJUSTE FINO) --- */
-.qa-container {
-    margin-top: -35px !important; /* Puxa MUITO para cima */
-    margin-bottom: 2px !important; /* Cola no card de baixo */
-}
-
+/* BOTÕES DO MENU RÁPIDO (SOLID COLORS) */
 .qa-btn-colored button {
-    font-weight: 600 !important;
-    border-radius: 4px !important;
-    padding: 0px 0px !important;
-    font-size: 0.65rem !important; /* Fonte pequena */
-    text-transform: none !important; /* Caixa baixa/normal */
-    box-shadow: 0 1px 1px rgba(0,0,0,0.05) !important;
-    min-height: 24px !important; /* Altura Mínima */
-    height: 24px !important;
-    border: none !important;
-    color: white !important;
-    transition: all 0.1s ease !important;
-    letter-spacing: 0px !important;
-    white-space: nowrap !important;
-    width: 100% !important;
-    line-height: 1 !important; /* Centralizar texto verticalmente */
+    font-weight: 800 !important; border-radius: 8px !important; padding: 4px 0 !important;
+    font-size: 0.65rem !important; text-transform: uppercase !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important; min-height: 28px !important; height: auto !important;
+    border: none !important; color: white !important; transition: all 0.2s ease !important;
 }
-.qa-btn-colored button:hover { transform: translateY(-1px) !important; filter: brightness(1.05); }
+.qa-btn-colored button:hover { transform: translateY(-1px) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important; }
 
-/* Cores dos Botões */
-div[data-testid="column"]:nth-of-type(2) .qa-btn-colored button { background: linear-gradient(135deg, #64748B, #475569) !important; }
-div[data-testid="column"]:nth-of-type(3) .qa-btn-colored button { background: linear-gradient(135deg, #4F46E5, #4338CA) !important; }
-div[data-testid="column"]:nth-of-type(4) .qa-btn-colored button { background: linear-gradient(135deg, #2563EB, #1D4ED8) !important; }
-div[data-testid="column"]:nth-of-type(5) .qa-btn-colored button { background: linear-gradient(135deg, #7C3AED, #6D28D9) !important; }
-div[data-testid="column"]:nth-of-type(6) .qa-btn-colored button { background: linear-gradient(135deg, #0D9488, #0F766E) !important; }
-div[data-testid="column"]:nth-of-type(7) .qa-btn-colored button { background: linear-gradient(135deg, #E11D48, #BE123C) !important; }
-div[data-testid="column"]:nth-of-type(8) .qa-btn-colored button { background: linear-gradient(135deg, #0284C7, #0369A1) !important; }
+/* Cores Específicas dos Botões */
+div[data-testid="column"]:nth-of-type(1) .qa-btn-colored button { background: linear-gradient(135deg, #64748B, #475569) !important; } /* Home */
+div[data-testid="column"]:nth-of-type(2) .qa-btn-colored button { background: linear-gradient(135deg, #4F46E5, #4338CA) !important; } /* Alunos */
+div[data-testid="column"]:nth-of-type(3) .qa-btn-colored button { background: linear-gradient(135deg, #2563EB, #1D4ED8) !important; } /* PEI */
+div[data-testid="column"]:nth-of-type(4) .qa-btn-colored button { background: linear-gradient(135deg, #7C3AED, #6D28D9) !important; } /* AEE */
+div[data-testid="column"]:nth-of-type(5) .qa-btn-colored button { background: linear-gradient(135deg, #0D9488, #0F766E) !important; } /* Recursos */
+div[data-testid="column"]:nth-of-type(6) .qa-btn-colored button { background: linear-gradient(135deg, #E11D48, #BE123C) !important; } /* Diário */
+div[data-testid="column"]:nth-of-type(7) .qa-btn-colored button { background: linear-gradient(135deg, #0284C7, #0369A1) !important; } /* Dados */
 
-/* CARD HERO (COLADO) */
-.mod-card-wrapper { 
-    display: flex; flex-direction: column; 
-    margin-bottom: 10px; margin-top: 0px; 
-    border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02); 
-}
-.mod-card-rect { background: white; padding: 0; border: 1px solid #E2E8F0; display: flex; align-items: center; height: 60px; /* Hero mais baixo */ }
-.mod-bar { width: 4px; height: 100%; flex-shrink: 0; }
-.mod-icon-area { width: 50px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; background: #FAFAFA; border-right: 1px solid #F1F5F9; }
-.mod-content { flex-grow: 1; padding: 0 14px; }
-.mod-title { font-weight: 700; font-size: 0.85rem; color: #1E293B; margin-bottom: 0px; }
-.mod-desc { font-size: 0.65rem; color: #64748B; }
+/* CARD HERO */
+.mod-card-wrapper { display: flex; flex-direction: column; margin-bottom: 15px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-top: 0px; }
+.mod-card-rect { background: white; padding: 0; border: 1px solid #E2E8F0; display: flex; align-items: center; height: 90px; }
+.mod-bar { width: 6px; height: 100%; flex-shrink: 0; }
+.mod-icon-area { width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; background: #FAFAFA; border-right: 1px solid #F1F5F9; }
+.mod-content { flex-grow: 1; padding: 0 20px; }
+.mod-title { font-weight: 800; font-size: 1rem; color: #1E293B; margin-bottom: 2px; }
+.mod-desc { font-size: 0.75rem; color: #64748B; }
 
 /* TABELA */
-.student-table { background: white; border-radius: 10px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02); margin-top: 8px; }
-.student-header { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; background: #F8FAFC; padding: 8px 16px; border-bottom: 1px solid #E2E8F0; font-weight: 700; color: #475569; font-size: 0.7rem; }
-.student-row { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; padding: 10px 16px; border-bottom: 1px solid #F1F5F9; align-items: center; background: white; }
+.student-table { background: white; border-radius: 16px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-top: 15px; }
+.student-header { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; background: #F8FAFC; padding: 12px 20px; border-bottom: 2px solid #E2E8F0; font-weight: 800; color: #475569; font-size: 0.8rem; text-transform: uppercase; }
+.student-row { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; padding: 12px 20px; border-bottom: 1px solid #F1F5F9; align-items: center; background: white; }
 .student-row:hover { background: #F8FAFC; }
-.badge-grade { background: #F0F9FF; color: #0369A1; padding: 1px 6px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; border: 1px solid #BAE6FD; }
-.badge-class { background: #F0FDF4; color: #15803D; padding: 1px 6px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; border: 1px solid #BBF7D0; }
+.badge-grade { background: #F0F9FF; color: #0369A1; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; border: 1px solid #BAE6FD; }
+.badge-class { background: #F0FDF4; color: #15803D; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; border: 1px solid #BBF7D0; }
 
 /* Cores Cards */
 .c-sky { background: #0284C7 !important; } .bg-sky-soft { background: #F0F9FF !important; color: #0284C7 !important; }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
-@media (max-width: 768px) { .topbar-thin { padding: 0 1rem; } .student-header { display: none; } .student-row { grid-template-columns: 1fr; gap: 6px; border-bottom: 2px solid #F1F5F9; } }
+@media (max-width: 768px) { .topbar-thin { padding: 0 1rem; } .student-header { display: none; } .student-row { grid-template-columns: 1fr; gap: 8px; border-bottom: 2px solid #F1F5F9; } }
 </style>
 """, unsafe_allow_html=True)
 
@@ -170,39 +150,44 @@ def render_thin_topbar():
 
 render_thin_topbar()
 
-# --- 2. MENU COMPACTO (Lower Case) ---
+# --- 2. MENU DE ACESSO RÁPIDO COLORIDO ---
 def render_menu():
-    # Usando colunas proporcionais para centralizar e dar espaço aos textos longos
-    # 0.5 (Spacer) | 1 | 1 | 1.2 | 1.2 | 1.2 | 1.2 | 1.2 | 0.5 (Spacer)
-    cols = st.columns([0.3, 0.8, 1, 1.2, 1.2, 1.2, 1.2, 1.2, 0.3], gap="small")
+    # CSS específico para "colar" o menu no topo
+    st.markdown("""
+    <style>
+        .qa-container { margin-top: -30px !important; padding-bottom: 5px !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    c1, c2, c3, c4, c5, c6, c7 = st.columns(7, gap="small")
     
-    with cols[1]: 
+    with c1: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        if st.button("Início", use_container_width=True): st.switch_page("pages/0_Home.py")
+        if st.button("INÍCIO", use_container_width=True): st.switch_page("pages/0_Home.py")
         st.markdown('</div>', unsafe_allow_html=True)
-    with cols[2]: 
+    with c2: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        if st.button("Estudantes", use_container_width=True): st.rerun()
+        if st.button("ESTUDANTES", use_container_width=True): st.rerun() # Já estamos aqui
         st.markdown('</div>', unsafe_allow_html=True)
-    with cols[3]: 
+    with c3: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        if st.button("Estratégias & PEI", use_container_width=True): st.switch_page("pages/1_PEI.py")
+        if st.button("PEI", use_container_width=True): st.switch_page("pages/1_PEI.py")
         st.markdown('</div>', unsafe_allow_html=True)
-    with cols[4]: 
+    with c4: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        if st.button("Plano de Ação (AEE)", use_container_width=True): st.switch_page("pages/2_PAE.py")
+        if st.button("AEE", use_container_width=True): st.switch_page("pages/2_PAE.py")
         st.markdown('</div>', unsafe_allow_html=True)
-    with cols[5]: 
+    with c5: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        if st.button("Hub de Recursos", use_container_width=True): st.switch_page("pages/3_Hub_Inclusao.py")
+        if st.button("RECURSOS", use_container_width=True): st.switch_page("pages/3_Hub_Inclusao.py")
         st.markdown('</div>', unsafe_allow_html=True)
-    with cols[6]: 
+    with c6: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        if st.button("Diário de Bordo", use_container_width=True): st.switch_page("pages/4_Diario_de_Bordo.py")
+        if st.button("DIÁRIO", use_container_width=True): st.switch_page("pages/4_Diario_de_Bordo.py")
         st.markdown('</div>', unsafe_allow_html=True)
-    with cols[7]: 
+    with c7: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        if st.button("Evolução & Dados", use_container_width=True): st.switch_page("pages/5_Monitoramento_Avaliacao.py")
+        if st.button("DADOS", use_container_width=True): st.switch_page("pages/5_Monitoramento_Avaliacao.py")
         st.markdown('</div>', unsafe_allow_html=True)
 
 render_menu()
@@ -217,13 +202,13 @@ st.markdown(f"""
             <div class="mod-icon-area bg-sky-soft"><i class="ri-group-fill"></i></div>
             <div class="mod-content">
                 <div class="mod-title">Gestão de Estudantes</div>
-                <div class="mod-desc">{saudacao}, <strong>{user_first}</strong>! Gerencie os dados aqui.</div>
+                <div class="mod-desc">{saudacao}, <strong>{user_first}</strong>! Gerencie os dados dos alunos vinculados aos PEIs neste workspace.</div>
             </div>
         </div>
     </div>
 """, unsafe_allow_html=True)
 
-# --- 4. CONTROLES ---
+# --- 4. CONTROLES E BUSCA ---
 col1, col2 = st.columns([3, 1], gap="medium")
 with col1:
     q = st.text_input("Buscar por nome", placeholder="Digite o nome...", label_visibility="collapsed", key="search")
@@ -260,7 +245,7 @@ if st.session_state.get("force_refresh"): list_students_rest.clear()
 alunos = list_students_rest(ws_id)
 if q: alunos = [a for a in alunos if q.lower() in (a.get("name") or "").lower()]
 
-# --- 6. TABELA ---
+# --- 6. TABELA DE ALUNOS ---
 if not alunos:
     st.info("Nenhum estudante encontrado.")
 else:
@@ -274,18 +259,20 @@ else:
         serie, turma = a.get("grade", "—"), a.get("class_group", "—")
         diag = a.get("diagnosis", "—")
         
+        # Linha HTML
         st.markdown(f"""
         <div class="student-row">
             <div style="font-weight:700; color:#1E293B;">{nome}</div>
             <div><span class="badge-grade">{serie}</span></div>
             <div><span class="badge-class">{turma}</span></div>
-            <div style="font-size:0.8rem; color:#64748B;">{diag}</div>
+            <div style="font-size:0.85rem; color:#64748B;">{diag}</div>
             <div>
         """, unsafe_allow_html=True)
         
+        # Botão de Excluir
         col_btn, _ = st.columns([1, 4])
         with col_btn:
-            if st.button("🗑️", key=f"del_{sid}", help="Excluir"):
+            if st.button("🗑️", key=f"del_{sid}", help="Excluir aluno"):
                 delete_student_rest(sid, ws_id)
                 list_students_rest.clear()
                 st.rerun()
@@ -294,4 +281,5 @@ else:
     
     st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown(f"<div style='text-align:center;color:#94A3B8;font-size:0.6rem;padding:10px;margin-top:10px;'>{len(alunos)} estudantes • {APP_VERSION}</div>", unsafe_allow_html=True)
+# Rodapé
+st.markdown(f"<div style='text-align:center;color:#94A3B8;font-size:0.7rem;padding:20px;margin-top:20px;'>{len(alunos)} estudantes registrados • {APP_VERSION}</div>", unsafe_allow_html=True)
