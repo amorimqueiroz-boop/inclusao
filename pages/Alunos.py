@@ -30,11 +30,29 @@ def get_base64_image(filename: str) -> str:
 # ==============================================================================
 # BLOCO A — TOPBAR FIXA FINA COM LOGO GIRANDO (OCULTA HEADER NATIVO)
 # ==============================================================================
+def get_user_initials(nome: str) -> str:
+    """Extrai as iniciais do nome do usuário"""
+    if not nome:
+        return "U"
+    parts = nome.strip().split()
+    if len(parts) >= 2:
+        return f"{parts[0][0]}{parts[-1][0]}".upper()
+    return parts[0][:2].upper()
+
+def get_user_first_name() -> str:
+    """Extrai o primeiro nome do usuário"""
+    return (st.session_state.get("usuario_nome", "Visitante").strip().split() or ["Visitante"])[0]
+
+def get_workspace_short(max_len: int = 20) -> str:
+    """Formata o nome do workspace com truncagem se necessário"""
+    ws = st.session_state.get("workspace_name", "") or ""
+    return (ws[:max_len] + "...") if len(ws) > max_len else ws
+
 def render_thin_topbar_with_spinning_logo():
-    """Renderiza a barra superior fixa SUPER FINA (55px) com logo giratória"""
+    """Renderiza a barra superior fixa FINA (65px) com logo giratória"""
     icone_b64 = get_base64_image("omni_icone.png")
     texto_b64 = get_base64_image("omni_texto.png")
-    ws_name = get_workspace_short(15)  # Mais curto
+    ws_name = get_workspace_short()
     user_first = get_user_first_name()
     initials = get_user_initials(st.session_state.get("usuario_nome", "Visitante"))
     
@@ -45,7 +63,7 @@ def render_thin_topbar_with_spinning_logo():
     
     img_text = (
         f'<img src="data:image/png;base64,{texto_b64}" class="brand-img-text" alt="Omnisfera">'
-        if texto_b64 else "<span style='font-weight:800; color:#2B3674; font-size:0.9rem;'>OMNISFERA</span>"
+        if texto_b64 else "<span style='font-weight:800; color:#2B3674;'>OMNISFERA</span>"
     )
     
     st.markdown(
@@ -55,7 +73,7 @@ def render_thin_topbar_with_spinning_logo():
                 {img_logo}
                 {img_text}
             </div>
-            <div class="brand-box" style="gap: 8px;">
+            <div class="brand-box" style="gap: 12px;">
                 <div class="user-badge-thin">{ws_name}</div>
                 <div class="user-badge-thin">{user_first}</div>
                 <div class="apple-avatar-thin">{initials}</div>
