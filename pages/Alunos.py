@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-APP_VERSION = "v2.6 - Menu Micro & Nomes Completos"
+APP_VERSION = "v2.7 - Menu Uniforme e Minúsculas"
 
 # ==============================================================================
 # FUNÇÕES AUXILIARES
@@ -36,7 +36,7 @@ def get_workspace_short(max_len: int = 20) -> str:
     return (ws[:max_len] + "...") if len(ws) > max_len else ws
 
 # ==============================================================================
-# CSS (ESTILOS REFINADOS - MICRO BOTÕES)
+# CSS E DESIGN SYSTEM (BOTÕES UNIFORMES)
 # ==============================================================================
 st.markdown("""
 <style>
@@ -81,52 +81,58 @@ html, body, [class*="css"] {
 .user-badge-thin { background: #F1F5F9; border: 1px solid #E2E8F0; padding: 3px 10px; border-radius: 12px; font-size: 0.65rem; font-weight: 700; color: #64748B; }
 .apple-avatar-thin { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.7rem; }
 
-/* --- BOTÕES DO MENU RÁPIDO (MICRO E CENTRALIZADOS) --- */
+/* --- BOTÕES DO MENU RÁPIDO (TEXTO NORMAL & UNIFORME) --- */
 .qa-container {
-    margin-top: -28px !important; /* MARGEM NEGATIVA FORTE PARA COLAR NO TOPO */
+    margin-top: -25px !important; /* Cola no topo */
     margin-bottom: 0px !important; /* Cola no card de baixo */
 }
 
-/* Estilo Base do Botão (BEM MENOR) */
+/* Estilo Base do Botão */
 .qa-btn-colored button {
-    font-weight: 800 !important;
-    border-radius: 4px !important; /* Bordas mais quadradas para parecer menor */
-    padding: 1px 0 !important; /* Padding mínimo */
-    font-size: 0.6rem !important; /* Fonte minúscula */
-    text-transform: uppercase !important;
-    box-shadow: 0 1px 1px rgba(0,0,0,0.05) !important;
-    min-height: 22px !important; /* Altura super reduzida */
-    height: auto !important;
+    font-weight: 700 !important; /* Um pouco menos grosso que 800 */
+    border-radius: 6px !important;
+    padding: 0px 4px !important; /* Padding lateral mínimo */
+    font-size: 0.7rem !important; /* Tamanho bom para leitura */
+    text-transform: none !important; /* REMOVE CAIXA ALTA */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08) !important;
+    min-height: 32px !important; /* Altura fixa para todos */
+    height: 32px !important;
     border: none !important;
     color: white !important;
     transition: all 0.2s ease !important;
-    letter-spacing: 0.2px !important;
-    white-space: nowrap !important; /* Garante que o texto longo não quebre */
+    letter-spacing: 0px !important; /* Remove espaçamento extra entre letras */
+    white-space: nowrap !important; /* Impede quebra de linha */
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
 }
-.qa-btn-colored button:hover { transform: translateY(-1px) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important; filter: brightness(1.05); }
+.qa-btn-colored button:hover { transform: translateY(-1px) !important; box-shadow: 0 2px 5px rgba(0,0,0,0.15) !important; filter: brightness(1.1); }
 
 /* Cores dos Botões (Gradient Suave) */
-/* Nota: Os índices mudam devido às colunas espaçadoras */
-div[data-testid="column"]:nth-of-type(2) .qa-btn-colored button { background: linear-gradient(135deg, #64748B, #475569) !important; } /* Início */
-div[data-testid="column"]:nth-of-type(3) .qa-btn-colored button { background: linear-gradient(135deg, #4F46E5, #4338CA) !important; } /* Alunos */
-div[data-testid="column"]:nth-of-type(4) .qa-btn-colored button { background: linear-gradient(135deg, #2563EB, #1D4ED8) !important; } /* PEI */
-div[data-testid="column"]:nth-of-type(5) .qa-btn-colored button { background: linear-gradient(135deg, #7C3AED, #6D28D9) !important; } /* AEE */
-div[data-testid="column"]:nth-of-type(6) .qa-btn-colored button { background: linear-gradient(135deg, #0D9488, #0F766E) !important; } /* Recursos */
-div[data-testid="column"]:nth-of-type(7) .qa-btn-colored button { background: linear-gradient(135deg, #E11D48, #BE123C) !important; } /* Diário */
-div[data-testid="column"]:nth-of-type(8) .qa-btn-colored button { background: linear-gradient(135deg, #0284C7, #0369A1) !important; } /* Dados */
+/* Índices ajustados para colunas espaçadoras */
+div[data-testid="column"]:nth-of-type(2) .qa-btn-colored button { background: linear-gradient(135deg, #64748B, #475569) !important; }
+div[data-testid="column"]:nth-of-type(3) .qa-btn-colored button { background: linear-gradient(135deg, #4F46E5, #4338CA) !important; }
+div[data-testid="column"]:nth-of-type(4) .qa-btn-colored button { background: linear-gradient(135deg, #2563EB, #1D4ED8) !important; }
+div[data-testid="column"]:nth-of-type(5) .qa-btn-colored button { background: linear-gradient(135deg, #7C3AED, #6D28D9) !important; }
+div[data-testid="column"]:nth-of-type(6) .qa-btn-colored button { background: linear-gradient(135deg, #0D9488, #0F766E) !important; }
+div[data-testid="column"]:nth-of-type(7) .qa-btn-colored button { background: linear-gradient(135deg, #E11D48, #BE123C) !important; }
+div[data-testid="column"]:nth-of-type(8) .qa-btn-colored button { background: linear-gradient(135deg, #0284C7, #0369A1) !important; }
 
 /* CARD HERO (COLADO NO MENU) */
 .mod-card-wrapper { 
     display: flex; flex-direction: column; 
-    margin-bottom: 15px; margin-top: 5px; /* Pequeno respiro do menu */
+    margin-bottom: 15px; margin-top: 5px; /* Pequeno respiro */
     border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
 }
-.mod-card-rect { background: white; padding: 0; border: 1px solid #E2E8F0; display: flex; align-items: center; height: 70px; /* Altura reduzida */ }
-.mod-bar { width: 4px; height: 100%; flex-shrink: 0; }
-.mod-icon-area { width: 50px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; background: #FAFAFA; border-right: 1px solid #F1F5F9; }
-.mod-content { flex-grow: 1; padding: 0 14px; }
-.mod-title { font-weight: 800; font-size: 0.85rem; color: #1E293B; margin-bottom: 2px; }
-.mod-desc { font-size: 0.65rem; color: #64748B; }
+.mod-card-rect { background: white; padding: 0; border: 1px solid #E2E8F0; display: flex; align-items: center; height: 75px; }
+.mod-bar { width: 5px; height: 100%; flex-shrink: 0; }
+.mod-icon-area { width: 60px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: #FAFAFA; border-right: 1px solid #F1F5F9; }
+.mod-content { flex-grow: 1; padding: 0 16px; }
+.mod-title { font-weight: 800; font-size: 0.9rem; color: #1E293B; margin-bottom: 2px; }
+.mod-desc { font-size: 0.7rem; color: #64748B; }
 
 /* TABELA */
 .student-table { background: white; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-top: 10px; }
@@ -170,43 +176,38 @@ def render_thin_topbar():
 
 render_thin_topbar()
 
-# --- 2. MENU DE ACESSO RÁPIDO (NOMES COMPLETOS & MICRO) ---
+# --- 2. MENU DE ACESSO RÁPIDO UNIFORME (MINÚSCULAS) ---
 def render_menu():
-    # Colunas com espaçadores laterais (1.2) para centralizar
-    cols = st.columns([1.2, 1, 1, 1, 1, 1, 1, 1, 1.2], gap="small")
+    # Ajustei as colunas: Reduzi os espaçadores das pontas (0.2) para dar mais espaço aos botões
+    cols = st.columns([0.2, 1, 1, 1, 1, 1, 1, 1, 0.2], gap="small")
     
     with cols[1]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        if st.button("INÍCIO", use_container_width=True): st.switch_page("pages/0_Home.py")
+        if st.button("Início", use_container_width=True): st.switch_page("pages/0_Home.py")
         st.markdown('</div>', unsafe_allow_html=True)
     with cols[2]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        if st.button("ESTUDANTES", use_container_width=True): st.rerun()
+        if st.button("Estudantes", use_container_width=True): st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     with cols[3]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        # Nome atualizado
-        if st.button("ESTRATÉGIAS & PEI", use_container_width=True): st.switch_page("pages/1_PEI.py")
+        if st.button("Estratégias & PEI", use_container_width=True): st.switch_page("pages/1_PEI.py")
         st.markdown('</div>', unsafe_allow_html=True)
     with cols[4]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        # Nome atualizado
-        if st.button("PLANO DE AÇÃO (AEE)", use_container_width=True): st.switch_page("pages/2_PAE.py")
+        if st.button("Plano de Ação (AEE)", use_container_width=True): st.switch_page("pages/2_PAE.py")
         st.markdown('</div>', unsafe_allow_html=True)
     with cols[5]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        # Nome atualizado
-        if st.button("HUB DE RECURSOS", use_container_width=True): st.switch_page("pages/3_Hub_Inclusao.py")
+        if st.button("Hub de Recursos", use_container_width=True): st.switch_page("pages/3_Hub_Inclusao.py")
         st.markdown('</div>', unsafe_allow_html=True)
     with cols[6]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        # Nome atualizado
-        if st.button("DIÁRIO DE BORDO", use_container_width=True): st.switch_page("pages/4_Diario_de_Bordo.py")
+        if st.button("Diário de Bordo", use_container_width=True): st.switch_page("pages/4_Diario_de_Bordo.py")
         st.markdown('</div>', unsafe_allow_html=True)
     with cols[7]: 
         st.markdown('<div class="qa-container qa-btn-colored">', unsafe_allow_html=True)
-        # Nome atualizado
-        if st.button("EVOLUÇÃO & DADOS", use_container_width=True): st.switch_page("pages/5_Monitoramento_Avaliacao.py")
+        if st.button("Evolução & Dados", use_container_width=True): st.switch_page("pages/5_Monitoramento_Avaliacao.py")
         st.markdown('</div>', unsafe_allow_html=True)
 
 render_menu()
@@ -221,7 +222,7 @@ st.markdown(f"""
             <div class="mod-icon-area bg-sky-soft"><i class="ri-group-fill"></i></div>
             <div class="mod-content">
                 <div class="mod-title">Gestão de Estudantes</div>
-                <div class="mod-desc">{saudacao}, <strong>{user_first}</strong>! Gerencie os dados dos alunos.</div>
+                <div class="mod-desc">{saudacao}, <strong>{user_first}</strong>! Gerencie os dados dos alunos vinculados aos PEIs neste workspace.</div>
             </div>
         </div>
     </div>
@@ -301,4 +302,4 @@ else:
     st.markdown("</div>", unsafe_allow_html=True)
 
 # Rodapé
-st.markdown(f"<div style='text-align:center;color:#94A3B8;font-size:0.65rem;padding:15px;margin-top:20px;'>{len(alunos)} estudantes • {APP_VERSION}</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center;color:#94A3B8;font-size:0.7rem;padding:20px;margin-top:20px;'>{len(alunos)} estudantes registrados • {APP_VERSION}</div>", unsafe_allow_html=True)
