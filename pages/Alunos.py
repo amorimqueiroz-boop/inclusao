@@ -17,6 +17,85 @@ st.set_page_config(
 
 APP_VERSION = "v2.0 - Gestão de Estudantes"
 
+
+# ==============================================================================
+# BLOCO A — TOPBAR COMPLETA (Logo + Workspace + Usuário + Avatar)
+# Reuso: cole este bloco em qualquer page e chame render_topbar()
+# ==============================================================================
+
+def get_base64_image(image_path: str) -> str:
+    """Lê imagem local e retorna base64 (string vazia se não existir)."""
+    if not os.path.exists(image_path):
+        return ""
+    try:
+        with open(image_path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    except Exception:
+        return ""
+
+def get_user_initials(nome: str) -> str:
+    """Retorna iniciais do usuário (ex: 'Rodrigo Amorim' -> 'RA')."""
+    if not nome:
+        return "U"
+    parts = nome.strip().split()
+    if len(parts) >= 2:
+        return f"{parts[0][0]}{parts[-1][0]}".upper()
+    return parts[0][:2].upper()
+
+def get_user_first_name() -> str:
+    """Primeiro nome do usuário."""
+    return (st.session_state.get("usuario_nome", "Visitante").strip().split() or ["Visitante"])[0]
+
+def get_workspace_short(max_len: int = 20) -> str:
+    """Nome curto da escola/workspace para badge."""
+    ws = st.session_state.get("workspace_name", "") or ""
+    return (ws[:max_len] + "...") if len(ws) > max_len else ws
+
+def render_topbar():
+    """
+    Renderiza a Topbar fixa com:
+    - Logo girando (omni_icone.png)
+    - Logo texto (omni_texto.png)
+    - Badge da escola/workspace
+    - Nome do usuário
+    - Avatar com iniciais (estilo Apple-like)
+    """
+
+    icone_b64 = get_base64_image("omni_icone.png")
+    texto_b64 = get_base64_image("omni_texto.png")
+
+    img_logo = (
+        f'<img src="data:image/png;base64,{icone_b64}" class="brand-logo">'
+        if icone_b64 else "🌐"
+    )
+    img_text = (
+        f'<img src="data:image/png;base64,{texto_b64}" class="brand-img-text">'
+        if texto_b64 else "<span style='font-weight:800;color:#2B3674;'>OMNISFERA</span>"
+    )
+
+    user_full = st.session_state.get("usuario_nome", "Visitante")
+    user_first = get_user_first_name()
+    initials = get_user_initials(user_full)
+    ws_name = get_workspace_short()
+
+    st.markdown(
+        f"""
+        <div class="topbar">
+            <!-- ESQUERDA: MARCA -->
+            <div class="brand-box">
+                {img_logo}
+                {img_text}
+            </div>
+
+            <!-- DIREITA: CONTEXTO DO USUÁRIO -->
+            <div class="brand-box" style="gap:10px;">
+                <div class="user-badge">{ws_name}</div>
+                <div class="user-badge">{user_first}</div>
+                <div class="apple-avatar">{initials}</div>
+            </div>
+
+
+
 # ==============================================================================
 # 🔷 DESIGN SYSTEM COM SIDEBAR E BADGE FLUTUANTE
 # ==============================================================================
