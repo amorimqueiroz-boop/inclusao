@@ -17,6 +17,87 @@ from streamlit_cropper import st_cropper
 from datetime import date, datetime
 
 
+
+
+# ✅ 1) set_page_config (UMA VEZ SÓ e sempre no topo)
+st.set_page_config(
+    page_title="Omnisfera | PEI",
+    page_icon="📘",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+APP_VERSION = "v150.0 (SaaS Design)"
+
+# ✅ 2) UI lockdown (não quebra se faltar arquivo)
+try:
+    from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
+    hide_streamlit_chrome_if_needed()
+    hide_default_sidebar_nav()
+except Exception:
+    pass
+
+# ✅ 3) Flag de ambiente (opcional)
+try:
+    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
+except Exception:
+    IS_TEST_ENV = False
+
+# ✅ 4) Gate mínimo: autenticado + workspace_id
+if not st.session_state.get("autenticado"):
+    st.error("🔒 Acesso negado. Faça login na Página Inicial.")
+    st.stop()
+
+ws_id = st.session_state.get("workspace_id")
+if not ws_id:
+    st.error("Workspace não definido. Volte ao Início e valide o PIN.")
+    if st.button("Voltar para Login", key="pei_btn_voltar_login", use_container_width=True):
+        for k in ["autenticado", "workspace_id", "workspace_name", "usuario_nome", "usuario_cargo", "supabase_jwt", "supabase_user_id"]:
+            st.session_state.pop(k, None)
+        st.switch_page("streamlit_app.py")
+    st.stop()
+
+# ✅ 5) Supabase (opcional: não bloqueia PEI se der ruim)
+sb = None
+try:
+    from _client import get_supabase
+    sb = get_supabase()  # <-- cliente (não é função)
+except Exception:
+    sb = None
+
+# Guardas legadas (não travam)
+def verificar_login_supabase():
+    st.session_state.setdefault("supabase_jwt", "")
+    st.session_state.setdefault("supabase_user_id", "")
+
+verificar_login_supabase()
+OWNER_ID = st.session_state.get("supabase_user_id", "")
+
+# ==============================================================================
+# OPENAI
+# ==============================================================================
+api_key = st.secrets.get("OPENAI_API_KEY", "")
+
+
+# ==============================================================================
+# 1. GUARDAS (LOGIN + SUPABASE)
+# ==============================================================================
+def verificar_login_app():
+    if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
+        st.error("🔒 Acesso Negado. Faça login na Página Inicial.")
+        st.stop()
+
+def verificar_login_supabase():
+    # Supabase é necessário para SALVAR/CARREGAR, mas o PEI pode abrir como rascunho.
+    # Então aqui só garantimos chaves mínimas (não bloqueia).
+    if "supabase_jwt" not in st.session_state:
+        st.session_state["supabase_jwt"] = ""
+    if "supabase_user_id" not in st.session_state:
+        st.session_state["supabase_user_id"] = ""
+
+verificar_login_app()
+verificar_login_supabase()
+
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
 # ==============================================================================
