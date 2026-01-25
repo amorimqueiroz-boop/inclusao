@@ -178,7 +178,152 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ==============================================================================
+# CARREGAMENTO DA BNCC (NOVO)
+# ==============================================================================
+import pandas as pd
 
+@st.cache_data
+def carregar_estrutura_bncc():
+    """Carrega BNCC do arquivo CSV"""
+    try:
+        # Tenta diferentes formatos
+        for enc in ['utf-8', 'latin-1', 'utf-8-sig']:
+            try:
+                df = pd.read_csv('bncc.csv', encoding=enc, delimiter=',')
+                break
+            except:
+                try:
+                    df = pd.read_csv('bncc.csv', encoding=enc, delimiter=';')
+                    break
+                except:
+                    continue
+        
+        df.columns = [col.strip() for col in df.columns]
+        
+        # Criar estrutura {ano: {disciplina: {unidade: [objetos]}}}
+        estrutura = {}
+        for _, row in df.iterrows():
+            ano = str(row['Ano']).strip()
+            disc = row['Disciplina'].strip()
+            unid = row['Unidade Temática'].strip()
+            obj = row['Objeto do Conhecimento'].strip()
+            hab = row['Habilidade'].strip()
+            
+            if ano not in estrutura:
+                estrutura[ano] = {}
+            if disc not in estrutura[ano]:
+                estrutura[ano][disc] = {}
+            if unid not in estrutura[ano][disc]:
+                estrutura[ano][disc][unid] = []
+            
+            # Verificar se objeto já existe
+            if not any(o['nome'] == obj for o in estrutura[ano][disc][unid]):
+                estrutura[ano][disc][unid].append({
+                    'nome': obj,
+                    'habilidades': [hab]
+                })
+            else:
+                # Adicionar habilidade
+                for o in estrutura[ano][disc][unid]:
+                    if o['nome'] == obj:
+                        o['habilidades'].append(hab)
+                        break
+        
+        return estrutura
+    except Exception as e:
+        st.sidebar.warning(f"BNCC não carregada: {str(e)[:100]}")
+        return None
+
+def extrair_ano_serie(serie_texto):
+    """Extrai número do ano da série do aluno"""
+    import re
+    if not serie_texto:
+        return None
+    
+    texto = str(serie_texto).lower()
+    
+    # Padrões comuns
+    padroes = [
+        r'(\d+)\s*º?\s*ano',      # "5º ano"
+        r'(\d+)\s*ª?\s*série',    # "2ª série"
+        r'ano\s*(\d+)',           # "Ano 3"
+        r'ef\s*(\d+)',            # "EF 5"
+        r'(\d+)\s*em',            # "1 EM"
+        r'série\s*(\d+)',         # "Série 4"
+        r'grade\s*(\d+)',         # "Grade 2"
+        r'year\s*(\d+)',          # "Year 3"
+    ]
+    
+    for padrao in padroes:
+        match = re.search(padrao, texto)
+        if match:
+            ano = match.group(1)
+            # Validar se é 1-9 ou 10-12
+            if ano.isdigit() and 1 <= int(ano) <= 12:
+                return ano
+    
+    # Fallback: primeiro número encontrado
+    match = re.search(r'(\d+)', texto)
+    return match.group(1) if match else None
+
+
+
+
+
+
+    def criar_selecao_bncc(disciplina_selecionada, ano_aluno, container_col, chave_unica=""):
+    """Cria dropdown de seleção BNCC"""
+    
+    # Carregar BNCC se não estiver em cache
+    if 'BNCC_ESTRUTURA' not in st.session_state:
+        st.session_state.BNCC_ESTRUTURA = carregar_estrutura_bncc()
+    
+    bncc = st.session_state.BNCC_ESTRUTURA
+    
+    # Fallback: campo de texto normal
+    if not bncc or not ano_aluno or ano_aluno not in bncc:
+        return container_col.text_input("Assunto/Tema", key=f"assunto_{chave_unica}")
+    
+    if disciplina_selecionada not in bncc[ano_aluno]:
+        return container_col.text_input(f"Assunto ({disciplina_selecionada})", key=f"assunto_{chave_unica}")
+    
+    # Coletar todos objetos
+    todos_objetos = []
+    unidades = bncc[ano_aluno][disciplina_selecionada]
+    
+    for unidade, objetos in unidades.items():
+        for obj in objetos:
+            todos_objetos.append({
+                'nome': obj['nome'],
+                'unidade': unidade,
+                'hab': obj['habilidades']
+            })
+    
+    # Criar opções para dropdown
+    opcoes = [f"{obj['unidade']} → {obj['nome']}" for obj in todos_objetos]
+    opcoes.append("✏️ Outro (Personalizado)")
+    
+    selecao = container_col.selectbox(
+        "Objeto do Conhecimento",
+        opcoes,
+        key=f"bncc_{chave_unica}"
+    )
+    
+    if selecao == "✏️ Outro (Personalizado)":
+        return container_col.text_input("Digite o assunto:", key=f"custom_{chave_unica}")
+    
+    # Extrair nome do objeto
+    objeto_nome = selecao.split(" → ", 1)[1] if " → " in selecao else selecao
+    
+    # Mostrar habilidades (opcional)
+    obj_info = next((o for o in todos_objetos if o['nome'] == objeto_nome), None)
+    if obj_info and obj_info['hab']:
+        with container_col.expander(f"📋 {len(obj_info['hab'])} habilidade(s)"):
+            for h in obj_info['hab'][:3]:
+                st.caption(f"• {h}")
+    
+    return objeto_nome
 
 # ==============================================================================
 # 2. O CÓDIGO DO HUB DE INCLUSÃO
@@ -268,6 +413,24 @@ if "banco_estudantes" not in st.session_state or not st.session_state.banco_estu
 
     st.session_state.banco_estudantes = alunos_sb if alunos_sb else carregar_banco_local()
 
+
+
+serie_aluno = aluno.get('serie', '').lower()
+is_ei = "infantil" in serie_aluno or "creche" in serie_aluno or "pré" in serie_aluno
+
+# AQUI ADICIONE:
+ano_aluno = extrair_ano_serie(aluno.get('serie', ''))
+st.session_state['ano_aluno'] = ano_aluno  # Salva para usar em todas abas
+
+# E ATUALIZE o header para mostrar o ano:
+st.markdown(f"""
+    <div class="student-header">
+        <div class="student-info-item"><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div>
+        <div class="student-info-item"><div class="student-label">Série</div><div class="student-value">{aluno.get('serie', '-')}</div></div>
+        <div class="student-info-item"><div class="student-label">Ano BNCC</div><div class="student-value">{ano_aluno if ano_aluno else 'Não identificado'}</div></div>
+        <div class="student-info-item"><div class="student-label">Hiperfoco</div><div class="student-value">{aluno.get('hiperfoco', '-')}</div></div>
+    </div>
+""", unsafe_allow_html=True)
 
 
 
