@@ -1497,29 +1497,18 @@ else:
         
         # --- BNCC DROPDOWNS (NOVO) ---
         st.markdown("### 📚 Selecione pela BNCC")
+        ano_bncc, disciplina_bncc, objeto_bncc = criar_dropdowns_simples()
+
+        # Usar os valores selecionados
+        mat_c = disciplina_bncc
+        obj_c = objeto_bncc
 
         # Criar 4 colunas para os dropdowns
         col_ano, col_disc, col_obj, col_hab = st.columns(4)
 
-        # Usar o novo sistema BNCC
-        ano_bncc, disciplina_bncc, objeto_bncc, habilidade_bncc = criar_dropdowns_bncc(
-        col_ano, col_disc, col_obj, col_hab,
-        chave_unica="aba3_criar_zero_v2"  # Mais específica
-        )
-
-
-        ano_bncc, disciplina_bncc, objeto_bncc, habilidade_bncc = criar_dropdowns_bncc(
-            col_ano, col_disc, col_obj, col_hab,
-            chave_unica="criar_zero"
-        )
-
-        # Usar esses valores nas variáveis existentes
-        mat_c = disciplina_bncc
-        obj_c = objeto_bncc
-
-        
         cc3, cc4 = st.columns(2)
         qtd_c = cc3.slider("Qtd Questões", 1, 10, 5, key="cq")
+
         
         # --- MUDANÇA: REMOVIDA OPÇÃO 'MISTA' ---
         tipo_quest = cc4.selectbox("Tipo", ["Objetiva", "Discursiva"], key="ctq")
