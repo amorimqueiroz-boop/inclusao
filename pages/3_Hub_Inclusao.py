@@ -1594,9 +1594,19 @@ else:
         </div>
         """, unsafe_allow_html=True)
         
-        cc1, cc2 = st.columns(2)
-        mat_c = cc1.selectbox("Componente", discip, key="cm")
-        obj_c = cc2.text_input("Assunto", key="co")
+        # --- BNCC DROPDOWNS (NOVO) ---
+        st.markdown("### 📚 Selecione pela BNCC")
+
+        col_ano, col_disc, col_obj, col_hab = st.columns(4)
+
+        ano_bncc, disciplina_bncc, objeto_bncc, habilidade_bncc = criar_dropdowns_bncc(
+            col_ano, col_disc, col_obj, col_hab,
+            chave_unica="criar_zero"
+        )
+
+        # Substitui os antigos mat_c e obj_c
+        mat_c = disciplina_bncc
+        obj_c = objeto_bncc  # ou: f"{objeto_bncc} — {habilidade_bncc}" se quiser
         
         cc3, cc4 = st.columns(2)
         qtd_c = cc3.slider("Qtd Questões", 1, 10, 5, key="cq")
