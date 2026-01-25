@@ -18,7 +18,164 @@ st.set_page_config(
 APP_VERSION = "v2.0 - Gestão de Estudantes"
 
 # ==============================================================================
-# 🔷 DESIGN SYSTEM COM SIDEBAR E BADGE FLUTUANTE
+# FUNÇÕES AUXILIARES PARA IMAGENS
+# ==============================================================================
+def get_base64_image(filename: str) -> str:
+    """
+    Carrega uma imagem e converte para base64.
+    Retorna string vazia se o arquivo não existir.
+    """
+    if os.path.exists(filename):
+        with open(filename, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    return ""
+
+def get_logo_base64():
+    """Função de fallback para a logo giratória"""
+    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
+    for c in caminhos:
+        if os.path.exists(c):
+            with open(c, "rb") as f:
+                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
+
+# ==============================================================================
+# BLOCO A — TOPBAR COMPLETA (Logo + Workspace + Usuário + Avatar)
+# ==============================================================================
+def get_user_initials(nome: str) -> str:
+    """Extrai as iniciais do nome do usuário"""
+    if not nome:
+        return "U"
+    parts = nome.strip().split()
+    if len(parts) >= 2:
+        return f"{parts[0][0]}{parts[-1][0]}".upper()
+    return parts[0][:2].upper()
+
+def get_user_first_name() -> str:
+    """Extrai o primeiro nome do usuário"""
+    return (st.session_state.get("usuario_nome", "Visitante").strip().split() or ["Visitante"])[0]
+
+def get_workspace_short(max_len: int = 20) -> str:
+    """Formata o nome do workspace com truncagem se necessário"""
+    ws = st.session_state.get("workspace_name", "") or ""
+    return (ws[:max_len] + "...") if len(ws) > max_len else ws
+
+def render_topbar():
+    """Renderiza a barra superior com logo, workspace e informações do usuário"""
+    icone_b64 = get_base64_image("omni_icone.png")
+    texto_b64 = get_base64_image("omni_texto.png")
+
+    img_logo = f'<img src="data:image/png;base64,{icone_b64}" class="brand-logo">' if icone_b64 else "🌐"
+    img_text = f'<img src="data:image/png;base64,{texto_b64}" class="brand-img-text">' if texto_b64 else "<span style='font-weight:800;color:#2B3674;'>OMNISFERA</span>"
+
+    user_full = st.session_state.get("usuario_nome", "Visitante")
+    user_first = get_user_first_name()
+    initials = get_user_initials(user_full)
+    ws_name = get_workspace_short()
+
+    st.markdown(
+        f"""
+        <div class="topbar">
+            <div class="brand-box">
+                {img_logo}
+                {img_text}
+            </div>
+
+            <div class="brand-box" style="gap:10px;">
+                <div class="user-badge">{ws_name}</div>
+                <div class="user-badge">{user_first}</div>
+                <div class="apple-avatar">{initials}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ==============================================================================
+# BLOCO B — MENU DE ACESSO RÁPIDO
+# ==============================================================================
+def render_quick_access_bar():
+    """
+    Menu compacto com botões coloridos logo abaixo do topo.
+    Observação: o CSS usa nth-of-type por coluna (1..7).
+    """
+    # CSS EXCLUSIVO DO MENU RÁPIDO
+    st.markdown("""
+    <style>
+        .qa-btn button {
+            font-weight: 800 !important;
+            border-radius: 6px !important;
+            padding: 4px 0 !important;
+            font-size: 0.7rem !important;
+            text-transform: uppercase !important;
+            box-shadow: none !important;
+            min-height: 32px !important;
+            height: auto !important;
+            border-width: 1px !important;
+        }
+
+        /* 1. Início (Cinza) */
+        div[data-testid="column"]:nth-of-type(1) .qa-btn button { border-color:#64748B !important; color:#64748B !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(1) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+
+        /* 2. Estudantes (Indigo) */
+        div[data-testid="column"]:nth-of-type(2) .qa-btn button { border-color:#4F46E5 !important; color:#4F46E5 !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(2) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+
+        /* 3. PEI (Blue) */
+        div[data-testid="column"]:nth-of-type(3) .qa-btn button { border-color:#2563EB !important; color:#2563EB !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(3) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+
+        /* 4. AEE (Purple) */
+        div[data-testid="column"]:nth-of-type(4) .qa-btn button { border-color:#7C3AED !important; color:#7C3AED !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(4) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+
+        /* 5. Recursos (Teal) */
+        div[data-testid="column"]:nth-of-type(5) .qa-btn button { border-color:#0D9488 !important; color:#0D9488 !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(5) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+
+        /* 6. Diário (Rose) */
+        div[data-testid="column"]:nth-of-type(6) .qa-btn button { border-color:#E11D48 !important; color:#E11D48 !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(6) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+
+        /* 7. Dados (Sky) */
+        div[data-testid="column"]:nth-of-type(7) .qa-btn button { border-color:#0284C7 !important; color:#0284C7 !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(7) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # 7 colunas do menu
+    c1, c2, c3, c4, c5, c6, c7 = st.columns(7, gap="small")
+
+    def _wrap_button(label: str, on_click):
+        """Wrapper padrão para garantir que o CSS da classe qa-btn funcione."""
+        st.markdown('<div class="qa-btn">', unsafe_allow_html=True)
+        st.button(label, use_container_width=True, on_click=on_click)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with c1:
+        _wrap_button("INÍCIO", on_click=lambda: st.switch_page("pages/0_Home.py"))
+
+    with c2:
+        _wrap_button("ESTUDANTES", on_click=lambda: st.rerun())
+
+    with c3:
+        _wrap_button("PEI", on_click=lambda: st.switch_page("pages/1_PEI.py"))
+
+    with c4:
+        _wrap_button("AEE", on_click=lambda: st.switch_page("pages/2_PAE.py"))
+
+    with c5:
+        _wrap_button("RECURSOS", on_click=lambda: st.switch_page("pages/3_Hub_Inclusao.py"))
+
+    with c6:
+        _wrap_button("DIÁRIO", on_click=lambda: st.switch_page("pages/4_Diario_de_Bordo.py"))
+
+    with c7:
+        _wrap_button("DADOS", on_click=lambda: st.switch_page("pages/5_Monitoramento_Avaliacao.py"))
+
+# ==============================================================================
+# 🔷 DESIGN SYSTEM COM TOPBAR, MENU RÁPIDO E SIDEBAR
 # ==============================================================================
 def _ui_home_block():
     st.markdown(
@@ -34,10 +191,65 @@ html, body, [class*="css"] {
     background-color: #F8FAFC !important;
 }
 
+/* ===== TOPBAR (BLOCO A) ===== */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    background: white;
+    border-bottom: 1px solid #E2E8F0;
+    margin-bottom: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 9999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
 
-/* ===== CONTAINER COM SIDEBAR VISÍVEL ===== */
+.brand-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.brand-logo {
+    height: 36px;
+    width: 36px;
+    object-fit: contain;
+}
+
+.brand-img-text {
+    height: 24px;
+    object-fit: contain;
+}
+
+.user-badge {
+    background: #F1F5F9;
+    color: #475569;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid #E2E8F0;
+}
+
+.apple-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+}
+
+/* ===== CONTAINER COM TOPBAR VISÍVEL ===== */
 .block-container {
-    padding-top: 3.5rem !important; /* AUMENTADO PARA DESCER O CABEÇALHO */
+    padding-top: 1.5rem !important;
     padding-bottom: 3rem !important;
     max-width: 95% !important;
     padding-left: 1rem !important;
@@ -385,96 +597,6 @@ html, body, [class*="css"] {
 _ui_home_block()
 
 # ==============================================================================
-# ### BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA & ALERTA DE TESTE ###
-# ==============================================================================
-# 1. Detecção Automática de Ambiente (Via st.secrets)
-try:
-    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
-except:
-    IS_TEST_ENV = False
-
-# 2. Função para carregar a logo em Base64
-def get_logo_base64():
-    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
-    for c in caminhos:
-        if os.path.exists(c):
-            with open(c, "rb") as f:
-                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
-    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
-
-src_logo_giratoria = get_logo_base64()
-
-# 3. Definição Dinâmica de Cores (Card Branco ou Amarelo)
-if IS_TEST_ENV:
-    # Amarelo Vibrante (Aviso de Teste)
-    card_bg = "rgba(255, 220, 50, 0.95)" 
-    card_border = "rgba(200, 160, 0, 0.5)"
-else:
-    # Branco Gelo Transparente (Original)
-    card_bg = "rgba(255, 255, 255, 0.85)"
-    card_border = "rgba(255, 255, 255, 0.6)"
-
-# 4. Renderização do CSS Global e Header Flutuante
-st.markdown(f"""
-<style>
-    /* CARD FLUTUANTE (OMNISFERA) */
-    .omni-badge {{
-        position: fixed;
-        top: 15px; 
-        right: 15px;
-        
-        /* COR DINÂMICA */
-        background: {card_bg};
-        border: 1px solid {card_border};
-        
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        
-        /* Dimensões: Fino e Largo */
-        padding: 4px 30px;
-        min-width: 260px;
-        justify-content: center;
-        
-        border-radius: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        z-index: 999990;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        pointer-events: none;
-    }}
-
-    .omni-text {{
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-weight: 800;
-        font-size: 0.9rem;
-        color: #2D3748;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-    }}
-
-    @keyframes spin-slow {{
-        from {{ transform: rotate(0deg); }}
-        to {{ transform: rotate(360deg); }}
-    }}
-    
-    .omni-logo-spin {{
-        height: 26px;
-        width: 26px;
-        animation: spin-slow 10s linear infinite;
-    }}
-</style>
-
-<div class="omni-badge">
-    <img src="{src_logo_giratoria}" class="omni-logo-spin">
-    <span class="omni-text">OMNISFERA</span>
-</div>
-""", unsafe_allow_html=True)
-# ==============================================================================
-# ### FIM BLOCO VISUAL INTELIGENTE ###
-# ==============================================================================
-
-# ==============================================================================
 # 🔒 VERIFICAÇÃO DE ACESSO
 # ==============================================================================
 def acesso_bloqueado(msg: str):
@@ -535,6 +657,12 @@ if not st.session_state.get("workspace_id"):
 WORKSPACE_ID = st.session_state.get("workspace_id")
 WORKSPACE_NAME = st.session_state.get("workspace_name") or f"{str(WORKSPACE_ID)[:8]}…"
 USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
+
+# ==============================================================================
+# ✅ RENDERIZAÇÃO DOS BLOCOS A e B
+# ==============================================================================
+render_topbar()  # Bloco A - Topbar completa
+render_quick_access_bar()  # Bloco B - Menu de acesso rápido
 
 # ==============================================================================
 # SIDEBAR PERSONALIZADA
