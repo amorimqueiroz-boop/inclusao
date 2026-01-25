@@ -237,6 +237,104 @@ def verificar_acesso():
 verificar_acesso()
 
 # ==============================================================================
+# CSS DO HUB (SIMPLIFICADO)
+# ==============================================================================
+
+def injetar_css_hub():
+    """Injeta o CSS específico do Hub"""
+    css = """
+    <style>
+    /* ESTILOS BÁSICOS DO HUB */
+    .hub-container {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    /* DROPDOWNS BNCC */
+    .bncc-dropdowns {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .bncc-col {
+        flex: 1;
+    }
+    
+    /* HEADER DO ALUNO */
+    .student-header {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .student-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .student-value {
+        font-size: 1.1rem;
+        color: #212529;
+        font-weight: 700;
+    }
+    
+    /* PEDAGOGIA BOX */
+    .pedagogia-box {
+        background: #e7f5ff;
+        border-left: 4px solid #339af0;
+        padding: 15px;
+        border-radius: 0 8px 8px 0;
+        margin-bottom: 20px;
+    }
+    
+    .pedagogia-title {
+        font-weight: 700;
+        color: #1c7ed6;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    /* BOTÕES */
+    .stButton > button {
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+    
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #0d6efd, #0a58ca) !important;
+        border: none !important;
+    }
+    
+    /* ABAS */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px !important;
+        background: #f8f9fa !important;
+        padding: 8px !important;
+        border-radius: 8px !important;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 6px !important;
+        padding: 10px 20px !important;
+    }
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
+# Chamar a função após verificar_acesso()
+verificar_acesso()
+injetar_css_hub()  # <-- ADICIONE ESTA LINHA
+
+
+
+
+# ==============================================================================
 # CARD HERO PRINCIPAL
 # ==============================================================================
 hora = datetime.now().hour
