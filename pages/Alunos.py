@@ -43,13 +43,13 @@ def get_user_first_name() -> str:
     """Extrai o primeiro nome do usuário"""
     return (st.session_state.get("usuario_nome", "Visitante").strip().split() or ["Visitante"])[0]
 
-def get_workspace_short(max_len: int = 15) -> str:
+def get_workspace_short(max_len: int = 20) -> str:
     """Formata o nome do workspace com truncagem se necessário"""
     ws = st.session_state.get("workspace_name", "") or ""
-    return (ws[:max_len] + "…") if len(ws) > max_len else ws
+    return (ws[:max_len] + "...") if len(ws) > max_len else ws
 
 def render_thin_topbar_with_spinning_logo():
-    """Renderiza a barra superior fixa FINA (60px) com logo giratória"""
+    """Renderiza a barra superior fixa FINA (65px) com logo giratória"""
     icone_b64 = get_base64_image("omni_icone.png")
     texto_b64 = get_base64_image("omni_texto.png")
     ws_name = get_workspace_short()
@@ -73,7 +73,7 @@ def render_thin_topbar_with_spinning_logo():
                 {img_logo}
                 {img_text}
             </div>
-            <div class="brand-box" style="gap: 8px;">
+            <div class="brand-box" style="gap: 12px;">
                 <div class="user-badge-thin">{ws_name}</div>
                 <div class="user-badge-thin">{user_first}</div>
                 <div class="apple-avatar-thin">{initials}</div>
@@ -84,150 +84,122 @@ def render_thin_topbar_with_spinning_logo():
     )
 
 # ==============================================================================
-# BLOCO B — MENU DE ACESSO RÁPIDO COM CORES EM FORMATO DE PÍLULA
+# BLOCO B — MENU DE ACESSO RÁPIDO COM CORES (MODIFICADO)
 # ==============================================================================
-def render_colored_pill_navigation():
+def render_colored_quick_access_bar():
     """
-    Menu compacto em formato de pílula, centralizado e funcional.
-    Cada pílula leva para a página correspondente.
+    Menu compacto com botões coloridos logo abaixo do topo.
+    Cada botão tem uma cor de fundo sólida (não apenas borda).
     """
-    # CSS para o menu de pílulas
+    # CSS com cores sólidas para os botões
     st.markdown("""
     <style>
-        /* Container centralizado com espaços laterais */
-        .pill-nav-container {
-            display: flex;
-            justify-content: center;
-            margin: 5px auto 8px auto; /* ESPAÇO MÍNIMO */
-            padding: 0 15px;
-            max-width: 1200px;
-            width: 100%;
-        }
-        
-        /* Estilo para cada pílula */
-        .pill-nav-btn button {
-            border-radius: 50px !important;
-            font-weight: 700 !important;
-            font-size: 0.7rem !important;
-            padding: 5px 12px !important;
-            min-height: 28px !important;
+        .qa-btn-colored button {
+            font-weight: 800 !important;
+            border-radius: 8px !important;
+            padding: 8px 0 !important;
+            font-size: 0.75rem !important;
+            text-transform: uppercase !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            min-height: 36px !important;
             height: auto !important;
             border: none !important;
             color: white !important;
             transition: all 0.2s ease !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
-            margin: 0 3px !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.3px !important;
         }
-        
-        .pill-nav-btn button:hover {
+
+        .qa-btn-colored button:hover {
             transform: translateY(-2px) !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
         }
-        
-        /* Cores específicas para cada pílula */
-        /* 1. INÍCIO - Cinza */
-        div[data-testid="column"]:nth-of-type(1) .pill-nav-btn button { 
-            background: linear-gradient(135deg, #64748B, #475569) !important;
-        }
-        div[data-testid="column"]:nth-of-type(1) .pill-nav-btn button:hover { 
+
+        /* 1. INÍCIO - Cinza escuro */
+        div[data-testid="column"]:nth-of-type(1) .qa-btn-colored button { 
             background: linear-gradient(135deg, #475569, #334155) !important;
         }
-        
+        div[data-testid="column"]:nth-of-type(1) .qa-btn-colored button:hover { 
+            background: linear-gradient(135deg, #334155, #1E293B) !important;
+        }
+
         /* 2. ESTUDANTES - Índigo */
-        div[data-testid="column"]:nth-of-type(2) .pill-nav-btn button { 
+        div[data-testid="column"]:nth-of-type(2) .qa-btn-colored button { 
             background: linear-gradient(135deg, #4F46E5, #4338CA) !important;
         }
-        div[data-testid="column"]:nth-of-type(2) .pill-nav-btn button:hover { 
+        div[data-testid="column"]:nth-of-type(2) .qa-btn-colored button:hover { 
             background: linear-gradient(135deg, #4338CA, #3730A3) !important;
         }
-        
+
         /* 3. PEI - Azul */
-        div[data-testid="column"]:nth-of-type(3) .pill-nav-btn button { 
+        div[data-testid="column"]:nth-of-type(3) .qa-btn-colored button { 
             background: linear-gradient(135deg, #2563EB, #1D4ED8) !important;
         }
-        div[data-testid="column"]:nth-of-type(3) .pill-nav-btn button:hover { 
-            background: linear-gradient(135deg, #1D4ED8, #1E40AF) !important;
+        div[data-testid="column"]:nth-of-type(3) .qa-btn-colored button:hover { 
+            background: linear-gradient(135deg, #1D4ed8, #1E40AF) !important;
         }
-        
+
         /* 4. AEE - Roxo */
-        div[data-testid="column"]:nth-of-type(4) .pill-nav-btn button { 
+        div[data-testid="column"]:nth-of-type(4) .qa-btn-colored button { 
             background: linear-gradient(135deg, #7C3AED, #6D28D9) !important;
         }
-        div[data-testid="column"]:nth-of-type(4) .pill-nav-btn button:hover { 
+        div[data-testid="column"]:nth-of-type(4) .qa-btn-colored button:hover { 
             background: linear-gradient(135deg, #6D28D9, #5B21B6) !important;
         }
-        
+
         /* 5. RECURSOS - Verde água */
-        div[data-testid="column"]:nth-of-type(5) .pill-nav-btn button { 
+        div[data-testid="column"]:nth-of-type(5) .qa-btn-colored button { 
             background: linear-gradient(135deg, #0D9488, #0F766E) !important;
         }
-        div[data-testid="column"]:nth-of-type(5) .pill-nav-btn button:hover { 
+        div[data-testid="column"]:nth-of-type(5) .qa-btn-colored button:hover { 
             background: linear-gradient(135deg, #0F766E, #115E59) !important;
         }
-        
+
         /* 6. DIÁRIO - Rosa */
-        div[data-testid="column"]:nth-of-type(6) .pill-nav-btn button { 
+        div[data-testid="column"]:nth-of-type(6) .qa-btn-colored button { 
             background: linear-gradient(135deg, #E11D48, #BE123C) !important;
         }
-        div[data-testid="column"]:nth-of-type(6) .pill-nav-btn button:hover { 
+        div[data-testid="column"]:nth-of-type(6) .qa-btn-colored button:hover { 
             background: linear-gradient(135deg, #BE123C, #9F1239) !important;
         }
-        
+
         /* 7. DADOS - Azul claro */
-        div[data-testid="column"]:nth-of-type(7) .pill-nav-btn button { 
+        div[data-testid="column"]:nth-of-type(7) .qa-btn-colored button { 
             background: linear-gradient(135deg, #0284C7, #0369A1) !important;
         }
-        div[data-testid="column"]:nth-of-type(7) .pill-nav-btn button:hover { 
+        div[data-testid="column"]:nth-of-type(7) .qa-btn-colored button:hover { 
             background: linear-gradient(135deg, #0369A1, #075985) !important;
         }
     </style>
     """, unsafe_allow_html=True)
-    
-    # Container principal
-    st.markdown('<div class="pill-nav-container">', unsafe_allow_html=True)
-    
-    # 7 colunas igualmente distribuídas
+
+    # 7 colunas do menu
     c1, c2, c3, c4, c5, c6, c7 = st.columns(7, gap="small")
-    
-    def _wrap_pill_button(label: str, page_path: str, key_suffix: str):
-        """Wrapper para criar botões em formato de pílula que funcionam"""
-        st.markdown('<div class="pill-nav-btn">', unsafe_allow_html=True)
-        
-        # Criar botão com navegação correta
-        if st.button(label, 
-                    use_container_width=True, 
-                    key=f"nav_{key_suffix}"):
-            try:
-                st.switch_page(page_path)
-            except:
-                st.rerun()
-                
+
+    def _wrap_button(label: str, on_click):
+        """Wrapper para botões com cores sólidas"""
+        st.markdown('<div class="qa-btn-colored">', unsafe_allow_html=True)
+        st.button(label, use_container_width=True, on_click=on_click)
         st.markdown('</div>', unsafe_allow_html=True)
-    
+
     with c1:
-        _wrap_pill_button("INÍCIO", "pages/0_Home.py", "home")
-    
+        _wrap_button("INÍCIO", on_click=lambda: st.switch_page("pages/0_Home.py"))
+
     with c2:
-        _wrap_pill_button("ESTUDANTES", "pages/Alunos.py", "alunos")
-    
+        _wrap_button("ESTUDANTES", on_click=lambda: st.rerun())
+
     with c3:
-        _wrap_pill_button("PEI", "pages/1_PEI.py", "pei")
-    
+        _wrap_button("PEI", on_click=lambda: st.switch_page("pages/1_PEI.py"))
+
     with c4:
-        _wrap_pill_button("AEE", "pages/2_PAE.py", "aee")
-    
+        _wrap_button("AEE", on_click=lambda: st.switch_page("pages/2_PAE.py"))
+
     with c5:
-        _wrap_pill_button("RECURSOS", "pages/3_Hub_Inclusao.py", "recursos")
-    
+        _wrap_button("RECURSOS", on_click=lambda: st.switch_page("pages/3_Hub_Inclusao.py"))
+
     with c6:
-        _wrap_pill_button("DIÁRIO", "pages/4_Diario_de_Bordo.py", "diario")
-    
+        _wrap_button("DIÁRIO", on_click=lambda: st.switch_page("pages/4_Diario_de_Bordo.py"))
+
     with c7:
-        _wrap_pill_button("DADOS", "pages/5_Monitoramento_Avaliacao.py", "dados")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+        _wrap_button("DADOS", on_click=lambda: st.switch_page("pages/5_Monitoramento_Avaliacao.py"))
 
 # ==============================================================================
 # 🔷 DESIGN SYSTEM COM TOPBAR FINA E MENU COLORIDO
@@ -652,139 +624,6 @@ footer {
 
 _ui_thin_topbar_design()
 
-
-def _ui_compact_design():
-    st.markdown(
-        """
-<style>
-/* ===== RESET & BASE ===== */
-html, body, [class*="css"] {
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
-    color: #1E293B !important;
-    background-color: #F8FAFC !important;
-}
-
-/* --- OCULTAR HEADER NATIVO DO STREAMLIT --- */
-[data-testid="stSidebarNav"],
-[data-testid="stHeader"],
-[data-testid="stToolbar"],
-[data-testid="collapsedControl"],
-footer {
-    display: none !important;
-}
-
-/* --- TOPBAR FINA (60px) - ESPAÇO REDUZIDO --- */
-.topbar-thin {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 60px !important;
-    background: rgba(255, 255, 255, 0.98) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border-bottom: 1px solid #E2E8F0;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 1.5rem !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    margin-bottom: 0 !important;
-}
-
-.brand-box {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.brand-logo {
-    height: 36px !important;
-    width: auto !important;
-    animation: spin 40s linear infinite;
-    filter: brightness(1.1);
-}
-
-.brand-img-text {
-    height: 20px !important;
-    width: auto;
-    margin-left: 8px;
-}
-
-.user-badge-thin {
-    background: #F1F5F9;
-    border: 1px solid #E2E8F0;
-    padding: 4px 10px;
-    border-radius: 16px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #475569;
-    letter-spacing: 0.3px;
-}
-
-.apple-avatar-thin {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #4F46E5, #7C3AED);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 0.75rem;
-    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
-}
-
-/* Ajustar padding para compensar a topbar fixa - REDUZIDO */
-.block-container {
-    padding-top: 75px !important; /* REDUZIDO */
-    padding-bottom: 2rem !important;
-    max-width: 95% !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-}
-
-/* --- ANIMAÇÕES --- */
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* ===== RESPONSIVIDADE ===== */
-@media (max-width: 768px) {
-    .topbar-thin { 
-        padding: 0 1rem !important; 
-        height: 55px !important;
-    }
-    .brand-logo { height: 32px !important; }
-    .brand-img-text { display: none; }
-    .user-badge-thin { 
-        font-size: 0.65rem !important; 
-        padding: 3px 8px !important;
-    }
-    .apple-avatar-thin { 
-        width: 28px !important; 
-        height: 28px !important; 
-        font-size: 0.7rem !important;
-    }
-    .block-container { 
-        padding-top: 70px !important;
-    }
-    
-    .pill-nav-btn button {
-        font-size: 0.65rem !important;
-        padding: 4px 8px !important;
-        min-height: 26px !important;
-        margin: 0 2px !important;
-    }
-}
-</style>
-        """,
-        unsafe_allow_html=True,
-    )
-
 # ==============================================================================
 # 🔒 VERIFICAÇÃO DE ACESSO
 # ==============================================================================
@@ -851,7 +690,7 @@ USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
 # ✅ RENDERIZAÇÃO DOS BLOCOS A e B
 # ==============================================================================
 render_thin_topbar_with_spinning_logo()  # Bloco A - Topbar fina com logo girando
-render_colored_pill_navigation()
+render_colored_quick_access_bar()  # Bloco B - Menu com cores sólidas
 
 # ==============================================================================
 # SIDEBAR PERSONALIZADA
