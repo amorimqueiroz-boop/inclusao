@@ -17,25 +17,24 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-APP_VERSION = "v3.1 - Menu Seguro"
+APP_VERSION = "v3.2 - Menu Ajustado (Mais Baixo)"
 
 # ==============================================================================
-# 2. DESIGN & CSS (CORREÇÃO DO ESPAÇAMENTO)
+# 2. DESIGN & CSS (AJUSTE DE POSIÇÃO)
 # ==============================================================================
 st.markdown("""
 <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 <style>
-    /* CORREÇÃO CRÍTICA: Espaço seguro para o menu não ficar escondido */
+    /* --- AJUSTE DE POSIÇÃO DO MENU --- */
     .block-container { 
-        padding-top: 2rem !important; /* Espaço suficiente para o menu */
+        padding-top: 5rem !important; /* Aumentado para 5rem para descer o menu */
         padding-bottom: 3rem; 
     }
     
-    /* Remove a barra de topo padrão do Streamlit para não cobrir o menu */
+    /* Remove a barra de topo padrão do Streamlit visualmente */
     header[data-testid="stHeader"] {
         background-color: transparent !important;
-        z-index: 1 !important; /* Fica atrás do nosso menu se houver sobreposição */
-        height: 0px !important; /* Tenta reduzir a altura */
+        z-index: 1;
     }
     
     /* Esconder elementos nativos desnecessários */
@@ -125,7 +124,6 @@ if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
 if not st.session_state.autenticado:
-    # Mostra aviso visual em vez de apenas parar, para você saber se é erro de auth
     st.warning("🔒 Acesso restrito. Faça login na Home.")
     st.stop()
 
