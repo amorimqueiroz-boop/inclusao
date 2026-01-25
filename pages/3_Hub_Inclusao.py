@@ -147,43 +147,35 @@ with st.sidebar:
         st.switch_page("Home.py")
     st.markdown("---")
 
+# ==============================================================================
+# CARD HERO PARA HUB (MESMO DESIGN DOS ESTUDANTES)
+# ==============================================================================
+hora = datetime.now().hour
+saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
+USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
+WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
 
-st.markdown("""
-<div class="header-hub">
-    <div style="font-size:42px; color:#0D9488;">
-        <i class="ri-compass-3-line"></i>
-    </div>
-    <div>
-        <div style="
-            font-size:0.75rem;
-            font-weight:800;
-            letter-spacing:1px;
-            text-transform:uppercase;
-            color:#64748B;
-        ">
-            Hub de Inclusão • Omnisfera
-        </div>
-        <div style="
-            font-size:1.4rem;
-            font-weight:900;
-            color:#0F172A;
-            line-height:1.2;
-            margin-top:4px;
-        ">
-            Estratégias, Recursos Visuais e Adaptações Pedagógicas
-        </div>
-        <div style="
-            font-size:0.95rem;
-            color:#475569;
-            margin-top:6px;
-            max-width:720px;
-        ">
-            Este módulo transforma o PEI em ação prática: atividades adaptadas, experiências lúdicas,
-            recursos visuais, comunicação alternativa (CAA) e estratégias inclusivas alinhadas à BNCC e ao DUA.
+st.markdown(
+    f"""
+    <div class="mod-card-wrapper">
+        <div class="mod-card-rect">
+            <div class="mod-bar c-blue"></div>
+            <div class="mod-icon-area bg-blue-soft">
+                <i class="ri-book-open-fill"></i>
+            </div>
+            <div class="mod-content">
+                <div class="mod-title">Hub de Recursos</div>
+                <div class="mod-desc">
+                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie atividades adaptadas, experiências lúdicas,
+            recursos visuais e estratégias inclusivas para estudantes da escola <strong>{WORKSPACE_NAME}</strong>. alinhadas à BNCC e ao DUA.
+                </div>
+            </div>
         </div>
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True,
+)
+
 
 
 # ==============================================================================
