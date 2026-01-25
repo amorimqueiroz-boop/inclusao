@@ -18,20 +18,7 @@ st.set_page_config(
 APP_VERSION = "v2.0 - Gestão de Estudantes"
 
 # ==============================================================================
-# Helpers essenciais (faltava isso aqui)
-# ==============================================================================
-def get_base64_image(image_path: str) -> str:
-    """Lê imagem local e retorna base64 (string vazia se não existir)."""
-    if not os.path.exists(image_path):
-        return ""
-    try:
-        with open(image_path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    except Exception:
-        return ""
-
-# ==============================================================================
-# 🔷 DESIGN SYSTEM (mantive seu bloco, mas acrescentei CSS da Topbar + padding)
+# 🔷 DESIGN SYSTEM COM SIDEBAR E BADGE FLUTUANTE
 # ==============================================================================
 def _ui_home_block():
     st.markdown(
@@ -45,32 +32,6 @@ html, body, [class*="css"] {
     font-family: 'Plus Jakarta Sans', sans-serif !important;
     color: #1E293B !important;
     background-color: #F8FAFC !important;
-}
-
-/* ===== TOPBAR (faltava no seu arquivo) ===== */
-.topbar {
-    position: fixed; top: 0; left: 0; right: 0; height: 74px;
-    background: rgba(255, 255, 255, 0.98) !important;
-    border-bottom: 1px solid #E2E8F0;
-    z-index: 9999;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 1.25rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-.brand-box { display: flex; align-items: center; gap: 10px; }
-
-.brand-logo { height: 46px !important; width: auto !important; animation: spin 45s linear infinite; }
-.brand-img-text { height: 30px !important; width: auto; margin-left: 8px; }
-
-.user-badge {
-    background: #F1F5F9;
-    border: 1px solid #E2E8F0;
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    color: #64748B;
 }
 
 /* AVATAR (iniciais) — usado pela topbar completa */
@@ -87,12 +48,10 @@ html, body, [class*="css"] {
     justify-content: center;
 }
 
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* ===== CONTAINER =====
-   Ajuste: agora o conteúdo desce o suficiente para não ficar embaixo da Topbar + Menu rápido */
+/* ===== CONTAINER COM SIDEBAR VISÍVEL ===== */
 .block-container {
-    padding-top: 120px !important; /* era 3.5rem; aqui resolve topbar + quick access */
+    padding-top: 3.5rem !important; /* AUMENTADO PARA DESCER O CABEÇALHO */
     padding-bottom: 3rem !important;
     max-width: 95% !important;
     padding-left: 1rem !important;
@@ -131,7 +90,11 @@ html, body, [class*="css"] {
     border-color: #CBD5E1;
 }
 
-.mod-bar { width: 6px; height: 100%; flex-shrink: 0; }
+.mod-bar {
+    width: 6px;
+    height: 100%;
+    flex-shrink: 0;
+}
 
 .mod-icon-area {
     width: 90px;
@@ -168,7 +131,9 @@ html, body, [class*="css"] {
     transition: color 0.2s;
 }
 
-.mod-card-rect:hover .mod-title { color: #4F46E5; }
+.mod-card-rect:hover .mod-title {
+    color: #4F46E5;
+}
 
 .mod-desc {
     font-size: 0.8rem;
@@ -182,9 +147,94 @@ html, body, [class*="css"] {
 
 /* CORES DOS CARDS - MESMA DA HOME */
 .c-sky { background: #0284C7 !important; }
-.bg-sky-soft { background: #F0F9FF !important; color: #0284C7 !important; }
+.bg-sky-soft { 
+    background: #F0F9FF !important;
+    color: #0284C7 !important;
+}
 
-/* ===== STUDENT TABLE ===== */
+/* ===== BOTÕES ESTILIZADOS (SINCRONIZAR E LIXEIRA) ===== */
+.btn-refresh {
+    background: white !important;
+    border: 1px solid #E2E8F0 !important;
+    color: #475569 !important;
+    border-radius: 12px !important;
+    font-weight: 800 !important;
+    font-size: 0.85rem !important;
+    padding: 10px 20px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+}
+
+.btn-refresh:hover {
+    background: #F8FAFC !important;
+    color: #0284C7 !important;
+    border-color: #BAE6FD !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(2, 132, 199, 0.12) !important;
+}
+
+.btn-delete {
+    background: white !important;
+    border: 1px solid #FECACA !important;
+    color: #DC2626 !important;
+    border-radius: 10px !important;
+    font-size: 0.9rem !important;
+    padding: 6px 12px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+}
+
+.btn-delete:hover {
+    background: #FEF2F2 !important;
+    border-color: #FCA5A5 !important;
+    color: #B91C1C !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15) !important;
+}
+
+.btn-confirm {
+    background: #DCFCE7 !important;
+    border: 1px solid #BBF7D0 !important;
+    color: #16A34A !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 0.8rem !important;
+    padding: 6px 12px !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-confirm:hover {
+    background: #BBF7D0 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15) !important;
+}
+
+.btn-cancel {
+    background: #FEF3C7 !important;
+    border: 1px solid #FDE68A !important;
+    color: #D97706 !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 0.8rem !important;
+    padding: 6px 12px !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-cancel:hover {
+    background: #FDE68A !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15) !important;
+}
+
+/* ===== STUDENT TABLE (MELHORADA) ===== */
 .student-table {
     background: white;
     border-radius: 16px;
@@ -217,11 +267,24 @@ html, body, [class*="css"] {
     background: white;
 }
 
-.student-row:hover { background: #F8FAFC; transform: translateX(4px); }
+.student-row:hover {
+    background: #F8FAFC;
+    transform: translateX(4px);
+}
 
-.student-name { font-weight: 700; color: #1E293B; font-size: 0.95rem; }
-.student-meta { font-size: 0.85rem; color: #64748B; font-weight: 500; }
+.student-name {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 0.95rem;
+}
 
+.student-meta {
+    font-size: 0.85rem;
+    color: #64748B;
+    font-weight: 500;
+}
+
+/* ===== BADGES ===== */
 .badge-grade {
     background: #F0F9FF;
     color: #0369A1;
@@ -246,6 +309,7 @@ html, body, [class*="css"] {
     text-align: center;
 }
 
+/* ===== EMPTY STATE ===== */
 .empty-state {
     text-align: center;
     padding: 80px 40px;
@@ -255,11 +319,65 @@ html, body, [class*="css"] {
     margin-top: 24px;
 }
 
-.empty-icon { font-size: 3rem; color: #CBD5E1; margin-bottom: 16px; }
-.empty-title { font-weight: 800; color: #64748B; margin-bottom: 8px; }
-.empty-desc { color: #94A3B8; font-size: 0.9rem; max-width: 400px; margin: 0 auto; }
+.empty-icon {
+    font-size: 3rem;
+    color: #CBD5E1;
+    margin-bottom: 16px;
+}
 
-/* ===== BANNER DE CONFIRMAÇÃO ===== */
+.empty-title {
+    font-weight: 800;
+    color: #64748B;
+    margin-bottom: 8px;
+}
+
+.empty-desc {
+    color: #94A3B8;
+    font-size: 0.9rem;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* ===== STREAMLIT OVERRIDES ===== */
+.stTextInput > div > div > input {
+    border-radius: 12px !important;
+    border: 1px solid #E2E8F0 !important;
+    padding: 12px 16px !important;
+    font-size: 0.9rem !important;
+}
+
+.stTextInput > div > div > input:focus {
+    border-color: #4F46E5 !important;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1) !important;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 1024px) {
+    .student-header, .student-row { grid-template-columns: 2.5fr 1fr 1fr 2fr 1fr; }
+    .mod-card-rect { height: 120px; }
+    .mod-icon-area { width: 80px; }
+}
+
+@media (max-width: 768px) {
+    .student-header, .student-row { grid-template-columns: 1fr; gap: 12px; }
+    .student-header { display: none; }
+    .mod-card-rect { 
+        height: 110px;
+        flex-direction: column;
+        height: auto;
+        padding: 16px;
+    }
+    .mod-bar { width: 100%; height: 6px; }
+    .mod-icon-area { 
+        width: 100%; 
+        height: 60px; 
+        border-right: none;
+        border-bottom: 1px solid #F1F5F9;
+    }
+    .mod-content { padding: 16px 0 0 0; }
+}
+
+/* ===== BANNER DE CONFIRMAÇÃO DE EXCLUSÃO ===== */
 .delete-confirm-banner {
     background: #FEF3C7;
     border: 1px solid #FDE68A;
@@ -277,11 +395,16 @@ html, body, [class*="css"] {
         unsafe_allow_html=True,
     )
 
+
 _ui_home_block()
+
+
+
 
 # ==============================================================================
 # BLOCO A — TOPBAR COMPLETA (Logo + Workspace + Usuário + Avatar)
 # ==============================================================================
+
 def get_user_initials(nome: str) -> str:
     if not nome:
         return "U"
@@ -327,19 +450,20 @@ def render_topbar():
         unsafe_allow_html=True
     )
 
+
 # ==============================================================================
-# 🟢 BLOCO: MENU DE ACESSO RÁPIDO (ISOLADO)
+# BLOCO B — MENU DE ACESSO RÁPIDO (botões compactos por módulo)
+# Reuso: cole este bloco em qualquer page e chame render_quick_access_bar()
 # ==============================================================================
+
 def render_quick_access_bar():
     """
-    Este bloco define os botões pequenos e coloridos que ficam
-    logo abaixo do topo da página.
+    Menu compacto com botões coloridos logo abaixo do topo.
+    Observação: o CSS usa nth-of-type por coluna (1..7).
     """
-    
-    # CSS EXCLUSIVO PARA O MENU RÁPIDO
+
     st.markdown("""
     <style>
-        /* Estilo base dos botões: Compactos, Texto Puro, Caixa Alta */
         .qa-btn button {
             font-weight: 800 !important;
             border-radius: 6px !important;
@@ -352,78 +476,136 @@ def render_quick_access_bar():
             border-width: 1px !important;
         }
 
-        /* 1. Início (Cinza) */
-        div[data-testid="column"]:nth-of-type(1) .qa-btn button { border-color: #64748B !important; color: #64748B !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(1) .qa-btn button:hover { background-color: #F1F5F9 !important; }
+        div[data-testid="column"]:nth-of-type(1) .qa-btn button { border-color:#64748B !important; color:#64748B !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(1) .qa-btn button:hover { background-color:#F1F5F9 !important; }
 
-        /* 2. Estudantes (Indigo) */
-        div[data-testid="column"]:nth-of-type(2) .qa-btn button { border-color: #4F46E5 !important; color: #4F46E5 !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(2) .qa-btn button:hover { background-color: #F1F5F9 !important; }
-        
-        /* 3. PEI (Blue) */
-        div[data-testid="column"]:nth-of-type(3) .qa-btn button { border-color: #2563EB !important; color: #2563EB !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(3) .qa-btn button:hover { background-color: #F1F5F9 !important; }
+        div[data-testid="column"]:nth-of-type(2) .qa-btn button { border-color:#4F46E5 !important; color:#4F46E5 !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(2) .qa-btn button:hover { background-color:#F1F5F9 !important; }
 
-        /* 4. AEE (Purple) */
-        div[data-testid="column"]:nth-of-type(4) .qa-btn button { border-color: #7C3AED !important; color: #7C3AED !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(4) .qa-btn button:hover { background-color: #F1F5F9 !important; }
+        div[data-testid="column"]:nth-of-type(3) .qa-btn button { border-color:#2563EB !important; color:#2563EB !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(3) .qa-btn button:hover { background-color:#F1F5F9 !important; }
 
-        /* 5. Recursos (Teal) */
-        div[data-testid="column"]:nth-of-type(5) .qa-btn button { border-color: #0D9488 !important; color: #0D9488 !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(5) .qa-btn button:hover { background-color: #F1F5F9 !important; }
+        div[data-testid="column"]:nth-of-type(4) .qa-btn button { border-color:#7C3AED !important; color:#7C3AED !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(4) .qa-btn button:hover { background-color:#F1F5F9 !important; }
 
-        /* 6. Diário (Rose) */
-        div[data-testid="column"]:nth-of-type(6) .qa-btn button { border-color: #E11D48 !important; color: #E11D48 !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(6) .qa-btn button:hover { background-color: #F1F5F9 !important; }
+        div[data-testid="column"]:nth-of-type(5) .qa-btn button { border-color:#0D9488 !important; color:#0D9488 !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(5) .qa-btn button:hover { background-color:#F1F5F9 !important; }
 
-        /* 7. Dados (Sky) */
-        div[data-testid="column"]:nth-of-type(7) .qa-btn button { border-color: #0284C7 !important; color: #0284C7 !important; background:white !important;}
-        div[data-testid="column"]:nth-of-type(7) .qa-btn button:hover { background-color: #F1F5F9 !important; }
+        div[data-testid="column"]:nth-of-type(6) .qa-btn button { border-color:#E11D48 !important; color:#E11D48 !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(6) .qa-btn button:hover { background-color:#F1F5F9 !important; }
+
+        div[data-testid="column"]:nth-of-type(7) .qa-btn button { border-color:#0284C7 !important; color:#0284C7 !important; background:white !important;}
+        div[data-testid="column"]:nth-of-type(7) .qa-btn button:hover { background-color:#F1F5F9 !important; }
     </style>
     """, unsafe_allow_html=True)
 
-    # Criação das 7 colunas
     c1, c2, c3, c4, c5, c6, c7 = st.columns(7, gap="small")
-    
-    # Renderização dos Botões
-    # Cada botão está envolto numa div '.qa-btn' para o CSS funcionar
-    with c1: 
+
+    def _wrap_button(label: str, on_click):
         st.markdown('<div class="qa-btn">', unsafe_allow_html=True)
-        st.button("INÍCIO", use_container_width=True, on_click=lambda: st.rerun())
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with c2: 
-        st.markdown('<div class="qa-btn">', unsafe_allow_html=True)
-        st.button("ESTUDANTES", use_container_width=True, on_click=lambda: st.switch_page("pages/Alunos.py"))
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    with c3: 
-        st.markdown('<div class="qa-btn">', unsafe_allow_html=True)
-        st.button("PEI", use_container_width=True, on_click=lambda: st.switch_page("pages/1_PEI.py"))
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    with c4: 
-        st.markdown('<div class="qa-btn">', unsafe_allow_html=True)
-        st.button("AEE", use_container_width=True, on_click=lambda: st.switch_page("pages/2_PAE.py"))
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    with c5: 
-        st.markdown('<div class="qa-btn">', unsafe_allow_html=True)
-        st.button("RECURSOS", use_container_width=True, on_click=lambda: st.switch_page("pages/3_Hub_Inclusao.py"))
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    with c6: 
-        st.markdown('<div class="qa-btn">', unsafe_allow_html=True)
-        st.button("DIÁRIO", use_container_width=True, on_click=lambda: st.switch_page("pages/4_Diario_de_Bordo.py"))
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    with c7: 
-        st.markdown('<div class="qa-btn">', unsafe_allow_html=True)
-        st.button("DADOS", use_container_width=True, on_click=lambda: st.switch_page("pages/5_Monitoramento_Avaliacao.py"))
+        st.button(label, use_container_width=True, on_click=on_click)
         st.markdown('</div>', unsafe_allow_html=True)
 
+    with c1: _wrap_button("INÍCIO", lambda: st.rerun())
+    with c2: _wrap_button("ESTUDANTES", lambda: st.switch_page("pages/Alunos.py"))
+    with c3: _wrap_button("PEI", lambda: st.switch_page("pages/1_PEI.py"))
+    with c4: _wrap_button("AEE", lambda: st.switch_page("pages/2_PAE.py"))
+    with c5: _wrap_button("RECURSOS", lambda: st.switch_page("pages/3_Hub_Inclusao.py"))
+    with c6: _wrap_button("DIÁRIO", lambda: st.switch_page("pages/4_Diario_de_Bordo.py"))
+    with c7: _wrap_button("DADOS", lambda: st.switch_page("pages/5_Monitoramento_Avaliacao.py"))
+
 # ==============================================================================
-# 🔒 VERIFICAÇÃO DE ACESSO (mantive sua lógica)
+# ### BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA & ALERTA DE TESTE ###
+# ==============================================================================
+# 1. Detecção Automática de Ambiente (Via st.secrets)
+try:
+    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
+except:
+    IS_TEST_ENV = False
+
+# 2. Função para carregar a logo em Base64
+def get_logo_base64():
+    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
+    for c in caminhos:
+        if os.path.exists(c):
+            with open(c, "rb") as f:
+                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
+
+src_logo_giratoria = get_logo_base64()
+
+# 3. Definição Dinâmica de Cores (Card Branco ou Amarelo)
+if IS_TEST_ENV:
+    # Amarelo Vibrante (Aviso de Teste)
+    card_bg = "rgba(255, 220, 50, 0.95)" 
+    card_border = "rgba(200, 160, 0, 0.5)"
+else:
+    # Branco Gelo Transparente (Original)
+    card_bg = "rgba(255, 255, 255, 0.85)"
+    card_border = "rgba(255, 255, 255, 0.6)"
+
+# 4. Renderização do CSS Global e Header Flutuante
+st.markdown(f"""
+<style>
+    /* CARD FLUTUANTE (OMNISFERA) */
+    .omni-badge {{
+        position: fixed;
+        top: 15px; 
+        right: 15px;
+        
+        /* COR DINÂMICA */
+        background: {card_bg};
+        border: 1px solid {card_border};
+        
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        
+        /* Dimensões: Fino e Largo */
+        padding: 4px 30px;
+        min-width: 260px;
+        justify-content: center;
+        
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        z-index: 999990;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        pointer-events: none;
+    }}
+
+    .omni-text {{
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 800;
+        font-size: 0.9rem;
+        color: #2D3748;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }}
+
+    @keyframes spin-slow {{
+        from {{ transform: rotate(0deg); }}
+        to {{ transform: rotate(360deg); }}
+    }}
+    
+    .omni-logo-spin {{
+        height: 26px;
+        width: 26px;
+        animation: spin-slow 10s linear infinite;
+    }}
+</style>
+
+<div class="omni-badge">
+    <img src="{src_logo_giratoria}" class="omni-logo-spin">
+    <span class="omni-text">OMNISFERA</span>
+</div>
+""", unsafe_allow_html=True)
+# ==============================================================================
+# ### FIM BLOCO VISUAL INTELIGENTE ###
+# ==============================================================================
+
+# ==============================================================================
+# 🔒 VERIFICAÇÃO DE ACESSO
 # ==============================================================================
 def acesso_bloqueado(msg: str):
     st.markdown(
@@ -473,6 +655,7 @@ def acesso_bloqueado(msg: str):
                 st.stop()
     st.stop()
 
+
 if not st.session_state.get("autenticado", False):
     acesso_bloqueado("Sessão expirada ou não iniciada.")
 
@@ -484,62 +667,56 @@ WORKSPACE_NAME = st.session_state.get("workspace_name") or f"{str(WORKSPACE_ID)[
 USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
 
 # ==============================================================================
-# ✅ CHAMADAS (isso faltava!)
-# ==============================================================================
-render_topbar()
-render_quick_access_bar()
-
-# ==============================================================================
-# SIDEBAR PERSONALIZADA (mantive)
+# SIDEBAR PERSONALIZADA
 # ==============================================================================
 with st.sidebar:
     st.markdown("### 🧭 Navegação")
-
-    if st.button("🏠 Home", key="nav_home", use_container_width=True,
+    
+    if st.button("🏠 Home", key="nav_home", use_container_width=True, 
                  help="Voltar para a página inicial"):
         st.switch_page("pages/0_Home.py")
-
+    
     col1, col2 = st.columns(2)
     with col1:
         st.button("👥 Estudantes", key="nav_estudantes", use_container_width=True, disabled=True)
     with col2:
         if st.button("📘 PEI", key="nav_pei", use_container_width=True):
             st.switch_page("pages/1_PEI.py")
-
+    
     if st.button("🧩 Plano de Ação", key="nav_paee", use_container_width=True):
         st.switch_page("pages/2_PAE.py")
-
+    
     if st.button("🚀 Hub IA", key="nav_hub", use_container_width=True):
         st.switch_page("pages/3_Hub_Inclusao.py")
-
+    
     if st.button("📝 Diário", key="nav_diario", use_container_width=True):
         st.switch_page("pages/4_Diario_de_Bordo.py")
-
+    
     if st.button("📊 Dashboard", key="nav_dashboard", use_container_width=True):
         st.switch_page("pages/5_Monitoramento_Avaliacao.py")
-
+    
     st.markdown("---")
     st.markdown("### 👤 Sessão")
     st.caption(f"**Usuário:** {st.session_state.get('usuario_nome', 'Visitante')}")
     st.caption(f"**Workspace:** {WORKSPACE_NAME}")
-
+    
     st.markdown("---")
     st.markdown("### 🔧 Ações")
     if st.button("🔄 Sincronizar Dados", key="sync_sidebar", use_container_width=True,
                  help="Atualizar todos os dados do workspace"):
         st.session_state["force_refresh"] = True
         st.rerun()
-
+    
     st.markdown("---")
     st.markdown(f"**Versão:** {APP_VERSION}")
-
+    
     if st.button("🚪 Sair", key="btn_sair", use_container_width=True):
         for k in ["autenticado", "workspace_id", "workspace_name", "usuario_nome", "usuario_cargo"]:
             st.session_state.pop(k, None)
         st.switch_page("streamlit_app.py")
 
 # ==============================================================================
-# CARD HERO
+# CARD HERO (ESTILO EXATO DA HOME COM HOVER)
 # ==============================================================================
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
@@ -555,7 +732,7 @@ st.markdown(
             <div class="mod-content">
                 <div class="mod-title">Gestão de Estudantes</div>
                 <div class="mod-desc">
-                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Aqui você gerencia todos os estudantes do workspace
+                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Aqui você gerencia todos os estudantes do workspace 
                     <strong>{WORKSPACE_NAME}</strong>. Visualize, busque e administre os dados dos alunos vinculados aos PEIs.
                 </div>
             </div>
@@ -566,7 +743,7 @@ st.markdown(
 )
 
 # ==============================================================================
-# CONTROLES SUPERIORES
+# CONTROLES SUPERIORES COM BOTÃO ESTILIZADO
 # ==============================================================================
 col1, col2 = st.columns([3, 1], gap="medium")
 
@@ -580,10 +757,12 @@ with col1:
 
 with col2:
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+    # Botão estilizado usando CSS class personalizada
     if st.button("**🔄 Atualizar Lista**", key="btn_refresh", use_container_width=True):
         st.session_state["force_refresh"] = True
         st.rerun()
 
+# 🔥 Refresh automático se veio do PEI ou força manual
 force_refresh = st.session_state.pop("force_refresh", False) or st.session_state.pop("students_dirty", False)
 
 # ==============================================================================
@@ -595,6 +774,7 @@ def _sb_url() -> str:
         raise RuntimeError("SUPABASE_URL não encontrado nos secrets.")
     return url.rstrip("/")
 
+
 def _sb_key() -> str:
     key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "")).strip()
     if not key:
@@ -602,6 +782,7 @@ def _sb_key() -> str:
     if not key:
         raise RuntimeError("SUPABASE_SERVICE_KEY/ANON_KEY não encontrado nos secrets.")
     return key
+
 
 def _headers() -> dict:
     key = _sb_key()
@@ -611,8 +792,10 @@ def _headers() -> dict:
         "Content-Type": "application/json",
     }
 
+
 def _http_error(prefix: str, r: requests.Response):
     raise RuntimeError(f"{prefix}: {r.status_code} {r.text}")
+
 
 @st.cache_data(ttl=10, show_spinner=False)
 def list_students_rest(workspace_id: str):
@@ -628,6 +811,7 @@ def list_students_rest(workspace_id: str):
     data = r.json()
     return data if isinstance(data, list) else []
 
+
 def delete_student_rest(student_id: str, workspace_id: str):
     url = f"{_sb_url()}/rest/v1/students?id=eq.{student_id}&workspace_id=eq.{workspace_id}"
     h = _headers()
@@ -638,7 +822,7 @@ def delete_student_rest(student_id: str, workspace_id: str):
     return r.json()
 
 # ==============================================================================
-# CARREGAMENTO DOS DADOS
+# CARREGAMENTO DOS DADOS COM CLEAR CACHE SE NECESSÁRIO
 # ==============================================================================
 if force_refresh:
     try:
@@ -653,12 +837,13 @@ with st.spinner("Carregando estudantes..."):
         st.error(f"Erro ao carregar do Supabase: {e}")
         st.stop()
 
+# Filtro
 if q and q.strip():
     qq = q.strip().lower()
     alunos = [a for a in alunos if (a.get("name") or "").lower().find(qq) >= 0]
 
 # ==============================================================================
-# RENDERIZAÇÃO
+# RENDERIZAÇÃO DOS ESTUDANTES
 # ==============================================================================
 if not alunos:
     st.markdown(
@@ -667,7 +852,7 @@ if not alunos:
             <div class="empty-icon"><i class="ri-user-search-line"></i></div>
             <div class="empty-title">Nenhum estudante encontrado</div>
             <div class="empty-desc">
-                Este workspace ainda não possui estudantes cadastrados.
+                Este workspace ainda não possui estudantes cadastrados. 
                 Crie um PEI para começar a adicionar alunos.
             </div>
         </div>
@@ -676,8 +861,9 @@ if not alunos:
     )
     st.stop()
 
+# Header da tabela
 st.markdown(
-    """
+    f"""
     <div class="student-table">
         <div class="student-header">
             <div>Nome</div>
@@ -690,19 +876,22 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Contador
 st.caption(f"**{len(alunos)}** estudante(s) encontrado(s)")
 
+# Linhas dos estudantes
 for a in alunos:
     sid = a.get("id")
     nome = a.get("name") or "—"
     serie = a.get("grade") or "—"
     turma = a.get("class_group") or "—"
     diag = a.get("diagnosis") or "—"
-
+    
     confirm_key = f"confirm_del_{sid}"
     if confirm_key not in st.session_state:
         st.session_state[confirm_key] = False
-
+    
+    # Renderiza a linha
     st.markdown(
         f"""
         <div class="student-row">
@@ -714,27 +903,29 @@ for a in alunos:
         """,
         unsafe_allow_html=True,
     )
-
+    
+    # Controles de ação com botões estilizados
     if not st.session_state[confirm_key]:
-        colx, _ = st.columns([1, 5])
-        with colx:
-            if st.button("🗑️", key=f"del_{sid}", help="Apagar estudante", use_container_width=True):
+        col1, _ = st.columns([1, 5])
+        with col1:
+            # Botão de lixeira estilizado
+            if st.button("🗑️", key=f"del_{sid}", help="Apagar estudante", 
+                         use_container_width=True):
                 st.session_state[confirm_key] = True
                 st.rerun()
     else:
-        st.markdown(
-            f"""
-            <div class="delete-confirm-banner">
-                <i class="ri-alert-fill"></i>
-                <div>Confirmar exclusão de <strong>{nome}</strong>?</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("✅ Sim", key=f"yes_{sid}", use_container_width=True, type="primary"):
+        # Modal de confirmação com botões estilizados
+        st.markdown(f"""
+        <div class="delete-confirm-banner">
+            <i class="ri-alert-fill"></i>
+            <div>Confirmar exclusão de <strong>{nome}</strong>?</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("✅ Sim", key=f"yes_{sid}", use_container_width=True, 
+                        type="primary"):
                 try:
                     delete_student_rest(sid, WORKSPACE_ID)
                     list_students_rest.clear()
@@ -744,15 +935,15 @@ for a in alunos:
                 except Exception as e:
                     st.session_state[confirm_key] = False
                     st.error(f"Erro ao apagar: {e}")
-
-        with c2:
+        
+        with col2:
             if st.button("❌ Não", key=f"no_{sid}", use_container_width=True):
                 st.session_state[confirm_key] = False
                 st.rerun()
-
+    
     st.markdown("</div></div>", unsafe_allow_html=True)
 
-st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)  # Fecha student-table
 
 # ==============================================================================
 # RODAPÉ
@@ -767,8 +958,8 @@ st.markdown(
         border-top: 1px solid #E2E8F0;
         margin-top: 40px;
     '>
-        <strong>Omnisfera {APP_VERSION}</strong> • Gestão de Estudantes •
-        Workspace: {WORKSPACE_NAME[:30]} •
+        <strong>Omnisfera {APP_VERSION}</strong> • Gestão de Estudantes • 
+        Workspace: {WORKSPACE_NAME[:30]} • 
         {datetime.now().strftime("%d/%m/%Y %H:%M")}
     </div>
     """,
