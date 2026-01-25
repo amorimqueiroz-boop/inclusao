@@ -331,12 +331,14 @@ footer {
 }
 
 /* Ajustar padding para compensar a topbar fixa */
-.block-container {
-    padding-top: 85px !important; /* Ajustado para barra fina */
-    padding-bottom: 3rem !important;
-    max-width: 95% !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+.mod-card-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    margin-top: 15px;  /* Adicionado para controlar o espaço acima do card */
 }
 
 /* --- MENU RÁPIDO (abaixo da topbar) --- */
@@ -730,7 +732,7 @@ USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
 # ✅ RENDERIZAÇÃO DOS BLOCOS A e B
 # ==============================================================================
 render_thin_topbar_with_spinning_logo()  # Bloco A - Topbar fina com logo girando
-render_colored_quick_access_bar()  # Bloco B - Menu com cores sólidas
+render_pill_navigation_bar()
 
 # ==============================================================================
 # SIDEBAR PERSONALIZADA
