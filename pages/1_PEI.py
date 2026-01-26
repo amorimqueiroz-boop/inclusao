@@ -1366,18 +1366,51 @@ st.markdown("""
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 """, unsafe_allow_html=True)
 
-# ==============================================================================
-# 9. LOGO E PROGRESSO (DESATIVADO)
-# ==============================================================================
+# ============================================================================== 
+# 9. LOGO E PROGRESSO
+# ============================================================================== 
 
-src_logo_giratoria = None
+def get_logo_base64() -> str | None:
+    """Obtém o logo em base64"""
+    for c in ["omni_icone.png", "logo.png", "iconeaba.png"]:
+        if os.path.exists(c):
+            with open(c, "rb") as f:
+                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return None
+
+src_logo_giratoria = get_logo_base64()
 
 def calcular_progresso() -> int:
-    return 0
+    """Calcula o progresso do formulário"""
+    try:
+        dados = st.session_state.get("dados", {}) or {}
+        campos = ["nome", "nasc", "turma", "ano"]
+        total = len(campos)
+        ok = sum(1 for c in campos if dados.get(c))
+        return int(round((ok / total) * 100)) if total else 0
+    except Exception:
+        return 0
 
 def render_progresso():
-    # barra desativada (mantém compatibilidade com chamadas antigas)
-    return
+    """Renderiza a barra de progresso compacta"""
+    p = max(0, min(100, int(calcular_progresso())))
+    icon_html = ""
+    
+    if src_logo_giratoria:
+        icon_html = f'<img src="{src_logo_giratoria}" class="omni-logo-spin" style="width:25px;height:25px;">'
+    
+    bar_color = "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)"
+    if p >= 100:
+        bar_color = "linear-gradient(90deg, #00C6FF 0%, #0072FF 100%)"
+    
+    st.markdown(f"""
+    <div class="progress-container">
+        <div style="width:100%; height:3px; background:#E2E8F0; border-radius:2px; position:relative;">
+            <div style="height:3px; width:{p}%; background:{bar_color}; border-radius:2px;"></div>
+            <div style="position:absolute; top:-14px; left:{p}%; transform:translateX(-50%);">{icon_html}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ==============================================================================
 # 10. CARD HERO - RENDERIZAÇÃO DIRETA SEM ESPAÇO
