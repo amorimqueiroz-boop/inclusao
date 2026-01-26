@@ -19,7 +19,7 @@ def ensure_state():
         st.session_state.view = "login"
 
 # =============================================================================
-# 2. UI COMPONENTS (HEADER & NAVBAR) - CORRIGIDO E SIMPLIFICADO
+# 2. UI COMPONENTS (HEADER & NAVBAR) - VERSÃO ULTRA COMPACTA
 # =============================================================================
 
 def get_base64_image(path: str) -> str | None:
@@ -30,7 +30,7 @@ def get_base64_image(path: str) -> str | None:
 
 def render_omnisfera_header():
     """
-    Renderiza o Topbar com CSS simplificado e que funciona
+    Renderiza o Topbar ULTRA COMPACTO
     """
     def _get_initials(nome: str) -> str:
         if not nome: return "U"
@@ -41,77 +41,67 @@ def render_omnisfera_header():
         ws = st.session_state.get("workspace_name", "") or "Workspace"
         return (ws[:max_len] + "...") if len(ws) > max_len else ws
 
-    # CSS simplificado e mais agressivo
+    # CSS ULTRA COMPACTO - ESPAÇO MÍNIMO
     st.markdown("""
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <style>
-        /* CSS MAIS AGUESSIVO - prioridade máxima */
-        div[data-testid="stAppViewContainer"] > div:first-child {
-            padding-top: 70px !important;
+        /* RESET COMPLETO */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
-        .stApp > header {
-            display: none !important;
-        }
-        
-        [data-testid="stSidebarNav"],
-        footer,
-        section[data-testid="stSidebar"],
-        button[data-testid="collapsedControl"] {
-            display: none !important;
-        }
-        
-        /* TOPBAR FIXA SIMPLES */
+        /* TOPBAR FIXA - SUPER COMPACTA */
         .omni-topbar {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            height: 50px !important;
+            height: 40px !important;  /* REDUZIDO */
             background: white !important;
             border-bottom: 1px solid #E2E8F0 !important;
             z-index: 999999 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: space-between !important;
-            padding: 0 20px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+            padding: 0 15px !important;  /* REDUZIDO */
         }
         
         .omni-brand {
             display: flex !important;
             align-items: center !important;
-            gap: 10px !important;
+            gap: 8px !important;  /* REDUZIDO */
         }
         
         .omni-logo {
-            height: 28px !important;
-            width: 28px !important;
+            height: 24px !important;  /* REDUZIDO */
+            width: 24px !important;
         }
         
         .omni-user-info {
             display: flex !important;
             align-items: center !important;
-            gap: 10px !important;
+            gap: 8px !important;  /* REDUZIDO */
         }
         
         .omni-workspace {
             background: #F1F5F9 !important;
             border: 1px solid #E2E8F0 !important;
-            padding: 4px 12px !important;
-            border-radius: 10px !important;
-            font-size: 12px !important;
+            padding: 3px 10px !important;  /* REDUZIDO */
+            border-radius: 8px !important;
+            font-size: 11px !important;  /* REDUZIDO */
             font-weight: 600 !important;
             color: #64748B !important;
-            max-width: 150px !important;
+            max-width: 120px !important;  /* REDUZIDO */
             overflow: hidden !important;
             text-overflow: ellipsis !important;
             white-space: nowrap !important;
         }
         
         .omni-avatar {
-            width: 28px !important;
-            height: 28px !important;
+            width: 24px !important;  /* REDUZIDO */
+            height: 24px !important;
             border-radius: 50% !important;
             background: linear-gradient(135deg, #4F46E5, #7C3AED) !important;
             color: white !important;
@@ -119,20 +109,44 @@ def render_omnisfera_header():
             align-items: center !important;
             justify-content: center !important;
             font-weight: 700 !important;
-            font-size: 11px !important;
+            font-size: 10px !important;  /* REDUZIDO */
         }
         
-        /* CORREÇÃO DO LAYOUT PRINCIPAL */
+        /* CONTAINER PRINCIPAL - ESPAÇO MÍNIMO PARA TOPBAR */
+        div[data-testid="stAppViewContainer"] > div:first-child {
+            padding-top: 45px !important;  /* Apenas 5px a mais que a topbar */
+        }
+        
+        /* REMOVER TODOS OS ELEMENTOS DO STREAMLIT */
+        .stApp > header,
+        [data-testid="stSidebarNav"],
+        footer,
+        section[data-testid="stSidebar"],
+        button[data-testid="collapsedControl"] {
+            display: none !important;
+        }
+        
+        /* CONTAINER DE CONTEÚDO - ZERO ESPAÇO SUPERIOR */
         .block-container {
-            padding-top: 20px !important;
-            padding-bottom: 20px !important;
+            padding-top: 0.1rem !important;  /* MÍNIMO */
+            padding-bottom: 1rem !important;
             max-width: 100% !important;
         }
         
-        /* REMOVER MARGENS E PADDINGS EXCESSIVOS */
         .main .block-container {
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
+            padding-left: 0.8rem !important;
+            padding-right: 0.8rem !important;
+        }
+        
+        /* REMOVER QUALQUER MARGEM/ESPAÇO EXTRA */
+        div[data-testid="stVerticalBlock"] > div:first-child {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        /* FORÇAR LAYOUT COMPACTO */
+        .stApp {
+            overflow-x: hidden !important;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -144,7 +158,7 @@ def render_omnisfera_header():
     
     # Usar fallback se as imagens não existirem
     img_logo = f'<img src="data:image/png;base64,{icone}" class="omni-logo">' if icone else '<div class="omni-logo">🌐</div>'
-    img_text = f'<img src="data:image/png;base64,{texto}" style="height: 16px; margin-left: 5px;">' if texto else '<span style="font-weight:800;color:#2B3674;font-size:14px;">OMNISFERA</span>'
+    img_text = f'<img src="data:image/png;base64,{texto}" style="height: 14px; margin-left: 4px;">' if texto else '<span style="font-weight:800;color:#2B3674;font-size:13px;">OMNISFERA</span>'
 
     st.markdown(f"""
         <div class="omni-topbar">
@@ -162,7 +176,7 @@ def render_omnisfera_header():
 
 def render_navbar(active_tab: str = "Início"):
     """
-    Renderiza o menu horizontal - versão simplificada
+    Renderiza o menu horizontal - VERSÃO ULTRA COMPACTA
     """
     opcoes = ["Início", "Estudantes", "Estratégias & PEI", "Plano de Ação (AEE)", "Hub de Recursos", "Diário de Bordo", "Evolução & Dados"]
     icones = ["house", "people", "book", "puzzle", "rocket", "journal", "bar-chart"]
@@ -172,13 +186,19 @@ def render_navbar(active_tab: str = "Início"):
     except ValueError: 
         default_idx = 0
 
-    # CSS específico para o navbar
+    # CSS ESPECÍFICO PARA NAVBAR COMPACTA
     st.markdown("""
     <style>
-    /* CONTAINER DO NAVBAR */
+    /* NAVBAR SUPER COMPACTA */
     .stHorizontalBlock {
-        margin-top: 10px !important;
-        margin-bottom: 20px !important;
+        margin-top: 0.1rem !important;  /* MÍNIMO */
+        margin-bottom: 0.3rem !important;  /* REDUZIDO */
+    }
+    
+    /* Container da option_menu */
+    .st-emotion-cache-1r4qj8v {
+        margin-top: 0 !important;
+        margin-bottom: 0.2rem !important;
     }
     
     /* REMOVER EFEITOS DO STREAMLIT */
@@ -189,11 +209,9 @@ def render_navbar(active_tab: str = "Início"):
     </style>
     """, unsafe_allow_html=True)
 
-    # Usar container para melhor controle
+    # Usar container SEM espaço extra
     with st.container():
-        # Adicionar um pouco de espaço acima do menu
-        st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True)
-        
+        # NÃO adicionar espaço acima do menu
         selected = option_menu(
             menu_title=None, 
             options=opcoes,
@@ -205,23 +223,23 @@ def render_navbar(active_tab: str = "Início"):
                     "padding": "0!important", 
                     "background-color": "#ffffff",
                     "border": "1px solid #E2E8F0",
-                    "border-radius": "10px",
+                    "border-radius": "8px",  /* REDUZIDO */
                     "margin": "0px",
-                    "box-shadow": "0 1px 3px rgba(0,0,0,0.05)"
+                    "box-shadow": "0 1px 2px rgba(0,0,0,0.03)"
                 },
                 "icon": {
                     "color": "#64748B", 
-                    "font-size": "14px"
+                    "font-size": "12px"  /* REDUZIDO */
                 }, 
                 "nav-link": {
-                    "font-size": "11px", 
+                    "font-size": "10px",  /* REDUZIDO */
                     "text-align": "center", 
                     "margin": "0px",
-                    "padding": "10px 12px",
+                    "padding": "6px 8px",  /* REDUZIDO */
                     "--hover-color": "#F1F5F9",
                     "color": "#475569",
                     "white-space": "nowrap",
-                    "border-radius": "8px"
+                    "border-radius": "6px"  /* REDUZIDO */
                 },
                 "nav-link-selected": {
                     "background-color": "#0284C7",
