@@ -1481,9 +1481,49 @@ if not st.session_state.banco_estudantes:
     st.warning("⚠️ Nenhum aluno encontrado para o seu usuário. Cadastre no módulo PEI primeiro.")
     st.stop()
 
-lista = [a['nome'] for a in st.session_state.banco_estudantes]
-nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista)
-aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
+# --- ATUALIZAÇÃO 2: HEADER RETRÁTIL E INTELIGENTE ---
+
+# 1. Renderiza o cabeçalho visual fixo (resumido)
+st.markdown(f"""
+    <div class="student-header">
+        <div class="student-info-item"><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div>
+        <div class="student-info-item"><div class="student-label">Série</div><div class="student-value">{aluno.get('serie', '-')}</div></div>
+        <div class="student-info-item"><div class="student-label">Diagnóstico</div><div class="student-value">{aluno.get('hiperfoco', '-')}</div></div>
+    </div>
+""", unsafe_allow_html=True)
+
+# 2. Expander com os dados profundos do PEI (JSON)
+with st.expander("📂 Ver Detalhes do PEI, Habilidades e Estratégias", expanded=False):
+    pei = aluno.get('pei_data', {})
+    
+    if not pei:
+        st.warning("⚠️ Este aluno ainda não possui um PEI estruturado gerado pela IA. Os dados acima são do cadastro básico.")
+    else:
+        c_pei1, c_pei2 = st.columns(2)
+        
+        with c_pei1:
+            st.markdown("**🧠 Habilidades Potenciais:**")
+            # Tenta pegar lista ou string
+            pots = pei.get('habilidades_potenciais', [])
+            if isinstance(pots, list):
+                for p in pots: st.markdown(f"- {p}")
+            else:
+                st.write(str(pots))
+
+        with c_pei2:
+            st.markdown("**⚠️ Barreiras/Desafios:**")
+            barr = pei.get('barreiras', []) or pei.get('desafios', [])
+            if isinstance(barr, list):
+                for b in barr: st.markdown(f"- {b}")
+            else:
+                st.write(str(barr))
+        
+        st.markdown("---")
+        st.markdown("**🎯 Estratégias de Ensino Sugeridas:**")
+        st.info(pei.get('estrategias_sugeridas', 'Sem estratégias definidas.'))
+        
+        st.markdown("**📝 Resumo Clínico/Pedagógico:**")
+        st.caption(aluno.get('ia_sugestao'))
 
 # --- DETECTOR DE EDUCAÇÃO INFANTIL ---
 serie_aluno = aluno.get('serie', '').lower()
