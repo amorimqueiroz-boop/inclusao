@@ -7,7 +7,7 @@ from streamlit_option_menu import option_menu
 # =============================================================================
 # 1) ESTADO E CONFIGURAÇÃO INICIAL
 # =============================================================================
-APP_VERSION = "omni_utils v2.1 (Smart Topbar + Navbar Otimizado)"
+APP_VERSION = "omni_utils v2.2 (Design Clean & Premium)"
 
 def ensure_state():
     if "autenticado" not in st.session_state:
@@ -152,7 +152,7 @@ def render_omnisfera_header():
 def render_navbar(active_tab: str = "Início"):
     """
     Menu horizontal otimizado.
-    Ajustado para legibilidade (12px) mantendo o perfil compacto.
+    Estilo selecionado: Cinza claro discreto com texto escuro (Design Premium).
     """
     ensure_state()
 
@@ -172,8 +172,6 @@ def render_navbar(active_tab: str = "Início"):
         padding-bottom: 0px !important;
       }
       div[data-testid="stHorizontalBlock"] .element-container { margin: 0 !important; padding: 0 !important; }
-      
-      /* Ajuste fino do padding interno dos botões */
       .st-emotion-cache-1aw8i8e { padding: 4px 4px !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -194,26 +192,27 @@ def render_navbar(active_tab: str = "Início"):
             },
             "icon": {
                 "color": "#64748B", 
-                "font-size": "15px",      # AUMENTADO (era 13px)
+                "font-size": "15px",
                 "margin-right": "6px",
             },
             "nav-link": {
-                "font-size": "12px",      # AUMENTADO (era 10px) - Legibilidade
+                "font-size": "12px",
                 "text-align": "center",
                 "margin": "0px",
-                "padding": "8px 10px",    # AUMENTADO (era 7px 8px) - Área de clique
+                "padding": "8px 10px",
                 "--hover-color": "#F8FAFC",
-                "color": "#475569",
+                "color": "#64748B", # Cor padrão do texto (cinza médio)
                 "white-space": "nowrap",
                 "border-radius": "8px",
-                "min-height": "36px",     # AUMENTADO (era 32px)
+                "min-height": "36px",
                 "display": "flex", "align-items": "center", "justify-content": "center",
+                "border": "1px solid transparent", # Para não pular quando selecionado
             },
             "nav-link-selected": {
-                "background-color": "#0F172A", # Cor mais sóbria/profissional
-                "color": "white",
-                "font-weight": "600",
-                "border": "none",
+                "background-color": "#F1F5F9", # <-- CINZA CLARO DISCRETO (Slate 100)
+                "color": "#0F172A",            # <-- TEXTO ESCURO PARA CONTRASTE
+                "font-weight": "700",          # <-- PESO PARA DESTAQUE
+                "border": "1px solid #E2E8F0", # <-- BORDA SUTIL (PREMIUM)
             },
         },
     )
@@ -232,7 +231,6 @@ def render_navbar(active_tab: str = "Início"):
         
         target = routes.get(selected)
         if target:
-            # Fallback para home caso o arquivo não exista
             if not os.path.exists(target) and selected == "Início":
                  target = "Home.py"
             st.switch_page(target)
