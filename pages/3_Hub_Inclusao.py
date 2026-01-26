@@ -825,38 +825,49 @@ st.markdown("""
   /* ========================================================= */
   /* HEADER / HERO (estilo PAEE) */
   /* ========================================================= */
-  .header-hub{
-    background: white; padding: 20px 30px; border-radius: 16px;
-    border: 1px solid #E2E8F0;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.04);
-    margin-bottom: 18px; display: flex; align-items: center; gap: 22px;
-  }
+  # --- ATUALIZAÇÃO 2: HEADER RETRÁTIL E INTELIGENTE ---
 
-  .student-header{
-    background-color: #F8FAFC;
-    border: 1px solid #E2E8F0;
-    border-radius: 16px;
-    padding: 18px 24px;
-    margin-bottom: 18px;
-    display: flex; justify-content: space-between; align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-  }
-  .student-label{
-    font-size: 0.78rem; color: #64748B; font-weight: 800;
-    text-transform: uppercase; letter-spacing: 1px;
-  }
-  .student-value{ font-size: 1.15rem; color: #1E293B; font-weight: 800; }
+# 1. Renderiza o cabeçalho visual fixo (resumido)
+st.markdown(f"""
+    <div class="student-header">
+        <div class="student-info-item"><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div>
+        <div class="student-info-item"><div class="student-label">Série</div><div class="student-value">{aluno.get('serie', '-')}</div></div>
+        <div class="student-info-item"><div class="student-label">Diagnóstico</div><div class="student-value">{aluno.get('hiperfoco', '-')}</div></div>
+    </div>
+""", unsafe_allow_html=True)
 
-  .pedagogia-box{
-    background: #F8FAFC;
-    border-left: 4px solid #CBD5E1;
-    padding: 16px 18px;
-    border-radius: 0 12px 12px 0;
-    margin-bottom: 16px;
-    font-size: 0.95rem;
-    color: #475569;
-  }
+# 2. Expander com os dados profundos do PEI (JSON)
+with st.expander("📂 Ver Detalhes do PEI, Habilidades e Estratégias", expanded=False):
+    pei = aluno.get('pei_data', {})
+    
+    if not pei:
+        st.warning("⚠️ Este aluno ainda não possui um PEI estruturado gerado pela IA. Os dados acima são do cadastro básico.")
+    else:
+        c_pei1, c_pei2 = st.columns(2)
+        
+        with c_pei1:
+            st.markdown("**🧠 Habilidades Potenciais:**")
+            # Tenta pegar lista ou string
+            pots = pei.get('habilidades_potenciais', [])
+            if isinstance(pots, list):
+                for p in pots: st.markdown(f"- {p}")
+            else:
+                st.write(str(pots))
 
+        with c_pei2:
+            st.markdown("**⚠️ Barreiras/Desafios:**")
+            barr = pei.get('barreiras', []) or pei.get('desafios', [])
+            if isinstance(barr, list):
+                for b in barr: st.markdown(f"- {b}")
+            else:
+                st.write(str(barr))
+        
+        st.markdown("---")
+        st.markdown("**🎯 Estratégias de Ensino Sugeridas:**")
+        st.info(pei.get('estrategias_sugeridas', 'Sem estratégias definidas.'))
+        
+        st.markdown("**📝 Resumo Clínico/Pedagógico:**")
+        st.caption(aluno.get('ia_sugestao'))
   /* ========================================================= */
   /* HUB RECURSO (visual PAEE) */
   /* ========================================================= */
