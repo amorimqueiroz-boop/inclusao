@@ -40,17 +40,66 @@ except Exception:
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Estratégias & PEI")
 
+apply_pei_theme() 
 
 
+# ==============================================================================
+# THEME — BOTÕES DA PÁGINA PEI
+# ==============================================================================
+def apply_pei_theme():
+    st.markdown("""
+    <style>
+    /* ===============================
+       PEI — TEMA DE BOTÕES
+       =============================== */
 
+    :root {
+        --pei-accent: #2563EB;        /* Azul principal */
+        --pei-accent-dark: #1D4ED8;   /* Hover */
+        --pei-accent-soft: #EEF2FF;   /* Fundo suave */
+    }
 
+    /* BOTÃO PRIMARY */
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(
+            135deg,
+            var(--pei-accent),
+            var(--pei-accent-dark)
+        ) !important;
+        border: none !important;
+        color: white !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        transition: all 0.2s ease !important;
+    }
 
+    .stButton > button[kind="primary"]:hover {
+        background: linear-gradient(
+            135deg,
+            var(--pei-accent-dark),
+            var(--pei-accent)
+        ) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+    }
 
+    /* BOTÃO SECONDARY */
+    .stButton > button[kind="secondary"] {
+        background: white !important;
+        color: var(--pei-accent) !important;
+        border: 1px solid var(--pei-accent) !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
+    }
 
-
-
-
-
+    .stButton > button[kind="secondary"]:hover {
+        background: var(--pei-accent-soft) !important;
+        border-color: var(--pei-accent-dark) !important;
+        color: var(--pei-accent-dark) !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 
 # ==============================================================================
