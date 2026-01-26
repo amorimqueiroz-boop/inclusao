@@ -40,7 +40,50 @@ except Exception:
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Estratégias & PEI")
 
-apply_pei_theme() 
+# ==============================================================================
+# THEME — BOTÕES DA PÁGINA PEI (AZUL)
+# Cole logo após o header/navbar
+# ==============================================================================
+st.markdown("""
+<style>
+:root{
+  --pei-accent:#2563EB;
+  --pei-accent-dark:#1D4ED8;
+  --pei-accent-soft:#EEF2FF;
+}
+
+/* PRIMARY */
+.stButton > button[kind="primary"]{
+  background: linear-gradient(135deg,var(--pei-accent),var(--pei-accent-dark)) !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  transition: all .2s ease !important;
+}
+.stButton > button[kind="primary"]:hover{
+  background: linear-gradient(135deg,var(--pei-accent-dark),var(--pei-accent)) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 20px rgba(37,99,235,.22) !important;
+}
+
+/* SECONDARY */
+.stButton > button[kind="secondary"]{
+  background: #fff !important;
+  color: var(--pei-accent) !important;
+  border: 1px solid var(--pei-accent) !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  transition: all .2s ease !important;
+}
+.stButton > button[kind="secondary"]:hover{
+  background: var(--pei-accent-soft) !important;
+  border-color: var(--pei-accent-dark) !important;
+  color: var(--pei-accent-dark) !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 
 
