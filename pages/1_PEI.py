@@ -1079,232 +1079,135 @@ st.markdown("""
 
 
 # ==============================================================================
-# BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA (MESMO PADRÃO)
+# BLOCO ENXUTO — CSS + LOGO (base64) + PROGRESSO (SEM BADGE FLUTUANTE)
+# - Remove totalmente o card flutuante (.omni-badge) e tudo relacionado
+# - Mantém somente o necessário para a logo girar na barra de progresso
 # ==============================================================================
-# ==============================================================================
-# BLOCO VISUAL — CSS (SEM CARD FLUTUANTE / SEM LOGO GIRANDO)
-# ==============================================================================
+
+import os, base64
+import streamlit as st
+
+# ------------------------------------------------------------------------------
+# 1) Logo em base64 (somente para usar no ícone da barra de progresso)
+# ------------------------------------------------------------------------------
+def get_logo_base64() -> str | None:
+    for c in ["omni_icone.png", "logo.png", "iconeaba.png"]:
+        if os.path.exists(c):
+            with open(c, "rb") as f:
+                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return None
+
+src_logo_giratoria = get_logo_base64()
+
+# ------------------------------------------------------------------------------
+# 2) CSS ENXUTO (mantém o que você já tinha + rotação da logo)
+#    ⚠️ Não inclui nenhum HTML do badge flutuante.
+# ------------------------------------------------------------------------------
 st.markdown("""
 <style>
-    /* =========================
-       HERO / MOD CARD (PEI)
-       ========================= */
-    .mod-card-wrapper {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 20px;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-    }
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+  html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }
+  .block-container { padding-top: 1.5rem !important; padding-bottom: 5rem !important; }
 
-    .mod-card-rect {
-        background: white;
-        border-radius: 16px 16px 0 0;
-        padding: 0;
-        border: 1px solid #E2E8F0;
-        border-bottom: none;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        height: 130px;
-        width: 100%;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+  /* Tabs (pílulas) */
+  div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] { display: none !important; }
+  .stTabs [data-baseweb="tab-list"] {
+      gap: 8px; display: flex; flex-wrap: wrap !important;
+      white-space: normal !important; overflow-x: visible !important;
+      padding: 10px 5px; width: 100%;
+  }
+  .stTabs [data-baseweb="tab"] {
+      height: 38px; border-radius: 20px !important;
+      background-color: #FFFFFF; border: 1px solid #E2E8F0;
+      color: #718096; font-weight: 700; font-size: 0.8rem;
+      padding: 0 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;
+  }
+  .stTabs [data-baseweb="tab"]:hover { border-color: #CBD5E0; color: #4A5568; background-color: #EDF2F7; }
+  .stTabs [aria-selected="true"] {
+      background-color: transparent !important; color: #3182CE !important;
+      border: 1px solid #3182CE !important; font-weight: 800;
+      box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important;
+  }
 
-    .mod-card-rect:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-        border-color: #CBD5E1;
-    }
+  /* Inputs */
+  .stTextInput input, .stTextArea textarea,
+  .stSelectbox div[data-baseweb="select"], .stMultiSelect div[data-baseweb="select"] {
+      border-radius: 8px !important; border-color: #E2E8F0 !important;
+  }
 
-    .mod-bar {
-        width: 6px;
-        height: 100%;
-        flex-shrink: 0;
-    }
+  /* Botões em colunas */
+  div[data-testid="column"] .stButton button {
+      border-radius: 8px !important; font-weight: 700 !important;
+      height: 45px !important; background-color: #0F52BA !important;
+      color: white !important; border: none !important;
+  }
+  div[data-testid="column"] .stButton button:hover { background-color: #0A3D8F !important; }
 
-    .mod-icon-area {
-        width: 90px;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.8rem;
-        flex-shrink: 0;
-        background: transparent !important; /* fundo transparente */
-        border-right: 1px solid #F1F5F9;
-        transition: all 0.3s ease;
-    }
+  /* Footer */
+  .footer-signature { text-align:center; opacity:0.55; font-size:0.75rem; padding:30px 0 10px 0; }
 
-    .mod-card-rect:hover .mod-icon-area {
-        background: transparent !important;
-        transform: scale(1.05);
-    }
-
-    .mod-content {
-        flex-grow: 1;
-        padding: 0 24px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .mod-title {
-        font-weight: 800;
-        font-size: 1.1rem;
-        color: #1E293B;
-        margin-bottom: 6px;
-        letter-spacing: -0.3px;
-        transition: color 0.2s;
-    }
-
-    .mod-card-rect:hover .mod-title {
-        color: #4F46E5;
-    }
-
-    .mod-desc {
-        font-size: 0.8rem;
-        color: #64748B;
-        line-height: 1.4;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    /* =========================
-       CORES (ex.: PEI azul)
-       ========================= */
-    .c-blue { background: #3B82F6 !important; }
-    .bg-blue-soft {
-        background: transparent !important;
-        color: #3B82F6 !important;
-    }
-
-    /* =========================
-       TABS — pílulas
-       ========================= */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 4px !important;
-        background-color: transparent !important;
-        padding: 0 !important;
-        border-radius: 0 !important;
-        margin-top: 24px !important;
-        border-bottom: none !important;
-        flex-wrap: wrap !important;
-    }
-
-    .stTabs [data-baseweb="tab"] {
-        height: 36px !important;
-        white-space: nowrap !important;
-        background-color: transparent !important;
-        border-radius: 20px !important;
-        padding: 0 16px !important;
-        color: #64748B !important;
-        font-weight: 600 !important;
-        font-size: 0.72rem !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.3px !important;
-        transition: all 0.2s ease !important;
-        border: 1px solid #E2E8F0 !important;
-        position: relative !important;
-        margin: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    /* aba ativa */
-    .stTabs [aria-selected="true"] {
-        background-color: #3B82F6 !important;
-        color: white !important;
-        font-weight: 700 !important;
-        border: 1px solid #3B82F6 !important;
-        box-shadow: 0 1px 3px rgba(59, 130, 246, 0.2) !important;
-    }
-
-    /* abas inativas */
-    .stTabs [data-baseweb="tab"]:not([aria-selected="true"]) {
-        background-color: white !important;
-        color: #64748B !important;
-        border: 1px solid #E2E8F0 !important;
-    }
-
-    /* hover */
-    .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {
-        background-color: #F8FAFC !important;
-        border-color: #CBD5E1 !important;
-        color: #475569 !important;
-    }
-
-    .stTabs [aria-selected="true"]:hover {
-        background-color: #2563EB !important;
-        border-color: #2563EB !important;
-    }
-
-    /* =========================
-       RESPONSIVO
-       ========================= */
-    @media (max-width: 1024px) {
-        .mod-card-rect { height: 120px; }
-        .mod-icon-area { width: 80px; }
-        .stTabs [data-baseweb="tab"] {
-            font-size: 0.68rem !important;
-            padding: 0 14px !important;
-            height: 34px !important;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .mod-card-rect {
-            flex-direction: column;
-            height: auto;
-            padding: 16px;
-        }
-        .mod-bar { width: 100%; height: 6px; }
-        .mod-icon-area {
-            width: 100%;
-            height: 60px;
-            border-right: none;
-            border-bottom: 1px solid #F1F5F9;
-        }
-        .mod-content { padding: 16px 0 0 0; }
-
-        .stTabs [data-baseweb="tab-list"] { gap: 6px !important; }
-
-        .stTabs [data-baseweb="tab"] {
-            flex: 1 0 calc(33.333% - 4px) !important;
-            min-width: calc(33.333% - 4px) !important;
-            height: 32px !important;
-            border-radius: 16px !important;
-            font-size: 0.65rem !important;
-            padding: 0 10px !important;
-        }
-    }
-
-    @media (max-width: 640px) {
-        .stTabs [data-baseweb="tab"] {
-            flex: 1 0 calc(50% - 4px) !important;
-            min-width: calc(50% - 4px) !important;
-            font-size: 0.62rem !important;
-            padding: 0 8px !important;
-            height: 30px !important;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .stTabs [data-baseweb="tab"] {
-            flex: 1 0 100% !important;
-            min-width: 100% !important;
-            border-radius: 12px !important;
-            margin-bottom: 4px !important;
-        }
-    }
+  /* ✅ Necessário para a logo girar na barra de progresso */
+  @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+  }
+  .omni-logo-spin {
+      animation: spin-slow 10s linear infinite;
+  }
 </style>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 """, unsafe_allow_html=True)
+
+# ------------------------------------------------------------------------------
+# 3) Funções da barra de progresso (use o seu calcular_progresso real)
+# ------------------------------------------------------------------------------
+def calcular_progresso() -> int:
+    """
+    ⚠️ SUBSTITUA PELO SEU CÁLCULO REAL.
+    Aqui vai um exemplo seguro pra não quebrar.
+    """
+    try:
+        # exemplo: se você já tem st.session_state.dados e usa campos obrigatórios
+        dados = st.session_state.get("dados", {}) or {}
+        campos = ["nome", "nasc", "turma", "ano"]  # ajuste para seus campos reais
+        total = len(campos)
+        if total == 0:
+            return 0
+        ok = sum(1 for c in campos if dados.get(c))
+        return int(round((ok / total) * 100))
+    except Exception:
+        return 0
+
+def render_progresso():
+    p = max(0, min(100, int(calcular_progresso())))
+
+    # ícone (não quebra se não achar logo)
+    icon_html = ""
+    if src_logo_giratoria:
+        icon_html = (
+            f'<img src="{src_logo_giratoria}" class="omni-logo-spin" '
+            f'style="width:25px;height:25px;" />'
+        )
+
+    bar_color = "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)"
+    if p >= 100:
+        bar_color = "linear-gradient(90deg, #00C6FF 0%, #0072FF 100%)"
+
+    st.markdown(
+        f"""
+        <div style="width:100%; margin: 0 0 20px 0;">
+          <div style="width:100%; height:3px; background:#E2E8F0; border-radius:2px; position:relative;">
+            <div style="height:3px; width:{p}%; background:{bar_color}; border-radius:2px;"></div>
+            <div style="position:absolute; top:-14px; left:{p}%; transform:translateX(-50%);">
+              {icon_html}
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
 # ==============================================================================
 # CARD HERO PARA PEI (MESMO DESIGN DOS ESTUDANTES)
