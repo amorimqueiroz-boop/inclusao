@@ -1028,49 +1028,294 @@ def limpar_formulario():
 
 
 # ==============================================================================
-# 8. ESTILO VISUAL
+# 8. ESTILO VISUAL - BLOCO UNIFICADO
 # ==============================================================================
 st.markdown("""
 <style>
+    /* FONTES E FUNDO */
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-    html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }
-    .block-container { padding-top: 1.5rem !important; padding-bottom: 5rem !important; }
-    div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] { display: none !important; }
+    
+    html, body, [class*="css"] { 
+        font-family: 'Nunito', sans-serif; 
+        color: #2D3748; 
+        background-color: #F7FAFC; 
+        margin: 0 !important; 
+        padding: 0 !important; 
+    }
+    
+    /* CONTAINER PRINCIPAL - MÍNIMO ESPAÇO */
+    .block-container { 
+        padding-top: 0rem !important;  
+        padding-bottom: 1.5rem !important; 
+    }
+    
+    .main .block-container {
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
+        padding-top: 0.1rem !important;
+    }
+    
+    /* NAVBAR COMPACTADO */
+    .stHorizontalBlock {
+        margin-top: 0.1rem !important;
+        margin-bottom: 0.1rem !important;
+    }
+    
+    /* CARD HERO - COLADO NO NAVBAR */
+    .mod-card-wrapper {
+        display: flex;
+        flex-direction: column;
+        margin-top: 0.1rem !important;  /* Margem mínima */
+        margin-bottom: 1rem !important;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    }
+    
+    /* CARD HERO COMPACTO */
+    .mod-card-rect {
+        background: white;
+        border-radius: 16px;
+        padding: 0;
+        border: 1px solid #E2E8F0;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        height: 110px;  /* Altura reduzida */
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .mod-card-rect:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        border-color: #CBD5E1;
+    }
+    
+    .mod-bar {
+        width: 6px;
+        height: 100%;
+        flex-shrink: 0;
+    }
+    
+    .mod-icon-area {
+        width: 70px;  /* Largura reduzida */
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;  /* Tamanho reduzido */
+        flex-shrink: 0;
+        background: transparent !important;
+        border-right: 1px solid #F1F5F9;
+        transition: all 0.3s ease;
+    }
+    
+    .mod-content {
+        flex-grow: 1;
+        padding: 0 16px;  /* Padding reduzido */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .mod-title {
+        font-weight: 800;
+        font-size: 1rem;  /* Tamanho reduzido */
+        color: #1E293B;
+        margin-bottom: 3px;  /* Margem reduzida */
+        letter-spacing: -0.2px;
+        transition: color 0.2s;
+    }
+    
+    .mod-desc {
+        font-size: 0.75rem;  /* Tamanho reduzido */
+        color: #64748B;
+        line-height: 1.2;  /* Linha mais compacta */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: 0 !important;
+    }
+    
+    /* CORES DO CARD */
+    .c-blue {
+        background: #3B82F6 !important;
+    }
+    
+    .bg-blue-soft {
+        background: transparent !important;
+        color: #3B82F6 !important;
+    }
+    
+    /* TABS COMPACTOS */
+    div[data-baseweb="tab-border"],
+    div[data-baseweb="tab-highlight"] { 
+        display: none !important; 
+    }
+    
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px; display: flex; flex-wrap: wrap !important;
-        white-space: normal !important; overflow-x: visible !important;
-        padding: 10px 5px; width: 100%;
+        gap: 6px;  /* Reduzido */
+        display: flex;
+        flex-wrap: wrap !important;
+        white-space: normal !important;
+        overflow-x: visible !important;
+        padding: 8px 4px;  /* Reduzido */
+        width: 100%;
+        margin-bottom: 0.5rem !important;
     }
+    
     .stTabs [data-baseweb="tab"] {
-        height: 38px; border-radius: 20px !important;
-        background-color: #FFFFFF; border: 1px solid #E2E8F0;
-        color: #718096; font-weight: 700; font-size: 0.8rem;
-        padding: 0 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-        text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;
+        height: 36px;  /* Reduzido */
+        border-radius: 18px !important;
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        color: #718096;
+        font-weight: 700;
+        font-size: 0.75rem;  /* Reduzido */
+        padding: 0 16px;  /* Reduzido */
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;  /* Reduzido */
+        margin-bottom: 4px;  /* Reduzido */
     }
-    .stTabs [data-baseweb="tab"]:hover { border-color: #CBD5E0; color: #4A5568; background-color: #EDF2F7; }
+    
+    .stTabs [data-baseweb="tab"]:hover { 
+        border-color: #CBD5E0; 
+        color: #4A5568; 
+        background-color: #EDF2F7; 
+    }
+    
     .stTabs [aria-selected="true"] {
-        background-color: transparent !important; color: #3182CE !important;
-        border: 1px solid #3182CE !important; font-weight: 800;
-        box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important;
+        background-color: transparent !important; 
+        color: #3182CE !important;
+        border: 1px solid #3182CE !important; 
+        font-weight: 800;
+        box-shadow: 0 0 10px rgba(49, 130, 206, 0.3), inset 0 0 4px rgba(49, 130, 206, 0.1) !important;
     }
-    .header-unified { background-color: white; padding: 20px 40px; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }
-    .header-subtitle { font-size: 1.2rem; color: #718096; font-weight: 600; border-left: 2px solid #E2E8F0; padding-left: 20px; line-height: 1.2; }
-    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"], .stMultiSelect div[data-baseweb="select"] { border-radius: 8px !important; border-color: #E2E8F0 !important; }
-    div[data-testid="column"] .stButton button { border-radius: 8px !important; font-weight: 700 !important; height: 45px !important; background-color: #0F52BA !important; color: white !important; border: none !important; }
-    div[data-testid="column"] .stButton button:hover { background-color: #0A3D8F !important; }
-    .footer-signature { text-align:center; opacity:0.55; font-size:0.75rem; padding:30px 0 10px 0; }
+    
+    /* ELEMENTOS DO FORMULÁRIO */
+    .stTextInput input, 
+    .stTextArea textarea, 
+    .stSelectbox div[data-baseweb="select"], 
+    .stMultiSelect div[data-baseweb="select"] { 
+        border-radius: 8px !important; 
+        border-color: #E2E8F0 !important; 
+    }
+    
+    div[data-testid="column"] .stButton button { 
+        border-radius: 8px !important; 
+        font-weight: 700 !important; 
+        height: 45px !important; 
+        background-color: #0F52BA !important; 
+        color: white !important; 
+        border: none !important; 
+    }
+    
+    div[data-testid="column"] .stButton button:hover { 
+        background-color: #0A3D8F !important; 
+    }
+    
+    /* REMOVER MARGENS EXCESSIVAS */
+    div[data-testid="column"] {
+        padding-top: 0.25rem !important;
+        padding-bottom: 0.25rem !important;
+    }
+    
+    .stButton button {
+        margin-top: 0.25rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+    
+    .st-emotion-cache-1r4qj8v,
+    .st-emotion-cache-keje6w,
+    .st-emotion-cache-1dp5vir {
+        margin-top: 0 !important;
+        margin-bottom: 0.2rem !important;
+    }
+    
+    /* REMOVER HEADER DO STREAMLIT */
+    section[data-testid="stHeader"] {
+        display: none !important;
+    }
+    
+    /* FOOTER */
+    .footer-signature { 
+        text-align:center; 
+        opacity:0.55; 
+        font-size:0.7rem; 
+        padding:15px 0 5px 0; 
+    }
+    
+    /* ANIMAÇÃO DO LOGO */
+    @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .omni-logo-spin {
+        animation: spin-slow 10s linear infinite;
+    }
+    
+    /* RESPONSIVIDADE */
+    @media (max-width: 768px) {
+        .mod-card-rect {
+            flex-direction: column;
+            height: auto;
+            padding: 12px;
+        }
+        
+        .mod-bar {
+            width: 100%;
+            height: 4px;
+        }
+        
+        .mod-icon-area {
+            width: 100%;
+            height: 50px;
+            border-right: none;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        
+        .mod-content {
+            padding: 12px 0 0 0;
+        }
+        
+        .block-container {
+            padding-top: 0.05rem !important;
+        }
+    }
+    
+    /* HACKS PARA REMOVER ESPAÇOS RESIDUAIS */
+    div.stApp > div:first-child,
+    div[data-testid="stAppViewContainer"] > div:first-child {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    div[data-testid="stVerticalBlock"] > div:first-child {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    /* CONTAINER DO PROGRESSO */
+    .progress-container {
+        width: 100%;
+        margin: 0.3rem 0 0.8rem 0 !important;
+    }
 </style>
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 """, unsafe_allow_html=True)
-      
-
 
 # ============================================================================== 
-# BLOCO FINAL — CSS COMPACTADO AO MÁXIMO
+# 9. LOGO E PROGRESSO
 # ============================================================================== 
 
 def get_logo_base64() -> str | None:
+    """Obtém o logo em base64"""
     for c in ["omni_icone.png", "logo.png", "iconeaba.png"]:
         if os.path.exists(c):
             with open(c, "rb") as f:
@@ -1079,358 +1324,8 @@ def get_logo_base64() -> str | None:
 
 src_logo_giratoria = get_logo_base64()
 
-# ------------------------------------------------------------------------------
-# CSS COMPACTADO - ESPAÇO MÍNIMO ENTRE MENU E CARD HERO
-# ------------------------------------------------------------------------------
-
-st.markdown("""
-<style>
-    /* REMOVER TODOS OS ESPAÇOS ENTRE NAVBAR E CARD HERO */
-    .block-container {
-        padding-top: 0rem !important;
-        padding-bottom: 0rem !important;
-    }
-    
-    /* CARD HERO - COLADO NO NAVBAR */
-    .mod-card-wrapper {
-        margin-top: 0px !important;  /* ZERO margem superior */
-        margin-bottom: 0.5rem !important;
-    }
-    
-    /* COMPACTAR AINDA MAIS O CARD HERO */
-    .mod-card-rect {
-        height: 110px !important;  /* Mais baixo */
-        padding: 0 !important;
-    }
-    
-    .mod-icon-area {
-        width: 70px !important;  /* Mais estreito */
-        font-size: 1.4rem !important;
-    }
-    
-    .mod-content {
-        padding: 0 16px !important;  /* Menos padding lateral */
-    }
-    
-    .mod-title {
-        font-size: 1rem !important;
-        margin-bottom: 3px !important;
-    }
-    
-    .mod-desc {
-        font-size: 0.75rem !important;
-        line-height: 1.2 !important;
-        -webkit-line-clamp: 2 !important;
-    }
-    
-    /* REMOVER QUALQUER ESPAÇO RESIDUAL */
-    div[data-testid="stVerticalBlock"] > div:first-child {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-    }
-    
-    .st-emotion-cache-1r4qj8v,
-    .st-emotion-cache-keje6w {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-    }
-    
-    /* OPCIONAL: Se ainda houver espaço, use este hack */
-    div[data-testid="stAppViewContainer"] > div:first-child {
-        padding-top: 0 !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# ==============================================================================
-# CARD HERO - RENDERIZAÇÃO DIRETA SEM ESPAÇO
-# ==============================================================================
-hora = datetime.now().hour
-saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
-USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
-WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
-
-# Container ultra compacto - sem margens
-with st.container():
-    # Sem espaço artificial
-    st.markdown(f"""
-    <div class="mod-card-wrapper">
-        <div class="mod-card-rect">
-            <div class="mod-bar c-blue"></div>
-            <div class="mod-icon-area bg-blue-soft">
-                <i class="ri-book-open-fill"></i>
-            </div>
-            <div class="mod-content">
-                <div class="mod-title">Plano Educacional Individualizado (PEI)</div>
-                <div class="mod-desc">
-                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie e gerencie Planos Educacionais Individualizados 
-                    para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>. 
-                    Desenvolva estratégias personalizadas e acompanhe o progresso de cada aluno.
-                </div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-
-html, body, [class*="css"] {
-    font-family: 'Nunito', sans-serif;
-    color: #2D3748;
-    background-color: #F7FAFC;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* CONTAINER PRINCIPAL - MÍNIMO POSSÍVEL */
-.block-container {
-    padding-top: 0rem !important;  /* Mínimo possível */
-    padding-bottom: 1.5rem !important;
-}
-
-/* REMOVER TODOS OS ESPAÇOS EXCESSIVOS */
-.main .block-container {
-    padding-left: 0.8rem !important;
-    padding-right: 0.8rem !important;
-    padding-top: 0.1rem !important;
-}
-
-/* NAVBAR COMPACTADO */
-.stHorizontalBlock {
-    margin-top: 0.1rem !important;
-    margin-bottom: 0.1rem !important;
-}
-
-/* CARD HERO COLADO NO MENU */
-.mod-card-wrapper {
-    display: flex;
-    flex-direction: column;
-    margin-top: 0.1rem !important;  /* Margem mínima */
-    margin-bottom: 1rem !important;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-}
-
-/* COMPACTAR CARD HERO */
-.mod-card-rect {
-    background: white;
-    border-radius: 16px;
-    padding: 0;
-    border: 1px solid #E2E8F0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    height: 120px;  /* Reduzido de 130px */
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.mod-card-rect:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-    border-color: #CBD5E1;
-}
-
-.mod-bar {
-    width: 6px;
-    height: 100%;
-    flex-shrink: 0;
-}
-
-.mod-icon-area {
-    width: 80px;  /* Reduzido de 90px */
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.6rem;  /* Reduzido de 1.8rem */
-    flex-shrink: 0;
-    background: transparent !important;
-    border-right: 1px solid #F1F5F9;
-    transition: all 0.3s ease;
-}
-
-.mod-content {
-    flex-grow: 1;
-    padding: 0 20px;  /* Reduzido de 24px */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.mod-title {
-    font-weight: 800;
-    font-size: 1.05rem;  /* Reduzido de 1.1rem */
-    color: #1E293B;
-    margin-bottom: 4px;  /* Reduzido de 6px */
-    letter-spacing: -0.2px;
-    transition: color 0.2s;
-}
-
-.mod-desc {
-    font-size: 0.78rem;  /* Reduzido de 0.8rem */
-    color: #64748B;
-    line-height: 1.3;  /* Reduzido de 1.4 */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin-bottom: 0 !important;
-}
-
-/* Paleta */
-.c-blue {
-    background: #3B82F6 !important;
-}
-
-.bg-blue-soft {
-    background: transparent !important;
-    color: #3B82F6 !important;
-}
-
-/* ========= TABS COMPACTOS ========= */
-div[data-baseweb="tab-border"],
-div[data-baseweb="tab-highlight"] {
-    display: none !important;
-}
-
-.stTabs [data-baseweb="tab-list"] {
-    gap: 6px;  /* Reduzido de 8px */
-    display: flex;
-    flex-wrap: wrap !important;
-    white-space: normal !important;
-    overflow-x: visible !important;
-    padding: 8px 4px;  /* Reduzido */
-    width: 100%;
-    margin-bottom: 0.5rem !important;
-}
-
-.stTabs [data-baseweb="tab"] {
-    height: 36px;  /* Reduzido de 38px */
-    border-radius: 18px !important;
-    background-color: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    color: #718096;
-    font-weight: 700;
-    font-size: 0.75rem;  /* Reduzido de 0.8rem */
-    padding: 0 16px;  /* Reduzido de 20px */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-    text-transform: uppercase;
-    letter-spacing: 0.3px;  /* Reduzido de 0.5px */
-    margin-bottom: 4px;  /* Reduzido de 5px */
-}
-
-.stTabs [aria-selected="true"] {
-    background-color: transparent !important;
-    color: #3182CE !important;
-    border: 1px solid #3182CE !important;
-    font-weight: 800;
-    box-shadow: 0 0 10px rgba(49, 130, 206, 0.3), inset 0 0 4px rgba(49, 130, 206, 0.1) !important;
-}
-
-/* REMOVER MARGENS DOS ELEMENTOS DO STREAMLIT */
-div[data-testid="column"] {
-    padding-top: 0.25rem !important;
-    padding-bottom: 0.25rem !important;
-}
-
-.stButton button {
-    margin-top: 0.25rem !important;
-    margin-bottom: 0.25rem !important;
-}
-
-/* PROGRESS BAR COMPACTA */
-.progress-container {
-    width: 100%;
-    margin: 0.3rem 0 0.8rem 0 !important;
-}
-
-@keyframes spin-slow {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-.omni-logo-spin {
-    animation: spin-slow 10s linear infinite;
-}
-
-/* REMOVER ESPAÇOS DE TODOS OS ELEMENTOS STREAMLIT */
-.st-emotion-cache-1r4qj8v,
-.st-emotion-cache-keje6w,
-.st-emotion-cache-1dp5vir {
-    margin-top: 0 !important;
-    margin-bottom: 0.2rem !important;
-}
-
-/* SE HOUVER ESPAÇO DO HEADER DA PÁGINA */
-section[data-testid="stHeader"] {
-    display: none !important;
-}
-
-/* Footer compacto */
-.footer-signature {
-    text-align:center;
-    opacity:0.55;
-    font-size:0.7rem;
-    padding:15px 0 5px 0;
-}
-
-/* Responsivo */
-@media (max-width: 768px) {
-    .mod-card-rect {
-        flex-direction: column;
-        height: auto;
-        padding: 12px;
-    }
-    
-    .mod-bar {
-        width: 100%;
-        height: 4px;
-    }
-    
-    .mod-icon-area {
-        width: 100%;
-        height: 50px;
-        border-right: none;
-        border-bottom: 1px solid #F1F5F9;
-    }
-    
-    .mod-content {
-        padding: 12px 0 0 0;
-    }
-    
-    .block-container {
-        padding-top: 0.05rem !important;
-    }
-}
-
-/* CSS AGUESSIVO PARA REMOVER ESPAÇOS - ÚLTIMO RECURSO */
-div.stApp > div:first-child,
-div[data-testid="stAppViewContainer"] > div:first-child {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-}
-
-/* REMOVER QUALQUER ESPAÇO EM CIMA DO MENU */
-div[data-testid="stVerticalBlock"] > div:first-child {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
-
-</style>
-<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
-""", unsafe_allow_html=True)
-
-# ------------------------------------------------------------------------------
-# PROGRESSO COMPACTO
-# ------------------------------------------------------------------------------
 def calcular_progresso() -> int:
+    """Calcula o progresso do formulário"""
     try:
         dados = st.session_state.get("dados", {}) or {}
         campos = ["nome", "nasc", "turma", "ano"]
@@ -1441,16 +1336,17 @@ def calcular_progresso() -> int:
         return 0
 
 def render_progresso():
+    """Renderiza a barra de progresso compacta"""
     p = max(0, min(100, int(calcular_progresso())))
     icon_html = ""
+    
     if src_logo_giratoria:
-        icon_html = f'<img src="{src_logo_giratoria}" class="omni-logo-spin" style="width:22px;height:22px;">'  # Reduzido de 25px
+        icon_html = f'<img src="{src_logo_giratoria}" class="omni-logo-spin" style="width:22px;height:22px;">'
     
     bar_color = "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)"
     if p >= 100:
         bar_color = "linear-gradient(90deg, #00C6FF 0%, #0072FF 100%)"
     
-    # Progresso mais compacto
     st.markdown(f"""
     <div class="progress-container">
         <div style="width:100%; height:2px; background:#E2E8F0; border-radius:1px; position:relative;">
@@ -1461,7 +1357,7 @@ def render_progresso():
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# CARD HERO - RENDERIZAÇÃO DIRETA SEM ESPAÇO
+# 10. CARD HERO - RENDERIZAÇÃO DIRETA SEM ESPAÇO
 # ==============================================================================
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
@@ -1470,7 +1366,6 @@ WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
 
 # Container ultra compacto - sem margens
 with st.container():
-    # Sem espaço artificial
     st.markdown(f"""
     <div class="mod-card-wrapper">
         <div class="mod-card-rect">
