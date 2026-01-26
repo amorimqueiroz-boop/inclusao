@@ -44,62 +44,49 @@ apply_pei_theme()
 
 
 # ==============================================================================
-# THEME — BOTÕES DA PÁGINA PEI
+# THEME — BOTÕES DA PÁGINA PEI (AZUL)
+# Cole logo após o header/navbar
 # ==============================================================================
-def apply_pei_theme():
-    st.markdown("""
-    <style>
-    /* ===============================
-       PEI — TEMA DE BOTÕES
-       =============================== */
+st.markdown("""
+<style>
+:root{
+  --pei-accent:#2563EB;
+  --pei-accent-dark:#1D4ED8;
+  --pei-accent-soft:#EEF2FF;
+}
 
-    :root {
-        --pei-accent: #2563EB;        /* Azul principal */
-        --pei-accent-dark: #1D4ED8;   /* Hover */
-        --pei-accent-soft: #EEF2FF;   /* Fundo suave */
-    }
+/* PRIMARY */
+.stButton > button[kind="primary"]{
+  background: linear-gradient(135deg,var(--pei-accent),var(--pei-accent-dark)) !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  transition: all .2s ease !important;
+}
+.stButton > button[kind="primary"]:hover{
+  background: linear-gradient(135deg,var(--pei-accent-dark),var(--pei-accent)) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 20px rgba(37,99,235,.22) !important;
+}
 
-    /* BOTÃO PRIMARY */
-    .stButton > button[kind="primary"] {
-        background: linear-gradient(
-            135deg,
-            var(--pei-accent),
-            var(--pei-accent-dark)
-        ) !important;
-        border: none !important;
-        color: white !important;
-        font-weight: 600 !important;
-        border-radius: 8px !important;
-        transition: all 0.2s ease !important;
-    }
+/* SECONDARY */
+.stButton > button[kind="secondary"]{
+  background: #fff !important;
+  color: var(--pei-accent) !important;
+  border: 1px solid var(--pei-accent) !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  transition: all .2s ease !important;
+}
+.stButton > button[kind="secondary"]:hover{
+  background: var(--pei-accent-soft) !important;
+  border-color: var(--pei-accent-dark) !important;
+  color: var(--pei-accent-dark) !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
-    .stButton > button[kind="primary"]:hover {
-        background: linear-gradient(
-            135deg,
-            var(--pei-accent-dark),
-            var(--pei-accent)
-        ) !important;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
-    }
-
-    /* BOTÃO SECONDARY */
-    .stButton > button[kind="secondary"] {
-        background: white !important;
-        color: var(--pei-accent) !important;
-        border: 1px solid var(--pei-accent) !important;
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        transition: all 0.2s ease !important;
-    }
-
-    .stButton > button[kind="secondary"]:hover {
-        background: var(--pei-accent-soft) !important;
-        border-color: var(--pei-accent-dark) !important;
-        color: var(--pei-accent-dark) !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 
 
 # ==============================================================================
