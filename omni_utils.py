@@ -3,7 +3,7 @@ import base64
 import json
 import requests
 import streamlit as st
-from streamlit_option_menu import option_menu
+from streamlit_option_menu import option_menu 
 
 # =============================================================================
 # 1. ESTADO E CONFIGURAÇÃO INICIAL
@@ -19,7 +19,7 @@ def ensure_state():
         st.session_state.view = "login"
 
 # =============================================================================
-# 2. UI COMPONENTS (HEADER & NAVBAR) - VERSÃO TURBINADA (64px)
+# 2. UI COMPONENTS (HEADER & NAVBAR) - AJUSTADO (FULL WIDTH & TIGHT)
 # =============================================================================
 
 def get_base64_image(path: str) -> str | None:
@@ -30,8 +30,7 @@ def get_base64_image(path: str) -> str | None:
 
 def render_omnisfera_header():
     """
-    Renderiza o Topbar com dimensões aumentadas (64px), elementos maiores 
-    e ajusta o layout da página para ocupar a tela toda.
+    Renderiza o Topbar e define o CSS para layout COMPACTO e LARGURA TOTAL.
     """
     def _get_initials(nome: str) -> str:
         if not nome: return "U"
@@ -42,86 +41,48 @@ def render_omnisfera_header():
         ws = st.session_state.get("workspace_name", "") or "Workspace"
         return (ws[:max_len] + "...") if len(ws) > max_len else ws
 
-    # CSS Ajustado para Barra Maior e Layout Full Width
     st.markdown("""
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <style>
-        /* 1. AJUSTE DE PADDING SUPERIOR (CRÍTICO) 
-           Compensa a barra de 64px + margem. Empurra o conteúdo para baixo. */
-        div[data-testid="stAppViewContainer"] > div:first-child {
-            padding-top: 90px !important;
+        /* TOPBAR FIXA */
+        .topbar-thin {
+            position: fixed; top: 0; left: 0; right: 0; height: 50px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #E2E8F0;
+            z-index: 9999;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 1.5rem; /* Padding lateral menor */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
         
-        /* 2. REMOVER ELEMENTOS NATIVOS DO STREAMLIT */
-        .stApp > header { display: none !important; }
-        [data-testid="stSidebarNav"], footer, section[data-testid="stSidebar"], button[data-testid="collapsedControl"] {
-            display: none !important;
-        }
-        
-        /* 3. TOPBAR FIXA - MAIOR (64px) */
-        .omni-topbar {
-            position: fixed !important;
-            top: 0 !important; left: 0 !important; right: 0 !important;
-            height: 64px !important; /* Altura aumentada */
-            background: white !important;
-            border-bottom: 1px solid #E2E8F0 !important;
-            z-index: 999999 !important;
-            display: flex !important; align-items: center !important; justify-content: space-between !important;
-            padding: 0 24px !important; /* Mais respiro lateral */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
-        }
-        
-        .omni-brand {
-            display: flex !important; align-items: center !important; gap: 12px !important;
-        }
-        
-        /* LOGO MAIOR */
-        .omni-logo {
-            height: 38px !important; width: 38px !important;
-            animation: spin-logo 60s linear infinite;
-        }
-        
-        .omni-user-info {
-            display: flex !important; align-items: center !important; gap: 12px !important;
-        }
-        
-        .omni-workspace {
-            background: #F1F5F9 !important;
-            border: 1px solid #E2E8F0 !important;
-            padding: 6px 14px !important;
-            border-radius: 12px !important;
-            font-size: 13px !important;
-            font-weight: 600 !important;
-            color: #64748B !important;
-            max-width: 180px !important;
-            overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important;
-        }
-        
-        /* AVATAR MAIOR */
-        .omni-avatar {
-            width: 36px !important; height: 36px !important;
-            border-radius: 50% !important;
-            background: linear-gradient(135deg, #4F46E5, #7C3AED) !important;
-            color: white !important;
-            display: flex !important; align-items: center !important; justify-content: center !important;
-            font-weight: 700 !important;
-            font-size: 13px !important;
-            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2) !important;
-        }
-        
-        @keyframes spin-logo { 100% { transform: rotate(360deg); } }
+        /* ELEMENTOS DA MARCA */
+        .brand-box { display: flex; align-items: center; gap: 8px; }
+        .brand-logo { height: 28px !important; width: auto !important; animation: spin-logo 60s linear infinite; }
+        .brand-img-text { height: 16px !important; width: auto; margin-left: 6px; }
 
-        /* 4. LAYOUT FULL WIDTH (LARGURA TOTAL) */
-        .block-container {
-            padding-top: 10px !important;
-            padding-bottom: 20px !important;
-            max-width: 100% !important;
-        }
+        /* USER INFO */
+        .user-badge-thin { background: #F1F5F9; border: 1px solid #E2E8F0; padding: 2px 8px; border-radius: 10px; font-size: 0.65rem; font-weight: 700; color: #64748B; }
+        .apple-avatar-thin { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.65rem; }
+
+        @keyframes spin-logo { 100% { transform: rotate(360deg); } }
         
-        .main .block-container {
-            padding-left: 2rem !important; /* Margem lateral do conteúdo */
-            padding-right: 2rem !important;
+        /* --- AQUI ESTÁ A MÁGICA DO LAYOUT --- */
+        
+        /* 1. Sobe o conteúdo para colar na barra (era 5rem, agora 3.5rem) */
+        /* 2. Remove limite de largura (max-width: 100%) para ocupar a tela toda */
+        .block-container { 
+            padding-top: 3.8rem !important; 
+            padding-bottom: 2rem; 
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            max-width: 100% !important; 
         }
+
+        /* Limpeza do Streamlit */
+        header[data-testid="stHeader"] { background-color: transparent !important; z-index: 1; }
+        [data-testid="stSidebarNav"], footer, section[data-testid="stSidebar"], button[data-testid="collapsedControl"] { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -130,21 +91,15 @@ def render_omnisfera_header():
     ws_name = _get_ws_short()
     user_name = st.session_state.get("usuario_nome", "Visitante")
     
-    # Imagens e Textos ajustados para o novo tamanho
-    img_logo = f'<img src="data:image/png;base64,{icone}" class="omni-logo">' if icone else '<div class="omni-logo" style="display:flex;align-items:center;justify-content:center;font-size:24px;">🌐</div>'
-    
-    # Texto Omnisfera aumentado
-    img_text = f'<img src="data:image/png;base64,{texto}" style="height: 22px; margin-left: 4px;">' if texto else '<span style="font-weight:800;color:#2B3674;font-size:18px;letter-spacing:-0.5px;">OMNISFERA</span>'
+    img_logo = f'<img src="data:image/png;base64,{icone}" class="brand-logo">' if icone else "🌐"
+    img_text = f'<img src="data:image/png;base64,{texto}" class="brand-img-text">' if texto else "<span style='font-weight:800;color:#2B3674;'>OMNISFERA</span>"
 
     st.markdown(f"""
-        <div class="omni-topbar">
-            <div class="omni-brand">
-                {img_logo}
-                {img_text}
-            </div>
-            <div class="omni-user-info">
-                <div class="omni-workspace" title="{ws_name}">{ws_name}</div>
-                <div class="omni-avatar">{_get_initials(user_name)}</div>
+        <div class="topbar-thin">
+            <div class="brand-box">{img_logo}{img_text}</div>
+            <div class="brand-box">
+                <div class="user-badge-thin">{ws_name}</div>
+                <div class="apple-avatar-thin">{_get_initials(user_name)}</div>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -157,67 +112,25 @@ def render_navbar(active_tab: str = "Início"):
     opcoes = ["Início", "Estudantes", "Estratégias & PEI", "Plano de Ação (AEE)", "Hub de Recursos", "Diário de Bordo", "Evolução & Dados"]
     icones = ["house", "people", "book", "puzzle", "rocket", "journal", "bar-chart"]
 
-    try: 
-        default_idx = opcoes.index(active_tab)
-    except ValueError: 
-        default_idx = 0
+    try: default_idx = opcoes.index(active_tab)
+    except ValueError: default_idx = 0
 
-    # CSS específico para o navbar (Container)
-    st.markdown("""
-    <style>
-    .stHorizontalBlock {
-        margin-top: 0px !important;
-        margin-bottom: 15px !important;
-    }
-    div[data-testid="stHorizontalBlock"] {
-        background: none !important; border: none !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    with st.container():
-        # Pequeno espaçador visual opcional
-        st.markdown('<div style="height: 5px;"></div>', unsafe_allow_html=True)
-        
-        selected = option_menu(
-            menu_title=None, 
-            options=opcoes,
-            icons=icones,
-            default_index=default_idx,
-            orientation="horizontal",
-            styles={
-                "container": {
-                    "padding": "0!important", 
-                    "background-color": "#ffffff",
-                    "border": "1px solid #E2E8F0",
-                    "border-radius": "10px",
-                    "margin": "0px",
-                    "box-shadow": "0 1px 3px rgba(0,0,0,0.05)"
-                },
-                "icon": {
-                    "color": "#64748B", 
-                    "font-size": "14px"
-                }, 
-                "nav-link": {
-                    "font-size": "11px", 
-                    "text-align": "center", 
-                    "margin": "0px",
-                    "padding": "10px 12px",
-                    "--hover-color": "#F1F5F9",
-                    "color": "#475569",
-                    "white-space": "nowrap",
-                    "border-radius": "8px"
-                },
-                "nav-link-selected": {
-                    "background-color": "#0284C7",
-                    "color": "white",
-                    "font-weight": "600",
-                    "border": "none"
-                },
-            }
-        )
+    selected = option_menu(
+        menu_title=None, 
+        options=opcoes,
+        icons=icones,
+        default_index=default_idx,
+        orientation="horizontal",
+        styles={
+            # MARGIN-BOTTOM reduzido para 5px (era 10px ou mais) para colar no conteúdo abaixo
+            "container": {"padding": "0!important", "background-color": "#ffffff", "border": "1px solid #E2E8F0", "border-radius": "10px", "margin-bottom": "5px"},
+            "icon": {"color": "#64748B", "font-size": "14px"}, 
+            "nav-link": {"font-size": "11px", "text-align": "center", "margin": "0px", "--hover-color": "#F1F5F9", "color": "#475569", "white-space": "nowrap"},
+            "nav-link-selected": {"background-color": "#0284C7", "color": "white", "font-weight": "600"},
+        }
+    )
     
-    # Redirecionamento
+    # Redirecionamento (Mantenha igual)
     if selected != active_tab:
         if selected == "Início":
             target = "pages/0_Home.py" if os.path.exists("pages/0_Home.py") else "0_Home.py"
@@ -235,7 +148,8 @@ def render_navbar(active_tab: str = "Início"):
 # =============================================================================
 def inject_base_css():
     """
-    CSS básico para a tela de Login e Home sem Header fixo.
+    CSS básico para a tela de Login e Home sem Header.
+    Se usar render_omnisfera_header(), este CSS pode ser sobrescrito parcialmente.
     """
     st.markdown(
         """
@@ -258,16 +172,17 @@ def inject_base_css():
 }
 
 /* HOME COMPONENTS */
-.header-lite {
+.header-lite{
   display:flex; justify-content:space-between; align-items:center;
   border: 1px solid #E2E8F0; background: rgba(255,255,255,0.85);
   border-radius: 16px; padding: 18px 20px; margin-bottom: 18px;
 }
-.h-title { font-size: 1.35rem; font-weight: 900; color:#1A202C; }
-.h-sub { font-size: .95rem; font-weight: 600; color:#718096; margin-top: 2px; }
-.h-badge {
+.h-title{ font-size: 1.35rem; font-weight: 900; color:#1A202C; }
+.h-sub{ font-size: .95rem; font-weight: 600; color:#718096; margin-top: 2px; }
+.h-badge{
   border: 1px solid #E2E8F0; background:#F7FAFC; color:#4A5568;
-  border-radius: 999px; padding: 6px 12px; font-weight: 900; font-size: .75rem; letter-spacing: .08em;
+  border-radius: 999px; padding: 6px 12px; font-weight: 900; font-size: .75rem;
+  letter-spacing: .08em;
 }
 </style>
         """,
@@ -275,7 +190,7 @@ def inject_base_css():
     )
 
 # =============================================================================
-# 4. SUPABASE / BANCO DE DADOS (REST)
+# 4. SUPABASE (REST CORE)
 # =============================================================================
 def _sb_url() -> str:
     url = st.secrets.get("SUPABASE_URL", "").strip()
@@ -316,6 +231,9 @@ def supabase_upsert(table: str, row: dict, on_conflict: str):
     if isinstance(data, list) and len(data) > 0: return data[0]
     return data if isinstance(data, dict) else None
 
+# =============================================================================
+# 5. LOGIC HELPERS (Workspace, Logs, PEI)
+# =============================================================================
 def supabase_workspace_from_pin(pin: str) -> str | None:
     pin = (pin or "").strip()
     if not pin: return None
