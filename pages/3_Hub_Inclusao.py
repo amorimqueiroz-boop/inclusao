@@ -752,7 +752,7 @@ def carregar_estudantes_supabase():
             "nome": item.get("name", ""),
             "serie": item.get("grade", ""),
             # Aqui mantemos o diagnosis visual, mas o pei_data guarda a inteligência
-            "hiperfoco": item.get("diagnosis", ""), 
+            "hiperfoco": item.get("hiperfoco", ""), 
             "ia_sugestao": contexto_ia,
             "id": item.get("id", ""),
             "pei_data": pei_completo # Guardamos o objeto todo
