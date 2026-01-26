@@ -210,7 +210,7 @@ def render_navbar(active_tab: str = "Início"):
 
       /* 4) Âncora: puxa o conteúdo logo abaixo do menu */
       .after-navbar-anchor{
-        margin-top: -22px !important;   /* AJUSTE FINO: -12 / -16 / -22 / -28 */
+        margin-top: -28px !important;   /* AJUSTE FINO: -12 / -16 / -22 / -28 */
         padding-top: 0 !important;
         height: 0 !important;
       }
