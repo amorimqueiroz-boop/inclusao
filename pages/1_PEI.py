@@ -1081,86 +1081,24 @@ st.markdown("""
 # ==============================================================================
 # BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA (MESMO PADRÃO)
 # ==============================================================================
-# 1. Detecção Automática de Ambiente
-try:
-    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
-except:
-    IS_TEST_ENV = False
-
-# 2. Função para carregar a logo em Base64
-def get_logo_base64():
-    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
-    for c in caminhos:
-        if os.path.exists(c):
-            with open(c, "rb") as f:
-                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
-    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
-
-src_logo_giratoria = get_logo_base64()
-
-# 3. Definição Dinâmica de Cores
-if IS_TEST_ENV:
-    card_bg = "rgba(255, 220, 50, 0.95)" 
-    card_border = "rgba(200, 160, 0, 0.5)"
-else:
-    card_bg = "rgba(255, 255, 255, 0.85)"
-    card_border = "rgba(255, 255, 255, 0.6)"
-
-# 4. Renderização do Header Flutuante
-st.markdown(f"""
+# ==============================================================================
+# BLOCO VISUAL — CSS (SEM CARD FLUTUANTE / SEM LOGO GIRANDO)
+# ==============================================================================
+st.markdown("""
 <style>
-    /* CARD FLUTUANTE (OMNISFERA) - MESMO PADRÃO */
-    .omni-badge {{
-        position: fixed;
-        top: 15px; 
-        right: 15px;
-        background: {card_bg};
-        border: 1px solid {card_border};
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        padding: 4px 30px;
-        min-width: 260px;
-        justify-content: center;
-        border-radius: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        z-index: 999990;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        pointer-events: none;
-    }}
-
-    .omni-text {{
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-weight: 800;
-        font-size: 0.9rem;
-        color: #2D3748;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-    }}
-
-    @keyframes spin-slow {{
-        from {{ transform: rotate(0deg); }}
-        to {{ transform: rotate(360deg); }}
-    }}
-    
-    .omni-logo-spin {{
-        height: 26px;
-        width: 26px;
-        animation: spin-slow 10s linear infinite;
-    }}
-
-    /* CARD HERO PARA PEI - COM FUNDO TRANSPARENTE NO ÍCONE */
-    .mod-card-wrapper {{
+    /* =========================
+       HERO / MOD CARD (PEI)
+       ========================= */
+    .mod-card-wrapper {
         display: flex;
         flex-direction: column;
         margin-bottom: 20px;
         border-radius: 16px;
         overflow: hidden;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-    }}
+    }
 
-    .mod-card-rect {{
+    .mod-card-rect {
         background: white;
         border-radius: 16px 16px 0 0;
         padding: 0;
@@ -1174,21 +1112,21 @@ st.markdown(f"""
         position: relative;
         overflow: hidden;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }}
+    }
 
-    .mod-card-rect:hover {{
+    .mod-card-rect:hover {
         transform: translateY(-4px);
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
         border-color: #CBD5E1;
-    }}
+    }
 
-    .mod-bar {{
+    .mod-bar {
         width: 6px;
         height: 100%;
         flex-shrink: 0;
-    }}
+    }
 
-    .mod-icon-area {{
+    .mod-icon-area {
         width: 90px;
         height: 100%;
         display: flex;
@@ -1196,38 +1134,38 @@ st.markdown(f"""
         justify-content: center;
         font-size: 1.8rem;
         flex-shrink: 0;
-        background: transparent !important; /* FUNDO TRANSPARENTE */
+        background: transparent !important; /* fundo transparente */
         border-right: 1px solid #F1F5F9;
         transition: all 0.3s ease;
-    }}
+    }
 
-    .mod-card-rect:hover .mod-icon-area {{
+    .mod-card-rect:hover .mod-icon-area {
         background: transparent !important;
         transform: scale(1.05);
-    }}
+    }
 
-    .mod-content {{
+    .mod-content {
         flex-grow: 1;
         padding: 0 24px;
         display: flex;
         flex-direction: column;
         justify-content: center;
-    }}
+    }
 
-    .mod-title {{
+    .mod-title {
         font-weight: 800;
         font-size: 1.1rem;
         color: #1E293B;
         margin-bottom: 6px;
         letter-spacing: -0.3px;
         transition: color 0.2s;
-    }}
+    }
 
-    .mod-card-rect:hover .mod-title {{
+    .mod-card-rect:hover .mod-title {
         color: #4F46E5;
-    }}
+    }
 
-    .mod-desc {{
+    .mod-desc {
         font-size: 0.8rem;
         color: #64748B;
         line-height: 1.4;
@@ -1235,17 +1173,21 @@ st.markdown(f"""
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
-    }}
+    }
 
-    /* CORES DOS CARDS - MESMA DA HOME (AZUL PARA PEI) */
-    .c-blue {{ background: #3B82F6 !important; }}
-    .bg-blue-soft {{ 
-        background: transparent !important; /* FUNDO TRANSPARENTE */
-        color: #3B82F6 !important; /* COR AZUL MAIS INTENSA */
-    }}
+    /* =========================
+       CORES (ex.: PEI azul)
+       ========================= */
+    .c-blue { background: #3B82F6 !important; }
+    .bg-blue-soft {
+        background: transparent !important;
+        color: #3B82F6 !important;
+    }
 
-    /* ABAS EM FORMATO DE PÍLULAS - DESIGN LIMPO E FUNCIONAL */
-    .stTabs [data-baseweb="tab-list"] {{
+    /* =========================
+       TABS — pílulas
+       ========================= */
+    .stTabs [data-baseweb="tab-list"] {
         gap: 4px !important;
         background-color: transparent !important;
         padding: 0 !important;
@@ -1253,9 +1195,9 @@ st.markdown(f"""
         margin-top: 24px !important;
         border-bottom: none !important;
         flex-wrap: wrap !important;
-    }}
+    }
 
-    .stTabs [data-baseweb="tab"] {{
+    .stTabs [data-baseweb="tab"] {
         height: 36px !important;
         white-space: nowrap !important;
         background-color: transparent !important;
@@ -1273,104 +1215,95 @@ st.markdown(f"""
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-    }}
+    }
 
-    /* ABA ATIVA - FUNDO AZUL SÓLIDO */
-    .stTabs [aria-selected="true"] {{
+    /* aba ativa */
+    .stTabs [aria-selected="true"] {
         background-color: #3B82F6 !important;
         color: white !important;
         font-weight: 700 !important;
         border: 1px solid #3B82F6 !important;
         box-shadow: 0 1px 3px rgba(59, 130, 246, 0.2) !important;
-    }}
+    }
 
-    /* ABA INATIVA - APENAS CONTORNO SUTIL */
-    .stTabs [data-baseweb="tab"]:not([aria-selected="true"]) {{
+    /* abas inativas */
+    .stTabs [data-baseweb="tab"]:not([aria-selected="true"]) {
         background-color: white !important;
         color: #64748B !important;
         border: 1px solid #E2E8F0 !important;
-    }}
+    }
 
-    /* HOVER SIMPLES E DIRETO */
-    .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{
+    /* hover */
+    .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {
         background-color: #F8FAFC !important;
         border-color: #CBD5E1 !important;
         color: #475569 !important;
-    }}
+    }
 
-    .stTabs [aria-selected="true"]:hover {{
+    .stTabs [aria-selected="true"]:hover {
         background-color: #2563EB !important;
         border-color: #2563EB !important;
-    }}
+    }
 
-    /* RESPONSIVIDADE PARA TELAS MENORES */
-    @media (max-width: 1024px) {{
-        .mod-card-rect {{ height: 120px; }}
-        .mod-icon-area {{ width: 80px; }}
-        .stTabs [data-baseweb="tab"] {{
+    /* =========================
+       RESPONSIVO
+       ========================= */
+    @media (max-width: 1024px) {
+        .mod-card-rect { height: 120px; }
+        .mod-icon-area { width: 80px; }
+        .stTabs [data-baseweb="tab"] {
             font-size: 0.68rem !important;
             padding: 0 14px !important;
             height: 34px !important;
-        }}
-    }}
+        }
+    }
 
-    @media (max-width: 768px) {{
-        .mod-card-rect {{ 
-            height: 110px;
+    @media (max-width: 768px) {
+        .mod-card-rect {
             flex-direction: column;
             height: auto;
             padding: 16px;
-        }}
-        .mod-bar {{ width: 100%; height: 6px; }}
-        .mod-icon-area {{ 
-            width: 100%; 
-            height: 60px; 
+        }
+        .mod-bar { width: 100%; height: 6px; }
+        .mod-icon-area {
+            width: 100%;
+            height: 60px;
             border-right: none;
             border-bottom: 1px solid #F1F5F9;
-        }}
-        .mod-content {{ padding: 16px 0 0 0; }}
-        
-        /* EM MOBILE, AS PÍLULAS FICAM EM GRID */
-        .stTabs [data-baseweb="tab-list"] {{
-            gap: 6px !important;
-        }}
-        
-        .stTabs [data-baseweb="tab"] {{
+        }
+        .mod-content { padding: 16px 0 0 0; }
+
+        .stTabs [data-baseweb="tab-list"] { gap: 6px !important; }
+
+        .stTabs [data-baseweb="tab"] {
             flex: 1 0 calc(33.333% - 4px) !important;
             min-width: calc(33.333% - 4px) !important;
-            margin-bottom: 0 !important;
             height: 32px !important;
             border-radius: 16px !important;
             font-size: 0.65rem !important;
             padding: 0 10px !important;
-        }}
-    }}
+        }
+    }
 
-    @media (max-width: 640px) {{
-        .stTabs [data-baseweb="tab"] {{
+    @media (max-width: 640px) {
+        .stTabs [data-baseweb="tab"] {
             flex: 1 0 calc(50% - 4px) !important;
             min-width: calc(50% - 4px) !important;
             font-size: 0.62rem !important;
             padding: 0 8px !important;
             height: 30px !important;
-        }}
-    }}
+        }
+    }
 
-    @media (max-width: 480px) {{
-        .stTabs [data-baseweb="tab"] {{
+    @media (max-width: 480px) {
+        .stTabs [data-baseweb="tab"] {
             flex: 1 0 100% !important;
             min-width: 100% !important;
             border-radius: 12px !important;
             margin-bottom: 4px !important;
-        }}
-    }}
+        }
+    }
 </style>
-
-<!-- BADGE FLUTUANTE OMNISFERA -->
-<div class="omni-badge">
-    <img src="{src_logo_giratoria}" class="omni-logo-spin">
-    <span class="omni-text">OMNISFERA</span>
-</div>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
