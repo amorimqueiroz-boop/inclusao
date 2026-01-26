@@ -1066,263 +1066,262 @@ def get_logo_base64() -> str | None:
 
 src_logo_giratoria = get_logo_base64()
 
-# ------------------------------------------------------------------------------
-# CSS COMPACTADO - ESPAÇO MÍNIMO ENTRE MENU E CARD HERO
-# ------------------------------------------------------------------------------
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+# ==============================================================================
+# BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA (MESMO PADRÃO)
+# ==============================================================================
 
-html, body, [class*="css"] {
-    font-family: 'Nunito', sans-serif;
-    color: #2D3748;
-    background-color: #F7FAFC;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* CONTAINER PRINCIPAL - MÍNIMO POSSÍVEL */
-.block-container {
-    padding-top: 0.1rem !important;  /* Mínimo possível */
-    padding-bottom: 1.5rem !important;
-}
-
-/* REMOVER TODOS OS ESPAÇOS EXCESSIVOS */
-.main .block-container {
-    padding-left: 0.8rem !important;
-    padding-right: 0.8rem !important;
-    padding-top: 0.1rem !important;
-}
-
-/* NAVBAR COMPACTADO */
-.stHorizontalBlock {
-    margin-top: 0.1rem !important;
-    margin-bottom: 0.1rem !important;
-}
-
-/* CARD HERO COLADO NO MENU */
-.mod-card-wrapper {
-    display: flex;
-    flex-direction: column;
-    margin-top: 0.1rem !important;  /* Margem mínima */
-    margin-bottom: 1rem !important;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-}
-
-/* COMPACTAR CARD HERO */
-.mod-card-rect {
-    background: white;
-    border-radius: 16px;
-    padding: 0;
-    border: 1px solid #E2E8F0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    height: 120px;  /* Reduzido de 130px */
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.mod-card-rect:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-    border-color: #CBD5E1;
-}
-
-.mod-bar {
-    width: 6px;
-    height: 100%;
-    flex-shrink: 0;
-}
-
-.mod-icon-area {
-    width: 80px;  /* Reduzido de 90px */
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.6rem;  /* Reduzido de 1.8rem */
-    flex-shrink: 0;
-    background: transparent !important;
-    border-right: 1px solid #F1F5F9;
-    transition: all 0.3s ease;
-}
-
-.mod-content {
-    flex-grow: 1;
-    padding: 0 20px;  /* Reduzido de 24px */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.mod-title {
-    font-weight: 800;
-    font-size: 1.05rem;  /* Reduzido de 1.1rem */
-    color: #1E293B;
-    margin-bottom: 4px;  /* Reduzido de 6px */
-    letter-spacing: -0.2px;
-    transition: color 0.2s;
-}
-
-.mod-desc {
-    font-size: 0.78rem;  /* Reduzido de 0.8rem */
-    color: #64748B;
-    line-height: 1.3;  /* Reduzido de 1.4 */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin-bottom: 0 !important;
-}
-
-/* Paleta */
-.c-blue {
-    background: #3B82F6 !important;
-}
-
-.bg-blue-soft {
-    background: transparent !important;
-    color: #3B82F6 !important;
-}
-
-/* ========= TABS COMPACTOS ========= */
-div[data-baseweb="tab-border"],
-div[data-baseweb="tab-highlight"] {
-    display: none !important;
-}
-
-.stTabs [data-baseweb="tab-list"] {
-    gap: 6px;  /* Reduzido de 8px */
-    display: flex;
-    flex-wrap: wrap !important;
-    white-space: normal !important;
-    overflow-x: visible !important;
-    padding: 8px 4px;  /* Reduzido */
-    width: 100%;
-    margin-bottom: 0.5rem !important;
-}
-
-.stTabs [data-baseweb="tab"] {
-    height: 36px;  /* Reduzido de 38px */
-    border-radius: 18px !important;
-    background-color: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    color: #718096;
-    font-weight: 700;
-    font-size: 0.75rem;  /* Reduzido de 0.8rem */
-    padding: 0 16px;  /* Reduzido de 20px */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-    text-transform: uppercase;
-    letter-spacing: 0.3px;  /* Reduzido de 0.5px */
-    margin-bottom: 4px;  /* Reduzido de 5px */
-}
-
-.stTabs [aria-selected="true"] {
-    background-color: transparent !important;
-    color: #3182CE !important;
-    border: 1px solid #3182CE !important;
-    font-weight: 800;
-    box-shadow: 0 0 10px rgba(49, 130, 206, 0.3), inset 0 0 4px rgba(49, 130, 206, 0.1) !important;
-}
-
-/* REMOVER MARGENS DOS ELEMENTOS DO STREAMLIT */
-div[data-testid="column"] {
-    padding-top: 0.25rem !important;
-    padding-bottom: 0.25rem !important;
-}
-
-.stButton button {
-    margin-top: 0.25rem !important;
-    margin-bottom: 0.25rem !important;
-}
-
-/* PROGRESS BAR COMPACTA */
-.progress-container {
-    width: 100%;
-    margin: 0.3rem 0 0.8rem 0 !important;
-}
-
-@keyframes spin-slow {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-.omni-logo-spin {
-    animation: spin-slow 10s linear infinite;
-}
-
-/* REMOVER ESPAÇOS DE TODOS OS ELEMENTOS STREAMLIT */
-.st-emotion-cache-1r4qj8v,
-.st-emotion-cache-keje6w,
-.st-emotion-cache-1dp5vir {
-    margin-top: 0 !important;
-    margin-bottom: 0.2rem !important;
-}
-
-/* SE HOUVER ESPAÇO DO HEADER DA PÁGINA */
-section[data-testid="stHeader"] {
-    display: none !important;
-}
-
-/* Footer compacto */
-.footer-signature {
-    text-align:center;
-    opacity:0.55;
-    font-size:0.7rem;
-    padding:15px 0 5px 0;
-}
-
-/* Responsivo */
-@media (max-width: 768px) {
-    .mod-card-rect {
+    /* CARD HERO PARA PEI - COM FUNDO TRANSPARENTE NO ÍCONE */
+    .mod-card-wrapper {{
+        display: flex;
         flex-direction: column;
-        height: auto;
-        padding: 12px;
-    }
-    
-    .mod-bar {
+        margin-bottom: 20px;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    }}
+
+    .mod-card-rect {{
+        background: white;
+        border-radius: 16px 16px 0 0;
+        padding: 0;
+        border: 1px solid #E2E8F0;
+        border-bottom: none;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        height: 130px;
         width: 100%;
-        height: 4px;
-    }
-    
-    .mod-icon-area {
-        width: 100%;
-        height: 50px;
-        border-right: none;
-        border-bottom: 1px solid #F1F5F9;
-    }
-    
-    .mod-content {
-        padding: 12px 0 0 0;
-    }
-    
-    .block-container {
-        padding-top: 0.05rem !important;
-    }
-}
+        position: relative;
+        overflow: hidden;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }}
 
-/* CSS AGUESSIVO PARA REMOVER ESPAÇOS - ÚLTIMO RECURSO */
-div.stApp > div:first-child,
-div[data-testid="stAppViewContainer"] > div:first-child {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-}
+    .mod-card-rect:hover {{
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+        border-color: #CBD5E1;
+    }}
 
-/* REMOVER QUALQUER ESPAÇO EM CIMA DO MENU */
-div[data-testid="stVerticalBlock"] > div:first-child {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
+    .mod-bar {{
+        width: 6px;
+        height: 100%;
+        flex-shrink: 0;
+    }}
 
+    .mod-icon-area {{
+        width: 90px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        flex-shrink: 0;
+        background: transparent !important; /* FUNDO TRANSPARENTE */
+        border-right: 1px solid #F1F5F9;
+        transition: all 0.3s ease;
+    }}
+
+    .mod-card-rect:hover .mod-icon-area {{
+        background: transparent !important;
+        transform: scale(1.05);
+    }}
+
+    .mod-content {{
+        flex-grow: 1;
+        padding: 0 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }}
+
+    .mod-title {{
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: #1E293B;
+        margin-bottom: 6px;
+        letter-spacing: -0.3px;
+        transition: color 0.2s;
+    }}
+
+    .mod-card-rect:hover .mod-title {{
+        color: #4F46E5;
+    }}
+
+    .mod-desc {{
+        font-size: 0.8rem;
+        color: #64748B;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }}
+
+    /* CORES DOS CARDS - MESMA DA HOME (AZUL PARA PEI) */
+    .c-blue {{ background: #3B82F6 !important; }}
+    .bg-blue-soft {{ 
+        background: transparent !important; /* FUNDO TRANSPARENTE */
+        color: #3B82F6 !important; /* COR AZUL MAIS INTENSA */
+    }}
+
+    /* ABAS EM FORMATO DE PÍLULAS - DESIGN LIMPO E FUNCIONAL */
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 4px !important;
+        background-color: transparent !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        margin-top: 24px !important;
+        border-bottom: none !important;
+        flex-wrap: wrap !important;
+    }}
+
+    .stTabs [data-baseweb="tab"] {{
+        height: 36px !important;
+        white-space: nowrap !important;
+        background-color: transparent !important;
+        border-radius: 20px !important;
+        padding: 0 16px !important;
+        color: #64748B !important;
+        font-weight: 600 !important;
+        font-size: 0.72rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.3px !important;
+        transition: all 0.2s ease !important;
+        border: 1px solid #E2E8F0 !important;
+        position: relative !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }}
+
+    /* ABA ATIVA - FUNDO AZUL SÓLIDO */
+    .stTabs [aria-selected="true"] {{
+        background-color: #3B82F6 !important;
+        color: white !important;
+        font-weight: 700 !important;
+        border: 1px solid #3B82F6 !important;
+        box-shadow: 0 1px 3px rgba(59, 130, 246, 0.2) !important;
+    }}
+
+    /* ABA INATIVA - APENAS CONTORNO SUTIL */
+    .stTabs [data-baseweb="tab"]:not([aria-selected="true"]) {{
+        background-color: white !important;
+        color: #64748B !important;
+        border: 1px solid #E2E8F0 !important;
+    }}
+
+    /* HOVER SIMPLES E DIRETO */
+    .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{
+        background-color: #F8FAFC !important;
+        border-color: #CBD5E1 !important;
+        color: #475569 !important;
+    }}
+
+    .stTabs [aria-selected="true"]:hover {{
+        background-color: #2563EB !important;
+        border-color: #2563EB !important;
+    }}
+
+    /* RESPONSIVIDADE PARA TELAS MENORES */
+    @media (max-width: 1024px) {{
+        .mod-card-rect {{ height: 120px; }}
+        .mod-icon-area {{ width: 80px; }}
+        .stTabs [data-baseweb="tab"] {{
+            font-size: 0.68rem !important;
+            padding: 0 14px !important;
+            height: 34px !important;
+        }}
+    }}
+
+    @media (max-width: 768px) {{
+        .mod-card-rect {{ 
+            height: 110px;
+            flex-direction: column;
+            height: auto;
+            padding: 16px;
+        }}
+        .mod-bar {{ width: 100%; height: 6px; }}
+        .mod-icon-area {{ 
+            width: 100%; 
+            height: 60px; 
+            border-right: none;
+            border-bottom: 1px solid #F1F5F9;
+        }}
+        .mod-content {{ padding: 16px 0 0 0; }}
+        
+        /* EM MOBILE, AS PÍLULAS FICAM EM GRID */
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: 6px !important;
+        }}
+        
+        .stTabs [data-baseweb="tab"] {{
+            flex: 1 0 calc(33.333% - 4px) !important;
+            min-width: calc(33.333% - 4px) !important;
+            margin-bottom: 0 !important;
+            height: 32px !important;
+            border-radius: 16px !important;
+            font-size: 0.65rem !important;
+            padding: 0 10px !important;
+        }}
+    }}
+
+    @media (max-width: 640px) {{
+        .stTabs [data-baseweb="tab"] {{
+            flex: 1 0 calc(50% - 4px) !important;
+            min-width: calc(50% - 4px) !important;
+            font-size: 0.62rem !important;
+            padding: 0 8px !important;
+            height: 30px !important;
+        }}
+    }}
+
+    @media (max-width: 480px) {{
+        .stTabs [data-baseweb="tab"] {{
+            flex: 1 0 100% !important;
+            min-width: 100% !important;
+            border-radius: 12px !important;
+            margin-bottom: 4px !important;
+        }}
+    }}
 </style>
-<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+
+<!-- BADGE FLUTUANTE OMNISFERA -->
+<div class="omni-badge">
+    <img src="{src_logo_giratoria}" class="omni-logo-spin">
+    <span class="omni-text">OMNISFERA</span>
+</div>
 """, unsafe_allow_html=True)
 
+# ==============================================================================
+# CARD HERO PARA PEI (MESMO DESIGN DOS ESTUDANTES)
+# ==============================================================================
+hora = datetime.now().hour
+saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
+USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
+WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
+
+st.markdown(
+    f"""
+    <div class="mod-card-wrapper">
+        <div class="mod-card-rect">
+            <div class="mod-bar c-blue"></div>
+            <div class="mod-icon-area bg-blue-soft">
+                <i class="ri-book-open-fill"></i>
+            </div>
+            <div class="mod-content">
+                <div class="mod-title">Plano Educacional Individualizado (PEI)</div>
+                <div class="mod-desc">
+                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie e gerencie Planos Educacionais Individualizados 
+                    para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>. Desenvolva estratégias personalizadas 
+                    e acompanhe o progresso de cada aluno.
+                </div>
+            </div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 # ------------------------------------------------------------------------------
 # PROGRESSO COMPACTO
 # ------------------------------------------------------------------------------
