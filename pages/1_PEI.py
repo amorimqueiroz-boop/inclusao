@@ -1078,15 +1078,10 @@ st.markdown("""
       
 
 
-# ==============================================================================
+# ============================================================================== 
 # BLOCO FINAL — CSS + LOGO (base64) + PROGRESSO (SEM BADGE FLUTUANTE)
-# Mantém: hero card (mod-*) + tabs + inputs/botões + rotação p/ progresso
-# Remove: badge flutuante (omni-badge) e qualquer HTML dele
-# ==============================================================================
+# ============================================================================== 
 
-# ------------------------------------------------------------------------------
-# 1) Logo em base64 (somente para usar no ícone da barra de progresso)
-# ------------------------------------------------------------------------------
 def get_logo_base64() -> str | None:
     for c in ["omni_icone.png", "logo.png", "iconeaba.png"]:
         if os.path.exists(c):
@@ -1097,164 +1092,275 @@ def get_logo_base64() -> str | None:
 src_logo_giratoria = get_logo_base64()
 
 # ------------------------------------------------------------------------------
-# 2) CSS (inclui HERO CARD + TABS + INPUTS + BOTÕES + ANIMAÇÃO SPIN)
+# CSS AJUSTADO - CARD HERO MAIS PRÓXIMO DO MENU
 # ------------------------------------------------------------------------------
 st.markdown("""
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-  html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }
-  .block-container { padding-top: 1.5rem !important; padding-bottom: 5rem !important; }
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
-  /* ========= HERO CARD (mod-*) — VOLTOU ========= */
-  .mod-card-wrapper {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 20px;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-  }
-  .mod-card-rect {
-      background: white;
-      border-radius: 16px 16px 0 0;
-      padding: 0;
-      border: 1px solid #E2E8F0;
-      border-bottom: none;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      height: 130px;
-      width: 100%;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .mod-card-rect:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-      border-color: #CBD5E1;
-  }
-  .mod-bar {
-      width: 6px;
-      height: 100%;
-      flex-shrink: 0;
-  }
-  .mod-icon-area {
-      width: 90px;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      flex-shrink: 0;
-      background: transparent !important;
-      border-right: 1px solid #F1F5F9;
-      transition: all 0.3s ease;
-  }
-  .mod-card-rect:hover .mod-icon-area {
-      background: transparent !important;
-      transform: scale(1.05);
-  }
-  .mod-content {
-      flex-grow: 1;
-      padding: 0 24px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-  }
-  .mod-title {
-      font-weight: 800;
-      font-size: 1.1rem;
-      color: #1E293B;
-      margin-bottom: 6px;
-      letter-spacing: -0.3px;
-      transition: color 0.2s;
-  }
-  .mod-card-rect:hover .mod-title { color: #4F46E5; }
-  .mod-desc {
-      font-size: 0.8rem;
-      color: #64748B;
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-  }
+html, body, [class*="css"] {
+    font-family: 'Nunito', sans-serif;
+    color: #2D3748;
+    background-color: #F7FAFC;
+}
 
-  /* Paleta (exemplo que você já usava) */
-  .c-blue { background: #3B82F6 !important; }
-  .bg-blue-soft { background: transparent !important; color: #3B82F6 !important; }
+/* CONTAINER PRINCIPAL - REDUZIDO PARA SUBIR O CONTEÚDO */
+.block-container {
+    padding-top: 0.5rem !important;  /* Reduzido de 1.5rem */
+    padding-bottom: 2rem !important;  /* Reduzido de 5rem */
+}
 
-  /* ========= TABS ========= */
-  div[data-baseweb="tab-border"], div[data-baseweb="tab-highlight"] { display: none !important; }
-  .stTabs [data-baseweb="tab-list"] {
-      gap: 8px; display: flex; flex-wrap: wrap !important;
-      white-space: normal !important; overflow-x: visible !important;
-      padding: 10px 5px; width: 100%;
-  }
-  .stTabs [data-baseweb="tab"] {
-      height: 38px; border-radius: 20px !important;
-      background-color: #FFFFFF; border: 1px solid #E2E8F0;
-      color: #718096; font-weight: 700; font-size: 0.8rem;
-      padding: 0 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;
-  }
-  .stTabs [data-baseweb="tab"]:hover { border-color: #CBD5E0; color: #4A5568; background-color: #EDF2F7; }
-  .stTabs [aria-selected="true"] {
-      background-color: transparent !important; color: #3182CE !important;
-      border: 1px solid #3182CE !important; font-weight: 800;
-      box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important;
-  }
+/* REMOVER MARGENS EXCESSIVAS DO STREAMLIT */
+.main .block-container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
 
-  /* ========= Inputs ========= */
-  .stTextInput input, .stTextArea textarea,
-  .stSelectbox div[data-baseweb="select"], .stMultiSelect div[data-baseweb="select"] {
-      border-radius: 8px !important; border-color: #E2E8F0 !important;
-  }
+/* CARD HERO - MARGEM SUPERIOR REDUZIDA */
+.mod-card-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.5rem !important;  /* Adicionado para controle */
+    margin-bottom: 1.5rem !important;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
 
-  /* ========= Botões em colunas ========= */
-  div[data-testid="column"] .stButton button {
-      border-radius: 8px !important; font-weight: 700 !important;
-      height: 45px !important; background-color: #0F52BA !important;
-      color: white !important; border: none !important;
-  }
-  div[data-testid="column"] .stButton button:hover { background-color: #0A3D8F !important; }
+.mod-card-rect {
+    background: white;
+    border-radius: 16px 16px 0 0;
+    padding: 0;
+    border: 1px solid #E2E8F0;
+    border-bottom: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 130px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-  /* ========= Animação da logo (para o progresso) ========= */
-  @keyframes spin-slow {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-  }
-  .omni-logo-spin { animation: spin-slow 10s linear infinite; }
+.mod-card-rect:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    border-color: #CBD5E1;
+}
 
-  /* Footer */
-  .footer-signature { text-align:center; opacity:0.55; font-size:0.75rem; padding:30px 0 10px 0; }
+.mod-bar {
+    width: 6px;
+    height: 100%;
+    flex-shrink: 0;
+}
 
-  /* Responsivo do hero card (opcional, mas ajuda a não quebrar mobile) */
-  @media (max-width: 768px) {
-      .mod-card-rect { flex-direction: column; height: auto; padding: 16px; }
-      .mod-bar { width: 100%; height: 6px; }
-      .mod-icon-area {
-          width: 100%;
-          height: 60px;
-          border-right: none;
-          border-bottom: 1px solid #F1F5F9;
-      }
-      .mod-content { padding: 16px 0 0 0; }
-  }
+.mod-icon-area {
+    width: 90px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+    background: transparent !important;
+    border-right: 1px solid #F1F5F9;
+    transition: all 0.3s ease;
+}
+
+.mod-card-rect:hover .mod-icon-area {
+    background: transparent !important;
+    transform: scale(1.05);
+}
+
+.mod-content {
+    flex-grow: 1;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.mod-title {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #1E293B;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+    transition: color 0.2s;
+}
+
+.mod-card-rect:hover .mod-title {
+    color: #4F46E5;
+}
+
+.mod-desc {
+    font-size: 0.8rem;
+    color: #64748B;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Paleta */
+.c-blue {
+    background: #3B82F6 !important;
+}
+
+.bg-blue-soft {
+    background: transparent !important;
+    color: #3B82F6 !important;
+}
+
+/* ========= TABS ========= */
+div[data-baseweb="tab-border"],
+div[data-baseweb="tab-highlight"] {
+    display: none !important;
+}
+
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    display: flex;
+    flex-wrap: wrap !important;
+    white-space: normal !important;
+    overflow-x: visible !important;
+    padding: 10px 5px;
+    width: 100%;
+}
+
+.stTabs [data-baseweb="tab"] {
+    height: 38px;
+    border-radius: 20px !important;
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    color: #718096;
+    font-weight: 700;
+    font-size: 0.8rem;
+    padding: 0 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    border-color: #CBD5E0;
+    color: #4A5568;
+    background-color: #EDF2F7;
+}
+
+.stTabs [aria-selected="true"] {
+    background-color: transparent !important;
+    color: #3182CE !important;
+    border: 1px solid #3182CE !important;
+    font-weight: 800;
+    box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important;
+}
+
+/* ========= Inputs ========= */
+.stTextInput input,
+.stTextArea textarea,
+.stSelectbox div[data-baseweb="select"],
+.stMultiSelect div[data-baseweb="select"] {
+    border-radius: 8px !important;
+    border-color: #E2E8F0 !important;
+}
+
+/* ========= Botões em colunas ========= */
+div[data-testid="column"] .stButton button {
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    height: 45px !important;
+    background-color: #0F52BA !important;
+    color: white !important;
+    border: none !important;
+}
+
+div[data-testid="column"] .stButton button:hover {
+    background-color: #0A3D8F !important;
+}
+
+/* ========= Animação da logo ========= */
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.omni-logo-spin {
+    animation: spin-slow 10s linear infinite;
+}
+
+/* Progress bar container - ajustado para ficar mais próximo */
+.progress-container {
+    width: 100%;
+    margin: 0.5rem 0 1.5rem 0 !important;  /* Margens reduzidas */
+}
+
+/* Footer */
+.footer-signature {
+    text-align:center;
+    opacity:0.55;
+    font-size:0.75rem;
+    padding:20px 0 10px 0;
+}
+
+/* Responsivo do hero card */
+@media (max-width: 768px) {
+    .mod-card-rect {
+        flex-direction: column;
+        height: auto;
+        padding: 16px;
+    }
+    
+    .mod-bar {
+        width: 100%;
+        height: 6px;
+    }
+    
+    .mod-icon-area {
+        width: 100%;
+        height: 60px;
+        border-right: none;
+        border-bottom: 1px solid #F1F5F9;
+    }
+    
+    .mod-content {
+        padding: 16px 0 0 0;
+    }
+    
+    .block-container {
+        padding-top: 0.25rem !important;
+    }
+}
+
+/* SEÇÃO EXTRA PARA COMPACTAR LAYOUT */
+.st-emotion-cache-1r4qj8v {
+    margin-bottom: 0.5rem !important;
+}
+
+div[data-testid="column"] {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+/* Espaçamento após navbar - reduzido */
+.stHorizontalBlock {
+    margin-bottom: 0.5rem !important;
+}
+
 </style>
-
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 """, unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# 3) Progresso (use seu cálculo real)
+# PROGRESSO (COM MARGENS REDUZIDAS)
 # ------------------------------------------------------------------------------
 def calcular_progresso() -> int:
-    # SUBSTITUA pelo seu cálculo real
     try:
         dados = st.session_state.get("dados", {}) or {}
-        campos = ["nome", "nasc", "turma", "ano"]  # ajuste p/ seus campos
+        campos = ["nome", "nasc", "turma", "ano"]
         total = len(campos)
         ok = sum(1 for c in campos if dados.get(c))
         return int(round((ok / total) * 100)) if total else 0
@@ -1263,39 +1369,38 @@ def calcular_progresso() -> int:
 
 def render_progresso():
     p = max(0, min(100, int(calcular_progresso())))
-
     icon_html = ""
     if src_logo_giratoria:
         icon_html = f'<img src="{src_logo_giratoria}" class="omni-logo-spin" style="width:25px;height:25px;">'
-
+    
     bar_color = "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)"
     if p >= 100:
         bar_color = "linear-gradient(90deg, #00C6FF 0%, #0072FF 100%)"
-
-    st.markdown(
-        f"""
-        <div style="width:100%; margin: 0 0 20px 0;">
-          <div style="width:100%; height:3px; background:#E2E8F0; border-radius:2px; position:relative;">
+    
+    # Container com margem reduzida
+    st.markdown(f"""
+    <div class="progress-container">
+        <div style="width:100%; height:3px; background:#E2E8F0; border-radius:2px; position:relative;">
             <div style="height:3px; width:{p}%; background:{bar_color}; border-radius:2px;"></div>
             <div style="position:absolute; top:-14px; left:{p}%; transform:translateX(-50%);">{icon_html}</div>
-          </div>
         </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-
+    </div>
+    """, unsafe_allow_html=True)
 
 # ==============================================================================
-# CARD HERO PARA PEI (MESMO DESIGN DOS ESTUDANTES)
+# CARD HERO - RENDERIZADO DIRETO SEM ESPAÇO EXTRA
 # ==============================================================================
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
 USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
 WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
 
-st.markdown(
-    f"""
+# Renderizar o card hero com container compacto
+with st.container():
+    # Forçar margem mínima no container
+    st.markdown('<div style="height: 0.25rem;"></div>', unsafe_allow_html=True)
+    
+    st.markdown(f"""
     <div class="mod-card-wrapper">
         <div class="mod-card-rect">
             <div class="mod-bar c-blue"></div>
@@ -1306,15 +1411,13 @@ st.markdown(
                 <div class="mod-title">Plano Educacional Individualizado (PEI)</div>
                 <div class="mod-desc">
                     {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie e gerencie Planos Educacionais Individualizados 
-                    para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>. Desenvolva estratégias personalizadas 
-                    e acompanhe o progresso de cada aluno.
+                    para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>. 
+                    Desenvolva estratégias personalizadas e acompanhe o progresso de cada aluno.
                 </div>
             </div>
         </div>
     </div>
-    """,
-    unsafe_allow_html=True,
-)
+    """, unsafe_allow_html=True)
 
 # ==============================================================================
 # ABAS DO PEI (TEXTO EM MAIÚSCULAS, SEM EMOJIS)
