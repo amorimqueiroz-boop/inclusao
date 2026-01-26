@@ -14,6 +14,38 @@ import time
 import re
 from datetime import date, datetime
 
+import omni_utils as ou  # módulo atualizado
+
+
+
+# ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
+st.set_page_config(
+    page_title="Omnisfera | PEI",
+    page_icon="📘",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+APP_VERSION = "v150.0 (SaaS Design)"
+
+# ✅ UI lockdown (não quebra se faltar)
+try:
+    from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
+    hide_streamlit_chrome_if_needed()
+    hide_default_sidebar_nav()
+except Exception:
+    pass
+
+# ✅ Header + Navbar (depois do page_config)
+ou.render_omnisfera_header()
+ou.render_navbar(active_tab="Estratégias & PEI")
+
+
+
+
+
+
+
 
 st.set_page_config(
     page_title="Omnisfera | PEI",
@@ -30,28 +62,9 @@ try:
 except Exception:
     pass
 
-# CSS TOP-ZERO (tem que vir ANTES do header/nav e do hero)
-st.markdown("""
-<style>
-/* remove qualquer respiro padrão */
-html, body { margin:0 !important; padding:0 !important; }
 
-/* container principal do streamlit */
-section.main > div { padding-top: 0rem !important; }
-.block-container { padding-top: 0rem !important; padding-bottom: 1.5rem !important; }
 
-/* zera margens dos “blocos” internos */
-div[data-testid="stVerticalBlock"] { gap: 0rem !important; }
-div[data-testid="stVerticalBlock"] > div { margin-top: 0rem !important; padding-top: 0rem !important; }
 
-/* some com header nativo (quando existir) */
-section[data-testid="stHeader"] { display:none !important; }
-</style>
-""", unsafe_allow_html=True)
-
-import omni_utils as ou
-ou.render_omnisfera_header()
-ou.render_navbar(active_tab="Estratégias & PEI")
 
 # ==============================================================================
 # OPENAI
