@@ -17,7 +17,7 @@ import omni_utils as ou  # módulo atualizado
 
 # ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
 st.set_page_config(
-    page_title="Omnisfera | PEI",
+    page_title="Omnisfera | PAEE",
     page_icon="📘",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -36,24 +36,6 @@ except Exception:
 # ✅ Header + Navbar (depois do page_config)
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Plano de Ação (AEE)")
-
-
-st.set_page_config(
-    page_title="Omnisfera | PEI",
-    page_icon="📘",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
-
-# UI lockdown (se usar)
-try:
-    from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
-    hide_streamlit_chrome_if_needed()
-    hide_default_sidebar_nav()
-except Exception:
-    pass
-
-
 
 
 # ==============================================================================
