@@ -1462,15 +1462,30 @@ with st.sidebar:
         st.rerun()
 
 
-
+# ==============================================================================
+# CARREGAMENTO DOS DADOS DOS ALUNOS
+# ==============================================================================
+if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
+    with st.spinner("🔄 Lendo dados da nuvem..."):
+        st.session_state.banco_estudantes = carregar_estudantes_supabase()
 
 if not st.session_state.banco_estudantes:
-    st.warning("⚠️ Nenhum aluno encontrado para o seu usuário. Cadastre no módulo PEI primeiro.")
+    st.warning("⚠️ Nenhum aluno encontrado.")
+    if st.button("📘 Ir para o módulo PEI", type="primary"): 
+        st.switch_page("pages/1_PEI.py")
     st.stop()
 
-lista = [a['nome'] for a in st.session_state.banco_estudantes]
-nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista)
-aluno = next(a for a in st.session_state.banco_estudantes if a['nome'] == nome_aluno)
+# --- SELEÇÃO DE ALUNO ---
+lista_alunos = [a['nome'] for a in st.session_state.banco_estudantes]
+col_sel, col_info = st.columns([1, 2])
+with col_sel:
+    nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista_alunos)
+
+aluno = next((a for a in st.session_state.banco_estudantes if a.get('nome') == nome_aluno), None)
+
+if not aluno: 
+    st.error("Aluno não encontrado")
+    st.stop()
 
 # --- DETECTOR DE EDUCAÇÃO INFANTIL ---
 serie_aluno = aluno.get('serie', '').lower()
