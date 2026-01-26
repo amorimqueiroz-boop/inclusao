@@ -13,6 +13,15 @@ import os
 import time
 import re
 from datetime import date, datetime
+import omni_utils as ou # Importa o módulo atualizado
+
+st.set_page_config(page_title="Omnisfera", layout="wide", initial_sidebar_state="collapsed")
+
+# 1. Renderiza o Header (Logo + Usuário)
+ou.render_omnisfera_header()
+
+# 2. Renderiza o Menu (Navbar)
+ou.render_navbar(active_tab="Estratégias & PEI") # Mude o nome conforme a página
 
 
 # ✅ 1) set_page_config (UMA VEZ SÓ e sempre no topo)
@@ -319,49 +328,9 @@ def db_update_pei_content(student_id: str, pei_dict: dict):
     return r.json() if r.status_code < 400 else None
 
 # ==============================================================================
-# 3. BLOCO VISUAL (badge / logo)
+# 
 # ==============================================================================
-def get_logo_base64():
-    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png", "omni.png", "ominisfera.png"]
-    for c in caminhos:
-        if os.path.exists(c):
-            with open(c, "rb") as f:
-                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
-    # fallback
-    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
 
-src_logo_giratoria = get_logo_base64()
-
-if IS_TEST_ENV:
-    card_bg = "rgba(255, 220, 50, 0.95)"
-    card_border = "rgba(200, 160, 0, 0.5)"
-else:
-    card_bg = "rgba(255, 255, 255, 0.85)"
-    card_border = "rgba(255, 255, 255, 0.6)"
-
-st.markdown(f"""
-<style>
-    .omni-badge {{
-        position: fixed; top: 15px; right: 15px;
-        background: {card_bg}; border: 1px solid {card_border};
-        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        padding: 4px 30px; min-width: 260px; justify-content: center;
-        border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        z-index: 999990; display: flex; align-items: center; gap: 10px;
-        pointer-events: none;
-    }}
-    .omni-text {{
-        font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem;
-        color: #2D3748; letter-spacing: 1px; text-transform: uppercase;
-    }}
-    @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
-    .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
-</style>
-<div class="omni-badge">
-    <img src="{src_logo_giratoria}" class="omni-logo-spin">
-    <span class="omni-text">OMNISFERA</span>
-</div>
-""", unsafe_allow_html=True)
 
 
 # ==============================================================================
@@ -457,61 +426,7 @@ st.session_state.setdefault("selected_student_id", None)
 st.session_state.setdefault("selected_student_name", "")
 
 
-# ==============================================================================
-# SIDEBAR PADRÃO — OMNISFERA (VERSÃO ESTÁVEL)
-# ==============================================================================
 
-with st.sidebar:
-    st.markdown("## 🌐 Omnisfera")
-
-    st.markdown("---")
-    st.markdown("### 🧭 Navegação")
-
-    if st.button("🏠 Home", use_container_width=True):
-        st.switch_page("pages/0_Home.py")
-
-    if st.button("👥 Estudantes", use_container_width=True):
-        st.switch_page("pages/Alunos.py")
-
-    if st.button("📘 PEI", use_container_width=True, disabled=True):
-        pass
-
-    if st.button("🧩 PAEE", use_container_width=True):
-        st.switch_page("pages/2_PAE.py")
-
-    if st.button("🚀 Hub de Inclusão", use_container_width=True):
-        st.switch_page("pages/3_Hub_Inclusao.py")
-
-    st.markdown("---")
-    st.markdown("### 👤 Sessão")
-
-    st.caption(f"Usuário: **{st.session_state.get('usuario_nome','')}**")
-    st.caption(f"Workspace: **{st.session_state.get('workspace_name','')}**")
-
-    st.markdown("---")
-    st.markdown("### 🧾 Status do Aluno")
-
-    student_id = st.session_state.get("selected_student_id")
-    if student_id:
-        st.success("✅ Vinculado ao Supabase")
-        st.caption(f"id: {student_id[:8]}…")
-    else:
-        st.warning("📝 Rascunho (não salvo)")
-
-    st.markdown("---")
-    st.markdown("### 🚪")
-
-    if st.button("Sair do Sistema", type="secondary", use_container_width=True):
-        for k in [
-            "autenticado",
-            "workspace_id",
-            "workspace_name",
-            "usuario_nome",
-            "usuario_cargo",
-            "selected_student_id",
-        ]:
-            st.session_state.pop(k, None)
-        st.switch_page("streamlit_app.py")
 
 # ==============================================================================
 # 7. UTILITÁRIOS
@@ -1161,9 +1076,7 @@ st.markdown("""
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 """, unsafe_allow_html=True)
       
-# ==============================================================================
-# 10. HEADER + ABAS - NOVO DESIGN (PADRÃO ESTUDANTES)
-# ==============================================================================
+
 
 # ==============================================================================
 # BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA (MESMO PADRÃO)
