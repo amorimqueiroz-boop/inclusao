@@ -1069,7 +1069,26 @@ src_logo_giratoria = get_logo_base64()
 # ------------------------------------------------------------------------------
 # CSS COMPACTADO - ESPAÇO MÍNIMO ENTRE MENU E CARD HERO
 # ------------------------------------------------------------------------------
-st.markdown("""
+
+st.markdown(f"""
+<div id="pei-hero" class="mod-card-wrapper" style="margin-top:0 !important;">
+    <div class="mod-card-rect">
+        <div class="mod-bar c-blue"></div>
+        <div class="mod-icon-area bg-blue-soft">
+            <i class="ri-book-open-fill"></i>
+        </div>
+        <div class="mod-content">
+            <div class="mod-title">Plano Educacional Individualizado (PEI)</div>
+            <div class="mod-desc">
+                {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie e gerencie Planos Educacionais Individualizados 
+                para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>. 
+                Desenvolva estratégias personalizadas e acompanhe o progresso de cada aluno.
+            </div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+        
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
