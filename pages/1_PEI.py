@@ -47,20 +47,7 @@ ou.render_navbar(active_tab="Estratégias & PEI")
 
 
 
-st.set_page_config(
-    page_title="Omnisfera | PEI",
-    page_icon="📘",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
 
-# UI lockdown (se usar)
-try:
-    from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
-    hide_streamlit_chrome_if_needed()
-    hide_default_sidebar_nav()
-except Exception:
-    pass
 
 
 
