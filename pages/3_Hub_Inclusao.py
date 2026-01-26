@@ -1473,11 +1473,16 @@ def render_aba_adaptar_prova(aluno, api_key):
     # Dropdowns BNCC simplificados
     ano_bncc, disciplina_bncc, unidade_bncc, objeto_bncc, _ = criar_dropdowns_bncc_completos_melhorado(key_suffix="adaptar_prova", mostrar_habilidades=False)
     
-    c1, c2, c3 = st.columns(3)
-    materia_d = c1.selectbox("Matéria", DISCIPLINAS_PADRAO, key="dm")
-    tema_d = c2.text_input("Tema", value=objeto_bncc if objeto_bncc else "", placeholder="Ex: Frações", key="dt")
-    tipo_d = c3.selectbox("Tipo", ["Prova", "Tarefa"], key="dtp")
-    arquivo_d = st.file_uploader("Upload DOCX", type=["docx"], key="fd")
+    st.markdown("---")
+    
+    # Layout simplificado (apenas Tipo e Upload)
+    c1, c2 = st.columns([1, 2])
+    tipo_d = c1.selectbox("Tipo de Documento", ["Prova", "Tarefa", "Avaliação"], key="dtp")
+    arquivo_d = c2.file_uploader("Upload do Arquivo DOCX", type=["docx"], key="fd")
+    
+    # Definição automática baseada na BNCC
+    materia_d = disciplina_bncc if disciplina_bncc else "Geral"
+    tema_d = objeto_bncc if objeto_bncc else "Geral"
     
     if 'docx_imgs' not in st.session_state:
         st.session_state.docx_imgs = []
@@ -1494,21 +1499,29 @@ def render_aba_adaptar_prova(aluno, api_key):
     map_d = {}
     qs_d = []
     if st.session_state.docx_imgs:
-        st.write("### Mapeamento")
+        st.write("### Mapeamento de Imagens")
         cols = st.columns(3)
         for i, img in enumerate(st.session_state.docx_imgs):
             with cols[i % 3]:
                 st.image(img, width=80)
-                q = st.number_input(f"Questão:", 0, 50, key=f"dq_{i}")
+                q = st.number_input(f"Pertence à Questão:", 0, 50, key=f"dq_{i}")
                 if q > 0:
                     map_d[int(q)] = img
                     qs_d.append(int(q))
 
-    if st.button("🚀 ADAPTAR PROVA", type="primary", key="btn_d"):
+    st.markdown("---")
+
+    if st.button("🚀 ADAPTAR PROVA", type="primary", key="btn_d", use_container_width=True):
         if not st.session_state.docx_txt:
-            st.warning("Envie arquivo.")
+            st.warning("Por favor, faça o upload de um arquivo DOCX.")
             st.stop()
-        with st.spinner("Analisando e Adaptando..."):
+        
+        # Validação se BNCC foi preenchida
+        if not disciplina_bncc or not objeto_bncc:
+             st.warning("⚠️ Por favor, selecione a Disciplina e o Objeto do Conhecimento nos campos da BNCC acima para guiar a adaptação.")
+             st.stop()
+
+        with st.spinner("A IA está analisando e adaptando o conteúdo..."):
             rac, txt = adaptar_conteudo_docx(api_key, aluno, st.session_state.docx_txt, materia_d, tema_d, tipo_d, True, qs_d)
             st.session_state['res_docx'] = {'rac': rac, 'txt': txt, 'map': map_d, 'valid': False}
             st.rerun()
@@ -1519,11 +1532,11 @@ def render_aba_adaptar_prova(aluno, api_key):
             st.success("✅ **ATIVIDADE VALIDADA E PRONTA PARA USO**")
         else:
             col_v, col_r = st.columns([1, 1])
-            if col_v.button("✅ Validar", key="val_d"):
+            if col_v.button("✅ Validar", key="val_d", use_container_width=True):
                 st.session_state['res_docx']['valid'] = True
                 st.rerun()
-            if col_r.button("🧠 Refazer (+Profundo)", key="redo_d"):
-                with st.spinner("Refazendo..."):
+            if col_r.button("🧠 Refazer (+Profundo)", key="redo_d", use_container_width=True):
+                with st.spinner("Refazendo com análise mais profunda..."):
                     rac, txt = adaptar_conteudo_docx(api_key, aluno, st.session_state.docx_txt, materia_d, tema_d, tipo_d, True, qs_d, modo_profundo=True)
                     st.session_state['res_docx'] = {'rac': rac, 'txt': txt, 'map': map_d, 'valid': False}
                     st.rerun()
@@ -1543,19 +1556,21 @@ def render_aba_adaptar_prova(aluno, api_key):
         c_down1, c_down2 = st.columns(2)
         docx = construir_docx_final(res['txt'], aluno, materia_d, res['map'], tipo_d)
         c_down1.download_button(
-            "📥 BAIXAR DOCX (Só Atividade)", 
+            "📥 BAIXAR DOCX (Editável)", 
             docx, 
             "Prova_Adaptada.docx", 
-            "primary"
+            "primary",
+            use_container_width=True
         )
         
         pdf_bytes = criar_pdf_generico(res['txt'])
         c_down2.download_button(
-            "📕 BAIXAR PDF (Só Atividade)", 
+            "📕 BAIXAR PDF (Visualização)", 
             pdf_bytes, 
             "Prova_Adaptada.pdf", 
             mime="application/pdf", 
-            type="secondary"
+            type="secondary",
+            use_container_width=True
         )
 
 def render_aba_adaptar_atividade(aluno, api_key):
