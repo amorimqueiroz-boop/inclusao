@@ -14,6 +14,49 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+
+
+import omni_utils as ou  # módulo atualizado
+
+# ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
+st.set_page_config(
+    page_title="Omnisfera | Diário de Bordo",
+    page_icon="📘",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+APP_VERSION = "v150.0 (SaaS Design)"
+
+# ✅ UI lockdown (não quebra se faltar)
+try:
+    from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
+    hide_streamlit_chrome_if_needed()
+    hide_default_sidebar_nav()
+except Exception:
+    pass
+
+# ✅ Header + Navbar (depois do page_config)
+ou.render_omnisfera_header()
+ou.render_navbar(active_tab="Diário de Bordo")
+
+
+st.set_page_config(
+    page_title="Omnisfera | Diário de Bordo",
+    page_icon="📘",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# UI lockdown (se usar)
+try:
+    from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
+    hide_streamlit_chrome_if_needed()
+    hide_default_sidebar_nav()
+except Exception:
+    pass
+
+
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
 # ==============================================================================
