@@ -13,18 +13,8 @@ import os
 import time
 import re
 from datetime import date, datetime
-import omni_utils as ou # Importa o módulo atualizado
-
-st.set_page_config(page_title="Omnisfera", layout="wide", initial_sidebar_state="collapsed")
-
-# 1. Renderiza o Header (Logo + Usuário)
-ou.render_omnisfera_header()
-
-# 2. Renderiza o Menu (Navbar)
-ou.render_navbar(active_tab="Estratégias & PEI") # Mude o nome conforme a página
 
 
-# ✅ 1) set_page_config (UMA VEZ SÓ e sempre no topo)
 st.set_page_config(
     page_title="Omnisfera | PEI",
     page_icon="📘",
@@ -32,9 +22,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-APP_VERSION = "v150.0 (SaaS Design)"
-
-# ✅ 2) UI lockdown (não quebra se faltar arquivo)
+# UI lockdown (se usar)
 try:
     from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
     hide_streamlit_chrome_if_needed()
@@ -42,41 +30,28 @@ try:
 except Exception:
     pass
 
-# ✅ 3) Flag de ambiente (opcional)
-try:
-    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
-except Exception:
-    IS_TEST_ENV = False
+# CSS TOP-ZERO (tem que vir ANTES do header/nav e do hero)
+st.markdown("""
+<style>
+/* remove qualquer respiro padrão */
+html, body { margin:0 !important; padding:0 !important; }
 
-# ✅ 4) Gate mínimo: autenticado + workspace_id
-if not st.session_state.get("autenticado"):
-    st.error("🔒 Acesso negado. Faça login na Página Inicial.")
-    st.stop()
+/* container principal do streamlit */
+section.main > div { padding-top: 0rem !important; }
+.block-container { padding-top: 0rem !important; padding-bottom: 1.5rem !important; }
 
-ws_id = st.session_state.get("workspace_id")
-if not ws_id:
-    st.error("Workspace não definido. Volte ao Início e valide o PIN.")
-    if st.button("Voltar para Login", key="pei_btn_voltar_login", use_container_width=True):
-        for k in ["autenticado", "workspace_id", "workspace_name", "usuario_nome", "usuario_cargo", "supabase_jwt", "supabase_user_id"]:
-            st.session_state.pop(k, None)
-        st.switch_page("streamlit_app.py")
-    st.stop()
+/* zera margens dos “blocos” internos */
+div[data-testid="stVerticalBlock"] { gap: 0rem !important; }
+div[data-testid="stVerticalBlock"] > div { margin-top: 0rem !important; padding-top: 0rem !important; }
 
-# ✅ 5) Supabase (opcional: não bloqueia PEI se der ruim)
-sb = None
-try:
-    from _client import get_supabase
-    sb = get_supabase()  # <-- cliente (não é função)
-except Exception:
-    sb = None
+/* some com header nativo (quando existir) */
+section[data-testid="stHeader"] { display:none !important; }
+</style>
+""", unsafe_allow_html=True)
 
-# Guardas legadas (não travam)
-def verificar_login_supabase():
-    st.session_state.setdefault("supabase_jwt", "")
-    st.session_state.setdefault("supabase_user_id", "")
-
-verificar_login_supabase()
-OWNER_ID = st.session_state.get("supabase_user_id", "")
+import omni_utils as ou
+ou.render_omnisfera_header()
+ou.render_navbar(active_tab="Estratégias & PEI")
 
 # ==============================================================================
 # OPENAI
