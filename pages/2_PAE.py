@@ -230,27 +230,6 @@ def verificar_acesso():
 
 verificar_acesso()
 
-# ==============================================================================
-# SIDEBAR
-# ==============================================================================
-with st.sidebar:
-    try: 
-        st.image("ominisfera.png", width=150)
-    except: 
-        st.write("🌐 OMNISFERA")
-    st.markdown("---")
-    if st.button("🏠 Voltar para Home", use_container_width=True): 
-        st.switch_page("Home.py")
-    st.markdown("---")
-    
-    # GESTÃO DE CHAVES
-    if 'OPENAI_API_KEY' in st.secrets: 
-        api_key = st.secrets['OPENAI_API_KEY']
-        st.success("🔑 Chave OpenAI configurada")
-    else: 
-        api_key = st.text_input("Chave OpenAI:", type="password")
-        if api_key:
-            st.success("✅ Chave configurada")
 
 # ==============================================================================
 # CARD HERO PRINCIPAL
