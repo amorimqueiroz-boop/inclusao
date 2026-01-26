@@ -1391,8 +1391,10 @@ abas = [
 
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_9= st.tabs(abas)
 
+
+tab_objs = st.tabs(abas)
 # --- Barra de progresso: aparece em todas, exceto Início ---
-for i in range(1, len(tabs)):   # começa no 1 (pula Início)
+for i in range(1, len(tabs)):   # começa no 1 (pula INÍCIO)
     with tabs[i]:
         render_progresso()
 # ==============================================================================
