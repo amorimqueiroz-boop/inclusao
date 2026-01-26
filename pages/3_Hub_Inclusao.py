@@ -2140,28 +2140,14 @@ with tabs[2]:
                                 st.rerun()
 
     # 5. ROTEIRO DE AULA INDIVIDUAL
-   
     with tabs[4]:
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-user-follow-line"></i> Roteiro de Aula Individualizado</div>
-        Crie um passo a passo de aula <strong>específico para este estudante</strong> do PEI. 
-        A IA usará o hiperfoco como chave de acesso para o conteúdo.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Chamamos o componente BNCC completo
-    ano_rot, mat_rot, unid_rot, obj_rot, habs_rot = criar_dropdowns_bncc_completos_melhorado()
-    
-    if st.button("📝 GERAR ROTEIRO INDIVIDUAL", type="primary"): 
-        if habs_rot: # Verifica se tem habilidades
-            # Passamos as habilidades selecionadas junto com o objeto de conhecimento
-            assunto_completo = f"{obj_rot}. Habilidades: {', '.join(habs_rot)}"
-            res = gerar_roteiro_aula(api_key, aluno, mat_rot, assunto_completo)
-            st.session_state['res_roteiro'] = res
-        else:
-            st.warning("Selecione pelo menos uma habilidade BNCC.")
-   
+        st.markdown("""
+        <div class="pedagogia-box">
+            <div class="pedagogia-title"><i class="ri-user-follow-line"></i> Roteiro de Aula Individualizado</div>
+            Crie um passo a passo de aula <strong>específico para este estudante</strong> do PEI. 
+            A IA usará o hiperfoco como chave de acesso para o conteúdo.
+        </div>
+        """, unsafe_allow_html=True)
         
         c1, c2 = st.columns(2)
         materia_rotina = c1.selectbox("Componente Curricular", discip, key="rot_materia")
