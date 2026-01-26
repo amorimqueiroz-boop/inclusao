@@ -248,7 +248,7 @@ def criar_pdf_generico(texto):
     return pdf.output(dest='S').encode('latin-1')
 
 # ==============================================================================
-# FUNÇÕES DE CONEXÃO COM SUPABASE
+# FUNÇÕES DE CONEXÃO COM SUPABASE (CORRIGIDO PARA SEPARAR DIAGNÓSTICO DE HIPERFOCO)
 # ==============================================================================
 
 def _sb_url() -> str:
@@ -271,8 +271,9 @@ def _headers() -> dict:
 @st.cache_data(ttl=10, show_spinner=False)
 def list_students_rest():
     """
-    Busca estudantes do Supabase incluindo o campo pei_data e paee_ciclos.
-    Traz todo o contexto necessário para o Hub.
+    Busca estudantes do Supabase.
+    Removemos 'hiperfoco' da query direta para evitar erro se a coluna não existir,
+    pois vamos pegar esse dado de dentro do JSON 'pei_data'.
     """
     WORKSPACE_ID = st.session_state.get("workspace_id")
     if not WORKSPACE_ID:
@@ -295,7 +296,7 @@ def list_students_rest():
         return []
 
 def carregar_estudantes_supabase():
-    """Carrega e processa estudantes, extraindo contexto rico do PEI."""
+    """Carrega e processa estudantes, separando Diagnóstico de Hiperfoco."""
     dados = list_students_rest()
     estudantes = []
 
@@ -307,16 +308,39 @@ def carregar_estudantes_supabase():
         if isinstance(pei_completo, dict):
             contexto_ia = pei_completo.get("ia_sugestao", "") or ""
         
-        # Se não tiver resumo da IA, monta um básico com os dados cadastrais
+        # 1. CAPTURA DO DIAGNÓSTICO (Vem da coluna do banco)
+        diagnostico_real = item.get("diagnosis")
+        if not diagnostico_real:
+            diagnostico_real = "Não informado no cadastro"
+
+        # 2. CAPTURA DO HIPERFOCO (Vem de dentro do JSON pei_data)
+        # Tenta várias chaves possíveis onde o hiperfoco pode ter sido salvo
+        hiperfoco_real = ""
+        if isinstance(pei_completo, dict):
+            hiperfoco_real = (
+                pei_completo.get("hiperfoco") or 
+                pei_completo.get("interesses") or 
+                pei_completo.get("habilidades_interesses") or 
+                ""
+            )
+        
+        # Se não achou no JSON, coloca um padrão (mas NÃO usa o diagnóstico)
+        if not hiperfoco_real:
+            hiperfoco_real = "Interesses gerais (A descobrir)"
+
+        # Montagem do resumo de fallback se não houver contexto da IA
         if not contexto_ia:
-            diag = item.get("diagnosis", "Não informado")
             serie = item.get("grade", "")
-            contexto_ia = f"Aluno: {item.get('name')}. Série: {serie}. Diagnóstico: {diag}."
+            contexto_ia = f"Aluno: {item.get('name')}. Série: {serie}. Diagnóstico: {diagnostico_real}."
 
         estudante = {
             "nome": item.get("name", ""),
             "serie": item.get("grade", ""),
-            "hiperfoco": item.get("diagnosis", ""),
+            
+            # AQUI ESTÁ A CORREÇÃO: Chaves separadas e limpas
+            "diagnosis": diagnostico_real,  
+            "hiperfoco": hiperfoco_real,
+            
             "ia_sugestao": contexto_ia,
             "id": item.get("id", ""),
             "pei_data": pei_completo,
@@ -326,18 +350,6 @@ def carregar_estudantes_supabase():
             estudantes.append(estudante)
 
     return estudantes
-
-def carregar_pei_aluno(aluno_id):
-    """Carrega o PEI atualizado de um aluno específico."""
-    try:
-        url = f"{_sb_url()}/rest/v1/students"
-        params = {"select": "id,pei_data", "id": f"eq.{aluno_id}"}
-        r = requests.get(url, headers=_headers(), params=params, timeout=15)
-        if r.status_code == 200 and r.json():
-            return r.json()[0].get("pei_data", {}) or {}
-        return {}
-    except Exception:
-        return {}
 
 # ==============================================================================
 # FUNÇÕES DE IA (OPENAI)
