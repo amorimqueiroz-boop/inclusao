@@ -173,7 +173,7 @@ def render_omnisfera_header():
 def render_navbar(active_tab: str = "Início"):
     """
     Menu horizontal (option_menu) com espaço MÍNIMO entre o menu e o conteúdo seguinte.
-    ✅ Reduzido drasticamente o espaço abaixo do navbar.
+    ✅ Espaço abaixo do navbar reduzido pela metade.
     """
     ensure_state()
 
@@ -187,11 +187,11 @@ def render_navbar(active_tab: str = "Início"):
 
     st.markdown("""
     <style>
-      /* 1) Container principal - reduz todas as margens */
+      /* 1) Container principal - margens mínimas */
       div[data-testid="stHorizontalBlock"],
       .stHorizontalBlock {
-        margin-top: 4px !important;
-        margin-bottom: -8px !important;  /* Negativo para "puxar" o conteúdo para cima */
+        margin-top: 0px !important;
+        margin-bottom: -2px !important;  /* Mais negativo para puxar conteúdo */
         padding-bottom: 0px !important;
       }
 
@@ -221,10 +221,11 @@ def render_navbar(active_tab: str = "Início"):
 
       /* 6) Âncora - espaço mínimo após o navbar */
       .after-navbar-anchor {
-        margin-top: -12px !important;  /* Reduzido pela metade */
+        margin-top: -4px !important;  /* Reduzido drasticamente */
         padding-top: 0 !important;
         height: 0 !important;
         display: block;
+        line-height: 0;
       }
     </style>
     """, unsafe_allow_html=True)
@@ -246,19 +247,19 @@ def render_navbar(active_tab: str = "Início"):
             },
             "icon": {
                 "color": "#64748B", 
-                "font-size": "14px",
-                "margin-right": "4px",
+                "font-size": "13px",  # Um pouco menor
+                "margin-right": "3px",  # Menos espaço
             },
             "nav-link": {
-                "font-size": "11px",
+                "font-size": "10px",  # Um pouco menor
                 "text-align": "center",
                 "margin": "0px",
-                "padding": "8px 10px",  # Reduzido
+                "padding": "7px 8px",  # Mais compacto
                 "--hover-color": "#F1F5F9",
                 "color": "#475569",
                 "white-space": "nowrap",
-                "border-radius": "8px",
-                "min-height": "36px",  # Altura reduzida
+                "border-radius": "6px",  # Cantos mais suaves
+                "min-height": "32px",  # Altura reduzida
                 "display": "flex",
                 "align-items": "center",
                 "justify-content": "center",
@@ -268,7 +269,7 @@ def render_navbar(active_tab: str = "Início"):
                 "color": "white",
                 "font-weight": "600",
                 "border": "none",
-                "padding": "8px 10px",
+                "padding": "7px 8px",  # Igual ao não selecionado
             },
         },
     )
@@ -295,7 +296,7 @@ def render_navbar(active_tab: str = "Início"):
             st.switch_page("pages/4_Diario_de_Bordo.py")
         elif selected == "Evolução & Dados":
             st.switch_page("pages/5_Monitoramento_Avaliacao.py")
-
+            
 # =============================================================================
 # 3) CSS BÁSICO (LOGIN / HOME / ETC.) - LEGADO
 # =============================================================================
