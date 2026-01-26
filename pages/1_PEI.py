@@ -1043,45 +1043,63 @@ st.markdown("""
         padding: 0 !important; 
     }
     
-    /* CONTAINER PRINCIPAL - MÍNIMO ESPAÇO */
+    /* HACK AGUESSIVO PARA REMOVER TODOS OS ESPAÇOS */
+    div.stApp > div:first-child {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    div[data-testid="stAppViewContainer"] > div:first-child {
+        padding-top: 0 !important !important;
+        margin-top: 0 !important !important;
+    }
+    
+    div[data-testid="stVerticalBlock"] {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    div[data-testid="stHorizontalBlock"] {
+        margin-top: 0 !important;
+        margin-bottom: -5px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* CONTAINER PRINCIPAL - ESPAÇO ZERO */
     .block-container { 
         padding-top: 0rem !important;  
-        padding-bottom: 1.5rem !important; 
+        padding-bottom: 1rem !important;
+        margin-top: 0 !important;
     }
     
     .main .block-container {
         padding-left: 0.8rem !important;
         padding-right: 0.8rem !important;
-        padding-top: 0.1rem !important;
-    }
-    
-    /* NAVBAR COMPACTADO */
-    .stHorizontalBlock {
-        margin-top: 0.1rem !important;
-        margin-bottom: 0.1rem !important;
+        padding-top: 0rem !important;
     }
     
     /* CARD HERO - COLADO NO NAVBAR */
     .mod-card-wrapper {
         display: flex;
         flex-direction: column;
-        margin-top: 0.1rem !important;  /* Margem mínima */
+        margin-top: 0px !important;
         margin-bottom: 1rem !important;
         border-radius: 16px;
         overflow: hidden;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
     }
     
-    /* CARD HERO COMPACTO */
+    /* CARD HERO MAIS COMPACTO */
     .mod-card-rect {
         background: white;
         border-radius: 16px;
-        padding: 0;
+        padding: 0 !important;
         border: 1px solid #E2E8F0;
         display: flex;
         flex-direction: row;
         align-items: center;
-        height: 110px;  /* Altura reduzida */
+        height: 90px !important;  /* Altura drasticamente reduzida */
         width: 100%;
         position: relative;
         overflow: hidden;
@@ -1095,18 +1113,18 @@ st.markdown("""
     }
     
     .mod-bar {
-        width: 6px;
+        width: 4px !important;  /* Mais fino */
         height: 100%;
         flex-shrink: 0;
     }
     
     .mod-icon-area {
-        width: 70px;  /* Largura reduzida */
+        width: 60px !important;  /* Mais estreito */
         height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.4rem;  /* Tamanho reduzido */
+        font-size: 1.2rem !important;  /* Menor */
         flex-shrink: 0;
         background: transparent !important;
         border-right: 1px solid #F1F5F9;
@@ -1115,7 +1133,7 @@ st.markdown("""
     
     .mod-content {
         flex-grow: 1;
-        padding: 0 16px;  /* Padding reduzido */
+        padding: 0 12px !important;  /* Menos padding */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -1123,17 +1141,18 @@ st.markdown("""
     
     .mod-title {
         font-weight: 800;
-        font-size: 1rem;  /* Tamanho reduzido */
+        font-size: 0.9rem !important;  /* Menor */
         color: #1E293B;
-        margin-bottom: 3px;  /* Margem reduzida */
+        margin-bottom: 2px !important;  /* Menos margem */
         letter-spacing: -0.2px;
         transition: color 0.2s;
+        line-height: 1.2;
     }
     
     .mod-desc {
-        font-size: 0.75rem;  /* Tamanho reduzido */
+        font-size: 0.7rem !important;  /* Menor */
         color: #64748B;
-        line-height: 1.2;  /* Linha mais compacta */
+        line-height: 1.1 !important;  /* Linha mais compacta */
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -1158,29 +1177,29 @@ st.markdown("""
     }
     
     .stTabs [data-baseweb="tab-list"] {
-        gap: 6px;  /* Reduzido */
+        gap: 4px !important;  /* Menor gap */
         display: flex;
         flex-wrap: wrap !important;
         white-space: normal !important;
         overflow-x: visible !important;
-        padding: 8px 4px;  /* Reduzido */
+        padding: 6px 2px !important;  /* Menos padding */
         width: 100%;
-        margin-bottom: 0.5rem !important;
+        margin-bottom: 0.3rem !important;  /* Menos margem */
     }
     
     .stTabs [data-baseweb="tab"] {
-        height: 36px;  /* Reduzido */
-        border-radius: 18px !important;
+        height: 32px !important;  /* Mais baixo */
+        border-radius: 16px !important;
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
         color: #718096;
         font-weight: 700;
-        font-size: 0.75rem;  /* Reduzido */
-        padding: 0 16px;  /* Reduzido */
+        font-size: 0.7rem !important;  /* Menor */
+        padding: 0 12px !important;  /* Menos padding */
         box-shadow: 0 1px 2px rgba(0,0,0,0.02);
         text-transform: uppercase;
-        letter-spacing: 0.3px;  /* Reduzido */
-        margin-bottom: 4px;  /* Reduzido */
+        letter-spacing: 0.2px;
+        margin-bottom: 2px !important;
     }
     
     .stTabs [data-baseweb="tab"]:hover { 
@@ -1194,7 +1213,7 @@ st.markdown("""
         color: #3182CE !important;
         border: 1px solid #3182CE !important; 
         font-weight: 800;
-        box-shadow: 0 0 10px rgba(49, 130, 206, 0.3), inset 0 0 4px rgba(49, 130, 206, 0.1) !important;
+        box-shadow: 0 0 8px rgba(49, 130, 206, 0.3), inset 0 0 3px rgba(49, 130, 206, 0.1) !important;
     }
     
     /* ELEMENTOS DO FORMULÁRIO */
@@ -1209,7 +1228,7 @@ st.markdown("""
     div[data-testid="column"] .stButton button { 
         border-radius: 8px !important; 
         font-weight: 700 !important; 
-        height: 45px !important; 
+        height: 40px !important;  /* Mais baixo */
         background-color: #0F52BA !important; 
         color: white !important; 
         border: none !important; 
@@ -1221,20 +1240,20 @@ st.markdown("""
     
     /* REMOVER MARGENS EXCESSIVAS */
     div[data-testid="column"] {
-        padding-top: 0.25rem !important;
-        padding-bottom: 0.25rem !important;
+        padding-top: 0.15rem !important;
+        padding-bottom: 0.15rem !important;
     }
     
     .stButton button {
-        margin-top: 0.25rem !important;
-        margin-bottom: 0.25rem !important;
+        margin-top: 0.15rem !important;
+        margin-bottom: 0.15rem !important;
     }
     
     .st-emotion-cache-1r4qj8v,
     .st-emotion-cache-keje6w,
     .st-emotion-cache-1dp5vir {
         margin-top: 0 !important;
-        margin-bottom: 0.2rem !important;
+        margin-bottom: 0.1rem !important;
     }
     
     /* REMOVER HEADER DO STREAMLIT */
@@ -1246,8 +1265,8 @@ st.markdown("""
     .footer-signature { 
         text-align:center; 
         opacity:0.55; 
-        font-size:0.7rem; 
-        padding:15px 0 5px 0; 
+        font-size:0.65rem; 
+        padding:10px 0 5px 0; 
     }
     
     /* ANIMAÇÃO DO LOGO */
@@ -1264,38 +1283,33 @@ st.markdown("""
     @media (max-width: 768px) {
         .mod-card-rect {
             flex-direction: column;
-            height: auto;
-            padding: 12px;
+            height: auto !important;
+            min-height: 80px !important;
+            padding: 8px !important;
         }
         
         .mod-bar {
-            width: 100%;
-            height: 4px;
+            width: 100% !important;
+            height: 3px !important;
         }
         
         .mod-icon-area {
-            width: 100%;
-            height: 50px;
-            border-right: none;
+            width: 100% !important;
+            height: 40px !important;
+            border-right: none !important;
             border-bottom: 1px solid #F1F5F9;
         }
         
         .mod-content {
-            padding: 12px 0 0 0;
+            padding: 8px 0 0 0 !important;
         }
         
         .block-container {
-            padding-top: 0.05rem !important;
+            padding-top: 0rem !important;
         }
     }
     
-    /* HACKS PARA REMOVER ESPAÇOS RESIDUAIS */
-    div.stApp > div:first-child,
-    div[data-testid="stAppViewContainer"] > div:first-child {
-        padding-top: 0 !important;
-        margin-top: 0 !important;
-    }
-    
+    /* REMOVER QUALQUER ESPAÇO EM CIMA DO MENU */
     div[data-testid="stVerticalBlock"] > div:first-child {
         margin-top: 0 !important;
         padding-top: 0 !important;
@@ -1304,7 +1318,16 @@ st.markdown("""
     /* CONTAINER DO PROGRESSO */
     .progress-container {
         width: 100%;
-        margin: 0.3rem 0 0.8rem 0 !important;
+        margin: 0.2rem 0 0.6rem 0 !important;
+    }
+    
+    /* AGRESSIVO: REMOVER TODOS OS PADDINGS/MARGINS DOS ELEMENTOS STREAMLIT */
+    .st-emotion-cache-1on073z,
+    .st-emotion-cache-1wrcr25,
+    .st-emotion-cache-1v0mbdj,
+    .st-emotion-cache-1y4p8pa {
+        margin: 0 !important;
+        padding: 0 !important;
     }
 </style>
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
@@ -1341,7 +1364,7 @@ def render_progresso():
     icon_html = ""
     
     if src_logo_giratoria:
-        icon_html = f'<img src="{src_logo_giratoria}" class="omni-logo-spin" style="width:22px;height:22px;">'
+        icon_html = f'<img src="{src_logo_giratoria}" class="omni-logo-spin" style="width:20px;height:20px;">'
     
     bar_color = "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)"
     if p >= 100:
@@ -1351,7 +1374,7 @@ def render_progresso():
     <div class="progress-container">
         <div style="width:100%; height:2px; background:#E2E8F0; border-radius:1px; position:relative;">
             <div style="height:2px; width:{p}%; background:{bar_color}; border-radius:1px;"></div>
-            <div style="position:absolute; top:-11px; left:{p}%; transform:translateX(-50%);">{icon_html}</div>
+            <div style="position:absolute; top:-10px; left:{p}%; transform:translateX(-50%);">{icon_html}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1364,27 +1387,28 @@ saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else 
 USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
 WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
 
-# Container ultra compacto - sem margens
-with st.container():
-    st.markdown(f"""
-    <div class="mod-card-wrapper">
-        <div class="mod-card-rect">
-            <div class="mod-bar c-blue"></div>
-            <div class="mod-icon-area bg-blue-soft">
-                <i class="ri-book-open-fill"></i>
-            </div>
-            <div class="mod-content">
-                <div class="mod-title">Plano Educacional Individualizado (PEI)</div>
-                <div class="mod-desc">
-                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie e gerencie Planos Educacionais Individualizados 
-                    para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>. 
-                    Desenvolva estratégias personalizadas e acompanhe o progresso de cada aluno.
-                </div>
+# Container ultra compacto - SEM NENHUM ESPAÇO
+st.markdown(f"""
+<div class="mod-card-wrapper" style="margin-top:0px!important;padding-top:0px!important;">
+    <div class="mod-card-rect">
+        <div class="mod-bar c-blue"></div>
+        <div class="mod-icon-area bg-blue-soft">
+            <i class="ri-book-open-fill"></i>
+        </div>
+        <div class="mod-content">
+            <div class="mod-title">Plano Educacional Individualizado (PEI)</div>
+            <div class="mod-desc">
+                {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie e gerencie Planos Educacionais Individualizados 
+                para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>. 
+                Desenvolva estratégias personalizadas e acompanhe o progresso de cada aluno.
             </div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+</div>
+""", unsafe_allow_html=True)
 
+# Renderizar progresso (se necessário)
+render_progresso()
 # ==============================================================================
 # ABAS DO PEI (TEXTO EM MAIÚSCULAS, SEM EMOJIS)
 # ==============================================================================
