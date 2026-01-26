@@ -1079,7 +1079,7 @@ st.markdown("""
 
 
 # ============================================================================== 
-# BLOCO FINAL — CSS + LOGO (base64) + PROGRESSO (SEM BADGE FLUTUANTE)
+# BLOCO FINAL — CSS COMPACTADO AO MÁXIMO
 # ============================================================================== 
 
 def get_logo_base64() -> str | None:
@@ -1092,7 +1092,7 @@ def get_logo_base64() -> str | None:
 src_logo_giratoria = get_logo_base64()
 
 # ------------------------------------------------------------------------------
-# CSS AJUSTADO - CARD HERO MAIS PRÓXIMO DO MENU
+# CSS COMPACTADO - ESPAÇO MÍNIMO ENTRE MENU E CARD HERO
 # ------------------------------------------------------------------------------
 st.markdown("""
 <style>
@@ -1102,41 +1102,50 @@ html, body, [class*="css"] {
     font-family: 'Nunito', sans-serif;
     color: #2D3748;
     background-color: #F7FAFC;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
-/* CONTAINER PRINCIPAL - REDUZIDO PARA SUBIR O CONTEÚDO */
+/* CONTAINER PRINCIPAL - MÍNIMO POSSÍVEL */
 .block-container {
-    padding-top: 0.5rem !important;  /* Reduzido de 1.5rem */
-    padding-bottom: 2rem !important;  /* Reduzido de 5rem */
+    padding-top: 0.1rem !important;  /* Mínimo possível */
+    padding-bottom: 1.5rem !important;
 }
 
-/* REMOVER MARGENS EXCESSIVAS DO STREAMLIT */
+/* REMOVER TODOS OS ESPAÇOS EXCESSIVOS */
 .main .block-container {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+    padding-left: 0.8rem !important;
+    padding-right: 0.8rem !important;
+    padding-top: 0.1rem !important;
 }
 
-/* CARD HERO - MARGEM SUPERIOR REDUZIDA */
+/* NAVBAR COMPACTADO */
+.stHorizontalBlock {
+    margin-top: 0.1rem !important;
+    margin-bottom: 0.1rem !important;
+}
+
+/* CARD HERO COLADO NO MENU */
 .mod-card-wrapper {
     display: flex;
     flex-direction: column;
-    margin-top: 0.5rem !important;  /* Adicionado para controle */
-    margin-bottom: 1.5rem !important;
+    margin-top: 0.1rem !important;  /* Margem mínima */
+    margin-bottom: 1rem !important;
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
 }
 
+/* COMPACTAR CARD HERO */
 .mod-card-rect {
     background: white;
-    border-radius: 16px 16px 0 0;
+    border-radius: 16px;
     padding: 0;
     border: 1px solid #E2E8F0;
-    border-bottom: none;
     display: flex;
     flex-direction: row;
     align-items: center;
-    height: 130px;
+    height: 120px;  /* Reduzido de 130px */
     width: 100%;
     position: relative;
     overflow: hidden;
@@ -1144,8 +1153,8 @@ html, body, [class*="css"] {
 }
 
 .mod-card-rect:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
     border-color: #CBD5E1;
 }
 
@@ -1156,26 +1165,21 @@ html, body, [class*="css"] {
 }
 
 .mod-icon-area {
-    width: 90px;
+    width: 80px;  /* Reduzido de 90px */
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.8rem;
+    font-size: 1.6rem;  /* Reduzido de 1.8rem */
     flex-shrink: 0;
     background: transparent !important;
     border-right: 1px solid #F1F5F9;
     transition: all 0.3s ease;
 }
 
-.mod-card-rect:hover .mod-icon-area {
-    background: transparent !important;
-    transform: scale(1.05);
-}
-
 .mod-content {
     flex-grow: 1;
-    padding: 0 24px;
+    padding: 0 20px;  /* Reduzido de 24px */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1183,25 +1187,22 @@ html, body, [class*="css"] {
 
 .mod-title {
     font-weight: 800;
-    font-size: 1.1rem;
+    font-size: 1.05rem;  /* Reduzido de 1.1rem */
     color: #1E293B;
-    margin-bottom: 6px;
-    letter-spacing: -0.3px;
+    margin-bottom: 4px;  /* Reduzido de 6px */
+    letter-spacing: -0.2px;
     transition: color 0.2s;
 }
 
-.mod-card-rect:hover .mod-title {
-    color: #4F46E5;
-}
-
 .mod-desc {
-    font-size: 0.8rem;
+    font-size: 0.78rem;  /* Reduzido de 0.8rem */
     color: #64748B;
-    line-height: 1.4;
+    line-height: 1.3;  /* Reduzido de 1.4 */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    margin-bottom: 0 !important;
 }
 
 /* Paleta */
@@ -1214,41 +1215,36 @@ html, body, [class*="css"] {
     color: #3B82F6 !important;
 }
 
-/* ========= TABS ========= */
+/* ========= TABS COMPACTOS ========= */
 div[data-baseweb="tab-border"],
 div[data-baseweb="tab-highlight"] {
     display: none !important;
 }
 
 .stTabs [data-baseweb="tab-list"] {
-    gap: 8px;
+    gap: 6px;  /* Reduzido de 8px */
     display: flex;
     flex-wrap: wrap !important;
     white-space: normal !important;
     overflow-x: visible !important;
-    padding: 10px 5px;
+    padding: 8px 4px;  /* Reduzido */
     width: 100%;
+    margin-bottom: 0.5rem !important;
 }
 
 .stTabs [data-baseweb="tab"] {
-    height: 38px;
-    border-radius: 20px !important;
+    height: 36px;  /* Reduzido de 38px */
+    border-radius: 18px !important;
     background-color: #FFFFFF;
     border: 1px solid #E2E8F0;
     color: #718096;
     font-weight: 700;
-    font-size: 0.8rem;
-    padding: 0 20px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    font-size: 0.75rem;  /* Reduzido de 0.8rem */
+    padding: 0 16px;  /* Reduzido de 20px */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 5px;
-}
-
-.stTabs [data-baseweb="tab"]:hover {
-    border-color: #CBD5E0;
-    color: #4A5568;
-    background-color: #EDF2F7;
+    letter-spacing: 0.3px;  /* Reduzido de 0.5px */
+    margin-bottom: 4px;  /* Reduzido de 5px */
 }
 
 .stTabs [aria-selected="true"] {
@@ -1256,33 +1252,26 @@ div[data-baseweb="tab-highlight"] {
     color: #3182CE !important;
     border: 1px solid #3182CE !important;
     font-weight: 800;
-    box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important;
+    box-shadow: 0 0 10px rgba(49, 130, 206, 0.3), inset 0 0 4px rgba(49, 130, 206, 0.1) !important;
 }
 
-/* ========= Inputs ========= */
-.stTextInput input,
-.stTextArea textarea,
-.stSelectbox div[data-baseweb="select"],
-.stMultiSelect div[data-baseweb="select"] {
-    border-radius: 8px !important;
-    border-color: #E2E8F0 !important;
+/* REMOVER MARGENS DOS ELEMENTOS DO STREAMLIT */
+div[data-testid="column"] {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
 }
 
-/* ========= Botões em colunas ========= */
-div[data-testid="column"] .stButton button {
-    border-radius: 8px !important;
-    font-weight: 700 !important;
-    height: 45px !important;
-    background-color: #0F52BA !important;
-    color: white !important;
-    border: none !important;
+.stButton button {
+    margin-top: 0.25rem !important;
+    margin-bottom: 0.25rem !important;
 }
 
-div[data-testid="column"] .stButton button:hover {
-    background-color: #0A3D8F !important;
+/* PROGRESS BAR COMPACTA */
+.progress-container {
+    width: 100%;
+    margin: 0.3rem 0 0.8rem 0 !important;
 }
 
-/* ========= Animação da logo ========= */
 @keyframes spin-slow {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
@@ -1292,62 +1281,67 @@ div[data-testid="column"] .stButton button:hover {
     animation: spin-slow 10s linear infinite;
 }
 
-/* Progress bar container - ajustado para ficar mais próximo */
-.progress-container {
-    width: 100%;
-    margin: 0.5rem 0 1.5rem 0 !important;  /* Margens reduzidas */
+/* REMOVER ESPAÇOS DE TODOS OS ELEMENTOS STREAMLIT */
+.st-emotion-cache-1r4qj8v,
+.st-emotion-cache-keje6w,
+.st-emotion-cache-1dp5vir {
+    margin-top: 0 !important;
+    margin-bottom: 0.2rem !important;
 }
 
-/* Footer */
+/* SE HOUVER ESPAÇO DO HEADER DA PÁGINA */
+section[data-testid="stHeader"] {
+    display: none !important;
+}
+
+/* Footer compacto */
 .footer-signature {
     text-align:center;
     opacity:0.55;
-    font-size:0.75rem;
-    padding:20px 0 10px 0;
+    font-size:0.7rem;
+    padding:15px 0 5px 0;
 }
 
-/* Responsivo do hero card */
+/* Responsivo */
 @media (max-width: 768px) {
     .mod-card-rect {
         flex-direction: column;
         height: auto;
-        padding: 16px;
+        padding: 12px;
     }
     
     .mod-bar {
         width: 100%;
-        height: 6px;
+        height: 4px;
     }
     
     .mod-icon-area {
         width: 100%;
-        height: 60px;
+        height: 50px;
         border-right: none;
         border-bottom: 1px solid #F1F5F9;
     }
     
     .mod-content {
-        padding: 16px 0 0 0;
+        padding: 12px 0 0 0;
     }
     
     .block-container {
-        padding-top: 0.25rem !important;
+        padding-top: 0.05rem !important;
     }
 }
 
-/* SEÇÃO EXTRA PARA COMPACTAR LAYOUT */
-.st-emotion-cache-1r4qj8v {
-    margin-bottom: 0.5rem !important;
+/* CSS AGUESSIVO PARA REMOVER ESPAÇOS - ÚLTIMO RECURSO */
+div.stApp > div:first-child,
+div[data-testid="stAppViewContainer"] > div:first-child {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
 }
 
-div[data-testid="column"] {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-}
-
-/* Espaçamento após navbar - reduzido */
-.stHorizontalBlock {
-    margin-bottom: 0.5rem !important;
+/* REMOVER QUALQUER ESPAÇO EM CIMA DO MENU */
+div[data-testid="stVerticalBlock"] > div:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
 }
 
 </style>
@@ -1355,7 +1349,7 @@ div[data-testid="column"] {
 """, unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# PROGRESSO (COM MARGENS REDUZIDAS)
+# PROGRESSO COMPACTO
 # ------------------------------------------------------------------------------
 def calcular_progresso() -> int:
     try:
@@ -1371,35 +1365,33 @@ def render_progresso():
     p = max(0, min(100, int(calcular_progresso())))
     icon_html = ""
     if src_logo_giratoria:
-        icon_html = f'<img src="{src_logo_giratoria}" class="omni-logo-spin" style="width:25px;height:25px;">'
+        icon_html = f'<img src="{src_logo_giratoria}" class="omni-logo-spin" style="width:22px;height:22px;">'  # Reduzido de 25px
     
     bar_color = "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)"
     if p >= 100:
         bar_color = "linear-gradient(90deg, #00C6FF 0%, #0072FF 100%)"
     
-    # Container com margem reduzida
+    # Progresso mais compacto
     st.markdown(f"""
     <div class="progress-container">
-        <div style="width:100%; height:3px; background:#E2E8F0; border-radius:2px; position:relative;">
-            <div style="height:3px; width:{p}%; background:{bar_color}; border-radius:2px;"></div>
-            <div style="position:absolute; top:-14px; left:{p}%; transform:translateX(-50%);">{icon_html}</div>
+        <div style="width:100%; height:2px; background:#E2E8F0; border-radius:1px; position:relative;">
+            <div style="height:2px; width:{p}%; background:{bar_color}; border-radius:1px;"></div>
+            <div style="position:absolute; top:-11px; left:{p}%; transform:translateX(-50%);">{icon_html}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# CARD HERO - RENDERIZADO DIRETO SEM ESPAÇO EXTRA
+# CARD HERO - RENDERIZAÇÃO DIRETA SEM ESPAÇO
 # ==============================================================================
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
 USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
 WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
 
-# Renderizar o card hero com container compacto
+# Container ultra compacto - sem margens
 with st.container():
-    # Forçar margem mínima no container
-    st.markdown('<div style="height: 0.25rem;"></div>', unsafe_allow_html=True)
-    
+    # Sem espaço artificial
     st.markdown(f"""
     <div class="mod-card-wrapper">
         <div class="mod-card-rect">
