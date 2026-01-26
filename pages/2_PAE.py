@@ -437,6 +437,63 @@ def carregar_ciclo_ativo(aluno_id):
         st.error(f"Erro ao carregar ciclo: {str(e)}")
         return None
 
+ def listar_ciclos_aluno(aluno_id):
+    """Lista todos os ciclos PAEE do aluno (historico), retornando lista ordenada."""
+    try:
+        url = f"{_sb_url()}/rest/v1/students"
+        params = {"select": "id,paee_ciclos,planejamento_ativo", "id": f"eq.{aluno_id}"}
+        r = requests.get(url, headers=_headers(), params=params, timeout=15)
+        if r.status_code == 200 and r.json():
+            aluno_row = r.json()[0]
+            ciclos = aluno_row.get("paee_ciclos") or []
+            ativo = aluno_row.get("planejamento_ativo")
+            # ordena por criado_em desc (quando existir)
+            def _key(c):
+                ce = c.get("criado_em") or ""
+                return ce
+            ciclos = sorted(ciclos, key=_key, reverse=True)
+            return ciclos, ativo
+        return [], None
+    except Exception as e:
+        st.error(f"Erro ao listar ciclos: {e}")
+        return [], None
+
+
+def definir_ciclo_ativo(aluno_id, ciclo_id, status="ativo"):
+    """Define qual ciclo é o ativo no aluno."""
+    try:
+        url = f"{_sb_url()}/rest/v1/students"
+        params = {"id": f"eq.{aluno_id}"}
+        payload = {
+            "planejamento_ativo": ciclo_id,
+            "status_planejamento": status
+        }
+        r = requests.patch(url, headers=_headers(), params=params, json=payload, timeout=20)
+        return (r.status_code == 204)
+    except Exception as e:
+        st.error(f"Erro ao definir ciclo ativo: {e}")
+        return False
+
+
+def _fmt_data_iso(d):
+    try:
+        return datetime.fromisoformat(str(d).replace("Z", "+00:00")).strftime("%d/%m/%Y")
+    except:
+        return str(d) if d else "-"
+
+
+def _badge_status(status):
+    s = (status or "rascunho").lower()
+    mp = {
+        "rascunho": ("🟡", "#F59E0B"),
+        "ativo": ("🟢", "#10B981"),
+        "concluido": ("🔵", "#3B82F6"),
+        "arquivado": ("⚫", "#64748B"),
+    }
+    return mp.get(s, ("⚪", "#94A3B8"))
+
+        
+
 # ==============================================================================
 # CARREGAMENTO DOS DADOS DOS ALUNOS
 # ==============================================================================
@@ -1485,324 +1542,316 @@ with tab_ponte:
                 st.session_state.status_documento_articulacao = 'revisao'
                 st.rerun()
 
-# ==============================================================================
-# ABA 5: PLANEJAMENTO DO CICLO (CULMINAÇÃO)
-# ==============================================================================
 with tab_planejamento:
-    col_titulo1, col_titulo2, col_titulo3 = st.columns([1, 2, 1])
-    with col_titulo2:
-        st.markdown("""
-        <div style='text-align: center; margin-bottom: 25px;'>
-            <h2 style='color: #1E293B; font-weight: 700; margin-bottom: 8px;'>📋 Planejamento do Ciclo AEE</h2>
-            <p style='color: #64748B; font-size: 0.95rem;'>Culminação do PEI - Implementação prática das estratégias</p>
+    # ============================
+    # HEADER TOP (mais clean)
+    # ============================
+    st.markdown("""
+    <div class="timeline-header">
+      <div>
+        <div style="font-size:.78rem;color:#64748B;font-weight:800;letter-spacing:.08em;text-transform:uppercase;">
+          Planejamento do Ciclo AEE
         </div>
-        """, unsafe_allow_html=True)
-    
-    # Adicionar uma linha divisória sutil
-    st.markdown('<div style="border-top: 1px solid #E2E8F0; margin-bottom: 25px;"></div>', unsafe_allow_html=True)
-    
-    # Carregar PEI do aluno
-    pei_data = carregar_pei_aluno(aluno['id'])
-    
-    # Seção 1: VISÃO GERAL DO PEI
-    with st.expander("📋 Visão geral do PEI", expanded=True):
-        col_visao1, col_visao2, col_visao3 = st.columns(3)
-        
-        with col_visao1:
-            st.metric("Aluno", aluno['nome'])
-            st.metric("Série/Turma", aluno.get('serie', 'Não informada'))
-        
-        with col_visao2:
-            if aluno.get('hiperfoco'):
-                st.metric("Diagnóstico", aluno['hiperfoco'][:20] + "..." if len(aluno['hiperfoco']) > 20 else aluno['hiperfoco'])
-            
-            # Data de revisão do PEI
-            if pei_data and 'data_revisao' in pei_data:
-                try:
-                    data_revisao = datetime.fromisoformat(pei_data['data_revisao'].replace('Z', '+00:00')).date()
-                    dias_para_revisao = (data_revisao - date.today()).days
-                    st.metric("Revisão do PEI", f"{dias_para_revisao} dias")
-                except:
-                    pass
-        
-        with col_visao3:
-            # Status do planejamento
-            ciclo_ativo = carregar_ciclo_ativo(aluno['id'])
-            if ciclo_ativo:
-                status = ciclo_ativo.get('status', 'rascunho')
-                status_color = {
-                    'rascunho': '🟡',
-                    'ativo': '🟢',
-                    'concluido': '🔵',
-                    'arquivado': '⚫'
-                }.get(status, '⚪')
-                st.metric("Status Ciclo", f"{status_color} {status.title()}")
-            else:
-                st.metric("Status Ciclo", "🆕 Não iniciado")
-    
-    # Seção 2: METAS DO PEI PARA O CICLO
-    st.markdown("### 🎯 Metas do PEI selecionadas")
-    
-    # Extrair metas do PEI
-    metas_pei = extrair_metas_do_pei(pei_data)
-    
-    if metas_pei:
-        # Mostrar metas em cards selecionáveis
-        cols_metas = st.columns(2)
-        metas_selecionadas = []
-        
-        for idx, meta in enumerate(metas_pei):
-            with cols_metas[idx % 2]:
-                # Card de meta
-                cor_tipo = {
-                    'HABILIDADES SOCIAIS': '#3B82F6',
-                    'COMUNICAÇÃO': '#10B981',
-                    'ACADÊMICO': '#8B5CF6',
-                    'MOTOR': '#F59E0B',
-                    'AUTONOMIA': '#EF4444',
-                    'GERAL': '#64748B',
-                    'DESENVOLVIMENTO': '#0D9488'
-                }.get(meta['tipo'], '#64748B')
-                
-                selecionada = st.checkbox(
-                    f"**{meta['tipo']}**",
-                    value=meta.get('selecionada', True),
-                    key=f"meta_{meta['id']}",
-                    help=meta['descricao']
-                )
-                
-                if selecionada:
-                    metas_selecionadas.append({
-                        'id': meta['id'],
-                        'tipo': meta['tipo'],
-                        'descricao': meta['descricao'],
-                        'prioridade': meta.get('prioridade', 'media')
-                    })
-                
-                st.markdown(f"""
-                <div style='border-left: 4px solid {cor_tipo}; padding-left: 10px; margin: 5px 0;'>
-                    <div style='font-size: 0.9rem; color: #4B5563;'>
-                        {meta['descricao']}
-                    </div>
+        <div style="font-size:1.35rem;color:#0F172A;font-weight:900;margin-top:3px;">
+          Culminação do PEI → Execução prática
+        </div>
+        <div style="font-size:.9rem;color:#64748B;margin-top:6px;">
+          Gere, revise, salve e visualize ciclos diretamente do histórico do estudante.
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:.72rem;color:#94A3B8;font-weight:800;text-transform:uppercase;">Aluno</div>
+        <div style="font-size:1.05rem;color:#0F172A;font-weight:900;">{aluno.get('nome','')}</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ============================
+    # LAYOUT: 2 COLUNAS (painel + preview)
+    # ============================
+    col_left, col_right = st.columns([1.05, 1.35], gap="large")
+
+    # ----------------------------
+    # COLUNA ESQUERDA: HISTÓRICO + CONFIG
+    # ----------------------------
+    with col_left:
+        st.markdown("### 🗂️ Histórico de ciclos (nuvem)")
+
+        ciclos, ciclo_ativo_id = listar_ciclos_aluno(aluno["id"])
+        ciclo_ativo = None
+        if ciclo_ativo_id:
+            ciclo_ativo = next((c for c in ciclos if c.get("ciclo_id") == ciclo_ativo_id), None)
+
+        # Se existe ciclo ativo, mostra card
+        if ciclo_ativo:
+            ic, cor = _badge_status(ciclo_ativo.get("status"))
+            cfg = ciclo_ativo.get("config_ciclo", {}) or {}
+            st.markdown(f"""
+            <div style="border:1px solid #E2E8F0;border-radius:14px;padding:14px 14px;margin-bottom:12px;background:#FFFFFF;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <div style="font-weight:900;color:#0F172A;">{ic} Ciclo ativo</div>
+                <div style="font-size:.75rem;font-weight:900;color:{cor};text-transform:uppercase;letter-spacing:.06em;">
+                  {str(ciclo_ativo.get("status","rascunho")).upper()}
                 </div>
-                """, unsafe_allow_html=True)
-    else:
-        st.warning("Nenhuma meta encontrada no PEI. Gere o PEI primeiro.")
-        metas_selecionadas = []
-    
-    # Seção 3: RECURSOS GERADOS (das abas anteriores)
-    st.markdown("### 🧩 Recursos incorporados")
-    
-    # Coletar recursos das outras abas (do session_state)
-    recursos_disponiveis = {
-        'diagnostico_barreiras': st.session_state.get('conteudo_diagnostico_barreiras', ''),
-        'plano_habilidades': st.session_state.get('conteudo_plano_habilidades', ''),
-        'tecnologia_assistiva': st.session_state.get('conteudo_tecnologia_assistiva', ''),
-        'documento_articulacao': st.session_state.get('conteudo_documento_articulacao', '')
-    }
-    
-    # Filtra recursos com conteúdo
-    recursos_com_conteudo = {k: v for k, v in recursos_disponiveis.items() if v and len(str(v)) > 100}
-    
-    if recursos_com_conteudo:
-        recursos_selecionados = {}
-        
-        col_rec1, col_rec2 = st.columns(2)
-        recursos_nomes = {
-            'diagnostico_barreiras': '🔍 Diagnóstico de Barreiras',
-            'plano_habilidades': '📈 Plano de Habilidades',
-            'tecnologia_assistiva': '💻 Tecnologia Assistiva',
-            'documento_articulacao': '🤝 Documento de Articulação'
-        }
-        
-        for idx, (recurso_id, conteudo) in enumerate(recursos_com_conteudo.items()):
-            with col_rec1 if idx % 2 == 0 else col_rec2:
-                # Checkbox para selecionar recurso
-                selecionado = st.checkbox(
-                    recursos_nomes.get(recurso_id, recurso_id),
-                    value=True,
-                    key=f"recurso_{recurso_id}"
+              </div>
+              <div style="margin-top:10px;color:#334155;font-size:.9rem;">
+                <div><b>Foco:</b> {cfg.get("foco_principal","-")}</div>
+                <div><b>Período:</b> {_fmt_data_iso(cfg.get("data_inicio"))} → {_fmt_data_iso(cfg.get("data_fim"))}</div>
+                <div><b>Duração:</b> {cfg.get("duracao_semanas","-")} semanas</div>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Selecionar um ciclo para visualizar
+        if ciclos:
+            labels = []
+            for c in ciclos:
+                cfg = c.get("config_ciclo", {}) or {}
+                ic, _ = _badge_status(c.get("status"))
+                labels.append(
+                    f"{ic} {cfg.get('foco_principal','Ciclo')} • {_fmt_data_iso(cfg.get('data_inicio'))} • v{c.get('versao',1)}"
                 )
-                
-                if selecionado:
-                    # Resumo do conteúdo
-                    resumo = str(conteudo)[:300] + ("..." if len(str(conteudo)) > 300 else "")
-                    recursos_selecionados[recurso_id] = {
-                        'resumo': resumo,
-                        'completo': conteudo,
-                        'data_incorporacao': datetime.now().isoformat()
-                    }
-                    
-                    # Mostrar preview
-                    with st.expander("📄 Ver resumo", expanded=False):
-                        st.text_area("", resumo, height=100, disabled=True)
-    else:
-        st.info("ℹ️ Gere recursos nas abas anteriores para incorporar ao ciclo.")
-        recursos_selecionados = {}
-    
-    # Seção 4: CONFIGURAÇÃO DO CICLO
-    st.markdown("### ⚙️ Configuração do ciclo")
-    
-    with st.form("config_ciclo_form"):
-        col_config1, col_config2 = st.columns(2)
-        
-        with col_config1:
-            duracao = st.slider(
-                "Duração do ciclo (semanas):",
-                min_value=4,
-                max_value=24,
-                value=12,
-                help="Quantas semanas de execução do plano"
+            idx_default = 0
+            if ciclo_ativo_id:
+                for i, c in enumerate(ciclos):
+                    if c.get("ciclo_id") == ciclo_ativo_id:
+                        idx_default = i
+                        break
+
+            escolha = st.selectbox(
+                "Selecione um ciclo para visualizar:",
+                options=list(range(len(ciclos))),
+                format_func=lambda i: labels[i],
+                index=idx_default,
+                key="paee_ciclo_picker"
             )
-            
-            frequencia = st.selectbox(
-                "Frequência do AEE:",
-                options=[
-                    ("1x_semana", "1 vez por semana"),
-                    ("2x_semana", "2 vezes por semana"),
-                    ("3x_semana", "3 vezes por semana"),
-                    ("diario", "Atendimento diário")
-                ],
-                format_func=lambda x: x[1],
-                index=1
-            )
-        
-        with col_config2:
-            data_inicio = st.date_input(
-                "Data de início:",
-                value=date.today(),
-                min_value=date.today()
-            )
-            
-            data_fim = st.date_input(
-                "Previsão de término:",
-                value=data_inicio + timedelta(weeks=duracao),
-                min_value=data_inicio
-            )
-        
-        foco_principal = st.text_input(
-            "Foco principal do ciclo:",
-            value=aluno.get('hiperfoco', 'Desenvolvimento de habilidades específicas'),
-            help="Objetivo principal deste ciclo de intervenção"
-        )
-        
-        descricao_ciclo = st.text_area(
-            "Descrição detalhada do ciclo:",
-            height=100,
-            placeholder="Descreva os principais objetivos, abordagens e expectativas para este ciclo...",
-            help="Esta descrição será usada para comunicação com a equipe e família"
-        )
-        
-        # Botão para gerar cronograma com IA
-        col_gen1, col_gen2 = st.columns(2)
-        with col_gen1:
-            usar_ia = st.checkbox("🤖 Usar IA para sugestão de cronograma", value=True)
-        
-        with col_gen2:
-            if st.form_submit_button("✨ Gerar planejamento", type="primary", use_container_width=True):
-                if not metas_selecionadas:
-                    st.error("Selecione pelo menos uma meta do PEI para o ciclo.")
-                else:
-                    # Criar estrutura do ciclo
-                    ciclo_data = {
-                        'ciclo_id': None,  # Será gerado no salvamento
-                        'status': 'rascunho',
-                        'config_ciclo': {
-                            'duracao_semanas': duracao,
-                            'frequencia': frequencia[0],
-                            'foco_principal': foco_principal,
-                            'descricao': descricao_ciclo,
-                            'data_inicio': data_inicio.isoformat(),
-                            'data_fim': data_fim.isoformat(),
-                            'metas_selecionadas': metas_selecionadas
-                        },
-                        'recursos_incorporados': recursos_selecionados,
-                        'criado_por': st.session_state.get("user_id", ""),
-                        'versao': 1
-                    }
-                    
-                    # Se usar IA, gerar sugestão de cronograma
-                    if usar_ia and api_key:
-                        with st.spinner("🤖 IA planejando cronograma..."):
-                            cronograma_ia = gerar_cronograma_inteligente(
-                                api_key, aluno, duracao, foco_principal, metas_selecionadas
-                            )
-                            if cronograma_ia:
-                                ciclo_data['cronograma'] = cronograma_ia
-                            else:
-                                # Cronograma básico se IA falhar
-                                ciclo_data['cronograma'] = criar_cronograma_basico(duracao, metas_selecionadas)
+            st.session_state["paee_ciclo_selecionado"] = ciclos[escolha]
+        else:
+            st.info("Ainda não há ciclos salvos para este estudante.")
+
+        # Botão: marcar ciclo como ativo
+        ciclo_sel = st.session_state.get("paee_ciclo_selecionado")
+        if ciclo_sel and ciclo_sel.get("ciclo_id"):
+            c_id = ciclo_sel["ciclo_id"]
+            colA, colB = st.columns([1,1])
+            with colA:
+                if st.button("🟢 Definir como ciclo ativo", use_container_width=True, type="secondary"):
+                    ok = definir_ciclo_ativo(aluno["id"], c_id, status="ativo")
+                    if ok:
+                        st.success("Ciclo definido como ativo.")
+                        time.sleep(0.8)
+                        st.rerun()
                     else:
-                        # Cronograma básico sem IA
-                        ciclo_data['cronograma'] = criar_cronograma_basico(duracao, metas_selecionadas)
-                    
-                    # Salvar no session_state para preview
-                    st.session_state.ciclo_preview = ciclo_data
-                    st.success("Planejamento gerado! Revise abaixo e salve.")
-    
-    # Seção 5: PREVIEW E SALVAMENTO
-    if 'ciclo_preview' in st.session_state:
-        st.markdown("### 📋 Preview do planejamento")
-        
-        ciclo_preview = st.session_state.ciclo_preview
-        
-        # Mostrar preview
-        col_prev1, col_prev2 = st.columns(2)
-        
-        with col_prev1:
-            st.markdown("**📅 Configuração:**")
-            config = ciclo_preview['config_ciclo']
-            st.write(f"- **Duração:** {config['duracao_semanas']} semanas")
-            st.write(f"- **Frequência:** {config['frequencia'].replace('_', ' ').title()}")
-            st.write(f"- **Período:** {config['data_inicio']} a {config['data_fim']}")
-            st.write(f"- **Foco:** {config['foco_principal']}")
-            
-            st.markdown("**🎯 Metas incluídas:**")
-            for meta in config['metas_selecionadas'][:3]:
-                st.write(f"- {meta['tipo']}: {meta['descricao'][:50]}...")
-        
-        with col_prev2:
-            st.markdown("**🧩 Recursos incorporados:**")
-            recursos = ciclo_preview.get('recursos_incorporados', {})
-            if recursos:
-                for recurso_id, dados in recursos.items():
-                    nome = recursos_nomes.get(recurso_id, recurso_id)
-                    st.write(f"- {nome}")
-            else:
-                st.write("Nenhum recurso incorporado")
-            
-            st.markdown("**🗓️ Cronograma:**")
-            if 'cronograma' in ciclo_preview:
-                cronograma = ciclo_preview['cronograma']
-                if 'fases' in cronograma:
-                    st.write(f"- {len(cronograma['fases'])} fases planejadas")
-                if 'semanas' in cronograma:
-                    st.write(f"- {len(cronograma['semanas'])} semanas com atividades")
-        
-        # Botão para salvar
-        col_save1, col_save2, col_save3 = st.columns(3)
-        
-        with col_save2:
-            if st.button("💾 Salvar planejamento", type="primary", use_container_width=True):
-                # Salvar no Supabase
-                resultado = salvar_paee_ciclo(aluno['id'], ciclo_preview)
-                
-                if resultado['sucesso']:
-                    st.success(f"✅ Ciclo salvo com sucesso! ID: {resultado['ciclo_id'][:8]}")
-                    
-                    # Limpar preview
-                    del st.session_state.ciclo_preview
-                    
-                    # Atualizar interface
-                    time.sleep(2)
+                        st.error("Não consegui definir como ativo.")
+            with colB:
+                if st.button("🧹 Limpar seleção", use_container_width=True):
+                    st.session_state.pop("paee_ciclo_selecionado", None)
                     st.rerun()
+
+        st.markdown("---")
+
+        # ============================
+        # CONFIGURAÇÃO E GERAÇÃO (gera preview e só salva quando clicar)
+        # ============================
+        st.markdown("### ⚙️ Gerar novo ciclo (preview antes de salvar)")
+
+        pei_data = carregar_pei_aluno(aluno["id"])
+        metas_pei = extrair_metas_do_pei(pei_data)
+
+        if not metas_pei:
+            st.warning("Não encontrei metas no PEI. Gere/complete o PEI primeiro.")
+        else:
+            with st.expander("🎯 Selecionar metas do PEI", expanded=True):
+                metas_selecionadas = []
+                cols_m = st.columns(2)
+                for i, meta in enumerate(metas_pei):
+                    with cols_m[i % 2]:
+                        sel = st.checkbox(
+                            f"**{meta['tipo']}**",
+                            value=meta.get("selecionada", True),
+                            key=f"paee_meta_{meta['id']}"
+                        )
+                        st.caption(meta["descricao"])
+                        if sel:
+                            metas_selecionadas.append({
+                                "id": meta["id"],
+                                "tipo": meta["tipo"],
+                                "descricao": meta["descricao"],
+                                "prioridade": meta.get("prioridade", "media")
+                            })
+
+            recursos_disponiveis = {
+                "diagnostico_barreiras": st.session_state.get("conteudo_diagnostico_barreiras", ""),
+                "plano_habilidades": st.session_state.get("conteudo_plano_habilidades", ""),
+                "tecnologia_assistiva": st.session_state.get("conteudo_tecnologia_assistiva", ""),
+                "documento_articulacao": st.session_state.get("conteudo_documento_articulacao", ""),
+            }
+            recursos_nomes = {
+                "diagnostico_barreiras": "🔍 Diagnóstico de Barreiras",
+                "plano_habilidades": "📈 Plano de Habilidades",
+                "tecnologia_assistiva": "💻 Tecnologia Assistiva",
+                "documento_articulacao": "🤝 Documento de Articulação",
+            }
+            recursos_com_conteudo = {k: v for k, v in recursos_disponiveis.items() if v and len(str(v)) > 120}
+
+            with st.expander("🧩 Incorporar recursos (opcional)", expanded=False):
+                recursos_selecionados = {}
+                if recursos_com_conteudo:
+                    for k, conteudo in recursos_com_conteudo.items():
+                        marcado = st.checkbox(recursos_nomes.get(k, k), value=True, key=f"paee_rec_{k}")
+                        if marcado:
+                            resumo = str(conteudo)[:300] + ("..." if len(str(conteudo)) > 300 else "")
+                            recursos_selecionados[k] = {
+                                "resumo": resumo,
+                                "completo": conteudo,
+                                "data_incorporacao": datetime.now().isoformat()
+                            }
                 else:
-                    st.error(f"❌ Erro ao salvar: {resultado.get('erro', 'Erro desconhecido')}")
-        
-        with col_save3:
-            if st.button("🔄 Gerar novo", type="secondary", use_container_width=True):
-                del st.session_state.ciclo_preview
-                st.rerun()
+                    st.caption("Nenhum recurso gerado nas abas anteriores ainda.")
+
+            with st.form("config_ciclo_form_v2"):
+                duracao = st.slider("Duração (semanas)", 4, 24, 12)
+                freq = st.selectbox("Frequência do AEE", ["1x_semana","2x_semana","3x_semana","diario"], index=1)
+                data_inicio = st.date_input("Data de início", value=date.today(), min_value=date.today())
+                data_fim = st.date_input("Previsão de término", value=data_inicio + timedelta(weeks=duracao), min_value=data_inicio)
+                foco_principal = st.text_input("Foco principal", value=aluno.get("hiperfoco") or "Desenvolvimento de habilidades específicas")
+                descricao_ciclo = st.text_area("Descrição do ciclo", height=90)
+                usar_ia = st.checkbox("🤖 Usar IA para cronograma", value=True)
+
+                gerar = st.form_submit_button("✨ Gerar preview do planejamento", type="primary", use_container_width=True)
+
+                if gerar:
+                    if not metas_selecionadas:
+                        st.error("Selecione pelo menos 1 meta.")
+                    else:
+                        ciclo_data = {
+                            "ciclo_id": None,
+                            "status": "rascunho",
+                            "config_ciclo": {
+                                "duracao_semanas": duracao,
+                                "frequencia": freq,
+                                "foco_principal": foco_principal,
+                                "descricao": descricao_ciclo,
+                                "data_inicio": data_inicio.isoformat(),
+                                "data_fim": data_fim.isoformat(),
+                                "metas_selecionadas": metas_selecionadas
+                            },
+                            "recursos_incorporados": recursos_selecionados if "recursos_selecionados" in locals() else {},
+                            "criado_por": st.session_state.get("user_id", ""),
+                            "versao": 1
+                        }
+
+                        if usar_ia and (api_key if "api_key" in globals() else None):
+                            with st.spinner("🤖 IA planejando cronograma..."):
+                                cronograma_ia = gerar_cronograma_inteligente(api_key, aluno, duracao, foco_principal, metas_selecionadas)
+                                ciclo_data["cronograma"] = cronograma_ia or criar_cronograma_basico(duracao, metas_selecionadas)
+                        else:
+                            ciclo_data["cronograma"] = criar_cronograma_basico(duracao, metas_selecionadas)
+
+                        st.session_state["ciclo_preview"] = ciclo_data
+                        st.success("Preview gerado. Veja à direita e salve quando estiver pronto.")
+                        st.rerun()
+
+    # ----------------------------
+    # COLUNA DIREITA: VISUALIZAÇÃO (ciclo selecionado OU preview)
+    # ----------------------------
+    with col_right:
+        st.markdown("### 👁️ Visualização do ciclo")
+
+        ciclo_preview = st.session_state.get("ciclo_preview")
+        ciclo_sel = st.session_state.get("paee_ciclo_selecionado")
+
+        # prioridade: preview (novo) -> selecionado (histórico) -> ativo
+        ciclo_para_ver = ciclo_preview or ciclo_sel or ciclo_ativo
+
+        if not ciclo_para_ver:
+            st.info("Selecione um ciclo no histórico ou gere um preview.")
+        else:
+            cfg = (ciclo_para_ver.get("config_ciclo") or {})
+            ic, cor = _badge_status(ciclo_para_ver.get("status"))
+
+            st.markdown(f"""
+            <div style="border:1px solid #E2E8F0;border-radius:16px;padding:16px;background:#FFFFFF;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-weight:900;color:#0F172A;font-size:1.05rem;">{ic} {cfg.get("foco_principal","Ciclo AEE")}</div>
+                <div style="font-size:.75rem;font-weight:900;color:{cor};text-transform:uppercase;letter-spacing:.06em;">
+                  {str(ciclo_para_ver.get("status","rascunho")).upper()}
+                </div>
+              </div>
+              <div style="margin-top:8px;color:#334155;">
+                <span style="font-weight:800;">Período:</span> {_fmt_data_iso(cfg.get("data_inicio"))} → {_fmt_data_iso(cfg.get("data_fim"))}
+                &nbsp;•&nbsp;
+                <span style="font-weight:800;">Duração:</span> {cfg.get("duracao_semanas","-")} sem
+                &nbsp;•&nbsp;
+                <span style="font-weight:800;">Freq:</span> {str(cfg.get("frequencia","-")).replace("_"," ").title()}
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Metas
+            with st.expander("🎯 Metas selecionadas", expanded=True):
+                metas = cfg.get("metas_selecionadas") or []
+                if metas:
+                    for m in metas:
+                        st.markdown(f"- **{m.get('tipo','')}**: {m.get('descricao','')}")
+                else:
+                    st.caption("Sem metas registradas.")
+
+            # Recursos
+            with st.expander("🧩 Recursos incorporados", expanded=False):
+                recs = ciclo_para_ver.get("recursos_incorporados") or {}
+                if recs:
+                    for rid, d in recs.items():
+                        nome = (rid or "").replace("_"," ").title()
+                        st.markdown(f"**{nome}**")
+                        st.caption(d.get("resumo",""))
+                else:
+                    st.caption("Nenhum recurso incorporado.")
+
+            # Cronograma (fases + semanas)
+            cron = ciclo_para_ver.get("cronograma") or {}
+            with st.expander("🗓️ Cronograma", expanded=True):
+                fases = cron.get("fases") or []
+                semanas = cron.get("semanas") or []
+
+                if fases:
+                    st.markdown("**Fases**")
+                    for f in fases:
+                        st.markdown(f"- **{f.get('nome','Fase')}**: {f.get('objetivo_geral','')}")
+                        st.caption(f.get("descricao",""))
+
+                if semanas:
+                    st.markdown("**Semanas (preview)**")
+                    # mostra só as 6 primeiras para não ficar gigante
+                    for w in semanas[:6]:
+                        st.markdown(f"**Semana {w.get('numero')} — {w.get('tema','')}**")
+                        st.caption(w.get("objetivo",""))
+                        atv = w.get("atividades") or []
+                        if atv:
+                            st.markdown("• " + "\n• ".join(atv[:3]))
+                        st.markdown("---")
+                    if len(semanas) > 6:
+                        st.info(f"Mostrando 6 de {len(semanas)} semanas.")
+
+            # Botões (se for preview, salva na nuvem)
+            if ciclo_preview:
+                st.markdown("### 💾 Salvar este ciclo")
+                c1, c2 = st.columns([1,1])
+                with c1:
+                    if st.button("💾 Salvar na nuvem (Supabase)", type="primary", use_container_width=True):
+                        resultado = salvar_paee_ciclo(aluno["id"], ciclo_preview)
+                        if resultado.get("sucesso"):
+                            st.success(f"✅ Salvo! ID: {str(resultado.get('ciclo_id',''))[:8]}")
+                            st.session_state.pop("ciclo_preview", None)
+                            time.sleep(0.8)
+                            st.rerun()
+                        else:
+                            st.error(f"❌ Erro ao salvar: {resultado.get('erro','')}")
+                with c2:
+                    if st.button("🧹 Descartar preview", use_container_width=True):
+                        st.session_state.pop("ciclo_preview", None)
+                        st.rerun()
+
 
 # ==============================================================================
 # RODAPÉ E INFORMAÇÕES
