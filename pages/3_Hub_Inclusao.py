@@ -693,7 +693,7 @@ TAXONOMIA_BLOOM = {
 }
 
 # ==============================================================================
-# CARREGAR ALUNOS DO SUPABASE (igual ao PAEE) + fallback local opcional
+# CARREGAR ALUNOS DO SUPABASE (ATUALIZADO PARA PEI COMPLETO)
 # ==============================================================================
 
 @st.cache_data(ttl=10, show_spinner=False)
@@ -703,28 +703,10 @@ def list_students_rest():
         return []
 
     try:
+        # Puxamos pei_data que contem o JSON completo
         base = (
             f"{_sb_url()}/rest/v1/students"
             f"?select=id,name,grade,class_group,diagnosis,created_at,pei_data"
-            f"&workspace_id=eq.{WORKSPACE_ID}"
-            f"&order=created_at.desc"
-        )
-        r = requests.get(base, headers=_headers(), timeout=20)
-        return r.json() if r.status_code == 200 else []
-    except:
-        return []
-
-@st.cache_data(ttl=10, show_spinner=False)
-def list_students_rest():
-    WORKSPACE_ID = st.session_state.get("workspace_id")
-    if not WORKSPACE_ID:
-        return []
-
-    try:
-        # ALTERAÇÃO AQUI: Adicionei 'pei_data' explicitamente na query
-        base = (
-            f"{_sb_url()}/rest/v1/students"
-            f"?select=id,name,grade,class_group,diagnosis,created_at,pei_data" 
             f"&workspace_id=eq.{WORKSPACE_ID}"
             f"&order=created_at.desc"
         )
@@ -738,7 +720,7 @@ def carregar_estudantes_supabase():
     estudantes = []
 
     for item in dados:
-        # ALTERAÇÃO AQUI: Prioridade total para o pei_data (JSON)
+        # Prioridade total para o pei_data (JSON)
         pei_completo = item.get("pei_data") or {}
         
         # Tenta pegar o resumo da IA dentro do JSON, senão monta um básico
@@ -751,8 +733,8 @@ def carregar_estudantes_supabase():
         estudante = {
             "nome": item.get("name", ""),
             "serie": item.get("grade", ""),
-            # Aqui mantemos o diagnosis visual, mas o pei_data guarda a inteligência
-            "hiperfoco": item.get("hiperfoco", ""), 
+            # Ajuste importante: O Supabase retorna 'diagnosis', usamos isso como perfil base
+            "hiperfoco": item.get("diagnosis", ""), 
             "ia_sugestao": contexto_ia,
             "id": item.get("id", ""),
             "pei_data": pei_completo # Guardamos o objeto todo
@@ -762,7 +744,7 @@ def carregar_estudantes_supabase():
 
     return estudantes
 
-# --- fallback local (opcional, se você quiser manter) ---
+# --- FALLBACK LOCAL (Mantido como segurança) ---
 ARQUIVO_DB = "banco_alunos.json"
 
 def carregar_banco_local():
@@ -776,7 +758,7 @@ def carregar_banco_local():
             return []
     return []
 
-# --- inicialização do banco_estudantes (Supabase primeiro) ---
+# --- INICIALIZAÇÃO UNIFICADA DO BANCO ---
 if "banco_estudantes" not in st.session_state or not st.session_state.banco_estudantes:
     alunos_sb = []
     try:
@@ -786,42 +768,8 @@ if "banco_estudantes" not in st.session_state or not st.session_state.banco_estu
     except:
         alunos_sb = []
 
+    # Se não achou no Supabase, tenta local
     st.session_state.banco_estudantes = alunos_sb if alunos_sb else carregar_banco_local()
-
-
-
-
-# --- BANCO DE DADOS ---
-ARQUIVO_DB = "banco_alunos.json"
-
-def carregar_banco():
-    # --- BLINDAGEM DE DADOS ---
-    usuario_atual = st.session_state.get("usuario_nome", "")
-    # --------------------------
-
-    if os.path.exists(ARQUIVO_DB):
-        try:
-            with open(ARQUIVO_DB, "r", encoding="utf-8") as f:
-                todos_alunos = json.load(f)
-                # FILTRAGEM: Retorna apenas alunos deste usuário
-                meus_alunos = [
-                    aluno for aluno in todos_alunos 
-                    if aluno.get('responsavel') == usuario_atual
-                ]
-                return meus_alunos
-        except: return []
-    return []
-
-if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
-    st.session_state.banco_estudantes = carregar_banco()
-
-# --- ESTILO VISUAL (CSS) ---
-st.markdown("""
-<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
-
-<style>
-  html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', 'Nunito', sans-serif; color: #1E293B; }
-
   /* ========================================================= */
   /* HEADER / HERO (estilo PAEE) */
   /* ========================================================= */
