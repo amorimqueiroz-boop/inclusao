@@ -1082,12 +1082,7 @@ st.markdown("""
 # BLOCO FINAL — CSS + LOGO (base64) + PROGRESSO (SEM BADGE FLUTUANTE)
 # Mantém: hero card (mod-*) + tabs + inputs/botões + rotação p/ progresso
 # Remove: badge flutuante (omni-badge) e qualquer HTML dele
-# Ajuste: reduzir espaço entre MENU (navbar) e HERO (card)
 # ==============================================================================
-
-import os, base64
-from datetime import datetime
-import streamlit as st
 
 # ------------------------------------------------------------------------------
 # 1) Logo em base64 (somente para usar no ícone da barra de progresso)
@@ -1110,20 +1105,10 @@ st.markdown("""
   html, body, [class*="css"] { font-family: 'Nunito', sans-serif; color: #2D3748; background-color: #F7FAFC; }
   .block-container { padding-top: 1.5rem !important; padding-bottom: 5rem !important; }
 
-  /* ========= PATCH: reduzir "vão" entre NAVBAR (option_menu) e HERO =========
-     - Não mexe no .block-container (pra não quebrar topbar fixa)
-     - Só remove margem/padding de blocos horizontais imediatamente acima do hero
-  */
-  div[data-testid="stHorizontalBlock"]{
-      margin-bottom: 0 !important;
-      padding-bottom: 0 !important;
-  }
-
-  /* ========= HERO CARD (mod-*) ========= */
+  /* ========= HERO CARD (mod-*) — VOLTOU ========= */
   .mod-card-wrapper {
       display: flex;
       flex-direction: column;
-      margin-top: 6px;          /* ✅ AQUI você "sobe" o hero (ajuste fino) */
       margin-bottom: 20px;
       border-radius: 16px;
       overflow: hidden;
@@ -1196,7 +1181,7 @@ st.markdown("""
       overflow: hidden;
   }
 
-  /* Paleta */
+  /* Paleta (exemplo que você já usava) */
   .c-blue { background: #3B82F6 !important; }
   .bg-blue-soft { background: transparent !important; color: #3B82F6 !important; }
 
@@ -1245,7 +1230,7 @@ st.markdown("""
   /* Footer */
   .footer-signature { text-align:center; opacity:0.55; font-size:0.75rem; padding:30px 0 10px 0; }
 
-  /* Responsivo do hero card */
+  /* Responsivo do hero card (opcional, mas ajuda a não quebrar mobile) */
   @media (max-width: 768px) {
       .mod-card-rect { flex-direction: column; height: auto; padding: 16px; }
       .mod-bar { width: 100%; height: 6px; }
@@ -1299,6 +1284,8 @@ def render_progresso():
         unsafe_allow_html=True
     )
 
+
+
 # ==============================================================================
 # CARD HERO PARA PEI (MESMO DESIGN DOS ESTUDANTES)
 # ==============================================================================
@@ -1328,7 +1315,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 
 # ==============================================================================
 # ABAS DO PEI (TEXTO EM MAIÚSCULAS, SEM EMOJIS)
