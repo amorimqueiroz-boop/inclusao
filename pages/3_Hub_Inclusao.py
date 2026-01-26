@@ -693,37 +693,11 @@ TAXONOMIA_BLOOM = {
 }
 
 # ==============================================================================
-# FUNÇÕES SUPABASE (REST) — BLOCO COMPLETO (SUBSTITUIR TUDO AQUI)
+# CARREGAR ALUNOS DO SUPABASE (igual ao PAEE) + fallback local opcional
 # ==============================================================================
 
-import requests
-import uuid
-from datetime import datetime
-import streamlit as st
-
-def _sb_url() -> str:
-    url = str(st.secrets.get("SUPABASE_URL", "")).strip()
-    if not url:
-        raise RuntimeError("SUPABASE_URL missing")
-    return url.rstrip("/")
-
-def _sb_key() -> str:
-    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "") or st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
-    if not key:
-        raise RuntimeError("SUPABASE_KEY missing")
-    return key
-
-def _headers() -> dict:
-    key = _sb_key()
-    return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-
-
-# ==============================================================================
-# CARREGAR ESTUDANTES DO SUPABASE
-# ==============================================================================
 @st.cache_data(ttl=10, show_spinner=False)
 def list_students_rest():
-    """Busca estudantes do Supabase incluindo o campo pei_data."""
     WORKSPACE_ID = st.session_state.get("workspace_id")
     if not WORKSPACE_ID:
         return []
@@ -731,29 +705,44 @@ def list_students_rest():
     try:
         base = (
             f"{_sb_url()}/rest/v1/students"
-            f"?select=id,name,grade,class_group,diagnosis,created_at,pei_data,paee_ciclos,planejamento_ativo"
+            f"?select=id,name,grade,class_group,diagnosis,created_at,pei_data"
             f"&workspace_id=eq.{WORKSPACE_ID}"
             f"&order=created_at.desc"
         )
         r = requests.get(base, headers=_headers(), timeout=20)
         return r.json() if r.status_code == 200 else []
-    except Exception as e:
-        st.error(f"Erro ao carregar alunos: {str(e)}")
+    except:
         return []
 
+@st.cache_data(ttl=10, show_spinner=False)
+def list_students_rest():
+    WORKSPACE_ID = st.session_state.get("workspace_id")
+    if not WORKSPACE_ID:
+        return []
+
+    try:
+        # ALTERAÇÃO AQUI: Adicionei 'pei_data' explicitamente na query
+        base = (
+            f"{_sb_url()}/rest/v1/students"
+            f"?select=id,name,grade,class_group,diagnosis,created_at,pei_data" 
+            f"&workspace_id=eq.{WORKSPACE_ID}"
+            f"&order=created_at.desc"
+        )
+        r = requests.get(base, headers=_headers(), timeout=20)
+        return r.json() if r.status_code == 200 else []
+    except:
+        return []
 
 def carregar_estudantes_supabase():
-    """Carrega e processa estudantes, extraindo contexto rico do PEI."""
     dados = list_students_rest()
     estudantes = []
 
     for item in dados:
+        # ALTERAÇÃO AQUI: Prioridade total para o pei_data (JSON)
         pei_completo = item.get("pei_data") or {}
-        contexto_ia = ""
-
-        # tenta pegar texto de contexto
-        if isinstance(pei_completo, dict):
-            contexto_ia = pei_completo.get("ia_sugestao", "") or ""
+        
+        # Tenta pegar o resumo da IA dentro do JSON, senão monta um básico
+        contexto_ia = pei_completo.get("ia_sugestao", "")
         if not contexto_ia:
             diag = item.get("diagnosis", "Não informado")
             serie = item.get("grade", "")
@@ -762,32 +751,76 @@ def carregar_estudantes_supabase():
         estudante = {
             "nome": item.get("name", ""),
             "serie": item.get("grade", ""),
-            "hiperfoco": item.get("diagnosis", ""),
+            # Aqui mantemos o diagnosis visual, mas o pei_data guarda a inteligência
+            "hiperfoco": item.get("hiperfoco", ""), 
             "ia_sugestao": contexto_ia,
             "id": item.get("id", ""),
-            "pei_data": pei_completo,
+            "pei_data": pei_completo # Guardamos o objeto todo
         }
         if estudante["nome"]:
             estudantes.append(estudante)
 
     return estudantes
 
+# --- fallback local (opcional, se você quiser manter) ---
+ARQUIVO_DB = "banco_alunos.json"
 
-# ==============================================================================
-# PEI DO ALUNO
-# ==============================================================================
-def carregar_pei_aluno(aluno_id):
-    """Carrega o PEI do aluno do Supabase (campo pei_data na tabela students)."""
+def carregar_banco_local():
+    usuario_atual = st.session_state.get("usuario_nome", "")
+    if os.path.exists(ARQUIVO_DB):
+        try:
+            with open(ARQUIVO_DB, "r", encoding="utf-8") as f:
+                todos_alunos = json.load(f)
+            return [a for a in todos_alunos if a.get("responsavel") == usuario_atual]
+        except:
+            return []
+    return []
+
+# --- inicialização do banco_estudantes (Supabase primeiro) ---
+if "banco_estudantes" not in st.session_state or not st.session_state.banco_estudantes:
+    alunos_sb = []
     try:
-        url = f"{_sb_url()}/rest/v1/students"
-        params = {"select": "id,pei_data", "id": f"eq.{aluno_id}"}
-        r = requests.get(url, headers=_headers(), params=params, timeout=15)
-        if r.status_code == 200 and r.json():
-            return r.json()[0].get("pei_data", {}) or {}
-        return {}
-    except Exception as e:
-        st.error(f"Erro ao carregar PEI: {str(e)}")
-        return {}
+        if _sb_url() and _sb_key():
+            with st.spinner("🔄 Lendo alunos da nuvem..."):
+                alunos_sb = carregar_estudantes_supabase()
+    except:
+        alunos_sb = []
+
+    st.session_state.banco_estudantes = alunos_sb if alunos_sb else carregar_banco_local()
+
+
+
+
+# --- BANCO DE DADOS ---
+ARQUIVO_DB = "banco_alunos.json"
+
+def carregar_banco():
+    # --- BLINDAGEM DE DADOS ---
+    usuario_atual = st.session_state.get("usuario_nome", "")
+    # --------------------------
+
+    if os.path.exists(ARQUIVO_DB):
+        try:
+            with open(ARQUIVO_DB, "r", encoding="utf-8") as f:
+                todos_alunos = json.load(f)
+                # FILTRAGEM: Retorna apenas alunos deste usuário
+                meus_alunos = [
+                    aluno for aluno in todos_alunos 
+                    if aluno.get('responsavel') == usuario_atual
+                ]
+                return meus_alunos
+        except: return []
+    return []
+
+if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
+    st.session_state.banco_estudantes = carregar_banco()
+
+# --- ESTILO VISUAL (CSS) ---
+st.markdown("""
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+
+<style>
+  html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', 'Nunito', sans-serif; color: #1E293B; }
 
   /* ========================================================= */
   /* HEADER / HERO (estilo PAEE) */
