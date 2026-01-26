@@ -1586,12 +1586,17 @@ def render_aba_adaptar_atividade(aluno, api_key):
     # Dropdowns BNCC simplificados
     ano_bncc, disciplina_bncc, unidade_bncc, objeto_bncc, _ = criar_dropdowns_bncc_completos_melhorado(key_suffix="adaptar_atividade", mostrar_habilidades=False)
     
-    c1, c2, c3 = st.columns(3)
-    materia_i = c1.selectbox("Matéria", DISCIPLINAS_PADRAO, key="im")
-    tema_i = c2.text_input("Tema", value=objeto_bncc if objeto_bncc else "", key="it")
-    tipo_i = c3.selectbox("Tipo", ["Atividade", "Tarefa"], key="itp")
-    arquivo_i = st.file_uploader("Upload", type=["png","jpg","jpeg"], key="fi")
-    livro_prof = st.checkbox("📖 Livro do Professor (Remover Respostas)", value=False)
+    st.markdown("---")
+
+    # Layout simplificado
+    c1, c2 = st.columns([1, 2])
+    tipo_i = c1.selectbox("Tipo", ["Atividade", "Tarefa", "Exercício"], key="itp")
+    arquivo_i = c2.file_uploader("Upload da Imagem/Foto", type=["png","jpg","jpeg"], key="fi")
+    livro_prof = st.checkbox("📖 É foto do Livro do Professor? (A IA removerá as respostas)", value=False)
+    
+    # Definição automática baseada na BNCC
+    materia_i = disciplina_bncc if disciplina_bncc else "Geral"
+    tema_i = objeto_bncc if objeto_bncc else "Geral"
     
     if 'img_raw' not in st.session_state:
         st.session_state.img_raw = None
@@ -1602,18 +1607,26 @@ def render_aba_adaptar_atividade(aluno, api_key):
 
     cropped_res = None
     if st.session_state.img_raw:
-        st.markdown("### ✂️ Recorte")
+        st.markdown("### ✂️ Recorte (Selecione a área da questão)")
         img_pil = Image.open(BytesIO(st.session_state.img_raw))
         img_pil.thumbnail((800, 800))
         cropped_res = st_cropper(img_pil, realtime_update=True, box_color='#FF0000', aspect_ratio=None, key="crop_i")
         if cropped_res:
-            st.image(cropped_res, width=200, caption="Prévia")
+            st.image(cropped_res, width=200, caption="Área selecionada")
 
-    if st.button("🚀 ADAPTAR ATIVIDADE", type="primary", key="btn_i"):
+    st.markdown("---")
+
+    if st.button("🚀 ADAPTAR ATIVIDADE", type="primary", key="btn_i", use_container_width=True):
         if not st.session_state.img_raw:
-            st.warning("Envie imagem.")
+            st.warning("Por favor, envie uma imagem.")
             st.stop()
-        with st.spinner("Analisando e Adaptando..."):
+        
+        # Validação BNCC
+        if not disciplina_bncc or not objeto_bncc:
+             st.warning("⚠️ Selecione a Disciplina e o Objeto do Conhecimento (BNCC) acima.")
+             st.stop()
+
+        with st.spinner("Lendo imagem e adaptando conteúdo..."):
             buf_c = BytesIO()
             cropped_res.convert('RGB').save(buf_c, format="JPEG", quality=90)
             img_bytes = buf_c.getvalue()
@@ -1627,10 +1640,10 @@ def render_aba_adaptar_atividade(aluno, api_key):
             st.success("✅ **ATIVIDADE VALIDADA E PRONTA PARA USO**")
         else:
             col_v, col_r = st.columns([1, 1])
-            if col_v.button("✅ Validar", key="val_i"):
+            if col_v.button("✅ Validar", key="val_i", use_container_width=True):
                 st.session_state['res_img']['valid'] = True
                 st.rerun()
-            if col_r.button("🧠 Refazer (+Profundo)", key="redo_i"):
+            if col_r.button("🧠 Refazer (+Profundo)", key="redo_i", use_container_width=True):
                 with st.spinner("Refazendo..."):
                     img_bytes = res['map'][1]
                     rac, txt = adaptar_conteudo_imagem(api_key, aluno, img_bytes, materia_i, tema_i, tipo_i, livro_prof, modo_profundo=True)
@@ -1648,16 +1661,18 @@ def render_aba_adaptar_atividade(aluno, api_key):
                 elif p.strip():
                     st.markdown(p.strip())
         
+        c_down1, c_down2 = st.columns(2)
         docx = construir_docx_final(res['txt'], aluno, materia_i, res['map'], tipo_i)
-        st.download_button("📥 BAIXAR DOCX (Só Atividade)", docx, "Atividade.docx", "primary")
+        c_down1.download_button("📥 BAIXAR DOCX (Editável)", docx, "Atividade.docx", "primary", use_container_width=True)
         
         pdf_bytes = criar_pdf_generico(res['txt'])
         c_down2.download_button(
-            "📕 BAIXAR PDF (Só Atividade)", 
+            "📕 BAIXAR PDF (Visualização)", 
             pdf_bytes, 
             "Atividade.pdf", 
             mime="application/pdf", 
-            type="secondary"
+            type="secondary",
+            use_container_width=True
         )
 
 def render_aba_criar_do_zero(aluno, api_key, unsplash_key):
@@ -1949,7 +1964,7 @@ def render_aba_roteiro_individual(aluno, api_key):
     <div class="pedagogia-box">
         <div class="pedagogia-title"><i class="ri-user-follow-line"></i> Roteiro de Aula Individualizado</div>
         Crie um passo a passo de aula <strong>específico para este estudante</strong> do PEI. 
-        A IA usará o hiperfoco como chave de acesso para o conteúdo.
+        A IA usará o hiperfoco como chave de acesso para o conteúdo selecionado na BNCC.
     </div>
     """, unsafe_allow_html=True)
     
@@ -1968,35 +1983,20 @@ def render_aba_roteiro_individual(aluno, api_key):
                 for i, hab in enumerate(habilidades_bncc, 1):
                     st.write(f"{i}. {hab}")
     
-    # Taxonomia de Bloom
-    st.markdown("#### 🧠 Intencionalidade Pedagógica (Taxonomia de Bloom)")
-    verbos_bloom = criar_seletor_bloom("roteiro")
-    
-    # Configuração
-    st.markdown("---")
-    st.markdown("### ⚙️ Configuração do Roteiro")
-    
-    # Usar objeto do conhecimento como assunto padrão
-    assunto_roteiro = st.text_input(
-        "Assunto/Tema da Aula:", 
-        value=objeto_bncc if objeto_bncc else "", 
-        key="assunto_roteiro",
-        placeholder="Ex: Ciclo da água"
-    )
-    
     # Botão para gerar
     st.markdown("---")
     
     if st.button("📝 GERAR ROTEIRO INDIVIDUAL", type="primary", use_container_width=True):
-        if assunto_roteiro and habilidades_bncc:
-            with st.spinner("Criando roteiro individualizado..."):
+        # Validação: Usa o objeto_bncc como assunto
+        if objeto_bncc and habilidades_bncc:
+            with st.spinner(f"Criando roteiro sobre '{objeto_bncc}'..."):
                 res = gerar_roteiro_aula_completo(
                     api_key=api_key,
                     aluno=aluno,
                     materia=disciplina_bncc,
-                    assunto=assunto_roteiro,
+                    assunto=objeto_bncc, # Passa o objeto BNCC como assunto
                     habilidades_bncc=habilidades_bncc,
-                    verbos_bloom=verbos_bloom,
+                    verbos_bloom=None, # Bloom removido
                     ano=ano_bncc,
                     unidade_tematica=unidade_bncc,
                     objeto_conhecimento=objeto_bncc
@@ -2004,7 +2004,7 @@ def render_aba_roteiro_individual(aluno, api_key):
                 st.session_state['res_roteiro'] = res
                 st.session_state['res_roteiro_valid'] = False
         else:
-            st.warning("Preencha o Assunto/Tema e selecione pelo menos uma habilidade BNCC.")
+            st.warning("⚠️ Para gerar o roteiro, selecione a 'Disciplina', 'Objeto do Conhecimento' e pelo menos uma 'Habilidade' nos campos da BNCC acima.")
     
     # Exibição do resultado
     if 'res_roteiro' in st.session_state:
@@ -2024,7 +2024,7 @@ def render_aba_roteiro_individual(aluno, api_key):
             with col_ajust:
                 if st.button("🔄 Refazer com Ajustes", key="redo_roteiro", use_container_width=True):
                     st.session_state['res_roteiro_valid'] = False
-                    st.info("Para ajustes, modifique os parâmetros acima e clique em 'GERAR ROTEIRO' novamente.")
+                    st.info("Para ajustes, modifique as seleções da BNCC e clique em 'GERAR ROTEIRO' novamente.")
             with col_desc:
                 if st.button("🗑️ Descartar", key="del_roteiro", use_container_width=True):
                     del st.session_state['res_roteiro']
@@ -2142,6 +2142,7 @@ def render_aba_dinamica_inclusiva(aluno, api_key):
     <div class="pedagogia-box">
         <div class="pedagogia-title"><i class="ri-group-line"></i> Dinâmica Inclusiva</div>
         Atividades em grupo onde todos participam, respeitando as singularidades.
+        Baseado no Objeto do Conhecimento selecionado.
     </div>
     """, unsafe_allow_html=True)
     
@@ -2160,23 +2161,9 @@ def render_aba_dinamica_inclusiva(aluno, api_key):
                 for i, hab in enumerate(habilidades_bncc, 1):
                     st.write(f"{i}. {hab}")
     
-    # Taxonomia de Bloom
-    st.markdown("#### 🧠 Intencionalidade Pedagógica (Taxonomia de Bloom)")
-    verbos_bloom = criar_seletor_bloom("dinamica")
-    
-    # Configuração
+    # Configuração (Simplificada)
     st.markdown("---")
-    st.markdown("### ⚙️ Configuração da Dinâmica")
-    
-    c1, c2 = st.columns(2)
-    with c1:
-        # Usar objeto do conhecimento como assunto padrão
-        assunto_din = st.text_input(
-            "Assunto:", 
-            value=objeto_bncc if objeto_bncc else "", 
-            key="din_ass",
-            placeholder="Ex: Operações matemáticas básicas"
-        )
+    st.markdown("### ⚙️ Configuração da Turma")
     
     c3, c4 = st.columns(2)
     with c3:
@@ -2192,17 +2179,17 @@ def render_aba_dinamica_inclusiva(aluno, api_key):
     st.markdown("---")
     
     if st.button("🤝 CRIAR DINÂMICA", type="primary", use_container_width=True): 
-        if assunto_din and habilidades_bncc:
-            with st.spinner("Criando dinâmica inclusiva..."):
+        if objeto_bncc and habilidades_bncc:
+            with st.spinner(f"Criando dinâmica sobre '{objeto_bncc}'..."):
                 res = gerar_dinamica_inclusiva_completa(
                     api_key=api_key,
                     aluno=aluno,
                     materia=disciplina_bncc,
-                    assunto=assunto_din,
+                    assunto=objeto_bncc, # Passa o objeto BNCC como assunto
                     qtd_alunos=qtd_alunos,
                     caracteristicas_turma=carac_turma,
                     habilidades_bncc=habilidades_bncc,
-                    verbos_bloom=verbos_bloom,
+                    verbos_bloom=None, # Bloom Removido
                     ano=ano_bncc,
                     unidade_tematica=unidade_bncc,
                     objeto_conhecimento=objeto_bncc
@@ -2210,7 +2197,7 @@ def render_aba_dinamica_inclusiva(aluno, api_key):
                 st.session_state['res_dinamica'] = res
                 st.session_state['res_dinamica_valid'] = False
         else:
-            st.warning("Preencha o Assunto e selecione pelo menos uma habilidade BNCC.")
+            st.warning("⚠️ Selecione a 'Disciplina', 'Objeto do Conhecimento' e pelo menos uma 'Habilidade' nos campos da BNCC acima.")
     
     # Exibição do resultado
     if 'res_dinamica' in st.session_state:
@@ -2230,7 +2217,7 @@ def render_aba_dinamica_inclusiva(aluno, api_key):
             with col_ajust:
                 if st.button("🔄 Refazer com Ajustes", key="redo_dinamica", use_container_width=True):
                     st.session_state['res_dinamica_valid'] = False
-                    st.info("Para ajustes, modifique os parâmetros acima e clique em 'CRIAR DINÂMICA' novamente.")
+                    st.info("Para ajustes, modifique os parâmetros e clique em 'CRIAR DINÂMICA' novamente.")
             with col_desc:
                 if st.button("🗑️ Descartar", key="del_dinamica", use_container_width=True):
                     del st.session_state['res_dinamica']
@@ -2288,13 +2275,9 @@ def render_aba_plano_aula(aluno, api_key):
                 for i, hab in enumerate(habilidades_bncc, 1):
                     st.write(f"{i}. {hab}")
     
-    # Taxonomia de Bloom
-    st.markdown("#### 🧠 Intencionalidade Pedagógica (Taxonomia de Bloom)")
-    verbos_bloom = criar_seletor_bloom("plano")
-    
-    # Configuração
+    # Configuração (Simplificada)
     st.markdown("---")
-    st.markdown("### ⚙️ Configuração do Plano")
+    st.markdown("### ⚙️ Configuração Metodológica")
     
     c1, c2 = st.columns(2)
     with c1:
@@ -2313,30 +2296,22 @@ def render_aba_plano_aula(aluno, api_key):
     with c4:
         recursos_plano = st.multiselect("Recursos Disponíveis:", RECURSOS_DISPONIVEIS, key="plano_rec")
     
-    # Usar objeto do conhecimento como assunto padrão
-    assunto_plano = st.text_input(
-        "Assunto/Tema:", 
-        value=objeto_bncc if objeto_bncc else "", 
-        key="plano_ass",
-        placeholder="Ex: Sistema solar e planetas"
-    )
-    
     # Botão para gerar
     st.markdown("---")
     
     if st.button("📅 GERAR PLANO DE AULA", type="primary", use_container_width=True):
-        if assunto_plano and habilidades_bncc:
-            with st.spinner("Consultando BNCC e planejando..."):
+        if objeto_bncc and habilidades_bncc:
+            with st.spinner(f"Consultando BNCC e planejando aula sobre '{objeto_bncc}'..."):
                 res = gerar_plano_aula_completo(
                     api_key=api_key,
                     materia=disciplina_bncc,
-                    assunto=assunto_plano,
+                    assunto=objeto_bncc, # Passa o objeto BNCC como assunto
                     metodologia=metodologia,
                     tecnica=tecnica_ativa,
                     qtd_alunos=qtd_alunos_plano,
                     recursos=recursos_plano,
                     habilidades_bncc=habilidades_bncc,
-                    verbos_bloom=verbos_bloom,
+                    verbos_bloom=None, # Bloom Removido
                     ano=ano_bncc,
                     unidade_tematica=unidade_bncc,
                     objeto_conhecimento=objeto_bncc,
@@ -2345,7 +2320,7 @@ def render_aba_plano_aula(aluno, api_key):
                 st.session_state['res_plano'] = res
                 st.session_state['res_plano_valid'] = False
         else:
-            st.warning("Preencha o Assunto/Tema e selecione pelo menos uma habilidade BNCC.")
+            st.warning("⚠️ Selecione a 'Disciplina', 'Objeto do Conhecimento' e pelo menos uma 'Habilidade' nos campos da BNCC acima.")
     
     # Exibição do resultado
     if 'res_plano' in st.session_state:
@@ -2365,7 +2340,7 @@ def render_aba_plano_aula(aluno, api_key):
             with col_ajust:
                 if st.button("🔄 Refazer com Ajustes", key="redo_plano", use_container_width=True):
                     st.session_state['res_plano_valid'] = False
-                    st.info("Para ajustes, modifique os parâmetros acima e clique em 'GERAR PLANO' novamente.")
+                    st.info("Para ajustes, modifique os parâmetros e clique em 'GERAR PLANO' novamente.")
             with col_desc:
                 if st.button("🗑️ Descartar", key="del_plano", use_container_width=True):
                     del st.session_state['res_plano']
@@ -2398,7 +2373,6 @@ def render_aba_plano_aula(aluno, api_key):
                 mime="application/pdf",
                 use_container_width=True
             )
-
     # ==============================================================================
 # FUNÇÕES DA EDUCAÇÃO INFANTIL
 # ==============================================================================
