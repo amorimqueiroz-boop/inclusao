@@ -1379,8 +1379,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Renderizar progresso (se necessário)
-render_progresso()
+
 # ==============================================================================
 # ABAS DO PEI (TEXTO EM MAIÚSCULAS, SEM EMOJIS)
 # ==============================================================================
@@ -1392,11 +1391,7 @@ abas = [
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_9= st.tabs(abas)
 
 
-tab_objs = st.tabs(abas)
-# --- Barra de progresso: aparece em todas, exceto Início ---
-for i in range(1, len(tabs)):   # começa no 1 (pula INÍCIO)
-    with tabs[i]:
-        render_progresso()
+
 # ==============================================================================
 # 11. ABA INÍCIO — CENTRAL (Gestão de Alunos + Backups)
 # ==============================================================================
