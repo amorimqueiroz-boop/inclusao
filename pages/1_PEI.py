@@ -1389,13 +1389,7 @@ abas = [
     "PLANO DE AÇÃO", "MONITORAMENTO", "CONSULTORIA IA", "DASHBOARD & DOCS", "JORNADA GAMIFICADA"
 ]
 
-tabs = st.tabs(abas)
-tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = tabs
-
-# --- Barra de progresso: aparece em todas, exceto INÍCIO ---
-for t in tabs[1:]:
-    with t:
-        render_progresso()
+tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_9= st.tabs(abas)
 # ==============================================================================
 # 11. ABA INÍCIO — CENTRAL (Gestão de Alunos + Backups)
 # ==============================================================================
@@ -1647,6 +1641,9 @@ with tab0:
 # 12. ABA ESTUDANTE
 # ==============================================================================
   
+with tab1:
+    render_progresso()
+    st.markdown("### <i class='ri-user-smile-line'></i> Dossiê do Estudante", unsafe_allow_html=True)
 
     # Garantias (caso algo não tenha entrado no default_state)
     st.session_state.dados.setdefault("matricula", "")
@@ -1889,7 +1886,9 @@ with tab0:
 # ==============================================================================
 # 13. ABA EVIDÊNCIAS (COMPLETA)
 # ==============================================================================
-
+with tab2:
+    render_progresso()
+    st.markdown("### <i class='ri-search-eye-line'></i> Coleta de Evidências", unsafe_allow_html=True)
 
     atual = st.session_state.dados.get("nivel_alfabetizacao")
     idx = LISTA_ALFABETIZACAO.index(atual) if atual in LISTA_ALFABETIZACAO else 0
@@ -1945,7 +1944,9 @@ with tab0:
 # ==============================================================================
 # 14. ABA REDE DE APOIO (COMPLETA)
 # ==============================================================================
-
+with tab3:
+    render_progresso()
+    st.markdown("### <i class='ri-team-line'></i> Rede de Apoio", unsafe_allow_html=True)
 
     # Garantias (caso algo não tenha entrado no default_state)
     st.session_state.dados.setdefault("rede_apoio", [])
@@ -2032,7 +2033,9 @@ with tab0:
 # ==============================================================================
 # 15. ABA MAPEAMENTO (3 colunas | hiperfoco + potências + barreiras + nível de apoio + observações)
 # ==============================================================================
-
+with tab4:
+    render_progresso()
+    st.markdown("### <i class='ri-radar-line'></i> Mapeamento", unsafe_allow_html=True)
     st.caption("Mapeie forças, hiperfocos e barreiras. Para cada barreira selecionada, indique a intensidade de apoio necessária.")
 
     # -------------------------
@@ -2193,7 +2196,9 @@ with tab0:
 # ==============================================================================
 # 16. ABA PLANO DE AÇÃO (COMPLETA)
 # ==============================================================================
-
+with tab5:
+    render_progresso()
+    st.markdown("### <i class='ri-tools-line'></i> Plano de Ação", unsafe_allow_html=True)
 
     c1, c2, c3 = st.columns(3)
 
@@ -2266,7 +2271,9 @@ with tab0:
 # ==============================================================================
 # 17. ABA MONITORAMENTO (COMPLETA)
 # ==============================================================================
-
+with tab6:
+    render_progresso()
+    st.markdown("### <i class='ri-loop-right-line'></i> Monitoramento", unsafe_allow_html=True)
 
     st.session_state.dados["monitoramento_data"] = st.date_input(
         "Data da Próxima Revisão",
@@ -2332,6 +2339,9 @@ with tab0:
 # ==============================================================================
 # 18. ABA CONSULTORIA IA (COMPLETA: gerar + revisar + aprovar + ajustar)
 # ==============================================================================
+with tab7:
+    render_progresso()
+    st.markdown("### <i class='ri-robot-2-line'></i> Consultoria Pedagógica", unsafe_allow_html=True)
 
     if not st.session_state.dados.get("serie"):
         st.warning("⚠️ Selecione a Série/Ano na aba **Estudante** para ativar o modo especialista.")
@@ -2485,6 +2495,9 @@ with tab0:
 # ==============================================================================
 # 19. ABA DASHBOARD & DOCS (Dashboard + Metas + Exportações + Sincronização 'rico')
 # ==============================================================================
+with tab8:
+    render_progresso()
+    st.markdown("### <i class='ri-file-pdf-line'></i> Dashboard e Exportação", unsafe_allow_html=True)
 
     # --------------------------------------------------------------------------
     # 0) GARANTIR CSS DO DASH
@@ -2903,6 +2916,8 @@ with tab0:
 # ABA — JORNADA GAMIFICADA (BLOCO COMPLETO)
 # ==============================================================================
 
+with tab_9:
+    render_progresso()
 
     nome_aluno = st.session_state.dados.get("nome") or "Estudante"
     serie = st.session_state.dados.get("serie") or ""
