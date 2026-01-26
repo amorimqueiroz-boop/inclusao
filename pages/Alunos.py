@@ -38,34 +38,22 @@ ou.ensure_state()
 # 1. Renderiza o Cabeçalho (Logo + Usuário)
 ou.render_omnisfera_header()
 
-## 2. CSS Específico desta página (Cards e Tabelas)
+# 2. CSS Específico desta página (Cards e Tabelas)
 st.markdown("""
 <style>
-    /* CARD HERO - Margens reduzidas */
-    .mod-card-wrapper { 
-        display: flex; flex-direction: column; 
-        margin-bottom: 10px; /* Reduzido espaço para a busca */
-        border-radius: 12px; overflow: hidden; 
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
-        border: 1px solid #E2E8F0; 
-        margin-top: 5px; /* Bem colado no menu */
-    }
-    .mod-card-wrapper {{ display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); }}
-    .mod-card-rect {{ background: white; border-radius: 16px 16px 0 0; padding: 0; border: 1px solid #E2E8F0; border-bottom: none; display: flex; flex-direction: row; align-items: center; height: 130px; width: 100%; position: relative; overflow: hidden; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }}
-    .mod-card-rect:hover {{ transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08); border-color: #CBD5E1; }}
-    .mod-bar {{ width: 6px; height: 100%; flex-shrink: 0; }}
-    .mod-icon-area {{ width: 90px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0; background: transparent !important; border-right: 1px solid #F1F5F9; transition: all 0.3s ease; }}
-    .mod-card-rect:hover .mod-icon-area {{ transform: scale(1.05); }}
-    .mod-content {{ flex-grow: 1; padding: 0 24px; display: flex; flex-direction: column; justify-content: center; }}
-    .mod-title {{ font-weight: 800; font-size: 1.1rem; color: #1E293B; margin-bottom: 6px; letter-spacing: -0.3px; transition: color 0.2s; }}
-    .mod-card-rect:hover .mod-title {{ color: #0D9488; }}
-    .mod-desc {{ font-size: 0.8rem; color: #64748B; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
+    /* CARD HERO */
+    .mod-card-wrapper { display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin-top: 15px;}
+    .mod-card-rect { background: white; padding: 0; display: flex; align-items: center; height: 90px; position: relative; }
+    .mod-bar { width: 6px; height: 100%; position: absolute; left: 0; background-color: #0284C7; }
+    .mod-icon-area { width: 80px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; background: #F0F9FF; color: #0284C7; margin-left: 6px; }
+    .mod-content { flex-grow: 1; padding: 0 20px; display: flex; flex-direction: column; justify-content: center; }
+    .mod-title { font-weight: 800; font-size: 1.1rem; color: #1E293B; margin-bottom: 4px; }
+    .mod-desc { font-size: 0.8rem; color: #64748B; }
 
-
-    /* TABELA DE ALUNOS - Mais compacta */
-    .student-table { background: white; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-top: 10px; }
-    .student-header { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; background: #F8FAFC; padding: 10px 20px; border-bottom: 1px solid #E2E8F0; font-weight: 800; color: #475569; font-size: 0.75rem; text-transform: uppercase; }
-    .student-row { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; padding: 10px 20px; border-bottom: 1px solid #F1F5F9; align-items: center; background: white; }
+    /* TABELA DE ALUNOS */
+    .student-table { background: white; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-top: 20px; }
+    .student-header { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; background: #F8FAFC; padding: 12px 20px; border-bottom: 1px solid #E2E8F0; font-weight: 800; color: #475569; font-size: 0.8rem; text-transform: uppercase; }
+    .student-row { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; padding: 12px 20px; border-bottom: 1px solid #F1F5F9; align-items: center; background: white; }
     .student-row:hover { background: #F8FAFC; }
     
     /* BADGES */
@@ -76,6 +64,9 @@ st.markdown("""
     .delete-confirm-banner { background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; padding: 8px 12px; margin-top: 4px; font-size: 0.8rem; color: #92400E; display: flex; align-items: center; gap: 8px; }
 </style>
 """, unsafe_allow_html=True)
+
+# 3. Renderiza o Menu de Navegação (Aba Ativa: Estudantes)
+ou.render_navbar(active_tab="Estudantes")
 
 # ==============================================================================
 # 3. LÓGICA DE DADOS
