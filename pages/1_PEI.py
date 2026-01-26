@@ -341,7 +341,60 @@ def db_list_students(search: str | None = None):
     data = r.json()
     return data if isinstance(data, list) else []
 
+def db_update_pei_content(student_id: str, pei_dict: dict):
+    """
+    Salva o dicionário completo do PEI na coluna 'pei_data' do Supabase.
+    """
+    # URL para atualizar o aluno específico
+    url = f"{_sb_url()}/rest/v1/students?id=eq.{student_id}"
+    
+    h = _headers()
+    h["Prefer"] = "return=representation"
+    
+    # Prepara o JSON. Convertemos para string/dict puro para garantir que datas não quebrem
+    import json
+    payload_json = json.loads(json.dumps(pei_dict, default=str))
+    
+    # Envia apenas o campo pei_data e a data de atualização
+    body = {
+        "pei_data": payload_json,
+        "updated_at": datetime.now().isoformat()
+    }
+    
+    r = requests.patch(url, headers=h, json=body, timeout=20)
+    
+    if r.status_code >= 400:
+        raise RuntimeError(f"Erro ao salvar conteúdo do PEI: {r.text}")
+        
+    return r.json()
+    
+def db_update_pei_content(student_id: str, pei_dict: dict):
+    """Salva o JSON completo na coluna pei_data do Supabase"""
+    # Verifica credenciais
+    url = str(st.secrets.get("SUPABASE_URL", "")).strip()
+    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "") or st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
+    
+    if not url or not key: return None
 
+    api_url = f"{url.rstrip('/')}/rest/v1/students?id=eq.{student_id}"
+    headers = {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    }
+    
+    # Prepara o JSON seguro (datas viram string)
+    import json
+    payload_json = json.loads(json.dumps(pei_dict, default=str))
+    
+    body = {
+        "pei_data": payload_json,
+        "updated_at": datetime.now().isoformat()
+    }
+    
+    r = requests.patch(api_url, headers=headers, json=body, timeout=20)
+    return r.json() if r.status_code < 400 else None
 
 # ==============================================================================
 # 
