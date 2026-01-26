@@ -1043,63 +1043,60 @@ st.markdown("""
         padding: 0 !important; 
     }
     
-    /* HACK AGUESSIVO PARA REMOVER TODOS OS ESPAÇOS */
-    div.stApp > div:first-child {
-        padding-top: 0 !important;
-        margin-top: 0 !important;
-    }
-    
+    /* HACK ESPECÍFICO PARA REMOVER ESPAÇO ENTRE NAVBAR E CARD */
+    /* Remove espaço do container principal do Streamlit */
     div[data-testid="stAppViewContainer"] > div:first-child {
-        padding-top: 0 !important !important;
-        margin-top: 0 !important !important;
-    }
-    
-    div[data-testid="stVerticalBlock"] {
-        margin-top: 0 !important;
         padding-top: 0 !important;
     }
     
-    div[data-testid="stHorizontalBlock"] {
-        margin-top: 0 !important;
-        margin-bottom: -5px !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* CONTAINER PRINCIPAL - ESPAÇO ZERO */
+    /* Remove espaço do block-container */
     .block-container { 
         padding-top: 0rem !important;  
-        padding-bottom: 1rem !important;
-        margin-top: 0 !important;
+        padding-bottom: 1.5rem !important;
     }
     
+    /* Remove margem do container principal */
     .main .block-container {
         padding-left: 0.8rem !important;
         padding-right: 0.8rem !important;
         padding-top: 0rem !important;
     }
     
-    /* CARD HERO - COLADO NO NAVBAR */
+    /* Remove espaço do navbar (option_menu) */
+    div[data-testid="stHorizontalBlock"] {
+        margin-top: 0 !important;
+        margin-bottom: -4px !important; /* Puxa o conteúdo para cima */
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Remove espaço residual após o navbar */
+    .after-navbar-anchor {
+        margin-top: -6px !important;
+        height: 0 !important;
+    }
+    
+    /* CARD HERO - TAMANHO ORIGINAL, SEM MARGEM SUPERIOR */
     .mod-card-wrapper {
         display: flex;
         flex-direction: column;
-        margin-top: 0px !important;
+        margin-top: 0px !important;  /* ZERO MARGEM SUPERIOR */
         margin-bottom: 1rem !important;
         border-radius: 16px;
         overflow: hidden;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
     }
     
-    /* CARD HERO MAIS COMPACTO */
+    /* CARD HERO TAMANHO ORIGINAL */
     .mod-card-rect {
         background: white;
         border-radius: 16px;
-        padding: 0 !important;
+        padding: 0;
         border: 1px solid #E2E8F0;
         display: flex;
         flex-direction: row;
         align-items: center;
-        height: 90px !important;  /* Altura drasticamente reduzida */
+        height: 130px !important;  /* TAMANHO ORIGINAL */
         width: 100%;
         position: relative;
         overflow: hidden;
@@ -1113,18 +1110,18 @@ st.markdown("""
     }
     
     .mod-bar {
-        width: 4px !important;  /* Mais fino */
+        width: 6px;
         height: 100%;
         flex-shrink: 0;
     }
     
     .mod-icon-area {
-        width: 60px !important;  /* Mais estreito */
+        width: 90px;  /* TAMANHO ORIGINAL */
         height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.2rem !important;  /* Menor */
+        font-size: 1.8rem;  /* TAMANHO ORIGINAL */
         flex-shrink: 0;
         background: transparent !important;
         border-right: 1px solid #F1F5F9;
@@ -1133,7 +1130,7 @@ st.markdown("""
     
     .mod-content {
         flex-grow: 1;
-        padding: 0 12px !important;  /* Menos padding */
+        padding: 0 24px;  /* TAMANHO ORIGINAL */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -1141,18 +1138,17 @@ st.markdown("""
     
     .mod-title {
         font-weight: 800;
-        font-size: 0.9rem !important;  /* Menor */
+        font-size: 1.1rem;  /* TAMANHO ORIGINAL */
         color: #1E293B;
-        margin-bottom: 2px !important;  /* Menos margem */
+        margin-bottom: 6px;  /* TAMANHO ORIGINAL */
         letter-spacing: -0.2px;
         transition: color 0.2s;
-        line-height: 1.2;
     }
     
     .mod-desc {
-        font-size: 0.7rem !important;  /* Menor */
+        font-size: 0.8rem;  /* TAMANHO ORIGINAL */
         color: #64748B;
-        line-height: 1.1 !important;  /* Linha mais compacta */
+        line-height: 1.4;  /* TAMANHO ORIGINAL */
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -1170,36 +1166,36 @@ st.markdown("""
         color: #3B82F6 !important;
     }
     
-    /* TABS COMPACTOS */
+    /* TABS - MANTÉM COMPACTOS */
     div[data-baseweb="tab-border"],
     div[data-baseweb="tab-highlight"] { 
         display: none !important; 
     }
     
     .stTabs [data-baseweb="tab-list"] {
-        gap: 4px !important;  /* Menor gap */
+        gap: 8px;
         display: flex;
         flex-wrap: wrap !important;
         white-space: normal !important;
         overflow-x: visible !important;
-        padding: 6px 2px !important;  /* Menos padding */
+        padding: 10px 5px;
         width: 100%;
-        margin-bottom: 0.3rem !important;  /* Menos margem */
+        margin-bottom: 0.5rem !important;
     }
     
     .stTabs [data-baseweb="tab"] {
-        height: 32px !important;  /* Mais baixo */
-        border-radius: 16px !important;
+        height: 38px;
+        border-radius: 20px !important;
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
         color: #718096;
         font-weight: 700;
-        font-size: 0.7rem !important;  /* Menor */
-        padding: 0 12px !important;  /* Menos padding */
-        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        font-size: 0.8rem;
+        padding: 0 20px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         text-transform: uppercase;
-        letter-spacing: 0.2px;
-        margin-bottom: 2px !important;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
     }
     
     .stTabs [data-baseweb="tab"]:hover { 
@@ -1213,7 +1209,7 @@ st.markdown("""
         color: #3182CE !important;
         border: 1px solid #3182CE !important; 
         font-weight: 800;
-        box-shadow: 0 0 8px rgba(49, 130, 206, 0.3), inset 0 0 3px rgba(49, 130, 206, 0.1) !important;
+        box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important;
     }
     
     /* ELEMENTOS DO FORMULÁRIO */
@@ -1228,7 +1224,7 @@ st.markdown("""
     div[data-testid="column"] .stButton button { 
         border-radius: 8px !important; 
         font-weight: 700 !important; 
-        height: 40px !important;  /* Mais baixo */
+        height: 45px !important; 
         background-color: #0F52BA !important; 
         color: white !important; 
         border: none !important; 
@@ -1238,35 +1234,12 @@ st.markdown("""
         background-color: #0A3D8F !important; 
     }
     
-    /* REMOVER MARGENS EXCESSIVAS */
-    div[data-testid="column"] {
-        padding-top: 0.15rem !important;
-        padding-bottom: 0.15rem !important;
-    }
-    
-    .stButton button {
-        margin-top: 0.15rem !important;
-        margin-bottom: 0.15rem !important;
-    }
-    
-    .st-emotion-cache-1r4qj8v,
-    .st-emotion-cache-keje6w,
-    .st-emotion-cache-1dp5vir {
-        margin-top: 0 !important;
-        margin-bottom: 0.1rem !important;
-    }
-    
-    /* REMOVER HEADER DO STREAMLIT */
-    section[data-testid="stHeader"] {
-        display: none !important;
-    }
-    
     /* FOOTER */
     .footer-signature { 
         text-align:center; 
         opacity:0.55; 
-        font-size:0.65rem; 
-        padding:10px 0 5px 0; 
+        font-size:0.75rem; 
+        padding:30px 0 10px 0; 
     }
     
     /* ANIMAÇÃO DO LOGO */
@@ -1284,50 +1257,29 @@ st.markdown("""
         .mod-card-rect {
             flex-direction: column;
             height: auto !important;
-            min-height: 80px !important;
-            padding: 8px !important;
+            padding: 12px;
         }
         
         .mod-bar {
-            width: 100% !important;
-            height: 3px !important;
+            width: 100%;
+            height: 4px;
         }
         
         .mod-icon-area {
-            width: 100% !important;
-            height: 40px !important;
-            border-right: none !important;
+            width: 100%;
+            height: 50px;
+            border-right: none;
             border-bottom: 1px solid #F1F5F9;
         }
         
         .mod-content {
-            padding: 8px 0 0 0 !important;
-        }
-        
-        .block-container {
-            padding-top: 0rem !important;
+            padding: 12px 0 0 0;
         }
     }
     
-    /* REMOVER QUALQUER ESPAÇO EM CIMA DO MENU */
-    div[data-testid="stVerticalBlock"] > div:first-child {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-    }
-    
-    /* CONTAINER DO PROGRESSO */
-    .progress-container {
-        width: 100%;
-        margin: 0.2rem 0 0.6rem 0 !important;
-    }
-    
-    /* AGRESSIVO: REMOVER TODOS OS PADDINGS/MARGINS DOS ELEMENTOS STREAMLIT */
-    .st-emotion-cache-1on073z,
-    .st-emotion-cache-1wrcr25,
-    .st-emotion-cache-1v0mbdj,
-    .st-emotion-cache-1y4p8pa {
-        margin: 0 !important;
-        padding: 0 !important;
+    /* REMOVER QUALQUER ESPAÇO RESIDUAL DO HEADER DO STREAMLIT */
+    section[data-testid="stHeader"] {
+        display: none !important;
     }
 </style>
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
@@ -1364,7 +1316,7 @@ def render_progresso():
     icon_html = ""
     
     if src_logo_giratoria:
-        icon_html = f'<img src="{src_logo_giratoria}" class="omni-logo-spin" style="width:20px;height:20px;">'
+        icon_html = f'<img src="{src_logo_giratoria}" class="omni-logo-spin" style="width:25px;height:25px;">'
     
     bar_color = "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)"
     if p >= 100:
@@ -1372,9 +1324,9 @@ def render_progresso():
     
     st.markdown(f"""
     <div class="progress-container">
-        <div style="width:100%; height:2px; background:#E2E8F0; border-radius:1px; position:relative;">
-            <div style="height:2px; width:{p}%; background:{bar_color}; border-radius:1px;"></div>
-            <div style="position:absolute; top:-10px; left:{p}%; transform:translateX(-50%);">{icon_html}</div>
+        <div style="width:100%; height:3px; background:#E2E8F0; border-radius:2px; position:relative;">
+            <div style="height:3px; width:{p}%; background:{bar_color}; border-radius:2px;"></div>
+            <div style="position:absolute; top:-14px; left:{p}%; transform:translateX(-50%);">{icon_html}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1387,9 +1339,9 @@ saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else 
 USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
 WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
 
-# Container ultra compacto - SEM NENHUM ESPAÇO
+# Container ultra compacto - sem margens
 st.markdown(f"""
-<div class="mod-card-wrapper" style="margin-top:0px!important;padding-top:0px!important;">
+<div class="mod-card-wrapper">
     <div class="mod-card-rect">
         <div class="mod-bar c-blue"></div>
         <div class="mod-icon-area bg-blue-soft">
