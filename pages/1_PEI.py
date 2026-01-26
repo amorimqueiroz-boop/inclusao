@@ -1096,7 +1096,7 @@ html, body, [class*="css"] {
 
 /* CONTAINER PRINCIPAL - MÍNIMO POSSÍVEL */
 .block-container {
-    padding-top: 0.1rem !important;  /* Mínimo possível */
+    padding-top: 0rem !important;  /* Mínimo possível */
     padding-bottom: 1.5rem !important;
 }
 
