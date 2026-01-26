@@ -3,7 +3,7 @@ import base64
 import json
 import requests
 import streamlit as st
-from streamlit_option_menu import option_menu 
+from streamlit_option_menu import option_menu
 
 # =============================================================================
 # 1. ESTADO E CONFIGURAÇÃO INICIAL
@@ -19,7 +19,7 @@ def ensure_state():
         st.session_state.view = "login"
 
 # =============================================================================
-# 2. UI COMPONENTS (HEADER & NAVBAR) - CORRIGIDO E SIMPLIFICADO
+# 2. UI COMPONENTS (HEADER & NAVBAR) - VERSÃO TURBINADA (64px)
 # =============================================================================
 
 def get_base64_image(path: str) -> str | None:
@@ -30,7 +30,8 @@ def get_base64_image(path: str) -> str | None:
 
 def render_omnisfera_header():
     """
-    Renderiza o Topbar com CSS simplificado e que funciona
+    Renderiza o Topbar com dimensões aumentadas (64px), elementos maiores 
+    e ajusta o layout da página para ocupar a tela toda.
     """
     def _get_initials(nome: str) -> str:
         if not nome: return "U"
@@ -41,98 +42,85 @@ def render_omnisfera_header():
         ws = st.session_state.get("workspace_name", "") or "Workspace"
         return (ws[:max_len] + "...") if len(ws) > max_len else ws
 
-    # CSS simplificado e mais agressivo
+    # CSS Ajustado para Barra Maior e Layout Full Width
     st.markdown("""
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <style>
-        /* CSS MAIS AGUESSIVO - prioridade máxima */
+        /* 1. AJUSTE DE PADDING SUPERIOR (CRÍTICO) 
+           Compensa a barra de 64px + margem. Empurra o conteúdo para baixo. */
         div[data-testid="stAppViewContainer"] > div:first-child {
-            padding-top: 70px !important;
+            padding-top: 90px !important;
         }
         
-        .stApp > header {
+        /* 2. REMOVER ELEMENTOS NATIVOS DO STREAMLIT */
+        .stApp > header { display: none !important; }
+        [data-testid="stSidebarNav"], footer, section[data-testid="stSidebar"], button[data-testid="collapsedControl"] {
             display: none !important;
         }
         
-        [data-testid="stSidebarNav"],
-        footer,
-        section[data-testid="stSidebar"],
-        button[data-testid="collapsedControl"] {
-            display: none !important;
-        }
-        
-        /* TOPBAR FIXA SIMPLES */
+        /* 3. TOPBAR FIXA - MAIOR (64px) */
         .omni-topbar {
             position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            height: 50px !important;
+            top: 0 !important; left: 0 !important; right: 0 !important;
+            height: 64px !important; /* Altura aumentada */
             background: white !important;
             border-bottom: 1px solid #E2E8F0 !important;
             z-index: 999999 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            padding: 0 20px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+            display: flex !important; align-items: center !important; justify-content: space-between !important;
+            padding: 0 24px !important; /* Mais respiro lateral */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
         }
         
         .omni-brand {
-            display: flex !important;
-            align-items: center !important;
-            gap: 10px !important;
+            display: flex !important; align-items: center !important; gap: 12px !important;
         }
         
+        /* LOGO MAIOR */
         .omni-logo {
-            height: 28px !important;
-            width: 28px !important;
+            height: 38px !important; width: 38px !important;
+            animation: spin-logo 60s linear infinite;
         }
         
         .omni-user-info {
-            display: flex !important;
-            align-items: center !important;
-            gap: 10px !important;
+            display: flex !important; align-items: center !important; gap: 12px !important;
         }
         
         .omni-workspace {
             background: #F1F5F9 !important;
             border: 1px solid #E2E8F0 !important;
-            padding: 4px 12px !important;
-            border-radius: 10px !important;
-            font-size: 12px !important;
+            padding: 6px 14px !important;
+            border-radius: 12px !important;
+            font-size: 13px !important;
             font-weight: 600 !important;
             color: #64748B !important;
-            max-width: 150px !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            white-space: nowrap !important;
+            max-width: 180px !important;
+            overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important;
         }
         
+        /* AVATAR MAIOR */
         .omni-avatar {
-            width: 28px !important;
-            height: 28px !important;
+            width: 36px !important; height: 36px !important;
             border-radius: 50% !important;
             background: linear-gradient(135deg, #4F46E5, #7C3AED) !important;
             color: white !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
+            display: flex !important; align-items: center !important; justify-content: center !important;
             font-weight: 700 !important;
-            font-size: 11px !important;
+            font-size: 13px !important;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2) !important;
         }
         
-        /* CORREÇÃO DO LAYOUT PRINCIPAL */
+        @keyframes spin-logo { 100% { transform: rotate(360deg); } }
+
+        /* 4. LAYOUT FULL WIDTH (LARGURA TOTAL) */
         .block-container {
-            padding-top: 20px !important;
+            padding-top: 10px !important;
             padding-bottom: 20px !important;
             max-width: 100% !important;
         }
         
-        /* REMOVER MARGENS E PADDINGS EXCESSIVOS */
         .main .block-container {
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
+            padding-left: 2rem !important; /* Margem lateral do conteúdo */
+            padding-right: 2rem !important;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -142,9 +130,11 @@ def render_omnisfera_header():
     ws_name = _get_ws_short()
     user_name = st.session_state.get("usuario_nome", "Visitante")
     
-    # Usar fallback se as imagens não existirem
-    img_logo = f'<img src="data:image/png;base64,{icone}" class="omni-logo">' if icone else '<div class="omni-logo">🌐</div>'
-    img_text = f'<img src="data:image/png;base64,{texto}" style="height: 16px; margin-left: 5px;">' if texto else '<span style="font-weight:800;color:#2B3674;font-size:14px;">OMNISFERA</span>'
+    # Imagens e Textos ajustados para o novo tamanho
+    img_logo = f'<img src="data:image/png;base64,{icone}" class="omni-logo">' if icone else '<div class="omni-logo" style="display:flex;align-items:center;justify-content:center;font-size:24px;">🌐</div>'
+    
+    # Texto Omnisfera aumentado
+    img_text = f'<img src="data:image/png;base64,{texto}" style="height: 22px; margin-left: 4px;">' if texto else '<span style="font-weight:800;color:#2B3674;font-size:18px;letter-spacing:-0.5px;">OMNISFERA</span>'
 
     st.markdown(f"""
         <div class="omni-topbar">
@@ -162,7 +152,7 @@ def render_omnisfera_header():
 
 def render_navbar(active_tab: str = "Início"):
     """
-    Renderiza o menu horizontal - versão simplificada
+    Renderiza o menu horizontal.
     """
     opcoes = ["Início", "Estudantes", "Estratégias & PEI", "Plano de Ação (AEE)", "Hub de Recursos", "Diário de Bordo", "Evolução & Dados"]
     icones = ["house", "people", "book", "puzzle", "rocket", "journal", "bar-chart"]
@@ -172,27 +162,22 @@ def render_navbar(active_tab: str = "Início"):
     except ValueError: 
         default_idx = 0
 
-    # CSS específico para o navbar
+    # CSS específico para o navbar (Container)
     st.markdown("""
     <style>
-    /* CONTAINER DO NAVBAR */
     .stHorizontalBlock {
-        margin-top: 10px !important;
-        margin-bottom: 20px !important;
+        margin-top: 0px !important;
+        margin-bottom: 15px !important;
     }
-    
-    /* REMOVER EFEITOS DO STREAMLIT */
     div[data-testid="stHorizontalBlock"] {
-        background: none !important;
-        border: none !important;
+        background: none !important; border: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # Usar container para melhor controle
     with st.container():
-        # Adicionar um pouco de espaço acima do menu
-        st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True)
+        # Pequeno espaçador visual opcional
+        st.markdown('<div style="height: 5px;"></div>', unsafe_allow_html=True)
         
         selected = option_menu(
             menu_title=None, 
@@ -238,107 +223,51 @@ def render_navbar(active_tab: str = "Início"):
             target = "pages/0_Home.py" if os.path.exists("pages/0_Home.py") else "0_Home.py"
             if not os.path.exists(target): target = "Home.py"
             st.switch_page(target)
-        elif selected == "Estudantes": 
-            st.switch_page("pages/Alunos.py") 
-        elif selected == "Estratégias & PEI": 
-            st.switch_page("pages/1_PEI.py")
-        elif selected == "Plano de Ação (AEE)": 
-            st.switch_page("pages/2_PAE.py")
-        elif selected == "Hub de Recursos": 
-            st.switch_page("pages/3_Hub_Inclusao.py")
-        elif selected == "Diário de Bordo": 
-            st.switch_page("pages/4_Diario_de_Bordo.py")
-        elif selected == "Evolução & Dados": 
-            st.switch_page("pages/5_Monitoramento_Avaliacao.py")
+        elif selected == "Estudantes": st.switch_page("pages/Alunos.py") 
+        elif selected == "Estratégias & PEI": st.switch_page("pages/1_PEI.py")
+        elif selected == "Plano de Ação (AEE)": st.switch_page("pages/2_PAE.py")
+        elif selected == "Hub de Recursos": st.switch_page("pages/3_Hub_Inclusao.py")
+        elif selected == "Diário de Bordo": st.switch_page("pages/4_Diario_de_Bordo.py")
+        elif selected == "Evolução & Dados": st.switch_page("pages/5_Monitoramento_Avaliacao.py")
 
 # =============================================================================
-# 3. UI HELPERS (LEGADO / LOGIN) - MANTIDO IGUAL
+# 3. UI HELPERS (LEGADO / LOGIN)
 # =============================================================================
 def inject_base_css():
     """
-    CSS básico para a tela de Login e Home sem Header.
+    CSS básico para a tela de Login e Home sem Header fixo.
     """
     st.markdown(
         """
 <style>
 /* LOGIN e GERAIS */
 .login-box {
-  background: white; 
-  border-radius: 24px; 
-  padding: 40px;
+  background: white; border-radius: 24px; padding: 40px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-  text-align: center; 
-  border: 1px solid #E2E8F0;
-  max-width: 650px; 
-  margin: 0 auto; 
-  margin-top: 30px;
+  text-align: center; border: 1px solid #E2E8F0;
+  max-width: 650px; margin: 0 auto; margin-top: 30px;
 }
-
-.login-logo { 
-  height: 80px; 
-  margin-bottom: 16px; 
-}
-
-.login-manifesto { 
-  font-style: italic; 
-  color: #718096; 
-  margin-bottom: 22px; 
-  font-size: 0.95rem; 
-}
-
-.stTextInput input { 
-  border-radius: 10px !important; 
-  border: 1px solid #E2E8F0 !important; 
-  height: 46px !important; 
-}
-
+.login-logo { height: 80px; margin-bottom: 16px; }
+.login-manifesto { font-style: italic; color: #718096; margin-bottom: 22px; font-size: 0.95rem; }
+.stTextInput input { border-radius: 10px !important; border: 1px solid #E2E8F0 !important; height: 46px !important; }
 .termo-box {
-  background-color: #F8FAFC; 
-  padding: 15px; 
-  border-radius: 10px;
-  height: 130px; 
-  overflow-y: auto; 
-  font-size: 0.80rem;
-  border: 1px solid #E2E8F0; 
-  margin-bottom: 14px;
-  text-align: justify; 
-  color: #4A5568;
+  background-color: #F8FAFC; padding: 15px; border-radius: 10px;
+  height: 130px; overflow-y: auto; font-size: 0.80rem;
+  border: 1px solid #E2E8F0; margin-bottom: 14px;
+  text-align: justify; color: #4A5568;
 }
 
 /* HOME COMPONENTS */
 .header-lite {
-  display:flex; 
-  justify-content:space-between; 
-  align-items:center;
-  border: 1px solid #E2E8F0; 
-  background: rgba(255,255,255,0.85);
-  border-radius: 16px; 
-  padding: 18px 20px; 
-  margin-bottom: 18px;
+  display:flex; justify-content:space-between; align-items:center;
+  border: 1px solid #E2E8F0; background: rgba(255,255,255,0.85);
+  border-radius: 16px; padding: 18px 20px; margin-bottom: 18px;
 }
-
-.h-title { 
-  font-size: 1.35rem; 
-  font-weight: 900; 
-  color:#1A202C; 
-}
-
-.h-sub { 
-  font-size: .95rem; 
-  font-weight: 600; 
-  color:#718096; 
-  margin-top: 2px; 
-}
-
+.h-title { font-size: 1.35rem; font-weight: 900; color:#1A202C; }
+.h-sub { font-size: .95rem; font-weight: 600; color:#718096; margin-top: 2px; }
 .h-badge {
-  border: 1px solid #E2E8F0; 
-  background:#F7FAFC; 
-  color:#4A5568;
-  border-radius: 999px; 
-  padding: 6px 12px; 
-  font-weight: 900; 
-  font-size: .75rem;
-  letter-spacing: .08em;
+  border: 1px solid #E2E8F0; background:#F7FAFC; color:#4A5568;
+  border-radius: 999px; padding: 6px 12px; font-weight: 900; font-size: .75rem; letter-spacing: .08em;
 }
 </style>
         """,
@@ -346,7 +275,7 @@ def inject_base_css():
     )
 
 # =============================================================================
-# RESTANTE DO CÓDIGO (MANTIDO IGUAL)
+# 4. SUPABASE / BANCO DE DADOS (REST)
 # =============================================================================
 def _sb_url() -> str:
     url = st.secrets.get("SUPABASE_URL", "").strip()
