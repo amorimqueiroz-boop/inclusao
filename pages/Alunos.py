@@ -38,22 +38,29 @@ ou.ensure_state()
 # 1. Renderiza o Cabeçalho (Logo + Usuário)
 ou.render_omnisfera_header()
 
-# 2. CSS Específico desta página (Cards e Tabelas)
+## 2. CSS Específico desta página (Cards e Tabelas)
 st.markdown("""
 <style>
-    /* CARD HERO */
-    .mod-card-wrapper { display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin-top: 15px;}
-    .mod-card-rect { background: white; padding: 0; display: flex; align-items: center; height: 90px; position: relative; }
+    /* CARD HERO - Margens reduzidas */
+    .mod-card-wrapper { 
+        display: flex; flex-direction: column; 
+        margin-bottom: 10px; /* Reduzido espaço para a busca */
+        border-radius: 12px; overflow: hidden; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+        border: 1px solid #E2E8F0; 
+        margin-top: 5px; /* Bem colado no menu */
+    }
+    .mod-card-rect { background: white; padding: 0; display: flex; align-items: center; height: 80px; /* Altura reduzida de 90 para 80px */ position: relative; }
     .mod-bar { width: 6px; height: 100%; position: absolute; left: 0; background-color: #0284C7; }
-    .mod-icon-area { width: 80px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; background: #F0F9FF; color: #0284C7; margin-left: 6px; }
+    .mod-icon-area { width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; background: #F0F9FF; color: #0284C7; margin-left: 6px; }
     .mod-content { flex-grow: 1; padding: 0 20px; display: flex; flex-direction: column; justify-content: center; }
-    .mod-title { font-weight: 800; font-size: 1.1rem; color: #1E293B; margin-bottom: 4px; }
+    .mod-title { font-weight: 800; font-size: 1.1rem; color: #1E293B; margin-bottom: 2px; }
     .mod-desc { font-size: 0.8rem; color: #64748B; }
 
-    /* TABELA DE ALUNOS */
-    .student-table { background: white; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-top: 20px; }
-    .student-header { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; background: #F8FAFC; padding: 12px 20px; border-bottom: 1px solid #E2E8F0; font-weight: 800; color: #475569; font-size: 0.8rem; text-transform: uppercase; }
-    .student-row { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; padding: 12px 20px; border-bottom: 1px solid #F1F5F9; align-items: center; background: white; }
+    /* TABELA DE ALUNOS - Mais compacta */
+    .student-table { background: white; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-top: 10px; }
+    .student-header { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; background: #F8FAFC; padding: 10px 20px; border-bottom: 1px solid #E2E8F0; font-weight: 800; color: #475569; font-size: 0.75rem; text-transform: uppercase; }
+    .student-row { display: grid; grid-template-columns: 3fr 1fr 1fr 2fr 1fr; padding: 10px 20px; border-bottom: 1px solid #F1F5F9; align-items: center; background: white; }
     .student-row:hover { background: #F8FAFC; }
     
     /* BADGES */
@@ -64,9 +71,6 @@ st.markdown("""
     .delete-confirm-banner { background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; padding: 8px 12px; margin-top: 4px; font-size: 0.8rem; color: #92400E; display: flex; align-items: center; gap: 8px; }
 </style>
 """, unsafe_allow_html=True)
-
-# 3. Renderiza o Menu de Navegação (Aba Ativa: Estudantes)
-ou.render_navbar(active_tab="Estudantes")
 
 # ==============================================================================
 # 3. LÓGICA DE DADOS
