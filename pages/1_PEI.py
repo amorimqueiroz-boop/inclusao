@@ -17,19 +17,8 @@ from datetime import date, datetime
 import omni_utils as ou  # módulo atualizado
 
 
-# ==============================================================================
-# BLOCO INICIAL PADRÃO — PEI (SAFE)
-# - 1x set_page_config
-# - ui_lockdown (se existir)
-# - gate autenticação
-# - header + navbar (omni_utils)
-# - NÃO altera .block-container
-# ==============================================================================
 
-import streamlit as st
-import omni_utils as ou
-
-# 1) CONFIG (UMA VEZ SÓ, SEM DUPLICAR)
+# ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
 st.set_page_config(
     page_title="Omnisfera | PEI",
     page_icon="📘",
@@ -37,7 +26,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# 2) UI LOCKDOWN (opcional)
+APP_VERSION = "v150.0 (SaaS Design)"
+
+# ✅ UI lockdown (não quebra se faltar)
 try:
     from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
     hide_streamlit_chrome_if_needed()
@@ -45,43 +36,10 @@ try:
 except Exception:
     pass
 
-# 3) ESTADO BASE (se seu PEI usa session_state)
-try:
-    ou.ensure_state()
-except Exception:
-    pass
-
-# 4) GATE (não mexe no layout)
-def verificar_acesso_padrao():
-    if not st.session_state.get("autenticado"):
-        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
-        st.stop()
-
-verificar_acesso_padrao()
-
-# 5) HEADER + NAVBAR (padrão)
+# ✅ Header + Navbar (depois do page_config)
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Estratégias & PEI")
-
-# 6) ESPAÇADOR PEQUENO (opcional)
-st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
-
-
-<style>
-    /* --- 1. CORREÇÃO ESTRUTURAL ( IGUAL AO HUB/ALUNOS ) --- */
-    
-    /* Remove cabeçalho padrão e sobe o conteúdo */
-    [data-testid="stHeader"] {
-        visibility: visible !important;
-        background-color: transparent !important;
-    }
-    
-    .block-container {
-        padding-top: 2rem !important; /* Cola o conteúdo no topo */
-        padding-bottom: 1rem !important;
-        margin-top: 0px !important;
-    }
-
+ou.inject_compact_app_css()
 
 # ==============================================================================
 # AJUSTE FINO DE LAYOUT (Igual ao Hub)
@@ -115,17 +73,6 @@ def forcar_layout_hub():
 
 # CHAME ESTA FUNÇÃO LOGO NO INÍCIO DO CÓDIGO
 forcar_layout_hub()
-# ==============================================================================
-# 1. CONFIGURAÇÃO E SEGURANÇA
-# ==============================================================================
-st.set_page_config(
-    page_title="Diário de Bordo PAEE | Omnisfera", 
-    page_icon="📘", 
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-
 # ==============================================================================
 # THEME — PEI (accent por página: botões + tabs + foco + chips/tags)
 # Cole logo após o header/navbar
