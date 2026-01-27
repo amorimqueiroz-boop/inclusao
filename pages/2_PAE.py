@@ -255,26 +255,34 @@ def inject_paee_css(theme: str = "teal"):
     )
 
 
+# ==============================================================================
+# FUNÇÃO DE VERIFICAÇÃO DE ACESSO
+# ==============================================================================
 def verificar_acesso():
-    # ✅ mantém o gate (importante)
+    """Verifica se o usuário está autenticado e AJUSTA O PADDING DO TOPO."""
     if not st.session_state.get("autenticado"):
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
         st.stop()
 
-    # ✅ se quiser esconder footer, ok (não mexe em padding)
-    st.markdown(
-        """
-<style>
-  footer {visibility:hidden !important;}
-</style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-# Chamar sempre no topo da página (depois do header/navbar do omni_utils)
-inject_paee_css(theme="teal")
-verificar_acesso()
+    # ✅ AQUI ESTÁ O SEGREDO DO ESPAÇAMENTO:
+    st.markdown("""
+        <style>
+            /* Esconde rodapé e menu padrão */
+            footer {visibility: hidden !important;}
+            #MainMenu {visibility: hidden !important;}
+            
+            /* Torna o header do Streamlit transparente */
+            [data-testid="stHeader"] {
+                visibility: visible !important; 
+                background-color: transparent !important;
+            }
+            
+            /* REMOVE O ESPAÇO GIGANTE DO TOPO */
+            .block-container {
+                padding-top: 2rem !important; /* O padrão é cerca de 6rem */
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
 
 # ==============================================================================
