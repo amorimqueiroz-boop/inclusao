@@ -1703,7 +1703,6 @@ with tab0:
 # ==============================================================================
   
 with tab1:
-    render_progresso()
     st.markdown("### <i class='ri-user-smile-line'></i> Dossiê do Estudante", unsafe_allow_html=True)
 
     # Garantias (caso algo não tenha entrado no default_state)
