@@ -39,7 +39,7 @@ except Exception:
 # ✅ Header + Navbar (depois do page_config)
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Estratégias & PEI")
-
+ou.inject_compact_app_css()
 
 
 # ==============================================================================
