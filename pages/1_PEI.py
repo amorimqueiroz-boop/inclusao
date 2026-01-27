@@ -67,6 +67,22 @@ ou.render_navbar(active_tab="Estratégias & PEI")
 st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
 
 
+<style>
+    /* --- 1. CORREÇÃO ESTRUTURAL ( IGUAL AO HUB/ALUNOS ) --- */
+    
+    /* Remove cabeçalho padrão e sobe o conteúdo */
+    [data-testid="stHeader"] {
+        visibility: visible !important;
+        background-color: transparent !important;
+    }
+    
+    .block-container {
+        padding-top: 2rem !important; /* Cola o conteúdo no topo */
+        padding-bottom: 1rem !important;
+        margin-top: 0px !important;
+    }
+
+
 # ==============================================================================
 # AJUSTE FINO DE LAYOUT (Igual ao Hub)
 # ==============================================================================
