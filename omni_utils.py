@@ -8,7 +8,7 @@ from streamlit_option_menu import option_menu
 # =============================================================================
 # 1) ESTADO E CONFIGURAÇÃO INICIAL
 # =============================================================================
-APP_VERSION = "omni_utils v2.4 (Layout Estável: Topbar+Navbar sem CSS global perigoso)"
+APP_VERSION = "omni_utils v2.5 (Layout colado: menu + hero bem perto)"
 
 def ensure_state():
     if "autenticado" not in st.session_state:
@@ -46,12 +46,16 @@ def _get_ws_short(max_len: int = 22) -> str:
     ws = str(ws).strip()
     return (ws[:max_len] + "...") if len(ws) > max_len else ws
 
-def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int = 14):
+def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int = 2):
     """
     CSS base do layout:
     - Topbar fixa
+    - Navbar fixa
     - Espaço exato para navbar + conteúdo
     - NÃO mexe em inputs globalmente
+
+    >>> content_gap controla o "respiro" entre a navbar e o primeiro conteúdo (HERO).
+    >>> Deixei BEM PERTO: content_gap=2 (pode pôr 0 se quiser colar total).
     """
     st.markdown(
         f"""
@@ -74,7 +78,7 @@ def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int =
   [data-testid="stSidebarNav"] {{ display:none !important; }}
   button[data-testid="collapsedControl"] {{ display:none !important; }}
 
-  /* Container principal: espaço calculado para topbar+navbar */
+  /* 🔥 CONTEÚDO: começa logo abaixo de topbar+navbar, com gap mínimo */
   .main .block-container {{
     padding-top: calc(var(--topbar-h) + var(--navbar-h) + var(--content-gap)) !important;
     padding-bottom: 2rem !important;
@@ -82,6 +86,12 @@ def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int =
     padding-right: 2rem !important;
     max-width: 100% !important;
     font-family: 'Inter', sans-serif !important;
+  }}
+
+  /* (opcional) reduz margens padrão do primeiro elemento dentro do main */
+  .main .block-container > div:first-child {{
+    margin-top: 0 !important;
+    padding-top: 0 !important;
   }}
 
   /* TOPBAR */
@@ -140,7 +150,7 @@ def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int =
     box-shadow: 0 2px 4px rgba(59, 130, 246, 0.25) !important;
   }}
 
-  /* NAVBAR WRAPPER (fixa logo abaixo da topbar) */
+  /* NAVBAR WRAPPER (fixa abaixo da topbar) */
   .omni-navbar {{
     position: fixed !important;
     top: var(--topbar-h) !important;
@@ -152,14 +162,14 @@ def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int =
     display:flex !important;
     align-items:center !important;
     justify-content:center !important;
-    pointer-events: none; /* libera clique só dentro do menu */
+    pointer-events: none;
   }}
   .omni-navbar-inner {{
     width: min(1200px, calc(100% - 48px));
     pointer-events: auto;
   }}
 
-  /* Deixa o option_menu sem espaçamento fantasma do Streamlit */
+  /* remove espaçamento fantasma do Streamlit no option_menu */
   .omni-navbar-inner .element-container {{
     margin: 0 !important;
     padding: 0 !important;
@@ -226,8 +236,6 @@ def inject_compact_app_css(accent: str = "#0D9488"):
     background: rgba(13,148,136,.06) !important;
   }}
 
-  /* Evita botões gigantes quando alguém usa use_container_width=True
-     (o botão pode ocupar a largura, mas não fica “alto/gordo”) */
   .stButton, .stDownloadButton {{
     margin: 0.15rem 0 !important;
   }}
@@ -241,7 +249,7 @@ def inject_compact_app_css(accent: str = "#0D9488"):
     padding: 0 !important;
     border-bottom: 2px solid #E2E8F0 !important;
     flex-wrap: wrap !important;
-    margin-top: 18px !important;
+    margin-top: 12px !important; /* mais colado */
   }}
   .stTabs [data-baseweb="tab"] {{
     height: 34px !important;
@@ -271,15 +279,11 @@ def inject_compact_app_css(accent: str = "#0D9488"):
     color: #475569 !important;
   }}
 
-  /* =========================
-     Pequenos refinamentos
-     ========================= */
   .stDivider {{ margin: 0.75rem 0 !important; }}
 </style>
         """,
         unsafe_allow_html=True,
     )
-
 
 def render_omnisfera_header():
     """
@@ -290,7 +294,9 @@ def render_omnisfera_header():
 
     TOPBAR_H = 56
     NAVBAR_H = 52
-    inject_layout_css(topbar_h=TOPBAR_H, navbar_h=NAVBAR_H, content_gap=14)
+
+    # 🔥 BEM PERTO: content_gap=2 (se quiser mais ainda: 0)
+    inject_layout_css(topbar_h=TOPBAR_H, navbar_h=NAVBAR_H, content_gap=2)
 
     icone = get_base64_image("omni_icone.png")
     texto = get_base64_image("omni_texto.png")
@@ -348,7 +354,6 @@ def render_navbar(active_tab: str = "Início"):
     except ValueError:
         default_idx = 0
 
-    # wrapper fixo
     st.markdown('<div class="omni-navbar"><div class="omni-navbar-inner">', unsafe_allow_html=True)
 
     selected = option_menu(
@@ -394,7 +399,6 @@ def render_navbar(active_tab: str = "Início"):
 
     st.markdown("</div></div>", unsafe_allow_html=True)
 
-    # roteamento (preservado)
     if selected != active_tab:
         routes = {
             "Início": "pages/0_Home.py" if os.path.exists("pages/0_Home.py") else "Home.py",
