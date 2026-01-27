@@ -833,12 +833,13 @@ def create_module_card(title, desc, icon, color_cls, bg_cls, page, key):
 
 
 def render_info_cards():
-    """Renderiza os cards informativos"""
+    """Renderiza os cards informativos organizados em tabs para melhor navegação"""
     info_cards_data = [
         {
             "title": "Acolhimento e Cultura Inclusiva",
             "icon": "ri-heart-line",
             "color": "info-card-orange",
+            "category": "Fundamentos",
             "content": """
                 <p><strong>Foco:</strong> O primeiro passo para a inclusão efetiva.</p>
                 <p><strong>Conceito:</strong> Receber o aluno com deficiência não garante a inclusão automática; é necessário integrar plenamente por meio de práticas pedagógicas significativas.</p>
@@ -855,6 +856,7 @@ def render_info_cards():
             "title": "Gestão Estratégica (PGEI)",
             "icon": "ri-strategy-line",
             "color": "info-card-blue",
+            "category": "Gestão",
             "content": """
                 <p><strong>Foco:</strong> Organização macro da escola para a inclusão.</p>
                 <p><strong>O que é:</strong> O Plano Geral de Educação Inclusiva (PGEI) organiza ações para diferentes perfis (deficiências, transtornos, altas habilidades).</p>
@@ -871,6 +873,7 @@ def render_info_cards():
             "title": "Equipe Multidisciplinar",
             "icon": "ri-team-line",
             "color": "info-card-purple",
+            "category": "Equipe",
             "content": """
                 <p><strong>Foco:</strong> Papéis e responsabilidades dos profissionais.</p>
                 <ul>
@@ -885,6 +888,7 @@ def render_info_cards():
             "title": "O Plano Individual (PEI/PDI)",
             "icon": "ri-file-list-3-line",
             "color": "info-card-teal",
+            "category": "Planejamento",
             "content": """
                 <p><strong>Foco:</strong> O roteiro de aprendizagem do aluno.</p>
                 <p><strong>Definição:</strong> O Plano Educacional Individualizado (PEI) ou Plano de Desenvolvimento Individual (PDI) é um roteiro flexível e obrigatório para nortear a aprendizagem.</p>
@@ -897,6 +901,7 @@ def render_info_cards():
             "title": "Adaptações e Transtornos",
             "icon": "ri-settings-5-line",
             "color": "info-card-rose",
+            "category": "Práticas",
             "content": """
                 <p><strong>Foco:</strong> Estratégias para sala de aula.</p>
                 <ul>
@@ -911,6 +916,7 @@ def render_info_cards():
             "title": "Deficiências e Suporte Prático",
             "icon": "ri-wheelchair-line",
             "color": "info-card-indigo",
+            "category": "Suporte",
             "content": """
                 <p><strong>Foco:</strong> Resumo técnico das necessidades.</p>
                 <ul>
@@ -923,49 +929,81 @@ def render_info_cards():
         }
     ]
     
-    # Primeira linha de cards
-    cols = st.columns(3, gap="medium")
-    for idx, card in enumerate(info_cards_data[:3]):
-        with cols[idx]:
-            st.markdown(
-                f"""
-                <div class="info-card {card['color']}">
-                    <div class="info-card-header">
-                        <div class="info-card-icon">
-                            <i class="{card['icon']}"></i>
-                        </div>
-                        <h3 class="info-card-title">{card['title']}</h3>
-                    </div>
-                    <div class="info-card-content">
-                        {card['content']}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    # Organiza cards por categoria
+    categories = {
+        "Fundamentos": [info_cards_data[0]],
+        "Gestão": [info_cards_data[1]],
+        "Equipe": [info_cards_data[2]],
+        "Planejamento": [info_cards_data[3]],
+        "Práticas": [info_cards_data[4]],
+        "Suporte": [info_cards_data[5]]
+    }
     
-    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+    # Usa tabs para organizar melhor
+    tab1, tab2, tab3 = st.tabs(["📋 Fundamentos & Gestão", "👥 Equipe & Planejamento", "⚙️ Práticas & Suporte"])
     
-    # Segunda linha de cards
-    cols = st.columns(3, gap="medium")
-    for idx, card in enumerate(info_cards_data[3:]):
-        with cols[idx]:
-            st.markdown(
-                f"""
-                <div class="info-card {card['color']}">
-                    <div class="info-card-header">
-                        <div class="info-card-icon">
-                            <i class="{card['icon']}"></i>
+    with tab1:
+        cols = st.columns(2, gap="medium")
+        for idx, card in enumerate([info_cards_data[0], info_cards_data[1]]):
+            with cols[idx]:
+                st.markdown(
+                    f"""
+                    <div class="info-card {card['color']}">
+                        <div class="info-card-header">
+                            <div class="info-card-icon">
+                                <i class="{card['icon']}"></i>
+                            </div>
+                            <h3 class="info-card-title">{card['title']}</h3>
                         </div>
-                        <h3 class="info-card-title">{card['title']}</h3>
+                        <div class="info-card-content">
+                            {card['content']}
+                        </div>
                     </div>
-                    <div class="info-card-content">
-                        {card['content']}
+                    """,
+                    unsafe_allow_html=True,
+                )
+    
+    with tab2:
+        cols = st.columns(2, gap="medium")
+        for idx, card in enumerate([info_cards_data[2], info_cards_data[3]]):
+            with cols[idx]:
+                st.markdown(
+                    f"""
+                    <div class="info-card {card['color']}">
+                        <div class="info-card-header">
+                            <div class="info-card-icon">
+                                <i class="{card['icon']}"></i>
+                            </div>
+                            <h3 class="info-card-title">{card['title']}</h3>
+                        </div>
+                        <div class="info-card-content">
+                            {card['content']}
+                        </div>
                     </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+                    """,
+                    unsafe_allow_html=True,
+                )
+    
+    with tab3:
+        cols = st.columns(2, gap="medium")
+        for idx, card in enumerate([info_cards_data[4], info_cards_data[5]]):
+            with cols[idx]:
+                st.markdown(
+                    f"""
+                    <div class="info-card {card['color']}">
+                        <div class="info-card-header">
+                            <div class="info-card-icon">
+                                <i class="{card['icon']}"></i>
+                            </div>
+                            <h3 class="info-card-title">{card['title']}</h3>
+                        </div>
+                        <div class="info-card-content">
+                            {card['content']}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
 
 def render_resources():
@@ -1034,33 +1072,6 @@ def render_resources():
                 )
 
 
-def render_metrics():
-    """Renderiza as métricas do dashboard"""
-    metrics_data = [
-        {"label": "Alunos Ativos", "value": "12", "change": "+2", "trend": "up"},
-        {"label": "PEIs Ativos", "value": "8", "change": "+1", "trend": "up"},
-        {"label": "Evidências Hoje", "value": "3", "change": "0", "trend": "neutral"},
-        {"label": "Meta Mensal", "value": "75%", "change": "+5%", "trend": "up"},
-    ]
-    
-    cols = st.columns(4, gap="medium")
-    for idx, metric in enumerate(metrics_data):
-        with cols[idx]:
-            trend_icon = "↗️" if metric["trend"] == "up" else "↘️" if metric["trend"] == "down" else "➡️"
-            trend_class = "metric-up" if metric["trend"] == "up" else "metric-down" if metric["trend"] == "down" else "metric-neutral"
-            
-            st.markdown(
-                f"""
-                <div class="metric-card">
-                    <span class="metric-label">{metric['label']}</span>
-                    <div class="metric-value">{metric['value']}</div>
-                    <div class="metric-change {trend_class}">
-                        {trend_icon} {metric['change']}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
 
 
 # ==============================================================================
@@ -1168,11 +1179,8 @@ st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
 st.markdown("### 📚 Recursos Externos & Referências")
 render_resources()
 
-# Métricas
-st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
-render_metrics()
-
 # Nova Seção: Guia de Inclusão
+st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
 st.markdown("---")
 st.markdown("## 📘 Guia Prático de Inclusão")
 st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
