@@ -54,35 +54,6 @@ verificar_acesso()
 
 
 # ==============================================================================
-# HERO - PEI (ÚNICO)
-# ==============================================================================
-hora = datetime.now().hour
-saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
-USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
-WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
-
-st.markdown(f"""
-<div class="mod-card-wrapper">
-    <div class="mod-card-rect">
-        <div class="mod-bar c-blue"></div>
-        <div class="mod-icon-area bg-blue-soft">
-            <i class="ri-book-open-fill"></i>
-        </div>
-        <div class="mod-content">
-            <div class="mod-title">Plano Educacional Individualizado (PEI)</div>
-            <div class="mod-desc">
-                {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie e gerencie Planos Educacionais Individualizados 
-                para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>. 
-                Desenvolva estratégias personalizadas e acompanhe o progresso de cada aluno.
-            </div>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-
-
-# ==============================================================================
 # AJUSTE FINO DE LAYOUT (Igual ao Hub)
 # ==============================================================================
 def forcar_layout_hub():
