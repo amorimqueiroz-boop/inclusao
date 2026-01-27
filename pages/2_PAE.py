@@ -88,103 +88,119 @@ forcar_layout_hub()
 
 # ==============================================================================
 # THEME — PEI (accent por página: botões + tabs + foco + chips/tags)
+# Azul acinzentado CLARO, elegante, SEM underline nas tabs
 # Cole logo após o header/navbar
 # ==============================================================================
-PEI_ACCENT = "#2563EB"       # azul principal
-PEI_ACCENT_DARK = "#1D4ED8"  # azul escuro
-PEI_ACCENT_SOFT = "#EEF2FF"  # azul claro (fundo)
+
+PEI_ACCENT = "#475569"        # slate-600 (azul acinzentado claro)
+PEI_ACCENT_DARK = "#334155"   # slate-700
+PEI_ACCENT_SOFT = "#F8FAFC"   # slate-50 (bem leve)
 
 st.markdown(f"""
 <style>
-:root{{
-  --acc:{PEI_ACCENT};
-  --accDark:{PEI_ACCENT_DARK};
-  --accSoft:{PEI_ACCENT_SOFT};
+:root {{
+  --acc: {PEI_ACCENT};
+  --accDark: {PEI_ACCENT_DARK};
+  --accSoft: {PEI_ACCENT_SOFT};
 }}
 
-/* -----------------------------
+/* =====================================================
    BOTÕES
-------------------------------*/
-.stButton > button[kind="primary"]{{
-  background: linear-gradient(135deg,var(--acc),var(--accDark)) !important;
+===================================================== */
+.stButton > button[kind="primary"] {{
+  background: linear-gradient(135deg, var(--acc), var(--accDark)) !important;
   border: none !important;
-  color: #fff !important;
+  color: #ffffff !important;
   font-weight: 700 !important;
   border-radius: 10px !important;
-  transition: all .2s ease !important;
+  transition: all .18s ease !important;
 }}
-.stButton > button[kind="primary"]:hover{{
+.stButton > button[kind="primary"]:hover {{
   transform: translateY(-1px) !important;
-  box-shadow: 0 10px 22px rgba(37,99,235,.20) !important;
+  box-shadow: 0 10px 22px rgba(71,85,105,.22) !important;
 }}
-.stButton > button[kind="secondary"]{{
-  background: #fff !important;
-  color: var(--acc) !important;
-  border: 1px solid var(--acc) !important;
+
+.stButton > button[kind="secondary"] {{
+  background: #ffffff !important;
+  color: var(--accDark) !important;
+  border: 1px solid #CBD5E1 !important;
   font-weight: 700 !important;
   border-radius: 10px !important;
 }}
-.stButton > button[kind="secondary"]:hover{{
+.stButton > button[kind="secondary"]:hover {{
   background: var(--accSoft) !important;
-  border-color: var(--accDark) !important;
+  border-color: var(--acc) !important;
   color: var(--accDark) !important;
 }}
 
-/* -----------------------------
-   TABS (underline + cor)
-------------------------------*/
-.stTabs [aria-selected="true"]{{
-  color: var(--acc) !important;
-}}
-.stTabs [aria-selected="true"]::after{{
-  background-color: var(--acc) !important;
+/* =====================================================
+   TABS — SEM UNDERLINE
+===================================================== */
+.stTabs [aria-selected="true"] {{
+  color: var(--accDark) !important;
+  font-weight: 700 !important;
+  background-color: transparent !important;
 }}
 
-/* -----------------------------
-   FOCUS RING / BORDAS AO CLICAR (inputs, selects etc.)
-   (mata aquele vermelho persistente)
-------------------------------*/
-*:focus, *:focus-visible {{
+.stTabs [aria-selected="true"]::after {{
+  display: none !important;
+}}
+
+.stTabs [data-baseweb="tab"] {{
+  border-radius: 8px !important;
+  transition: background-color .15s ease, color .15s ease;
+}}
+
+.stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{
+  background-color: var(--accSoft) !important;
+  color: var(--accDark) !important;
+}}
+
+/* =====================================================
+   FOCUS RING / BORDAS AO CLICAR
+===================================================== */
+*:focus,
+*:focus-visible {{
   outline: none !important;
 }}
 
 div[data-baseweb="input"] input:focus,
 div[data-baseweb="textarea"] textarea:focus {{
   border-color: var(--acc) !important;
-  box-shadow: 0 0 0 3px rgba(37,99,235,.18) !important;
+  box-shadow: 0 0 0 3px rgba(71,85,105,.18) !important;
 }}
 
 div[data-baseweb="select"] > div:focus-within {{
   border-color: var(--acc) !important;
-  box-shadow: 0 0 0 3px rgba(37,99,235,.18) !important;
+  box-shadow: 0 0 0 3px rgba(71,85,105,.18) !important;
 }}
 
-/* -----------------------------
-   MULTISELECT TAGS/CHIPS (os “pills”)
-------------------------------*/
+/* =====================================================
+   MULTISELECT TAGS / CHIPS
+===================================================== */
 div[data-baseweb="tag"] {{
   background: var(--accSoft) !important;
-  border: 1px solid rgba(37,99,235,.35) !important;
+  border: 1px solid #CBD5E1 !important;
 }}
+
 div[data-baseweb="tag"] span {{
   color: var(--accDark) !important;
   font-weight: 700 !important;
 }}
 
-/* -----------------------------
-   CHECKBOX/RADIO (quando marcado)
-------------------------------*/
+/* =====================================================
+   CHECKBOX / RADIO
+===================================================== */
 div[role="checkbox"][aria-checked="true"] {{
   background-color: var(--acc) !important;
   border-color: var(--acc) !important;
 }}
 
-/* -----------------------------
-   (OPCIONAL) Se aquelas “linhas vermelhas” forem <hr> / divider,
-   isso força a cor delas pro accent.
-------------------------------*/
+/* =====================================================
+   DIVIDERS
+===================================================== */
 hr {{
-  border-color: rgba(37,99,235,.35) !important;
+  border-color: #CBD5E1 !important;
 }}
 </style>
 """, unsafe_allow_html=True)
