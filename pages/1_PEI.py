@@ -40,6 +40,9 @@ ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Estratégias & PEI")
 ou.inject_compact_app_css()
 
+# Adiciona classe no body para cores específicas das abas
+st.markdown("<script>document.body.classList.add('page-blue');</script>", unsafe_allow_html=True)
+
 # ==============================================================================
 # AJUSTE FINO DE LAYOUT (ANTES DO HERO - PADRONIZADO)
 # ==============================================================================
@@ -1143,16 +1146,21 @@ html, body, [class*="css"] {
    CORES (HERDA ACCENT DO PEI)
 ================================ */
 .c-blue {
-    background: var(--acc) !important;
+    background: #0EA5E9 !important;
 }
 
 .bg-blue-soft {
-    background: transparent !important;
-    color: var(--acc) !important;
+    background: #E0F2FE !important;
+    color: #0284C7 !important;
 }
 
 .mod-icon-area i {
     color: inherit !important;
+}
+
+/* Garante que o ícone use a cor do bg-blue-soft */
+.bg-blue-soft i {
+    color: #0284C7 !important;
 }
 
 /* ===============================
