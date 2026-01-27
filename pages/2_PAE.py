@@ -62,6 +62,7 @@ def forcar_layout_hub():
             }
 
             /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) */
+            .main .block-container,
             .block-container {
                 padding-top: 0.1rem !important; /* Espaço mínimo entre navbar e hero */
                 padding-bottom: 1rem !important;
