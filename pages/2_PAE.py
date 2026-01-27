@@ -382,77 +382,8 @@ import uuid
 from datetime import datetime
 import streamlit as st
 
-def _sb_url() -> str:
-    url = str(st.secrets.get("SUPABASE_URL", "")).strip()
-    if not url:
-        raise RuntimeError("SUPABASE_URL missing")
-    return url.rstrip("/")
-
-def _sb_key() -> str:
-    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "") or st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
-    if not key:
-        raise RuntimeError("SUPABASE_KEY missing")
-    return key
-
-def _headers() -> dict:
-    key = _sb_key()
-    return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-
-
-# ==============================================================================
-# CARREGAR ESTUDANTES DO SUPABASE
-# ==============================================================================
-@st.cache_data(ttl=10, show_spinner=False)
-def list_students_rest():
-    """Busca estudantes do Supabase incluindo o campo pei_data."""
-    WORKSPACE_ID = st.session_state.get("workspace_id")
-    if not WORKSPACE_ID:
-        return []
-
-    try:
-        base = (
-            f"{_sb_url()}/rest/v1/students"
-            f"?select=id,name,grade,class_group,diagnosis,created_at,pei_data,paee_ciclos,planejamento_ativo"
-            f"&workspace_id=eq.{WORKSPACE_ID}"
-            f"&order=created_at.desc"
-        )
-        r = requests.get(base, headers=_headers(), timeout=20)
-        return r.json() if r.status_code == 200 else []
-    except Exception as e:
-        st.error(f"Erro ao carregar alunos: {str(e)}")
-        return []
-
-
-def carregar_estudantes_supabase():
-    """Carrega e processa estudantes, extraindo contexto rico do PEI."""
-    dados = list_students_rest()
-    estudantes = []
-
-    for item in dados:
-        pei_completo = item.get("pei_data") or {}
-        contexto_ia = ""
-
-        # tenta pegar texto de contexto
-        if isinstance(pei_completo, dict):
-            contexto_ia = pei_completo.get("ia_sugestao", "") or ""
-        if not contexto_ia:
-            diag = item.get("diagnosis", "Não informado")
-            serie = item.get("grade", "")
-            contexto_ia = f"Aluno: {item.get('name')}. Série: {serie}. Diagnóstico: {diag}."
-
-        estudante = {
-            "nome": item.get("name", ""),
-            "serie": item.get("grade", ""),
-            "hiperfoco": item.get("diagnosis", ""),
-            "ia_sugestao": contexto_ia,
-            "id": item.get("id", ""),
-            "pei_data": pei_completo,
-        }
-        if estudante["nome"]:
-            estudantes.append(estudante)
-
-    return estudantes
-
+# Funções _sb_url(), _sb_key(), _headers() removidas - usar ou._sb_url(), ou._sb_key(), ou._headers() do omni_utils
+# Primeira definição duplicada de list_students_rest() e carregar_estudantes_supabase() removida - usar as definições mais abaixo
 
 # ==============================================================================
 # PEI DO ALUNO
@@ -460,9 +391,9 @@ def carregar_estudantes_supabase():
 def carregar_pei_aluno(aluno_id):
     """Carrega o PEI do aluno do Supabase (campo pei_data na tabela students)."""
     try:
-        url = f"{_sb_url()}/rest/v1/students"
+        url = f"{ou._sb_url()}/rest/v1/students"
         params = {"select": "id,pei_data", "id": f"eq.{aluno_id}"}
-        r = requests.get(url, headers=_headers(), params=params, timeout=15)
+        r = requests.get(url, headers=ou._headers(), params=params, timeout=15)
         if r.status_code == 200 and r.json():
             return r.json()[0].get("pei_data", {}) or {}
         return {}
@@ -481,9 +412,9 @@ def salvar_paee_ciclo(aluno_id, ciclo_data):
     """
     try:
         # 1) Buscar aluno atual
-        url = f"{_sb_url()}/rest/v1/students"
+        url = f"{ou._sb_url()}/rest/v1/students"
         params_get = {"select": "id,paee_ciclos,planejamento_ativo", "id": f"eq.{aluno_id}"}
-        r = requests.get(url, headers=_headers(), params=params_get, timeout=15)
+        r = requests.get(url, headers=ou._headers(), params=params_get, timeout=15)
 
         if not (r.status_code == 200 and r.json()):
             return {"sucesso": False, "erro": "Aluno não encontrado"}
@@ -530,7 +461,7 @@ def salvar_paee_ciclo(aluno_id, ciclo_data):
 
         # 4) PATCH
         params_patch = {"id": f"eq.{aluno_id}"}
-        rp = requests.patch(url, headers=_headers(), params=params_patch, json=update_data, timeout=25)
+        rp = requests.patch(url, headers=ou._headers(), params=params_patch, json=update_data, timeout=25)
 
         if rp.status_code == 204:
             return {"sucesso": True, "ciclo_id": ciclo_id}
@@ -543,9 +474,9 @@ def salvar_paee_ciclo(aluno_id, ciclo_data):
 def carregar_ciclo_ativo(aluno_id):
     """Carrega o ciclo ativo (students.planejamento_ativo) dentro de students.paee_ciclos."""
     try:
-        url = f"{_sb_url()}/rest/v1/students"
+        url = f"{ou._sb_url()}/rest/v1/students"
         params = {"select": "id,paee_ciclos,planejamento_ativo", "id": f"eq.{aluno_id}"}
-        r = requests.get(url, headers=_headers(), params=params, timeout=15)
+        r = requests.get(url, headers=ou._headers(), params=params, timeout=15)
 
         if r.status_code == 200 and r.json():
             aluno_row = r.json()[0]
@@ -567,9 +498,9 @@ def carregar_ciclo_ativo(aluno_id):
 def listar_ciclos_aluno(aluno_id):
     """Lista todos os ciclos PAEE do aluno (students.paee_ciclos) e retorna (ciclos_ordenados, ciclo_ativo_id)."""
     try:
-        url = f"{_sb_url()}/rest/v1/students"
+        url = f"{ou._sb_url()}/rest/v1/students"
         params = {"select": "id,paee_ciclos,planejamento_ativo", "id": f"eq.{aluno_id}"}
-        r = requests.get(url, headers=_headers(), params=params, timeout=15)
+        r = requests.get(url, headers=ou._headers(), params=params, timeout=15)
 
         if r.status_code == 200 and r.json():
             aluno_row = r.json()[0]
@@ -592,10 +523,10 @@ def listar_ciclos_aluno(aluno_id):
 def definir_ciclo_ativo(aluno_id, ciclo_id, status="ativo"):
     """Define o ciclo ativo (students.planejamento_ativo) e status_planejamento."""
     try:
-        url = f"{_sb_url()}/rest/v1/students"
+        url = f"{ou._sb_url()}/rest/v1/students"
         params = {"id": f"eq.{aluno_id}"}
         payload = {"planejamento_ativo": ciclo_id, "status_planejamento": status}
-        r = requests.patch(url, headers=_headers(), params=params, json=payload, timeout=20)
+        r = requests.patch(url, headers=ou._headers(), params=params, json=payload, timeout=20)
         return r.status_code == 204
     except Exception as e:
         st.error(f"Erro ao definir ciclo ativo: {e}")
@@ -631,12 +562,12 @@ def list_students_rest():
     
     try:
         base = (
-            f"{_sb_url()}/rest/v1/students"
+            f"{ou._sb_url()}/rest/v1/students"
             f"?select=id,name,grade,class_group,diagnosis,created_at,pei_data"
             f"&workspace_id=eq.{WORKSPACE_ID}"
             f"&order=created_at.desc"
         )
-        r = requests.get(base, headers=_headers(), timeout=20)
+        r = requests.get(base, headers=ou._headers(), timeout=20)
         return r.json() if r.status_code == 200 else []
     except Exception as e:
         st.error(f"Erro ao carregar alunos: {str(e)}")
@@ -675,13 +606,13 @@ def carregar_estudantes_supabase():
 def carregar_pei_aluno(aluno_id):
     """Carrega o PEI do aluno do Supabase"""
     try:
-        url = f"{_sb_url()}/rest/v1/students"
+        url = f"{ou._sb_url()}/rest/v1/students"
         params = {
             "select": "id,pei_data",
             "id": f"eq.{aluno_id}"
         }
         
-        response = requests.get(url, headers=_headers(), params=params, timeout=10)
+        response = requests.get(url, headers=ou._headers(), params=params, timeout=10)
         if response.status_code == 200 and response.json():
             return response.json()[0].get('pei_data', {})
         return {}
@@ -693,10 +624,10 @@ def salvar_paee_ciclo(aluno_id, ciclo_data):
     """Salva um ciclo de PAEE no Supabase"""
     try:
         # Primeiro, carrega os ciclos existentes
-        url = f"{_sb_url()}/rest/v1/students"
+        url = f"{ou._sb_url()}/rest/v1/students"
         params = {"id": f"eq.{aluno_id}"}
         
-        response = requests.get(url, headers=_headers(), params=params, timeout=10)
+        response = requests.get(url, headers=ou._headers(), params=params, timeout=10)
         if response.status_code == 200 and response.json():
             aluno = response.json()[0]
             ciclos_existentes = aluno.get('paee_ciclos', []) if aluno.get('paee_ciclos') else []
@@ -732,7 +663,7 @@ def salvar_paee_ciclo(aluno_id, ciclo_data):
             
             update_response = requests.patch(
                 url, 
-                headers=_headers(), 
+                headers=ou._headers(), 
                 params=params, 
                 json=update_data,
                 timeout=20
@@ -751,13 +682,13 @@ def salvar_paee_ciclo(aluno_id, ciclo_data):
 def carregar_ciclo_ativo(aluno_id):
     """Carrega o ciclo ativo do aluno"""
     try:
-        url = f"{_sb_url()}/rest/v1/students"
+        url = f"{ou._sb_url()}/rest/v1/students"
         params = {
             "select": "id,paee_ciclos,planejamento_ativo",
             "id": f"eq.{aluno_id}"
         }
         
-        response = requests.get(url, headers=_headers(), params=params, timeout=10)
+        response = requests.get(url, headers=ou._headers(), params=params, timeout=10)
         if response.status_code == 200 and response.json():
             aluno = response.json()[0]
             ciclo_id = aluno.get('planejamento_ativo')
