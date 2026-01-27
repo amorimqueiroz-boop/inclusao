@@ -83,20 +83,16 @@ def forcar_layout_hub():
 # CHAME ESTA FUNÇÃO LOGO NO INÍCIO DO CÓDIGO
 forcar_layout_hub()
 
+# Cores dos hero cards (mesmas da Home)
+ou.inject_hero_card_colors()
 # CSS padronizado: abas (pílulas), botões, selects, etc.
 ou.inject_unified_ui_css()
 
 # 2. CSS Específico desta página (Cards e Tabelas)
 st.markdown("""
 <style>
-    /* CARD HERO */
-    .mod-card-wrapper { display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-top: 0 !important; border: 1px solid #E2E8F0;}
-    .mod-card-rect { background: white; padding: 0; display: flex; align-items: center; height: 130px !important; position: relative; border-radius: 16px 16px 0 0; border-bottom: none; }
-    .mod-bar { width: 6px; height: 100%; position: absolute; left: 0; background-color: #0284C7; }
-    .mod-icon-area { width: 80px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; background: #F0F9FF; color: #0284C7; margin-left: 6px; }
-    .mod-content { flex-grow: 1; padding: 0 20px; display: flex; flex-direction: column; justify-content: center; }
-    .mod-title { font-weight: 800; font-size: 1.1rem; color: #1E293B; margin-bottom: 4px; }
-    .mod-desc { font-size: 0.8rem; color: #64748B; }
+    /* CARD HERO - PADRÃO VIA omni_utils.inject_hero_card_colors() */
+    /* Estilos de hero card são aplicados via função padronizada */
 
     /* TABELA DE ALUNOS */
     .student-table { background: white; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-top: 20px; }
@@ -169,8 +165,10 @@ alunos = list_students_rest(ws_id)
 st.markdown(f"""
     <div class="mod-card-wrapper">
         <div class="mod-card-rect">
-            <div class="mod-bar"></div>
-            <div class="mod-icon-area"><i class="ri-group-fill"></i></div>
+            <div class="mod-bar c-indigo"></div>
+            <div class="mod-icon-area bg-indigo-soft">
+                <i class="ri-group-fill"></i>
+            </div>
             <div class="mod-content">
                 <div class="mod-title">Gestão de Estudantes</div>
                 <div class="mod-desc">{saudacao}, <strong>{user_first}</strong>! Gerencie os dados dos alunos vinculados aos PEIs neste workspace.</div>
