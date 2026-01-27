@@ -87,6 +87,111 @@ def forcar_layout_hub():
 forcar_layout_hub()
 
 # ==============================================================================
+# THEME — PEI (accent por página: botões + tabs + foco + chips/tags)
+# Cole logo após o header/navbar
+# ==============================================================================
+PEI_ACCENT = "#2563EB"       # azul principal
+PEI_ACCENT_DARK = "#1D4ED8"  # azul escuro
+PEI_ACCENT_SOFT = "#EEF2FF"  # azul claro (fundo)
+
+st.markdown(f"""
+<style>
+:root{{
+  --acc:{PEI_ACCENT};
+  --accDark:{PEI_ACCENT_DARK};
+  --accSoft:{PEI_ACCENT_SOFT};
+}}
+
+/* -----------------------------
+   BOTÕES
+------------------------------*/
+.stButton > button[kind="primary"]{{
+  background: linear-gradient(135deg,var(--acc),var(--accDark)) !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  transition: all .2s ease !important;
+}}
+.stButton > button[kind="primary"]:hover{{
+  transform: translateY(-1px) !important;
+  box-shadow: 0 10px 22px rgba(37,99,235,.20) !important;
+}}
+.stButton > button[kind="secondary"]{{
+  background: #fff !important;
+  color: var(--acc) !important;
+  border: 1px solid var(--acc) !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+}}
+.stButton > button[kind="secondary"]:hover{{
+  background: var(--accSoft) !important;
+  border-color: var(--accDark) !important;
+  color: var(--accDark) !important;
+}}
+
+/* -----------------------------
+   TABS (underline + cor)
+------------------------------*/
+.stTabs [aria-selected="true"]{{
+  color: var(--acc) !important;
+}}
+.stTabs [aria-selected="true"]::after{{
+  background-color: var(--acc) !important;
+}}
+
+/* -----------------------------
+   FOCUS RING / BORDAS AO CLICAR (inputs, selects etc.)
+   (mata aquele vermelho persistente)
+------------------------------*/
+*:focus, *:focus-visible {{
+  outline: none !important;
+}}
+
+div[data-baseweb="input"] input:focus,
+div[data-baseweb="textarea"] textarea:focus {{
+  border-color: var(--acc) !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.18) !important;
+}}
+
+div[data-baseweb="select"] > div:focus-within {{
+  border-color: var(--acc) !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.18) !important;
+}}
+
+/* -----------------------------
+   MULTISELECT TAGS/CHIPS (os “pills”)
+------------------------------*/
+div[data-baseweb="tag"] {{
+  background: var(--accSoft) !important;
+  border: 1px solid rgba(37,99,235,.35) !important;
+}}
+div[data-baseweb="tag"] span {{
+  color: var(--accDark) !important;
+  font-weight: 700 !important;
+}}
+
+/* -----------------------------
+   CHECKBOX/RADIO (quando marcado)
+------------------------------*/
+div[role="checkbox"][aria-checked="true"] {{
+  background-color: var(--acc) !important;
+  border-color: var(--acc) !important;
+}}
+
+/* -----------------------------
+   (OPCIONAL) Se aquelas “linhas vermelhas” forem <hr> / divider,
+   isso força a cor delas pro accent.
+------------------------------*/
+hr {{
+  border-color: rgba(37,99,235,.35) !important;
+}}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+# ==============================================================================
 # BLOCO VISUAL (GLOBAL) — CSS DO MÓDULO + GATE (REAPROVEITÁVEL)
 # Mantém: card hero, tabs, caixas, timeline e tema de botões
 # Remove: badge fixo + logo girando (porque conflita com ou.render_omnisfera_header)
