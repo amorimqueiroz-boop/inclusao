@@ -1,3 +1,4 @@
+# omni_utils.py
 import os
 import base64
 import requests
@@ -5,38 +6,28 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 
 # =============================================================================
-# 1) ESTADO E CONFIGURAÇÃO
+# 1) ESTADO E CONFIGURAÇÃO INICIAL
 # =============================================================================
-APP_VERSION = "omni_utils v3.0 (Hero Colorido + Botões Neutros)"
-
-# Mapeamento Central de Cores por Módulo
-OMNI_PAGE_COLORS = {
-    "home":     {"name": "Home",                "accent": "#2563EB"}, # Azul Real
-    "alunos":   {"name": "Estudantes",          "accent": "#0EA5E9"}, # Azul Claro
-    "pei":      {"name": "PEI",                 "accent": "#7C3AED"}, # Roxo
-    "pae":      {"name": "Plano de Ação / PAE", "accent": "#10B981"}, # Verde Esmeralda
-    "hub":      {"name": "Hub de Inclusão",     "accent": "#F59E0B"}, # Âmbar/Laranja
-    "diario":   {"name": "Diário de Bordo",     "accent": "#EF4444"}, # Vermelho
-    "monitor":  {"name": "Monitoramento",       "accent": "#06B6D4"}, # Ciano
-}
+APP_VERSION = "omni_utils v2.4 (Layout Estável: Topbar+Navbar sem CSS global perigoso)"
 
 def ensure_state():
-    """Garante que as variáveis de sessão essenciais existam."""
-    defaults = {
-        "autenticado": False,
-        "user": None,
-        "workspace_id": None,
-        "workspace_name": "Workspace",
-        "usuario_nome": "Visitante",
-        "usuario_cargo": "",
-        "view": "login"
-    }
-    for key, val in defaults.items():
-        if key not in st.session_state:
-            st.session_state[key] = val
+    if "autenticado" not in st.session_state:
+        st.session_state.autenticado = False
+    if "user" not in st.session_state:
+        st.session_state.user = None
+    if "workspace_id" not in st.session_state:
+        st.session_state.workspace_id = None
+    if "workspace_name" not in st.session_state:
+        st.session_state.workspace_name = "Workspace"
+    if "usuario_nome" not in st.session_state:
+        st.session_state.usuario_nome = "Visitante"
+    if "usuario_cargo" not in st.session_state:
+        st.session_state.usuario_cargo = ""
+    if "view" not in st.session_state:
+        st.session_state.view = "login"
 
 # =============================================================================
-# 2) UTILITÁRIOS VISUAIS (IMG, INICIAIS, FORMATADORES)
+# 2) UI COMPONENTS (HEADER & NAVBAR) — PADRÃO ESTÁVEL
 # =============================================================================
 def get_base64_image(path: str) -> str | None:
     if not os.path.exists(path):
@@ -55,278 +46,292 @@ def _get_ws_short(max_len: int = 22) -> str:
     ws = str(ws).strip()
     return (ws[:max_len] + "...") if len(ws) > max_len else ws
 
-# =============================================================================
-# 3) CSS GLOBAL & LAYOUT (SAAS DESIGN)
-# =============================================================================
 def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int = 14):
     """
-    CSS Core:
-    1. Esconde menu Streamlit e rodapé.
-    2. Define padding superior para compensar Topbar+Navbar fixas.
-    3. Importa fontes e ícones.
+    CSS base do layout:
+    - Topbar fixa
+    - Espaço exato para navbar + conteúdo
+    - NÃO mexe em inputs globalmente
     """
     st.markdown(
         f"""
-        <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
-        <style>
-          :root {{
-            --topbar-h: {topbar_h}px;
-            --navbar-h: {navbar_h}px;
-            --content-gap: {content_gap}px;
-          }}
+<style>
+  :root {{
+    --topbar-h: {topbar_h}px;
+    --navbar-h: {navbar_h}px;
+    --content-gap: {content_gap}px;
+  }}
 
-          /* Reset Global de Fontes */
-          html, body, [class*="css"] {{
-            font-family: 'Plus Jakarta Sans', sans-serif !important;
-          }}
+  /* Oculta chrome Streamlit (sem depender de classes internas) */
+  #MainMenu {{ visibility: hidden; }}
+  footer {{ visibility: hidden; }}
+  header[data-testid="stHeader"] {{ display:none !important; }}
+  [data-testid="stToolbar"] {{ display:none !important; }}
+  section[data-testid="stSidebar"] {{ display:none !important; }}
+  [data-testid="stSidebarNav"] {{ display:none !important; }}
+  button[data-testid="collapsedControl"] {{ display:none !important; }}
 
-          /* Ocultar Chrome do Streamlit */
-          #MainMenu {{ visibility: hidden; }}
-          footer {{ visibility: hidden; }}
-          header[data-testid="stHeader"] {{ display:none !important; }}
-          [data-testid="stToolbar"] {{ display:none !important; }}
-          
-          /* Ajuste do Bloco Principal (Padding para Topbar Fixa) */
-          .main .block-container {{
-            padding-top: calc(var(--topbar-h) + var(--navbar-h) + var(--content-gap)) !important;
-            padding-bottom: 3rem !important;
-            max-width: 100% !important;
-          }}
+  /* Container principal: espaço calculado para topbar+navbar */
+  .main .block-container {{
+    padding-top: calc(var(--topbar-h) + var(--navbar-h) + var(--content-gap)) !important;
+    padding-bottom: 2rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 100% !important;
+    font-family: 'Inter', sans-serif !important;
+  }}
 
-          /* TOPBAR FIXA */
-          .omni-topbar {{
-            position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important;
-            height: var(--topbar-h) !important;
-            background: #ffffff !important;
-            border-bottom: 1px solid #E2E8F0 !important;
-            z-index: 999999 !important;
-            display: flex !important; align-items: center !important; justify-content: space-between !important;
-            padding: 0 24px !important;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02) !important;
-          }}
-          
-          /* BRAND & USER INFO */
-          .omni-brand {{ display:flex; align-items:center; gap:12px; }}
-          .omni-logo {{ height: 28px; width: auto; object-fit: contain; }}
-          .omni-user-info {{ display:flex; align-items:center; gap:12px; }}
-          
-          .omni-workspace {{
-            background: #F8FAFC; border: 1px solid #E2E8F0;
-            padding: 4px 10px; border-radius: 8px;
-            font-size: 11px; font-weight: 700; color: #64748B;
-            text-transform: uppercase; letter-spacing: 0.5px;
-          }}
-          
-          .omni-avatar {{
-            width: 32px; height: 32px; border-radius: 50%;
-            background: linear-gradient(135deg, #3B82F6, #2563EB);
-            color: white; font-weight: 700; font-size: 12px;
-            display: flex; align-items: center; justify-content: center;
-          }}
+  /* TOPBAR */
+  .omni-topbar {{
+    position: fixed !important;
+    top: 0 !important; left: 0 !important; right: 0 !important;
+    height: var(--topbar-h) !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+    z-index: 999999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 24px !important;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
+  }}
+  .omni-brand {{
+    display:flex !important;
+    align-items:center !important;
+    gap:12px !important;
+    min-width: 0 !important;
+  }}
+  .omni-logo {{
+    height: 32px !important;
+    width: 32px !important;
+    object-fit: contain !important;
+  }}
+  .omni-user-info {{
+    display:flex !important;
+    align-items:center !important;
+    gap:12px !important;
+  }}
+  .omni-workspace {{
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    padding: 5px 12px !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #64748B !important;
+    max-width: 220px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }}
+  .omni-avatar {{
+    width: 32px !important; height: 32px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #3B82F6, #6366F1) !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 800 !important;
+    font-size: 12px !important;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.25) !important;
+  }}
 
-          /* NAVBAR FIXA (Abaixo da Topbar) */
-          .omni-navbar {{
-            position: fixed !important;
-            top: var(--topbar-h) !important; left: 0 !important; right: 0 !important;
-            height: var(--navbar-h) !important;
-            background: rgba(255,255,255,0.8) !important;
-            backdrop-filter: blur(8px);
-            z-index: 999998 !important;
-            display:flex !important; align-items:center !important; justify-content:center !important;
-            pointer-events: none; /* Deixa clicar no fundo se vazar, mas pointer-events auto no inner */
-          }}
-          .omni-navbar-inner {
-            pointer-events: auto;
-          }
-          
-          /* REMOVE GAPS DO OPTION MENU */
-          .omni-navbar-inner .element-container { margin: 0 !important; padding: 0 !important; }
-        </style>
+  /* NAVBAR WRAPPER (fixa logo abaixo da topbar) */
+  .omni-navbar {{
+    position: fixed !important;
+    top: var(--topbar-h) !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: var(--navbar-h) !important;
+    background: transparent !important;
+    z-index: 999998 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    pointer-events: none; /* libera clique só dentro do menu */
+  }}
+  .omni-navbar-inner {{
+    width: min(1200px, calc(100% - 48px));
+    pointer-events: auto;
+  }}
+
+  /* Deixa o option_menu sem espaçamento fantasma do Streamlit */
+  .omni-navbar-inner .element-container {{
+    margin: 0 !important;
+    padding: 0 !important;
+  }}
+
+  /* Responsivo */
+  @media (max-width: 900px) {{
+    .main .block-container {{
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
+    }}
+    .omni-workspace {{ display:none !important; }}
+  }}
+</style>
         """,
         unsafe_allow_html=True,
     )
 
-def inject_hero_css():
+def inject_compact_app_css(accent: str = "#0D9488"):
     """
-    CSS Específico para o Card Hero Unificado.
-    Define a estrutura (Flexbox), sombras e transições.
+    CSS do app (páginas internas) para:
+    - botões menores e consistentes
+    - tabs compactas e bonitas
+    IMPORTANTE: não altera inputs globalmente.
     """
-    st.markdown("""
-    <style>
-      .mod-card-wrapper {
-          display:flex; flex-direction:column;
-          margin-bottom:24px;
-          border-radius:16px;
-          overflow:hidden;
-          box-shadow:0 2px 4px rgba(0,0,0,0.02);
-          border: 1px solid #E2E8F0;
-      }
-      .mod-card-rect {
-          background:white;
-          border-radius:16px;
-          padding:0;
-          display:flex;
-          flex-direction:row;
-          align-items:center;
-          height:120px;
-          width:100%;
-          position:relative;
-          overflow:hidden;
-      }
-      .mod-bar {
-          width:6px; height:100%; flex-shrink:0;
-      }
-      .mod-icon-area {
-          width:80px; height:100%;
-          display:flex; align-items:center; justify-content:center;
-          font-size:1.8rem;
-          flex-shrink:0;
-          background:transparent !important;
-          border-right:1px solid #F1F5F9;
-          opacity: 0.9;
-      }
-      .mod-content {
-          flex-grow:1;
-          padding:0 24px;
-          display:flex; flex-direction:column; justify-content:center;
-      }
-      .mod-title {
-          font-weight:800; font-size:1.15rem; color:#0F172A;
-          margin-bottom:4px; letter-spacing:-0.02em;
-      }
-      .mod-desc {
-          font-size:.9rem; color:#64748B; line-height:1.5;
-      }
-      
-      /* Responsividade Mobile */
-      @media (max-width: 768px) {
-          .mod-card-rect { height:auto; flex-direction:column; padding:16px; align-items:flex-start; }
-          .mod-bar { width: 100%; height: 4px; margin-bottom: 12px; }
-          .mod-icon-area { 
-              width:40px; height:40px; border:none; 
-              justify-content:flex-start; margin-bottom:8px; font-size: 1.5rem; 
-          }
-          .mod-content { padding:0; }
-      }
-    </style>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        f"""
+<style>
+  /* =========================
+     BOTÕES (compactos)
+     ========================= */
+  .stButton > button,
+  .stDownloadButton > button {{
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    padding: 0.38rem 0.85rem !important;
+    min-height: 36px !important;
+    line-height: 1 !important;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease !important;
+  }}
 
-def apply_neutral_buttons():
-    """
-    Força todos os botões a serem NEUTROS (Cinza/Slate),
-    independentemente da página, para reduzir ruído visual.
-    """
-    st.markdown("""
-    <style>
-      /* Base Button Style */
-      .stButton > button {
-          border-radius: 8px !important;
-          font-weight: 600 !important;
-          font-size: 0.9rem !important;
-          padding: 0.4rem 1rem !important;
-          min-height: 40px !important;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      }
+  /* Primary */
+  .stButton > button[kind="primary"],
+  .stDownloadButton > button[kind="primary"] {{
+    background: linear-gradient(135deg, {accent}, #14B8A6) !important;
+    border: none !important;
+  }}
+  .stButton > button[kind="primary"]:hover,
+  .stDownloadButton > button[kind="primary"]:hover {{
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(13,148,136,.18) !important;
+  }}
 
-      /* Secondary Button (Ghost/Outline) - Padrão */
-      .stButton > button[kind="secondary"] {
-          background-color: #FFFFFF !important;
-          color: #475569 !important; /* Slate 600 */
-          border: 1px solid #CBD5E1 !important; /* Slate 300 */
-      }
-      .stButton > button[kind="secondary"]:hover {
-          background-color: #F8FAFC !important;
-          color: #0F172A !important;
-          border-color: #94A3B8 !important;
-          transform: translateY(-1px);
-      }
+  /* Secondary */
+  .stButton > button[kind="secondary"],
+  .stDownloadButton > button[kind="secondary"] {{
+    background: #ffffff !important;
+    color: {accent} !important;
+    border: 1px solid {accent} !important;
+  }}
+  .stButton > button[kind="secondary"]:hover,
+  .stDownloadButton > button[kind="secondary"]:hover {{
+    background: rgba(13,148,136,.06) !important;
+  }}
 
-      /* Primary Button (Solid Neutral) - Destaque sem cor gritante */
-      .stButton > button[kind="primary"] {
-          background-color: #334155 !important; /* Slate 700 */
-          color: #FFFFFF !important;
-          border: 1px solid #334155 !important;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-      }
-      .stButton > button[kind="primary"]:hover {
-          background-color: #1E293B !important; /* Slate 800 */
-          border-color: #1E293B !important;
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important;
-          transform: translateY(-1px);
-      }
-      
-      /* Tabs Neutras e Limpas */
-      .stTabs [data-baseweb="tab-list"] {
-        gap: 2px !important;
-        border-bottom: 2px solid #E2E8F0 !important;
-        margin-top: 20px !important;
-      }
-      .stTabs [data-baseweb="tab"] {
-        height: 38px !important;
-        border-radius: 8px 8px 0 0 !important;
-        font-weight: 600 !important;
-        color: #64748B !important;
-        border: none !important;
-        background: transparent !important;
-      }
-      .stTabs [aria-selected="true"] {
-        color: #0F172A !important; /* Slate 900 */
-        background: transparent !important;
-      }
-      .stTabs [aria-selected="true"]::after {
-        background: #0F172A !important; /* Linha preta/cinza escura */
-        height: 3px !important;
-      }
-    </style>
-    """, unsafe_allow_html=True)
+  /* Evita botões gigantes quando alguém usa use_container_width=True
+     (o botão pode ocupar a largura, mas não fica “alto/gordo”) */
+  .stButton, .stDownloadButton {{
+    margin: 0.15rem 0 !important;
+  }}
 
-# =============================================================================
-# 4) RENDERIZADORES DE COMPONENTES
-# =============================================================================
+  /* =========================
+     TABS (compactas)
+     ========================= */
+  .stTabs [data-baseweb="tab-list"] {{
+    gap: 2px !important;
+    background: transparent !important;
+    padding: 0 !important;
+    border-bottom: 2px solid #E2E8F0 !important;
+    flex-wrap: wrap !important;
+    margin-top: 18px !important;
+  }}
+  .stTabs [data-baseweb="tab"] {{
+    height: 34px !important;
+    padding: 0 16px !important;
+    border-radius: 10px 10px 0 0 !important;
+    font-size: 0.80rem !important;
+    font-weight: 700 !important;
+    letter-spacing: .3px !important;
+    color: #64748B !important;
+    border: none !important;
+    background: transparent !important;
+    position: relative !important;
+  }}
+  .stTabs [aria-selected="true"] {{
+    color: {accent} !important;
+  }}
+  .stTabs [aria-selected="true"]::after {{
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 0; right: 0;
+    height: 3px;
+    background: {accent};
+    border-radius: 3px 3px 0 0;
+  }}
+  .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{
+    background: #F8FAFC !important;
+    color: #475569 !important;
+  }}
+
+  /* =========================
+     Pequenos refinamentos
+     ========================= */
+  .stDivider {{ margin: 0.75rem 0 !important; }}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 def render_omnisfera_header():
-    """Renderiza a barra superior fixa (Logo + User)."""
+    """
+    Topbar fixa (apenas render).
+    O espaço do conteúdo é controlado por inject_layout_css().
+    """
     ensure_state()
-    
-    # Injeta os CSS fundamentais
-    inject_layout_css(topbar_h=60, navbar_h=54, content_gap=20)
-    
-    # Prepara imagens/textos
-    ws_name = _get_ws_short()
-    user_name = st.session_state.get("usuario_nome", "Visitante")
-    initials = _get_initials(user_name)
 
-    # Tenta carregar imagem local, senão usa ícone texto
-    icone_b64 = get_base64_image("omni_icone.png")
-    texto_b64 = get_base64_image("omni_texto.png")
-    
-    img_logo = f'<img src="data:image/png;base64,{icone_b64}" class="omni-logo">' if icone_b64 else '<span style="font-size:20px;">🌐</span>'
-    img_text = f'<img src="data:image/png;base64,{texto_b64}" style="height:20px;">' if texto_b64 else '<span style="font-weight:800;color:#0F172A;font-size:16px;">OMNISFERA</span>'
+    TOPBAR_H = 56
+    NAVBAR_H = 52
+    inject_layout_css(topbar_h=TOPBAR_H, navbar_h=NAVBAR_H, content_gap=14)
+
+    icone = get_base64_image("omni_icone.png")
+    texto = get_base64_image("omni_texto.png")
+
+    ws_name = _get_ws_short()
+    user_name = st.session_state.get("usuario_nome", "Visitante") or "Visitante"
+
+    img_logo = (
+        f'<img src="data:image/png;base64,{icone}" class="omni-logo">'
+        if icone else
+        '<div class="omni-logo">🌐</div>'
+    )
+
+    img_text = (
+        f'<img src="data:image/png;base64,{texto}" style="height:18px;">'
+        if texto else
+        '<span style="font-weight:900;color:#0F172A;font-size:15px;letter-spacing:0.05em;">OMNISFERA</span>'
+    )
 
     st.markdown(
         f"""
-        <div class="omni-topbar">
-          <div class="omni-brand">
-            {img_logo}
-            {img_text}
-          </div>
-          <div class="omni-user-info">
-            <div class="omni-workspace" title="{st.session_state.get('workspace_name','')}">{ws_name}</div>
-            <div class="omni-avatar" title="{user_name}">{initials}</div>
-          </div>
-        </div>
+<div class="omni-topbar">
+  <div class="omni-brand">
+    {img_logo}
+    {img_text}
+  </div>
+  <div class="omni-user-info">
+    <div class="omni-workspace" title="{ws_name}">{ws_name}</div>
+    <div class="omni-avatar" title="{user_name}">{_get_initials(user_name)}</div>
+  </div>
+</div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 def render_navbar(active_tab: str = "Início"):
     """
-    Renderiza a barra de navegação flutuante abaixo do header.
-    Faz o roteamento automático das páginas.
+    Navbar horizontal FIXA (abaixo da topbar), sem margin negativa.
     """
-    # Lista de páginas do sistema
+    ensure_state()
+
     opcoes = [
         "Início",
         "Estudantes",
@@ -337,14 +342,15 @@ def render_navbar(active_tab: str = "Início"):
         "Evolução & Dados",
     ]
     icones = ["house", "people", "book", "puzzle", "rocket", "journal", "bar-chart"]
-    
+
     try:
         default_idx = opcoes.index(active_tab)
     except ValueError:
         default_idx = 0
 
+    # wrapper fixo
     st.markdown('<div class="omni-navbar"><div class="omni-navbar-inner">', unsafe_allow_html=True)
-    
+
     selected = option_menu(
         menu_title=None,
         options=opcoes,
@@ -353,27 +359,42 @@ def render_navbar(active_tab: str = "Início"):
         orientation="horizontal",
         styles={
             "container": {
-                "padding": "4px", "margin": "0px",
+                "padding": "6px 6px",
+                "margin": "0px",
                 "background-color": "#ffffff",
                 "border": "1px solid #E2E8F0",
-                "border-radius": "12px",
-                "box-shadow": "0 2px 5px rgba(0,0,0,0.03)",
+                "border-radius": "14px",
+                "box-shadow": "0 1px 2px rgba(0,0,0,0.03)",
             },
-            "icon": {"color": "#64748B", "font-size": "14px"},
+            "icon": {"color": "#64748B", "font-size": "15px"},
             "nav-link": {
-                "font-size": "13px", "text-align": "center", "margin": "0px", "padding": "8px 12px",
-                "color": "#64748B", "font-weight": "500",
-                "border-radius": "8px", "border": "1px solid transparent",
+                "font-size": "12px",
+                "text-align": "center",
+                "margin": "0px",
+                "padding": "8px 10px",
+                "--hover-color": "#F8FAFC",
+                "color": "#64748B",
+                "white-space": "nowrap",
+                "border-radius": "10px",
+                "min-height": "38px",
+                "display": "flex",
+                "align-items": "center",
+                "justify-content": "center",
+                "border": "1px solid transparent",
+                "gap": "6px",
             },
             "nav-link-selected": {
-                "background-color": "#F1F5F9", "color": "#0F172A",
-                "font-weight": "700", "border": "1px solid #E2E8F0",
+                "background-color": "#F1F5F9",
+                "color": "#0F172A",
+                "font-weight": "700",
+                "border": "1px solid #E2E8F0",
             },
         },
     )
-    st.markdown('</div></div>', unsafe_allow_html=True)
 
-    # Lógica de Roteamento
+    st.markdown("</div></div>", unsafe_allow_html=True)
+
+    # roteamento (preservado)
     if selected != active_tab:
         routes = {
             "Início": "pages/0_Home.py" if os.path.exists("pages/0_Home.py") else "Home.py",
@@ -386,64 +407,25 @@ def render_navbar(active_tab: str = "Início"):
         }
         target = routes.get(selected)
         if target:
+            if selected == "Início" and not os.path.exists(target):
+                target = "Home.py"
             st.switch_page(target)
 
-def render_hero(page_key: str, icon: str, title: str, description: str):
-    """
-    Renderiza o Card Hero com a IDENTIDADE VISUAL da página (cor da borda e ícone).
-    
-    Args:
-        page_key (str): Chave para buscar a cor em OMNI_PAGE_COLORS (ex: 'pei', 'pae', 'hub').
-        icon (str): Classe do ícone Remix Icon (ex: 'ri-puzzle-fill').
-        title (str): Título principal do card.
-        description (str): Descrição (suporta placeholders {usuario} e {workspace}).
-    """
-    # 1. Injeta dependências CSS (Neutral Buttons + Hero Styles)
-    inject_hero_css()
-    apply_neutral_buttons()
-    
-    # 2. Define cor baseada na página
-    cfg = OMNI_PAGE_COLORS.get(page_key, {"accent": "#64748B"})
-    accent_color = cfg["accent"]
-    
-    # 3. Prepara textos dinâmicos
-    user_first = st.session_state.get("usuario_nome", "Visitante").split()[0]
-    ws_name = st.session_state.get("workspace_name", "Workspace")
-    
-    try:
-        final_desc = description.format(usuario=user_first, workspace=ws_name)
-    except:
-        final_desc = description
-
-    # 4. Renderiza HTML
-    st.markdown(f"""
-    <div class="mod-card-wrapper">
-        <div class="mod-card-rect">
-            <div class="mod-bar" style="background-color: {accent_color} !important;"></div>
-            
-            <div class="mod-icon-area" style="color: {accent_color} !important;">
-                <i class="{icon}"></i>
-            </div>
-            
-            <div class="mod-content">
-                <div class="mod-title">{title}</div>
-                <div class="mod-desc">{final_desc}</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
 # =============================================================================
-# 5) CONECTORES SUPABASE (BACKEND)
+# 3) SUPABASE & UTILS (LÓGICA PRESERVADA)
 # =============================================================================
 def _sb_url() -> str:
     url = str(st.secrets.get("SUPABASE_URL", "")).strip()
-    if not url: raise RuntimeError("SUPABASE_URL não configurado.")
+    if not url:
+        raise RuntimeError("SUPABASE_URL não encontrado nos secrets.")
     return url.rstrip("/")
 
 def _sb_key() -> str:
-    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "") or st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
-    if not key: raise RuntimeError("SUPABASE_KEY não configurada.")
+    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "")).strip()
+    if not key:
+        key = str(st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
+    if not key:
+        raise RuntimeError("Key não encontrada.")
     return key
 
 def _headers() -> dict:
@@ -453,7 +435,8 @@ def _headers() -> dict:
 def supabase_rpc(fn_name: str, payload: dict):
     url = f"{_sb_url()}/rest/v1/rpc/{fn_name}"
     r = requests.post(url, headers=_headers(), json=payload, timeout=20)
-    if r.status_code >= 400: raise RuntimeError(f"RPC {fn_name} erro: {r.text}")
+    if r.status_code >= 400:
+        raise RuntimeError(f"RPC {fn_name} erro: {r.status_code} {r.text}")
     return r.json()
 
 def supabase_insert(table: str, row: dict):
@@ -461,7 +444,8 @@ def supabase_insert(table: str, row: dict):
     h = _headers()
     h["Prefer"] = "return=representation"
     r = requests.post(url, headers=h, json=row, timeout=20)
-    if r.status_code >= 400: raise RuntimeError(f"Insert {table} erro: {r.text}")
+    if r.status_code >= 400:
+        raise RuntimeError(f"Insert {table} erro: {r.status_code} {r.text}")
     return r.json()
 
 def supabase_upsert(table: str, row: dict, on_conflict: str):
@@ -469,24 +453,84 @@ def supabase_upsert(table: str, row: dict, on_conflict: str):
     h = _headers()
     h["Prefer"] = "resolution=merge-duplicates,return=representation"
     r = requests.post(url, headers=h, json=row, timeout=20)
-    if r.status_code >= 400: raise RuntimeError(f"Upsert {table} erro: {r.text}")
+    if r.status_code >= 400:
+        raise RuntimeError(f"Upsert {table} erro: {r.status_code} {r.text}")
     data = r.json()
-    return data[0] if isinstance(data, list) and data else data
+    return data[0] if isinstance(data, list) and data else (data if isinstance(data, dict) else None)
+
+def supabase_workspace_from_pin(pin: str) -> str | None:
+    pin = (pin or "").strip()
+    if not pin:
+        return None
+
+    for p in ({"pin": pin}, {"p_pin": pin}, {"pincode": pin}):
+        try:
+            data = supabase_rpc("workspace_from_pin", p)
+            if isinstance(data, dict) and data.get("workspace_id"):
+                return data["workspace_id"]
+            if isinstance(data, list) and data and isinstance(data[0], dict) and data[0].get("workspace_id"):
+                return data[0]["workspace_id"]
+        except Exception:
+            continue
+    return None
+
+def supabase_log_access(workspace_id: str, nome: str, cargo: str, event: str, app_version: str = ""):
+    try:
+        ua = st.context.headers.get("User-Agent", "")[:500]
+    except Exception:
+        ua = ""
+    row = {
+        "workspace_id": workspace_id,
+        "nome": (nome or "").strip(),
+        "cargo": (cargo or "").strip(),
+        "event": (event or "").strip(),
+        "user_agent": ua,
+        "app_version": (app_version or "").strip(),
+    }
+    return supabase_insert("access_logs", row)
+
+def supa_save_pei(student_id: str, dados: dict, pdf_text: str = ""):
+    if not student_id or not st.session_state.get("workspace_id"):
+        raise RuntimeError("Dados incompletos.")
+    row = {
+        "student_id": student_id,
+        "workspace_id": st.session_state.workspace_id,
+        "pei_json": dados if isinstance(dados, dict) else {},
+        "pdf_text": pdf_text or "",
+    }
+    return supabase_upsert("peis", row, on_conflict="student_id")
 
 # =============================================================================
-# 6) CSS ESPECÍFICO PARA LOGIN (Não afeta app interno)
+# 4) CSS DO LOGIN (ESCOPADO) — NÃO AFETA O APP TODO
 # =============================================================================
 def inject_base_css():
-    """Estilos usados apenas na tela de login/inicial."""
-    st.markdown("""
-    <style>
-      .omni-login .login-box {
-        background: white; border-radius: 24px; padding: 40px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        text-align: center; border: 1px solid #E2E8F0;
-        max-width: 450px; margin: 40px auto;
-      }
-      .omni-login .stTextInput input { border-radius: 10px !important; height: 42px !important; }
-      .omni-login .stButton > button { width: 100%; justify-content: center; }
-    </style>
-    """, unsafe_allow_html=True)
+    """
+    CSS do login / telas iniciais.
+    IMPORTANTE: fica escopado em .omni-login para não “gordar” inputs no app inteiro.
+    """
+    st.markdown(
+        """
+<style>
+  .omni-login .login-box {
+    background: white;
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    text-align: center;
+    border: 1px solid #E2E8F0;
+    max-width: 650px;
+    margin: 30px auto;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* INPUTS SOMENTE NO LOGIN */
+  .omni-login .stTextInput input,
+  .omni-login .stTextArea textarea,
+  .omni-login div[data-baseweb="select"] {
+    border-radius: 12px !important;
+  }
+  .omni-login .stTextInput input { height: 44px !important; }
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
