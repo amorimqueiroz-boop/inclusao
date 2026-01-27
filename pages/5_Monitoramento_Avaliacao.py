@@ -12,7 +12,7 @@ from streamlit_option_menu import option_menu
 # 1. CONFIGURAÇÃO
 # ==============================================================================
 st.set_page_config(
-    page_title="Omnisfera • Monitoramento e Avaliação",
+    page_title="Omnisfera • Estudantes",
     page_icon="👥",
     layout="wide",
     initial_sidebar_state="collapsed",
