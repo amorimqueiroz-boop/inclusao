@@ -7,14 +7,11 @@ import os
 import json
 import pandas as pd
 from datetime import datetime, date, timedelta
-import base64
 import requests
 import time
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-
-
 
 import omni_utils as ou  # módulo atualizado
 
@@ -39,22 +36,6 @@ except Exception:
 # ✅ Header + Navbar (depois do page_config)
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Diário de Bordo")
-
-
-st.set_page_config(
-    page_title="Omnisfera | Diário de Bordo",
-    page_icon="📘",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
-
-# UI lockdown (se usar)
-try:
-    from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
-    hide_streamlit_chrome_if_needed()
-    hide_default_sidebar_nav()
-except Exception:
-    pass
 
 
 # ==============================================================================
@@ -92,111 +73,97 @@ else:
     card_bg = "rgba(255, 255, 255, 0.85)"
     card_border = "rgba(255, 255, 255, 0.6)"
 
-st.markdown(f"""
+st.markdown("""
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 
 <style>
-    /* CARD FLUTUANTE (OMNISFERA) */
-    .omni-badge {{
-        position: fixed; top: 15px; right: 15px;
-        background: {card_bg}; border: 1px solid {card_border};
-        backdrop-filter: blur(8px); padding: 4px 30px;
-        min-width: 260px; justify-content: center;
-        border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        z-index: 999990; display: flex; align-items: center; gap: 10px;
-        pointer-events: none;
-    }}
-    .omni-text {{ font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 0.9rem; color: #2D3748; letter-spacing: 1px; text-transform: uppercase; }}
-    @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
-    .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
-
     /* CARD HERO */
-    .mod-card-wrapper {{ display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); }}
-    .mod-card-rect {{ background: white; border-radius: 16px 16px 0 0; padding: 0; border: 1px solid #E2E8F0; border-bottom: none; display: flex; flex-direction: row; align-items: center; height: 130px; width: 100%; position: relative; overflow: hidden; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }}
-    .mod-card-rect:hover {{ transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08); border-color: #CBD5E1; }}
-    .mod-bar {{ width: 6px; height: 100%; flex-shrink: 0; }}
-    .mod-icon-area {{ width: 90px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0; background: transparent !important; border-right: 1px solid #F1F5F9; transition: all 0.3s ease; }}
-    .mod-card-rect:hover .mod-icon-area {{ transform: scale(1.05); }}
-    .mod-content {{ flex-grow: 1; padding: 0 24px; display: flex; flex-direction: column; justify-content: center; }}
-    .mod-title {{ font-weight: 800; font-size: 1.1rem; color: #1E293B; margin-bottom: 6px; letter-spacing: -0.3px; transition: color 0.2s; }}
-    .mod-card-rect:hover .mod-title {{ color: #4F46E5; }}
-    .mod-desc {{ font-size: 0.8rem; color: #64748B; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
+    .mod-card-wrapper { display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); }
+    .mod-card-rect { background: white; border-radius: 16px 16px 0 0; padding: 0; border: 1px solid #E2E8F0; border-bottom: none; display: flex; flex-direction: row; align-items: center; height: 130px; width: 100%; position: relative; overflow: hidden; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+    .mod-card-rect:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08); border-color: #CBD5E1; }
+    .mod-bar { width: 6px; height: 100%; flex-shrink: 0; }
+    .mod-icon-area { width: 90px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0; background: transparent !important; border-right: 1px solid #F1F5F9; transition: all 0.3s ease; }
+    .mod-card-rect:hover .mod-icon-area { transform: scale(1.05); }
+    .mod-content { flex-grow: 1; padding: 0 24px; display: flex; flex-direction: column; justify-content: center; }
+    .mod-title { font-weight: 800; font-size: 1.1rem; color: #1E293B; margin-bottom: 6px; letter-spacing: -0.3px; transition: color 0.2s; }
+    .mod-card-rect:hover .mod-title { color: #4F46E5; }
+    .mod-desc { font-size: 0.8rem; color: #64748B; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
     /* CORES */
-    .c-teal {{ background: #0D9488 !important; }}
-    .bg-teal-soft {{ background: transparent !important; color: #0D9488 !important; }}
+    .c-teal { background: #0D9488 !important; }
+    .bg-teal-soft { background: transparent !important; color: #0D9488 !important; }
 
     /* CARD DE DIÁRIO */
-    .diario-card {{
+    .diario-card {
         background: white;
         border: 1px solid #E2E8F0;
         border-radius: 12px;
         padding: 20px;
         margin-bottom: 15px;
         transition: all 0.2s ease;
-    }}
-    .diario-card:hover {{
+    }
+    .diario-card:hover {
         border-color: #0D9488;
         box-shadow: 0 4px 12px rgba(13, 148, 136, 0.1);
-    }}
-    
+    }
+
     /* BADGES */
-    .badge-individual {{ background: #DBEAFE; color: #1E40AF; }}
-    .badge-grupo {{ background: #D1FAE5; color: #065F46; }}
-    .badge-observacao {{ background: #FEF3C7; color: #92400E; }}
-    
+    .badge-individual { background: #DBEAFE; color: #1E40AF; }
+    .badge-grupo { background: #D1FAE5; color: #065F46; }
+    .badge-observacao { background: #FEF3C7; color: #92400E; }
+
     /* PROGRESS BAR */
-    .prog-bar-bg {{ 
-        width: 100%; 
-        height: 8px; 
-        background: #E2E8F0; 
-        border-radius: 4px; 
-        overflow: hidden; 
-        margin-top: 8px; 
-    }}
-    .prog-bar-fill {{ 
-        height: 100%; 
-        background: linear-gradient(90deg, #0D9488, #14B8A6); 
-        transition: width 1s; 
-    }}
-    
+    .prog-bar-bg {
+        width: 100%;
+        height: 8px;
+        background: #E2E8F0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+    .prog-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #0D9488, #14B8A6);
+        transition: width 1s;
+    }
+
     /* STATS CARDS */
-    .stat-card {{
+    .stat-card {
         background: white;
         border: 1px solid #E2E8F0;
         border-radius: 12px;
         padding: 20px;
         text-align: center;
-    }}
-    .stat-value {{
+    }
+    .stat-value {
         font-size: 2rem;
         font-weight: 800;
         color: #0D9488;
         margin-bottom: 5px;
-    }}
-    .stat-label {{
+    }
+    .stat-label {
         font-size: 0.85rem;
         color: #64748B;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-    }}
-    
+    }
+
     /* FORM STYLES */
-    .form-section {{
+    .form-section {
         background: #F8FAFC;
         border: 1px solid #E2E8F0;
         border-radius: 12px;
         padding: 25px;
         margin-bottom: 20px;
-    }}
-    
+    }
+
     /* TIMELINE */
-    .timeline-item {{
+    .timeline-item {
         position: relative;
         padding-left: 30px;
         margin-bottom: 20px;
-    }}
-    .timeline-dot {{
+    }
+    .timeline-dot {
         position: absolute;
         left: 0;
         top: 5px;
@@ -204,40 +171,44 @@ st.markdown(f"""
         height: 12px;
         border-radius: 50%;
         background: #0D9488;
-    }}
-    .timeline-content {{
+    }
+    .timeline-content {
         background: white;
         border: 1px solid #E2E8F0;
         border-radius: 8px;
         padding: 15px;
-    }}
+    }
 </style>
-
-<div class="omni-badge">
-    <img src="{src_logo_giratoria}" class="omni-logo-spin">
-    <span class="omni-text">OMNISFERA PAEE</span>
-</div>
 """, unsafe_allow_html=True)
+
 
 # ==============================================================================
 # FUNÇÃO DE VERIFICAÇÃO DE ACESSO
 # ==============================================================================
 def verificar_acesso():
-    if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
+    if not st.session_state.get("autenticado"):
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
         st.stop()
-    st.markdown("""<style>footer {visibility: hidden !important;} [data-testid="stHeader"] {visibility: visible !important; background-color: transparent !important;} .block-container {padding-top: 2rem !important;}</style>""", unsafe_allow_html=True)
+
+    # Não mexe no .block-container (senão quebra o padding do ou.inject_layout_css)
+    st.markdown("""
+    <style>
+      footer {visibility: hidden !important;}
+      header[data-testid="stHeader"] {display:none !important;}
+      [data-testid="stToolbar"] {display:none !important;}
+    </style>
+    """, unsafe_allow_html=True)
 
 verificar_acesso()
+
 
 # ==============================================================================
 # CARD HERO PRINCIPAL
 # ==============================================================================
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
-USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
-WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
-USER_ID = st.session_state.get("user_id", "")
+USUARIO_NOME = (st.session_state.get("usuario_nome", "Visitante") or "Visitante").split()[0]
+WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace") or "Workspace"
 
 st.markdown(
     f"""
