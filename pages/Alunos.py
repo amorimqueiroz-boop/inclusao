@@ -28,6 +28,18 @@ st.set_page_config(
 
 APP_VERSION = "v3.7 - Modularizado"
 
+def gap_hub():
+    """Respiro padrão do Hub (mesmo feeling de distâncias)."""
+    st.markdown(
+        """
+        <style>
+          .omni-page-gap { height: 14px; }
+        </style>
+        <div class="omni-page-gap"></div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 # ==============================================================================
 # 2. RENDERIZAÇÃO DOS COMPONENTES VISUAIS (HEADER E MENU)
 # ==============================================================================
