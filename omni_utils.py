@@ -81,6 +81,7 @@ def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int =
   [data-testid="stSidebar"] * {{ display: none !important; }}
 
   /* 🔥 CONTEÚDO: começa logo abaixo de topbar+navbar, com gap mínimo */
+  /* Nota: padding-top será sobrescrito por forcar_layout_hub() nas páginas */
   .main .block-container {{
     padding-top: calc(var(--topbar-h) + var(--navbar-h) + var(--content-gap)) !important;
     padding-bottom: 2rem !important;
@@ -295,8 +296,8 @@ def render_omnisfera_header():
     TOPBAR_H = 56
     NAVBAR_H = 52
 
-    # 🔥 MUITO PERTO: content_gap=0.5 (espaço mínimo entre navbar e hero)
-    inject_layout_css(topbar_h=TOPBAR_H, navbar_h=NAVBAR_H, content_gap=0.5)
+    # 🔥 MUITO PERTO: content_gap=0 (espaço mínimo entre navbar e hero)
+    inject_layout_css(topbar_h=TOPBAR_H, navbar_h=NAVBAR_H, content_gap=0)
 
     icone = get_base64_image("omni_icone.png")
     texto = get_base64_image("omni_texto.png")
@@ -546,7 +547,7 @@ def inject_hero_card_css():
    PADRONIZAÇÃO: DISTÂNCIA MENU → HERO
 ================================ */
 .block-container {
-    padding-top: 0.3rem !important;
+    padding-top: 0.1rem !important;
 }
 
 /* ===============================
