@@ -1189,7 +1189,7 @@ html, body, [class*="css"] {
     display: flex;
     flex-direction: row;
     align-items: center;
-    height: 130px;                /* 🔒 ALTURA FIXA */
+    height: 130px !important;  /* 🔒 ALTURA FIXA PADRONIZADA */
     width: 100%;
     position: relative;
     overflow: hidden;
@@ -1374,15 +1374,11 @@ div[data-baseweb="tab-highlight"] {
 }
 
 /* ===============================
-AJUSTE ENTRE MENU SUPERIOR E HERO
+AJUSTE ENTRE MENU SUPERIOR E HERO (PADRONIZADO)
 ================================ */
-
-/* reduz o espaçamento padrão do Streamlit */
 .block-container {
-    padding-top: 0.3rem !important;   /* teste: 0.2rem ou 0rem se quiser mais colado */
+    padding-top: 0.3rem !important;
 }
-
-/* garante que o HERO não empurre para baixo */
 .mod-card-wrapper {
     margin-top: 0 !important;
 }
