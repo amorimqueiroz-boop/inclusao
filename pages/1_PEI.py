@@ -1,6 +1,6 @@
 # pages/1_PEI.py
 import streamlit as st
-from datetime import date
+from datetime import date, datetime
 from io import BytesIO
 from docx import Document
 from openai import OpenAI
@@ -12,7 +12,6 @@ import json
 import os
 import time
 import re
-from datetime import date, datetime
 
 import omni_utils as ou  # módulo atualizado
 
@@ -40,8 +39,6 @@ except Exception:
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Estratégias & PEI")
 ou.inject_compact_app_css()
-
-from datetime import datetime
 
 # ==============================================================================
 # HERO - PEI (ÚNICO)
@@ -445,34 +442,6 @@ def db_update_pei_content(student_id: str, pei_dict: dict):
         raise RuntimeError(f"Erro ao salvar conteúdo do PEI: {r.text}")
         
     return r.json()
-    
-def db_update_pei_content(student_id: str, pei_dict: dict):
-    """Salva o JSON completo na coluna pei_data do Supabase"""
-    # Verifica credenciais
-    url = str(st.secrets.get("SUPABASE_URL", "")).strip()
-    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "") or st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
-    
-    if not url or not key: return None
-
-    api_url = f"{url.rstrip('/')}/rest/v1/students?id=eq.{student_id}"
-    headers = {
-        "apikey": key,
-        "Authorization": f"Bearer {key}",
-        "Content-Type": "application/json",
-        "Prefer": "return=representation"
-    }
-    
-    # Prepara o JSON seguro (datas viram string)
-    import json
-    payload_json = json.loads(json.dumps(pei_dict, default=str))
-    
-    body = {
-        "pei_data": payload_json,
-        "updated_at": datetime.now().isoformat()
-    }
-    
-    r = requests.patch(api_url, headers=headers, json=body, timeout=20)
-    return r.json() if r.status_code < 400 else None
 
 # ==============================================================================
 # 
@@ -1442,17 +1411,6 @@ def get_logo_base64() -> str | None:
     return None
 
 src_logo_giratoria = get_logo_base64()
-
-def calcular_progresso() -> int:
-    """Calcula o progresso do formulário"""
-    try:
-        dados = st.session_state.get("dados", {}) or {}
-        campos = ["nome", "nasc", "turma", "ano"]
-        total = len(campos)
-        ok = sum(1 for c in campos if dados.get(c))
-        return int(round((ok / total) * 100)) if total else 0
-    except Exception:
-        return 0
 
 def render_progresso():
     """Renderiza a barra de progresso compacta"""
