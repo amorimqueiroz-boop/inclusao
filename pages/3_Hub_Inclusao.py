@@ -53,9 +53,48 @@ except Exception:
 # ✅ Header + Navbar (depois do page_config)
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Hub de Recursos")
+ou.inject_compact_app_css()
 
 # Adiciona classe no body para cores específicas das abas
 st.markdown("<script>document.body.classList.add('page-teal');</script>", unsafe_allow_html=True)
+
+# ==============================================================================
+# AJUSTE FINO DE LAYOUT (ANTES DO HERO - PADRONIZADO)
+# ==============================================================================
+def forcar_layout_hub():
+    st.markdown("""
+        <style>
+            /* 1. Remove o cabeçalho padrão do Streamlit e a linha colorida */
+            header[data-testid="stHeader"] {
+                visibility: hidden !important;
+                height: 0px !important;
+            }
+
+            /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) */
+            .block-container {
+                padding-top: 0.3rem !important; /* Espaço mínimo entre navbar e hero */
+                padding-bottom: 1rem !important;
+                margin-top: 0px !important;
+            }
+
+            /* 3. Remove padding extra se houver container de navegação */
+            div[data-testid="stVerticalBlock"] > div:first-child {
+                padding-top: 0px !important;
+            }
+            
+            /* 4. Esconde o menu hambúrguer e rodapé */
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+        </style>
+    """, unsafe_allow_html=True)
+
+# CHAME ESTA FUNÇÃO ANTES DO HERO CARD (igual ao PEI)
+forcar_layout_hub()
+
+# Cores dos hero cards (paleta vibrante)
+ou.inject_hero_card_colors()
+# CSS padronizado: abas (pílulas), botões, selects, etc.
+ou.inject_unified_ui_css()
 
 # ==============================================================================
 # CONSTANTES E DADOS GLOBAIS
@@ -1167,86 +1206,39 @@ def criar_dropdowns_bncc_simplificado(key_suffix=""):
 # ==============================================================================
 
 def aplicar_estilos():
-    """Aplica todos os estilos CSS da aplicação"""
-    hora = datetime.now().hour
-    saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
-    USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
-    WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
-    
-    try:
-        IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
-    except:
-        IS_TEST_ENV = False
-
-    def get_logo_base64():
-        caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
-        for c in caminhos:
-            if os.path.exists(c):
-                with open(c, "rb") as f:
-                    return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
-        return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
-
-    src_logo_giratoria = get_logo_base64()
-    
-    if IS_TEST_ENV:
-        card_bg = "rgba(255, 220, 50, 0.95)" 
-        card_border = "rgba(200, 160, 0, 0.5)"
-    else:
-        card_bg = "rgba(255, 255, 255, 0.85)"
-        card_border = "rgba(255, 255, 255, 0.6)"
-    
-    st.markdown(f"""
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
-    
+    """Aplica estilos CSS específicos do Hub (sem hero card - já renderizado acima)"""
+    st.markdown("""
     <style>
-        /* CARD FLUTUANTE REMOVIDO - pode interferir no menu superior */
-    
-        /* CARD HERO (PADRONIZADO) */
-        .mod-card-wrapper {{ display: flex; flex-direction: column; margin-top: 0 !important; margin-bottom: 20px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); }}
-        .mod-card-rect {{ background: white; border-radius: 16px 16px 0 0; padding: 0; border: 1px solid #E2E8F0; border-bottom: none; display: flex; flex-direction: row; align-items: center; height: 130px !important; width: 100%; position: relative; overflow: hidden; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }}
-        .mod-card-rect:hover {{ transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08); border-color: #CBD5E1; }}
-        .mod-bar {{ width: 6px; height: 100%; flex-shrink: 0; }}
-        .mod-icon-area {{ width: 90px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0; background: #FAFAFA !important; border-right: 1px solid #F1F5F9; transition: all 0.3s ease; }}
-        .mod-card-rect:hover .mod-icon-area {{
-            background: white !important;
-            transform: scale(1.05) !important;
-        }}
-        .mod-content {{ flex-grow: 1; padding: 0 24px; display: flex; flex-direction: column; justify-content: center; }}
-        .mod-title {{ font-weight: 800; font-size: 1.1rem; color: #1E293B; margin-bottom: 6px; letter-spacing: -0.3px; transition: color 0.2s; }}
-        .mod-card-rect:hover .mod-title {{ color: #64748B; }}
-        .mod-desc {{ font-size: 0.8rem; color: #64748B; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
-    
-        /* CORES */
-        .c-teal {{ background: #0D9488 !important; }}
-        .bg-teal-soft {{ background: transparent !important; color: #0D9488 !important; }}
-        .c-purple {{ background: #8B5CF6 !important; }}
-        .bg-purple-soft {{ background: transparent !important; color: #8B5CF6 !important; }}
-    
-        /* ABAS — PADRÃO VIA omni_utils.inject_unified_ui_css() */
-        /* Estilos de tabs são aplicados via função padronizada */
-    
         /* PEDAGOGIA BOX */
-        .pedagogia-box {{ background-color: #F8FAFC; border-left: 4px solid #CBD5E1; padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 25px; font-size: 0.95rem; color: #4A5568; }}
+        .pedagogia-box { 
+            background-color: #F8FAFC; 
+            border-left: 4px solid #CBD5E1; 
+            padding: 20px; 
+            border-radius: 0 12px 12px 0; 
+            margin-bottom: 25px; 
+            font-size: 0.95rem; 
+            color: #4A5568; 
+        }
     
         /* RESOURCE BOX */
-        .resource-box {{ 
+        .resource-box { 
             background: #F8FAFC; 
             border: 1px solid #E2E8F0; 
             border-radius: 12px; 
             padding: 20px; 
             margin: 15px 0; 
-        }}
+        }
         
         /* ACTION BUTTONS */
-        .action-buttons {{ 
+        .action-buttons { 
             display: flex; 
             gap: 10px; 
             margin-top: 20px; 
             flex-wrap: wrap; 
-        }}
+        }
         
         /* TIMELINE STYLES */
-        .timeline-header {{ 
+        .timeline-header { 
             background: white; 
             border-radius: 12px; 
             padding: 20px;
@@ -1255,66 +1247,60 @@ def aplicar_estilos():
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
-        }}
-        .prog-bar-bg {{ 
+        }
+        .prog-bar-bg { 
             width: 100%; 
             height: 8px; 
             background: #E2E8F0; 
             border-radius: 4px; 
             overflow: hidden; 
             margin-top: 8px; 
-        }}
-        .prog-bar-fill {{ 
+        }
+        .prog-bar-fill { 
             height: 100%; 
-            background: linear-gradient(90deg, #0D9488, #14B8A6); 
+            background: linear-gradient(90deg, #06B6D4, #0891B2); 
             transition: width 1s; 
-        }}
-        
-        /* BOTÕES — PADRÃO VIA omni_utils.inject_unified_ui_css() */
-        /* Estilos de botões são aplicados via função padronizada */
+        }
         
         /* HEADER DO ALUNO */
-        .student-header {{
+        .student-header {
             background-color: #F8FAFC;
             border: 1px solid #E2E8F0;
             border-radius: 16px;
             padding: 18px 24px;
             margin-bottom: 18px;
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }}
-        .student-label {{
-            font-size: 0.78rem; color: #64748B; font-weight: 800;
-            text-transform: uppercase; letter-spacing: 1px;
-        }}
-        .student-value {{ font-size: 1.15rem; color: #1E293B; font-weight: 800; }}
+        }
+        .student-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .student-label {
+            font-size: 0.78rem; 
+            color: #64748B; 
+            font-weight: 800;
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+        .student-value { 
+            font-size: 1.15rem; 
+            color: #1E293B; 
+            font-weight: 800; 
+        }
         
         /* RESPONSIVIDADE */
-        @media (max-width: 768px) {{ 
-            .mod-card-rect {{ height: auto; flex-direction: column; padding: 16px; }} 
-            .mod-icon-area {{ width: 100%; height: 60px; border-right: none; border-bottom: 1px solid #F1F5F9; }} 
-            .mod-content {{ padding: 16px 0 0 0; }} 
-            .student-header {{ flex-direction: column; align-items:flex-start; gap: 12px; }}
-        }}
+        @media (max-width: 768px) { 
+            .student-header { 
+                flex-direction: column; 
+                align-items:flex-start; 
+                gap: 12px; 
+            }
+        }
     </style>
-    
-    <!-- Card flutuante removido - pode interferir no menu superior -->
-    
-    <div class="mod-card-wrapper">
-        <div class="mod-card-rect">
-            <div class="mod-bar c-teal"></div>
-            <div class="mod-icon-area bg-teal-soft">
-                <i class="ri-lightbulb-flash-fill"></i>
-            </div>
-            <div class="mod-content">
-                <div class="mod-title">Hub de atividades inclusivas</div>
-                <div class="mod-desc">
-                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie atividades adaptadas, experiências lúdicas,
-            recursos visuais e estratégias inclusivas para estudantes da escola <strong>{WORKSPACE_NAME}</strong>. alinhadas à BNCC e ao DUA.
-                </div>
-            </div>
-        </div>
-    </div>
     """, unsafe_allow_html=True)
 
 def render_cabecalho_aluno(aluno):
@@ -2498,52 +2484,51 @@ def render_aba_ei_inclusao_brincar(aluno, api_key):
 # EXECUÇÃO PRINCIPAL
 # ==============================================================================
 
+# ==============================================================================
+# HERO - HUB DE INCLUSÃO
+# ==============================================================================
+hora = datetime.now().hour
+saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
+USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
+WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
+
+st.markdown(f"""
+<div class="mod-card-wrapper">
+    <div class="mod-card-rect">
+        <div class="mod-bar c-teal"></div>
+        <div class="mod-icon-area bg-teal-soft">
+            <i class="ri-lightbulb-flash-fill"></i>
+        </div>
+        <div class="mod-content">
+            <div class="mod-title">Hub de Recursos & Inteligência Artificial</div>
+            <div class="mod-desc">
+                {saudacao}, <strong>{USUARIO_NOME}</strong>! Acesse recursos, modelos e ferramentas de IA 
+                para criar adaptações e estratégias personalizadas no workspace <strong>{WORKSPACE_NAME}</strong>.
+            </div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# CSS específico do Hub (após hero card)
+aplicar_estilos()
+
+# ==============================================================================
+# VERIFICAÇÃO DE ACESSO
+# ==============================================================================
+def verificar_acesso():
+    """Verifica se o usuário está autenticado"""
+    if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
+        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
+        st.stop()
+
+verificar_acesso()
+
+# ==============================================================================
+# FUNÇÃO PRINCIPAL
+# ==============================================================================
 def main():
-    """Função principal da aplicação"""
-    
-    # Verificar acesso
-    verificar_acesso()
-    
-    # Aplicar estilos (inclui hero card)
-    aplicar_estilos()
-    
-    # Cores dos hero cards (mesmas da Home)
-    ou.inject_hero_card_colors()
-    # CSS padronizado: abas (pílulas), botões, selects, etc.
-    ou.inject_unified_ui_css()
-    
-    # ==============================================================================
-    # AJUSTE FINO DE LAYOUT (Igual ao PEI - PADRONIZADO)
-    # ==============================================================================
-    def forcar_layout_hub():
-        st.markdown("""
-            <style>
-                /* 1. Remove o cabeçalho padrão do Streamlit e a linha colorida */
-                header[data-testid="stHeader"] {
-                    visibility: hidden !important;
-                    height: 0px !important;
-                }
-
-                /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) */
-                .block-container {
-                    padding-top: 0.3rem !important; /* Espaço mínimo entre navbar e hero */
-                    padding-bottom: 1rem !important;
-                    margin-top: 0px !important;
-                }
-
-                /* 3. Remove padding extra se houver container de navegação */
-                div[data-testid="stVerticalBlock"] > div:first-child {
-                    padding-top: 0px !important;
-                }
-                
-                /* 4. Esconde o menu hambúrguer e rodapé */
-                #MainMenu {visibility: hidden;}
-                footer {visibility: hidden;}
-            </style>
-        """, unsafe_allow_html=True)
-
-    # CHAME ESTA FUNÇÃO DEPOIS DO HERO CARD (igual ao PEI)
-    forcar_layout_hub()
+    """Função principal da aplicação - executa a lógica do Hub"""
     
     # Inicializar api_key antes de usar
     if 'OPENAI_API_KEY' in st.secrets:
@@ -2697,8 +2682,8 @@ def main():
         with tabs[7]:
             render_aba_plano_aula(aluno, api_key)
 
-if __name__ == "__main__":
-    main()
+# Executa a função principal
+main()
 
 
 
