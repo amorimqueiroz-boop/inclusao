@@ -183,6 +183,9 @@ def forcar_layout_hub():
 # CHAME ESTA FUNÇÃO DEPOIS DO HERO CARD (igual ao PEI)
 forcar_layout_hub()
 
+# CSS padronizado: abas (pílulas), botões, selects, etc.
+ou.inject_unified_ui_css()
+
 # ==============================================================================
 # FUNÇÕES SUPABASE (REST)
 # ==============================================================================
