@@ -70,12 +70,45 @@ st.set_page_config(
 # ==============================================================================
 # BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA
 # ==============================================================================
+try:
+    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
+except:
+    IS_TEST_ENV = False
+
+def get_logo_base64():
+    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
+    for c in caminhos:
+        if os.path.exists(c):
+            with open(c, "rb") as f:
+                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
+
+src_logo_giratoria = get_logo_base64()
+
+if IS_TEST_ENV:
+    card_bg = "rgba(255, 220, 50, 0.95)" 
+    card_border = "rgba(200, 160, 0, 0.5)"
+else:
+    card_bg = "rgba(255, 255, 255, 0.85)"
+    card_border = "rgba(255, 255, 255, 0.6)"
 
 st.markdown(f"""
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 
 <style>
-   
+    /* CARD FLUTUANTE (OMNISFERA) */
+    .omni-badge {{
+        position: fixed; top: 15px; right: 15px;
+        background: {card_bg}; border: 1px solid {card_border};
+        backdrop-filter: blur(8px); padding: 4px 30px;
+        min-width: 260px; justify-content: center;
+        border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        z-index: 999990; display: flex; align-items: center; gap: 10px;
+        pointer-events: none;
+    }}
+    .omni-text {{ font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 0.9rem; color: #2D3748; letter-spacing: 1px; text-transform: uppercase; }}
+    @keyframes spin-slow {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
+    .omni-logo-spin {{ height: 26px; width: 26px; animation: spin-slow 10s linear infinite; }}
 
     /* CARD HERO */
     .mod-card-wrapper {{ display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); }}
@@ -358,7 +391,24 @@ def excluir_registro_diario(registro_id):
 # ==============================================================================
 # SIDEBAR - FILTROS E NAVEGAÇÃO
 # ==============================================================================
-
+with st.sidebar:
+    try: 
+        st.image("ominisfera.png", width=150)
+    except: 
+        st.markdown("### 🌐 OMNISFERA PAEE")
+    
+    st.markdown("---")
+    
+    # Navegação
+    col_nav1, col_nav2 = st.columns(2)
+    with col_nav1:
+        if st.button("🏠 Home", use_container_width=True):
+            st.switch_page("Home.py")
+    with col_nav2:
+        if st.button("📋 PAE", use_container_width=True):
+            st.switch_page("pages/2_PAE.py")
+    
+    st.markdown("---")
     
     # Filtros
     st.markdown("### 🔍 Filtros")
