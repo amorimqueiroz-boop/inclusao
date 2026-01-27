@@ -114,12 +114,15 @@ def forcar_layout_hub():
 forcar_layout_hub()
 
 # ==============================================================================
-# CSS DO MÓDULO - SIMPLIFICADO (igual ao Hub)
+# BLOCO VISUAL (GLOBAL) — CSS DO MÓDULO + GATE (REAPROVEITÁVEL)
+# Mantém: card hero, tabs, caixas, timeline e tema de botões
+# Remove: badge fixo + logo girando (porque conflita com ou.render_omnisfera_header)
 # ==============================================================================
 
 def inject_paee_css(theme: str = "teal"):
     """
-    CSS simplificado para padronização com o Hub
+    Injeta CSS do módulo (reaproveitável em outras páginas).
+    - theme: "teal" (padrão) ou "purple" (se quiser alternar em outro módulo)
     """
     if theme == "purple":
         ACCENT = "#8B5CF6"
@@ -133,6 +136,10 @@ def inject_paee_css(theme: str = "teal"):
     st.markdown(
         f"""
 <style>
+  /* ============================
+     COMPONENTES BASE (REUSO)
+     ============================ */
+
   /* CARD HERO (header do módulo) */
   .mod-card-wrapper {{
       display:flex; flex-direction:column;
@@ -200,7 +207,7 @@ def inject_paee_css(theme: str = "teal"):
       overflow:hidden;
   }}
 
-  /* BOX pedagógico */
+  /* BOX pedagógico e caixas */
   .pedagogia-box {{
       background-color:#F8FAFC;
       border-left:4px solid #CBD5E1;
@@ -211,7 +218,28 @@ def inject_paee_css(theme: str = "teal"):
       color:#4A5568;
   }}
 
-  /* TABS (igual ao Hub) */
+  .resource-box {{
+      background:#F8FAFC;
+      border:1px solid #E2E8F0;
+      border-radius:12px;
+      padding:20px;
+      margin:15px 0;
+  }}
+
+  .timeline-header {{
+      background:white;
+      border-radius:12px;
+      padding:20px;
+      margin-bottom:20px;
+      border:1px solid #E2E8F0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+  }}
+
+  /* ============================
+     TABS (estilo)
+     ============================ */
   .stTabs [data-baseweb="tab-list"] {{
       gap:2px !important;
       background-color:transparent !important;
@@ -257,8 +285,20 @@ def inject_paee_css(theme: str = "teal"):
       background-color:#F8FAFC !important;
       color:#475569 !important;
   }}
+  .stTabs [data-baseweb="tab"]::before,
+  .stTabs [aria-selected="true"]::before {{
+      display:none !important;
+  }}
 
-  /* BOTÕES (simplificado) */
+  /* ============================
+     BOTÕES (tema global)
+     - isso é o que você quer reaproveitar
+     ============================ */
+  .stButton > button {{
+      border-radius:8px !important;
+      font-weight:600 !important;
+      transition:all .2s ease !important;
+  }}
   .stButton > button[kind="primary"] {{
       background:linear-gradient(135deg, {ACCENT}, #14B8A6) !important;
       border:none !important;
@@ -268,8 +308,17 @@ def inject_paee_css(theme: str = "teal"):
       transform:translateY(-1px) !important;
       box-shadow:0 4px 12px rgba(13,148,136,.2) !important;
   }}
+  .stButton > button[kind="secondary"] {{
+      background:white !important;
+      color:{ACCENT} !important;
+      border:1px solid {ACCENT} !important;
+  }}
+  .stButton > button[kind="secondary"]:hover {{
+      background:{ACCENT_SOFT} !important;
+      border-color:{ACCENT} !important;
+  }}
 
-  /* Responsividade */
+  /* Responsividade do HERO */
   @media (max-width: 768px) {{
       .mod-card-rect {{ height:auto; flex-direction:column; padding:16px; }}
       .mod-icon-area {{ width:100%; height:60px; border-right:none; border-bottom:1px solid #F1F5F9; }}
@@ -280,6 +329,27 @@ def inject_paee_css(theme: str = "teal"):
         unsafe_allow_html=True,
     )
 
+
+def verificar_acesso():
+    # ✅ mantém o gate (importante)
+    if not st.session_state.get("autenticado"):
+        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
+        st.stop()
+
+    # ✅ se quiser esconder footer, ok (não mexe em padding)
+    st.markdown(
+        """
+<style>
+  footer {visibility:hidden !important;}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# Chamar sempre no topo da página (depois do header/navbar do omni_utils)
+inject_paee_css(theme="teal")
+verificar_acesso()
 
 # ==============================================================================
 # CARD HERO PRINCIPAL
