@@ -50,12 +50,45 @@ ou.ensure_state()
 # 1. Renderiza o Cabeçalho (Logo + Usuário)
 ou.render_omnisfera_header()
 
+# ==============================================================================
+# AJUSTE FINO DE LAYOUT (Igual ao PEI - PADRONIZADO)
+# ==============================================================================
+def forcar_layout_hub():
+    st.markdown("""
+        <style>
+            /* 1. Remove o cabeçalho padrão do Streamlit e a linha colorida */
+            header[data-testid="stHeader"] {
+                visibility: hidden !important;
+                height: 0px !important;
+            }
+
+            /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) */
+            .block-container {
+                padding-top: 1rem !important; /* Padronizado: mesma distância do PEI */
+                padding-bottom: 1rem !important;
+                margin-top: 0px !important;
+            }
+
+            /* 3. Remove padding extra se houver container de navegação */
+            div[data-testid="stVerticalBlock"] > div:first-child {
+                padding-top: 0px !important;
+            }
+            
+            /* 4. Esconde o menu hambúrguer e rodapé */
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+        </style>
+    """, unsafe_allow_html=True)
+
+# CHAME ESTA FUNÇÃO LOGO NO INÍCIO DO CÓDIGO
+forcar_layout_hub()
+
 # 2. CSS Específico desta página (Cards e Tabelas)
 st.markdown("""
 <style>
     /* CARD HERO */
-    .mod-card-wrapper { display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; margin-top: 15px;}
-    .mod-card-rect { background: white; padding: 0; display: flex; align-items: center; height: 90px; position: relative; }
+    .mod-card-wrapper { display: flex; flex-direction: column; margin-bottom: 20px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-top: 0 !important; border: 1px solid #E2E8F0;}
+    .mod-card-rect { background: white; padding: 0; display: flex; align-items: center; height: 130px !important; position: relative; border-radius: 16px 16px 0 0; border-bottom: none; }
     .mod-bar { width: 6px; height: 100%; position: absolute; left: 0; background-color: #0284C7; }
     .mod-icon-area { width: 80px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; background: #F0F9FF; color: #0284C7; margin-left: 6px; }
     .mod-content { flex-grow: 1; padding: 0 20px; display: flex; flex-direction: column; justify-content: center; }
