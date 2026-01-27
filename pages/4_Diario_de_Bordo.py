@@ -308,83 +308,67 @@ def excluir_registro_diario(registro_id):
         return False
 
 # ==============================================================================
-# SIDEBAR - FILTROS E NAVEGAÇÃO
+# FILTROS E ESTATÍSTICAS (MOVIDOS DA SIDEBAR PARA CONTEÚDO PRINCIPAL)
 # ==============================================================================
-with st.sidebar:
-    try: 
-        st.image("ominisfera.png", width=150)
-    except: 
-        st.markdown("### 🌐 OMNISFERA PAEE")
-    
-    st.markdown("---")
-    
-    # Navegação
-    col_nav1, col_nav2 = st.columns(2)
-    with col_nav1:
-        if st.button("🏠 Home", use_container_width=True):
-            st.switch_page("Home.py")
-    with col_nav2:
-        if st.button("📋 PAE", use_container_width=True):
-            st.switch_page("pages/2_PAE.py")
-    
-    st.markdown("---")
-    
-    # Filtros
-    st.markdown("### 🔍 Filtros")
-    
-    # Carregar alunos
-    if 'alunos_cache' not in st.session_state:
-        with st.spinner("Carregando alunos..."):
-            st.session_state.alunos_cache = carregar_alunos_workspace()
-    
-    alunos = st.session_state.alunos_cache
-    
-    if not alunos:
-        st.warning("Nenhum aluno encontrado.")
-        st.stop()
-    
-    # Filtro por aluno
+
+# Carregar alunos
+if 'alunos_cache' not in st.session_state:
+    with st.spinner("Carregando alunos..."):
+        st.session_state.alunos_cache = carregar_alunos_workspace()
+
+alunos = st.session_state.alunos_cache
+
+if not alunos:
+    st.warning("Nenhum aluno encontrado.")
+    st.stop()
+
+# Filtros em colunas no conteúdo principal
+st.markdown("### 🔍 Filtros")
+col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
+
+with col_filtro1:
     nomes_alunos = [f"{a['name']} ({a.get('grade', 'N/I')})" for a in alunos]
-    aluno_filtro = st.selectbox("Aluno:", ["Todos"] + nomes_alunos)
-    
-    # Filtro por período
+    aluno_filtro = st.selectbox("Aluno:", ["Todos"] + nomes_alunos, key="filtro_aluno")
+
+with col_filtro2:
     periodo = st.selectbox("Período:", 
-                          ["Últimos 7 dias", "Últimos 30 dias", "Este mês", "Mês passado", "Personalizado", "Todos"])
-    
-    if periodo == "Personalizado":
-        col_data1, col_data2 = st.columns(2)
-        with col_data1:
-            data_inicio = st.date_input("De:", value=date.today() - timedelta(days=30))
-        with col_data2:
-            data_fim = st.date_input("Até:", value=date.today())
-    
-    # Filtro por modalidade
+                          ["Últimos 7 dias", "Últimos 30 dias", "Este mês", "Mês passado", "Personalizado", "Todos"],
+                          key="filtro_periodo")
+
+with col_filtro3:
     modalidade = st.multiselect(
         "Modalidade:",
         ["individual", "grupo", "observacao_sala", "consultoria"],
-        default=["individual", "grupo"]
+        default=["individual", "grupo"],
+        key="filtro_modalidade"
     )
+
+# Período personalizado
+if periodo == "Personalizado":
+    col_data1, col_data2 = st.columns(2)
+    with col_data1:
+        data_inicio = st.date_input("De:", value=date.today() - timedelta(days=30), key="data_inicio")
+    with col_data2:
+        data_fim = st.date_input("Até:", value=date.today(), key="data_fim")
+
+# Estatísticas rápidas
+st.markdown("### 📊 Estatísticas")
+registros = carregar_todos_registros(limite=500)
+
+if registros:
+    total_registros = len(registros)
+    registros_ultimos_30 = len([r for r in registros 
+                              if datetime.fromisoformat(r['created_at'].replace('Z', '+00:00')).date() > date.today() - timedelta(days=30)])
     
-    st.markdown("---")
-    
-    # Estatísticas rápidas
-    st.markdown("### 📊 Estatísticas")
-    
-    # Carregar registros para estatísticas
-    registros = carregar_todos_registros(limite=500)
-    
-    if registros:
-        total_registros = len(registros)
-        registros_ultimos_30 = len([r for r in registros 
-                                  if datetime.fromisoformat(r['created_at'].replace('Z', '+00:00')).date() > date.today() - timedelta(days=30)])
-        
-        col_stat1, col_stat2 = st.columns(2)
-        with col_stat1:
-            st.metric("Total", total_registros)
-        with col_stat2:
-            st.metric("Últimos 30d", registros_ultimos_30)
-    else:
-        st.info("Nenhum registro encontrado.")
+    col_stat1, col_stat2 = st.columns(2)
+    with col_stat1:
+        st.metric("Total", total_registros)
+    with col_stat2:
+        st.metric("Últimos 30d", registros_ultimos_30)
+else:
+    st.info("Nenhum registro encontrado.")
+
+st.markdown("---")
 
 # ==============================================================================
 # ABA PRINCIPAL - DIÁRIO DE BORDO
