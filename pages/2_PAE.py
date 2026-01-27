@@ -15,18 +15,17 @@ import uuid
 
 import omni_utils as ou  # módulo atualizado
 
-# ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
+# 1. CONFIGURAÇÃO INICIAL (topo absoluto)
 st.set_page_config(
-    page_title="Omnisfera | PAEE",
+    page_title="Omnisfera | Nome da Página",
     page_icon="📘",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-
 APP_VERSION = "v150.0 (SaaS Design)"
 
-# ✅ UI lockdown (não quebra se faltar)
+# 2. UI LOCKDOWN (opcional)
 try:
     from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
     hide_streamlit_chrome_if_needed()
@@ -34,10 +33,51 @@ try:
 except Exception:
     pass
 
-# ✅ Header + Navbar (depois do page_config)
+# 3. HEADER E NAVBAR (do omni_utils)
 ou.render_omnisfera_header()
-ou.render_navbar(active_tab="Plano de Ação (AEE)")
+ou.render_navbar(active_tab="Nome da Aba")
 
+# 4. CSS ESPECÍFICO DO MÓDULO (versão simplificada)
+def inject_modulo_css(theme="teal"):
+    # Usar o CSS simplificado que mostrei acima
+    pass
+
+inject_modulo_css(theme="teal")
+
+# 5. VERIFICAÇÃO DE ACESSO (sem CSS)
+def verificar_acesso():
+    if not st.session_state.get("autenticado"):
+        st.error("🔒 Acesso Negado.")
+        st.stop()
+
+verificar_acesso()
+
+# 6. CARD HERO (opcional, mas mantém consistência)
+hora = datetime.now().hour
+saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
+USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
+WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
+
+st.markdown(
+    f'''
+    <div class="mod-card-wrapper">
+        <div class="mod-card-rect">
+            <div class="mod-bar"></div>
+            <div class="mod-icon-area">
+                <i class="ri-settings-5-fill"></i>
+            </div>
+            <div class="mod-content">
+                <div class="mod-title">Título da Página</div>
+                <div class="mod-desc">
+                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Descrição da página 
+                    no workspace <strong>{WORKSPACE_NAME}</strong>.
+                </div>
+            </div>
+        </div>
+    </div>
+    ''',
+    unsafe_allow_html=True,
+)
 
 
 # ==============================================================================
@@ -74,15 +114,12 @@ def forcar_layout_hub():
 forcar_layout_hub()
 
 # ==============================================================================
-# BLOCO VISUAL (GLOBAL) — CSS DO MÓDULO + GATE (REAPROVEITÁVEL)
-# Mantém: card hero, tabs, caixas, timeline e tema de botões
-# Remove: badge fixo + logo girando (porque conflita com ou.render_omnisfera_header)
+# CSS DO MÓDULO - SIMPLIFICADO (igual ao Hub)
 # ==============================================================================
 
 def inject_paee_css(theme: str = "teal"):
     """
-    Injeta CSS do módulo (reaproveitável em outras páginas).
-    - theme: "teal" (padrão) ou "purple" (se quiser alternar em outro módulo)
+    CSS simplificado para padronização com o Hub
     """
     if theme == "purple":
         ACCENT = "#8B5CF6"
@@ -96,10 +133,6 @@ def inject_paee_css(theme: str = "teal"):
     st.markdown(
         f"""
 <style>
-  /* ============================
-     COMPONENTES BASE (REUSO)
-     ============================ */
-
   /* CARD HERO (header do módulo) */
   .mod-card-wrapper {{
       display:flex; flex-direction:column;
@@ -167,7 +200,7 @@ def inject_paee_css(theme: str = "teal"):
       overflow:hidden;
   }}
 
-  /* BOX pedagógico e caixas */
+  /* BOX pedagógico */
   .pedagogia-box {{
       background-color:#F8FAFC;
       border-left:4px solid #CBD5E1;
@@ -178,28 +211,7 @@ def inject_paee_css(theme: str = "teal"):
       color:#4A5568;
   }}
 
-  .resource-box {{
-      background:#F8FAFC;
-      border:1px solid #E2E8F0;
-      border-radius:12px;
-      padding:20px;
-      margin:15px 0;
-  }}
-
-  .timeline-header {{
-      background:white;
-      border-radius:12px;
-      padding:20px;
-      margin-bottom:20px;
-      border:1px solid #E2E8F0;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-  }}
-
-  /* ============================
-     TABS (estilo)
-     ============================ */
+  /* TABS (igual ao Hub) */
   .stTabs [data-baseweb="tab-list"] {{
       gap:2px !important;
       background-color:transparent !important;
@@ -245,20 +257,8 @@ def inject_paee_css(theme: str = "teal"):
       background-color:#F8FAFC !important;
       color:#475569 !important;
   }}
-  .stTabs [data-baseweb="tab"]::before,
-  .stTabs [aria-selected="true"]::before {{
-      display:none !important;
-  }}
 
-  /* ============================
-     BOTÕES (tema global)
-     - isso é o que você quer reaproveitar
-     ============================ */
-  .stButton > button {{
-      border-radius:8px !important;
-      font-weight:600 !important;
-      transition:all .2s ease !important;
-  }}
+  /* BOTÕES (simplificado) */
   .stButton > button[kind="primary"] {{
       background:linear-gradient(135deg, {ACCENT}, #14B8A6) !important;
       border:none !important;
@@ -268,17 +268,8 @@ def inject_paee_css(theme: str = "teal"):
       transform:translateY(-1px) !important;
       box-shadow:0 4px 12px rgba(13,148,136,.2) !important;
   }}
-  .stButton > button[kind="secondary"] {{
-      background:white !important;
-      color:{ACCENT} !important;
-      border:1px solid {ACCENT} !important;
-  }}
-  .stButton > button[kind="secondary"]:hover {{
-      background:{ACCENT_SOFT} !important;
-      border-color:{ACCENT} !important;
-  }}
 
-  /* Responsividade do HERO */
+  /* Responsividade */
   @media (max-width: 768px) {{
       .mod-card-rect {{ height:auto; flex-direction:column; padding:16px; }}
       .mod-icon-area {{ width:100%; height:60px; border-right:none; border-bottom:1px solid #F1F5F9; }}
@@ -288,28 +279,6 @@ def inject_paee_css(theme: str = "teal"):
         """,
         unsafe_allow_html=True,
     )
-
-
-def verificar_acesso():
-    # ✅ mantém o gate (importante)
-    if not st.session_state.get("autenticado"):
-        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
-        st.stop()
-
-    # ✅ se quiser esconder footer, ok (não mexe em padding)
-    st.markdown(
-        """
-<style>
-  footer {visibility:hidden !important;}
-</style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-# Chamar sempre no topo da página (depois do header/navbar do omni_utils)
-inject_paee_css(theme="teal")
-verificar_acesso()
 
 
 # ==============================================================================
