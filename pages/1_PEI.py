@@ -42,6 +42,29 @@ ou.render_navbar(active_tab="Estratégias & PEI")
 ou.inject_compact_app_css()
 
 # ==============================================================================
+# HERO — PEI (ALTURA PADRÃO OMNISFERA)
+# ==============================================================================
+
+st.markdown(f"""
+<div class="mod-card-wrapper">
+    <div class="mod-card-rect">
+        <div class="mod-bar c-blue"></div>
+        <div class="mod-icon-area">
+            <i class="ri-book-open-fill"></i>
+        </div>
+        <div class="mod-content">
+            <div class="mod-title">Plano Educacional Individualizado (PEI)</div>
+            <div class="mod-desc">
+                Criação, acompanhamento e registro do Plano Educacional Individualizado
+                do estudante, alinhado à BNCC, DUA e à legislação vigente.
+            </div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+
+# ==============================================================================
 # AJUSTE FINO DE LAYOUT (Igual ao Hub)
 # ==============================================================================
 def forcar_layout_hub():
@@ -1157,223 +1180,228 @@ def limpar_formulario():
 
 
 # ==============================================================================
-# 8. ESTILO VISUAL - BLOCO UNIFICADO
+# 8. ESTILO VISUAL - BLOCO UNIFICADO (FINAL / ESTÁVEL)
 # ==============================================================================
 st.markdown("""
 <style>
-    /* FONTES E FUNDO */
-    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-    
-    html, body, [class*="css"] { 
-        font-family: 'Nunito', sans-serif; 
-        color: #2D3748; 
-        background-color: #F7FAFC; 
-        margin: 0 !important; 
-        padding: 0 !important; 
-    }
-    
-    /* CARD HERO TAMANHO ORIGINAL */
+/* ===============================
+   FONTES E FUNDO GLOBAL
+================================ */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+html, body, [class*="css"] { 
+    font-family: 'Nunito', sans-serif; 
+    color: #2D3748; 
+    background-color: #F7FAFC; 
+    margin: 0 !important; 
+    padding: 0 !important; 
+}
+
+/* ===============================
+   HERO CARD — PADRÃO OMNISFERA
+================================ */
+.mod-card-wrapper {
+    margin-bottom: 20px;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.mod-card-rect {
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 0;
+    border: 1px solid #E2E8F0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 130px;                /* 🔒 ALTURA FIXA */
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mod-card-rect:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    border-color: #CBD5E1;
+}
+
+.mod-bar {
+    width: 6px;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+.mod-icon-area {
+    width: 90px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+    background: transparent;
+    border-right: 1px solid #F1F5F9;
+}
+
+.mod-content {
+    flex-grow: 1;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.mod-title {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #1E293B;
+    margin-bottom: 6px;
+    letter-spacing: -0.2px;
+}
+
+.mod-desc {
+    font-size: 0.8rem;
+    color: #64748B;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
+}
+
+/* ===============================
+   CORES (HERDA ACCENT DO PEI)
+================================ */
+.c-blue {
+    background: var(--acc) !important;
+}
+
+.bg-blue-soft {
+    background: transparent !important;
+    color: var(--acc) !important;
+}
+
+.mod-icon-area i {
+    color: inherit !important;
+}
+
+/* ===============================
+   TABS — COMPACTAS E ELEGANTES
+================================ */
+div[data-baseweb="tab-border"],
+div[data-baseweb="tab-highlight"] { 
+    display: none !important; 
+}
+
+.stTabs [data-baseweb="tab-list"] {
+    display: flex;
+    flex-wrap: wrap !important;
+    gap: 8px;
+    padding: 10px 5px;
+    width: 100%;
+    margin-top: 24px !important;     /* 🔒 ENCAIXE HERO → ABAS */
+    margin-bottom: 0.5rem !important;
+}
+
+.stTabs [data-baseweb="tab"] {
+    height: 38px;
+    border-radius: 20px !important;
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    color: #718096;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 0 18px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stTabs [data-baseweb="tab"]:hover { 
+    border-color: #CBD5E0; 
+    color: #4A5568; 
+    background-color: #EDF2F7; 
+}
+
+.stTabs [aria-selected="true"] {
+    background-color: transparent !important; 
+    color: var(--acc) !important;
+    border: 1px solid var(--acc) !important; 
+    font-weight: 800;
+    box-shadow: 0 0 12px rgba(0,0,0,0.12), inset 0 0 4px rgba(0,0,0,0.05) !important;
+}
+
+/* ===============================
+   FORMULÁRIOS (SEM EXAGEROS)
+================================ */
+.stTextInput input, 
+.stTextArea textarea, 
+.stSelectbox div[data-baseweb="select"], 
+.stMultiSelect div[data-baseweb="select"] { 
+    border-radius: 8px !important; 
+    border-color: #E2E8F0 !important; 
+}
+
+/* ===============================
+   FOOTER
+================================ */
+.footer-signature { 
+    text-align: center; 
+    opacity: 0.55; 
+    font-size: 0.75rem; 
+    padding: 30px 0 10px 0; 
+}
+
+/* ===============================
+   LOGO GIRANDO
+================================ */
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.omni-logo-spin {
+    animation: spin-slow 10s linear infinite;
+}
+
+/* ===============================
+   RESPONSIVIDADE
+================================ */
+@media (max-width: 768px) {
     .mod-card-rect {
-        background: white;
-        border-radius: 16px;
-        padding: 0;
-        border: 1px solid #E2E8F0;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        height: 130px !important;  /* TAMANHO ORIGINAL */
-        width: 100%;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .mod-card-rect:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-        border-color: #CBD5E1;
-    }
-    
-    .mod-bar {
-        width: 6px;
-        height: 100%;
-        flex-shrink: 0;
-    }
-    
-    .mod-icon-area {
-        width: 90px;  /* TAMANHO ORIGINAL */
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.8rem;  /* TAMANHO ORIGINAL */
-        flex-shrink: 0;
-        background: transparent !important;
-        border-right: 1px solid #F1F5F9;
-        transition: all 0.3s ease;
-    }
-    
-    .mod-content {
-        flex-grow: 1;
-        padding: 0 24px;  /* TAMANHO ORIGINAL */
-        display: flex;
         flex-direction: column;
-        justify-content: center;
-    }
-    
-    .mod-title {
-        font-weight: 800;
-        font-size: 1.1rem;  /* TAMANHO ORIGINAL */
-        color: #1E293B;
-        margin-bottom: 6px;  /* TAMANHO ORIGINAL */
-        letter-spacing: -0.2px;
-        transition: color 0.2s;
-    }
-    
-    .mod-desc {
-        font-size: 0.8rem;  /* TAMANHO ORIGINAL */
-        color: #64748B;
-        line-height: 1.4;  /* TAMANHO ORIGINAL */
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        margin-bottom: 0 !important;
-    }
-    
-    /* CORES DO CARD */
-    /* CORES DO CARD (USA O ACCENT DO PEI) */
-    .c-blue{
-        background: var(--acc) !important;              /* detalhe lateral */
+        height: auto;
+        padding: 12px;
     }
 
-    .bg-blue-soft{
-         background: transparent !important;
-         color: var(--acc) !important;                  /* cor do ícone */
-    }
-
-    /* garante que o <i> herde a cor */
-     .mod-icon-area i{
-          color: inherit !important;
-    }
-    
-    
-    /* TABS - MANTÉM COMPACTOS */
-    div[data-baseweb="tab-border"],
-    div[data-baseweb="tab-highlight"] { 
-        display: none !important; 
-    }
-    
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        display: flex;
-        flex-wrap: wrap !important;
-        white-space: normal !important;
-        overflow-x: visible !important;
-        padding: 10px 5px;
+    .mod-bar {
         width: 100%;
-        margin-bottom: 0.5rem !important;
+        height: 4px;
     }
-    
-    .stTabs [data-baseweb="tab"] {
-        height: 38px;
-        border-radius: 20px !important;
-        background-color: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        color: #718096;
-        font-weight: 700;
-        font-size: 0.8rem;
-        padding: 0 20px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 5px;
+
+    .mod-icon-area {
+        width: 100%;
+        height: 50px;
+        border-right: none;
+        border-bottom: 1px solid #F1F5F9;
     }
-    
-    .stTabs [data-baseweb="tab"]:hover { 
-        border-color: #CBD5E0; 
-        color: #4A5568; 
-        background-color: #EDF2F7; 
+
+    .mod-content {
+        padding: 12px 0 0 0;
     }
-    
-    .stTabs [aria-selected="true"] {
-        background-color: transparent !important; 
-        color: #3182CE !important;
-        border: 1px solid #3182CE !important; 
-        font-weight: 800;
-        box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important;
-    }
-    
-    /* ELEMENTOS DO FORMULÁRIO */
-    .stTextInput input, 
-    .stTextArea textarea, 
-    .stSelectbox div[data-baseweb="select"], 
-    .stMultiSelect div[data-baseweb="select"] { 
-        border-radius: 8px !important; 
-        border-color: #E2E8F0 !important; 
-    }
-    
-    div[data-testid="column"] .stButton button { 
-        border-radius: 8px !important; 
-        font-weight: 700 !important; 
-        height: 45px !important; 
-        background-color: #0F52BA !important; 
-        color: white !important; 
-        border: none !important; 
-    }
-    
-    div[data-testid="column"] .stButton button:hover { 
-        background-color: #0A3D8F !important; 
-    }
-    
-    /* FOOTER */
-    .footer-signature { 
-        text-align:center; 
-        opacity:0.55; 
-        font-size:0.75rem; 
-        padding:30px 0 10px 0; 
-    }
-    
-    /* ANIMAÇÃO DO LOGO */
-    @keyframes spin-slow {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-    
-    .omni-logo-spin {
-        animation: spin-slow 10s linear infinite;
-    }
-    
-    /* RESPONSIVIDADE */
-    @media (max-width: 768px) {
-        .mod-card-rect {
-            flex-direction: column;
-            height: auto !important;
-            padding: 12px;
-        }
-        
-        .mod-bar {
-            width: 100%;
-            height: 4px;
-        }
-        
-        .mod-icon-area {
-            width: 100%;
-            height: 50px;
-            border-right: none;
-            border-bottom: 1px solid #F1F5F9;
-        }
-        
-        .mod-content {
-            padding: 12px 0 0 0;
-        }
-    }
-    
-    /* REMOVER QUALQUER ESPAÇO RESIDUAL DO HEADER DO STREAMLIT */
-    section[data-testid="stHeader"] {
-        display: none !important;
-    }
+}
+
+/* ===============================
+   ESCONDER HEADER STREAMLIT
+================================ */
+section[data-testid="stHeader"] {
+    display: none !important;
+}
 </style>
+
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 """, unsafe_allow_html=True)
 
