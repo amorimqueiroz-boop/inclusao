@@ -112,15 +112,15 @@ def inject_paee_css(theme: str = "teal"):
 <style>
 
  /* ===============================
-    AJUSTE ENTRE MENU SUPERIOR E HERO (PAE/PAEE)
+    AJUSTE ENTRE MENU SUPERIOR E HERO (PADRONIZADO)
  ================================ */
 .block-container {{
-   padding-top: 0.3rem !important;   /* teste: 0.2rem ou 0rem se quiser mais colado */
+   padding-top: 0.3rem !important;
 }}
 
 .mod-card-wrapper {{
     margin-top: 0 !important;
-    margin-bottom: 14px !important;  /* era 20px; teste 12px/10px */
+    margin-bottom: 20px !important;
 }}
 
 
@@ -145,7 +145,7 @@ def inject_paee_css(theme: str = "teal"):
       display:flex;
       flex-direction:row;
       align-items:center;
-      height:130px;
+      height:130px !important;  /* 🔒 ALTURA FIXA PADRONIZADA */
       width:100%;
       position:relative;
       overflow:hidden;
