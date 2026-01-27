@@ -72,7 +72,7 @@ def forcar_layout_hub():
 
             /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) */
             .block-container {
-                padding-top: 0.3rem !important; /* Espaço mínimo entre navbar e hero */
+                padding-top: 0.1rem !important; /* Espaço mínimo entre navbar e hero */
                 padding-bottom: 1rem !important;
                 margin-top: 0px !important;
             }
@@ -95,6 +95,64 @@ forcar_layout_hub()
 ou.inject_hero_card_colors()
 # CSS padronizado: abas (pílulas), botões, selects, etc.
 ou.inject_unified_ui_css()
+
+# ==============================================================================
+# HERO - HUB DE INCLUSÃO
+# ==============================================================================
+hora = datetime.now().hour
+saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
+USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
+WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
+
+st.markdown(f"""
+<div class="mod-card-wrapper">
+    <div class="mod-card-rect">
+        <div class="mod-bar c-teal"></div>
+        <div class="mod-icon-area bg-teal-soft">
+            <i class="ri-lightbulb-flash-fill"></i>
+        </div>
+        <div class="mod-content">
+            <div class="mod-title">Hub de Recursos & Inteligência Artificial</div>
+            <div class="mod-desc">
+                {saudacao}, <strong>{USUARIO_NOME}</strong>! Acesse recursos, modelos e ferramentas de IA 
+                para criar adaptações e estratégias personalizadas no workspace <strong>{WORKSPACE_NAME}</strong>.
+            </div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# CSS específico do hero card do Hub
+st.markdown("""
+<style>
+    /* CORES ESPECÍFICAS TEAL - Garantir que o ícone tenha cor correta */
+    .c-teal { background: #0D9488 !important; }
+    .bg-teal-soft {
+        background: #CCFBF1 !important;
+        color: #0D9488 !important;
+    }
+    .mod-icon-area i { color: inherit !important; }
+    .bg-teal-soft i,
+    .mod-icon-area.bg-teal-soft i,
+    .mod-icon-area.bg-teal-soft i.ri-lightbulb-flash-fill {
+        color: #0D9488 !important;
+        font-size: 1.8rem !important;
+    }
+    .mod-content {
+        min-width: 0;
+        align-items: flex-start;
+    }
+    .mod-card-rect:hover .mod-title {
+        color: #0D9488; /* Specific hover color */
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# CSS específico do Hub (após hero card)
+aplicar_estilos()
+
+# Espaçamento após hero card
+st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
 # ==============================================================================
 # CONSTANTES E DADOS GLOBAIS
@@ -2483,35 +2541,6 @@ def render_aba_ei_inclusao_brincar(aluno, api_key):
 # ==============================================================================
 # EXECUÇÃO PRINCIPAL
 # ==============================================================================
-
-# ==============================================================================
-# HERO - HUB DE INCLUSÃO
-# ==============================================================================
-hora = datetime.now().hour
-saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
-USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
-WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
-
-st.markdown(f"""
-<div class="mod-card-wrapper">
-    <div class="mod-card-rect">
-        <div class="mod-bar c-teal"></div>
-        <div class="mod-icon-area bg-teal-soft">
-            <i class="ri-lightbulb-flash-fill"></i>
-        </div>
-        <div class="mod-content">
-            <div class="mod-title">Hub de Recursos & Inteligência Artificial</div>
-            <div class="mod-desc">
-                {saudacao}, <strong>{USUARIO_NOME}</strong>! Acesse recursos, modelos e ferramentas de IA 
-                para criar adaptações e estratégias personalizadas no workspace <strong>{WORKSPACE_NAME}</strong>.
-            </div>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# CSS específico do Hub (após hero card)
-aplicar_estilos()
 
 # ==============================================================================
 # VERIFICAÇÃO DE ACESSO
