@@ -200,21 +200,30 @@ st.markdown("""
 # FUNÇÃO DE VERIFICAÇÃO DE ACESSO
 # ==============================================================================
 def verificar_acesso():
-    """Verifica se o usuário está autenticado (sem quebrar layout do omni_utils)."""
+    """Verifica se o usuário está autenticado e AJUSTA O PADDING DO TOPO."""
     if not st.session_state.get("autenticado"):
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
         st.stop()
 
-    # Só garante que não apareça footer/menu, mas NÃO altera .block-container
-    st.markdown(
-        """
+    # ✅ AQUI ESTÁ O SEGREDO DO ESPAÇAMENTO:
+    st.markdown("""
         <style>
-          footer {visibility: hidden !important;}
-          #MainMenu {visibility: hidden !important;}
+            /* Esconde rodapé e menu padrão */
+            footer {visibility: hidden !important;}
+            #MainMenu {visibility: hidden !important;}
+            
+            /* Torna o header do Streamlit transparente */
+            [data-testid="stHeader"] {
+                visibility: visible !important; 
+                background-color: transparent !important;
+            }
+            
+            /* REMOVE O ESPAÇO GIGANTE DO TOPO */
+            .block-container {
+                padding-top: 2rem !important; /* O padrão é cerca de 6rem */
+            }
         </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    """, unsafe_allow_html=True)
 
 
 # ==============================================================================
