@@ -38,7 +38,6 @@ except Exception:
 # ✅ Header + Navbar (depois do page_config)
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Diário de Bordo")
-gap_hub()
 
 
 def gap_hub():
