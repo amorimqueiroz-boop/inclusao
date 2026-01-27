@@ -182,85 +182,9 @@ def inject_paee_css(theme: str = "teal"):
   }}
 
   /* ============================
-     TABS (estilo)
+     TABS E BOTÕES — PADRÃO VIA omni_utils.inject_unified_ui_css()
      ============================ */
-  .stTabs [data-baseweb="tab-list"] {{
-      gap:2px !important;
-      background-color:transparent !important;
-      padding:0 !important;
-      border-radius:0 !important;
-      margin-top:24px !important;
-      border-bottom:2px solid #E2E8F0 !important;
-      flex-wrap:wrap !important;
-  }}
-  .stTabs [data-baseweb="tab"] {{
-      height:36px !important;
-      white-space:nowrap !important;
-      background-color:transparent !important;
-      border-radius:8px 8px 0 0 !important;
-      padding:0 20px !important;
-      color:#64748B !important;
-      font-weight:600 !important;
-      font-size:.85rem !important;
-      text-transform:uppercase !important;
-      letter-spacing:.3px !important;
-      transition:all .2s ease !important;
-      border:none !important;
-      margin:0 2px 0 0 !important;
-      position:relative !important;
-  }}
-  .stTabs [aria-selected="true"] {{
-      background-color:transparent !important;
-      color:{ACCENT} !important;
-      font-weight:700 !important;
-      border:none !important;
-      box-shadow:none !important;
-  }}
-  .stTabs [aria-selected="true"]::after {{
-      content:'';
-      position:absolute;
-      bottom:-2px;
-      left:0; right:0;
-      height:3px;
-      background-color:{ACCENT};
-      border-radius:2px 2px 0 0;
-  }}
-  .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{
-      background-color:#F8FAFC !important;
-      color:#475569 !important;
-  }}
-  .stTabs [data-baseweb="tab"]::before,
-  .stTabs [aria-selected="true"]::before {{
-      display:none !important;
-  }}
-
-  /* ============================
-     BOTÕES (tema global)
-     - isso é o que você quer reaproveitar
-     ============================ */
-  .stButton > button {{
-      border-radius:8px !important;
-      font-weight:600 !important;
-      transition:all .2s ease !important;
-  }}
-  .stButton > button[kind="primary"] {{
-      background:linear-gradient(135deg, {ACCENT}, #14B8A6) !important;
-      border:none !important;
-  }}
-  .stButton > button[kind="primary"]:hover {{
-      background:linear-gradient(135deg, {ACCENT_DARK}, {ACCENT}) !important;
-      transform:translateY(-1px) !important;
-      box-shadow:0 4px 12px rgba(13,148,136,.2) !important;
-  }}
-  .stButton > button[kind="secondary"] {{
-      background:white !important;
-      color:{ACCENT} !important;
-      border:1px solid {ACCENT} !important;
-  }}
-  .stButton > button[kind="secondary"]:hover {{
-      background:{ACCENT_SOFT} !important;
-      border-color:{ACCENT} !important;
-  }}
+  /* Estilos de tabs, botões, selects, etc. são aplicados via função padronizada */
 
   /* Responsividade do HERO */
   @media (max-width: 768px) {{
@@ -356,6 +280,8 @@ forcar_layout_hub()
 
 # Chamar CSS do módulo (depois do layout)
 inject_paee_css(theme="teal")
+# CSS padronizado: abas (pílulas), botões, selects, etc.
+ou.inject_unified_ui_css()
 
 # ==============================================================================
 # PARTE 2/4: CONEXÃO COM BANCO DE DADOS E CARREGAMENTO DE ALUNOS
