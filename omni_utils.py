@@ -77,6 +77,8 @@ def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int =
   section[data-testid="stSidebar"] {{ display:none !important; }}
   [data-testid="stSidebarNav"] {{ display:none !important; }}
   button[data-testid="collapsedControl"] {{ display:none !important; }}
+  [data-testid="stSidebar"] {{ display: none !important; }}
+  [data-testid="stSidebar"] * {{ display: none !important; }}
 
   /* 🔥 CONTEÚDO: começa logo abaixo de topbar+navbar, com gap mínimo */
   .main .block-container {{
@@ -150,7 +152,7 @@ def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int =
     box-shadow: 0 2px 4px rgba(59, 130, 246, 0.25) !important;
   }}
 
-  /* NAVBAR WRAPPER (fixa abaixo da topbar) */
+  /* NAVBAR WRAPPER (fixa abaixo da topbar - SEMPRE FIXA) */
   .omni-navbar {{
     position: fixed !important;
     top: var(--topbar-h) !important;
@@ -164,6 +166,8 @@ def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int =
     justify-content:center !important;
     pointer-events: none;
     padding: 4px 0 !important; /* Espaço mínimo entre topbar e navbar */
+    /* Garante que fica fixo mesmo ao rolar */
+    will-change: transform;
   }}
   .omni-navbar-inner {{
     width: min(1200px, calc(100% - 48px));
