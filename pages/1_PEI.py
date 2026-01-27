@@ -40,6 +40,9 @@ except Exception:
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Estratégias & PEI")
 
+st.markdown("<div class='after-navbar-anchor'></div>", unsafe_allow_html=True)
+
+
 # ==============================================================================
 # THEME — PEI (accent por página: botões + tabs + foco + chips/tags)
 # Cole logo após o header/navbar
