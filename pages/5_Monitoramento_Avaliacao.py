@@ -87,10 +87,10 @@ def render_omnisfera_header():
         /* AJUSTE RESPONSIVO */
         @media (max-width: 768px) { .topbar-thin { padding: 0 1rem; } }
         
-        /* MENU BEM PRÓXIMO DA BARRA - ESPAÇO MÍNIMO */
+        /* MENU BEM PRÓXIMO DA BARRA - ESPAÇO MÍNIMO (será sobrescrito por forcar_layout_hub) */
         .block-container { 
-            padding-top: 3rem !important; /* REDUZIDO: De 4.5rem para 3rem (48px) */
-            padding-bottom: 3rem; 
+            padding-top: 1rem !important; /* Padronizado: mesma distância do PEI */
+            padding-bottom: 1rem; 
         }
     </style>
     """, unsafe_allow_html=True)
