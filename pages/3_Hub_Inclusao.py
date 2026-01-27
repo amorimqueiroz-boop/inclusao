@@ -148,11 +148,19 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# CSS específico do Hub (após hero card)
-aplicar_estilos()
-
 # Espaçamento após hero card
 st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+
+# ==============================================================================
+# VERIFICAÇÃO DE ACESSO
+# ==============================================================================
+def verificar_acesso():
+    """Verifica se o usuário está autenticado"""
+    if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
+        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
+        st.stop()
+
+verificar_acesso()
 
 # ==============================================================================
 # CONSTANTES E DADOS GLOBAIS
@@ -1404,14 +1412,7 @@ def criar_seletor_bloom(chave_prefixo):
     
     return verbos_finais if usar_bloom else None
 
-def verificar_acesso():
-    """Verifica se o usuário está autenticado"""
-    if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
-        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
-        st.stop()
-    # CSS removido - agora controlado pela função forcar_layout_hub() (1rem padronizado)
-
-    # ==============================================================================
+# ==============================================================================
 # FUNÇÕES DAS ABAS PRINCIPAIS
 # ==============================================================================
 
@@ -2542,16 +2543,8 @@ def render_aba_ei_inclusao_brincar(aluno, api_key):
 # EXECUÇÃO PRINCIPAL
 # ==============================================================================
 
-# ==============================================================================
-# VERIFICAÇÃO DE ACESSO
-# ==============================================================================
-def verificar_acesso():
-    """Verifica se o usuário está autenticado"""
-    if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
-        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
-        st.stop()
-
-verificar_acesso()
+# CSS específico do Hub (chamado após a definição da função)
+aplicar_estilos()
 
 # ==============================================================================
 # FUNÇÃO PRINCIPAL
