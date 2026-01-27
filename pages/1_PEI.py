@@ -1242,14 +1242,21 @@ st.markdown("""
     }
     
     /* CORES DO CARD */
-    .c-blue {
-        background: #3B82F6 !important;
+    /* CORES DO CARD (USA O ACCENT DO PEI) */
+    .c-blue{
+        background: var(--acc) !important;              /* detalhe lateral */
+    }
+
+    .bg-blue-soft{
+         background: transparent !important;
+         color: var(--acc) !important;                  /* cor do ícone */
+    }
+
+    /* garante que o <i> herde a cor */
+     .mod-icon-area i{
+          color: inherit !important;
     }
     
-    .bg-blue-soft {
-        background: transparent !important;
-        color: #3B82F6 !important;
-    }
     
     /* TABS - MANTÉM COMPACTOS */
     div[data-baseweb="tab-border"],
