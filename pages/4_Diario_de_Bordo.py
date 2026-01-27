@@ -70,27 +70,6 @@ st.set_page_config(
 # ==============================================================================
 # BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA
 # ==============================================================================
-try:
-    IS_TEST_ENV = st.secrets.get("ENV") == "TESTE"
-except:
-    IS_TEST_ENV = False
-
-def get_logo_base64():
-    caminhos = ["omni_icone.png", "logo.png", "iconeaba.png"]
-    for c in caminhos:
-        if os.path.exists(c):
-            with open(c, "rb") as f:
-                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
-    return "https://cdn-icons-png.flaticon.com/512/1183/1183672.png"
-
-src_logo_giratoria = get_logo_base64()
-
-if IS_TEST_ENV:
-    card_bg = "rgba(255, 220, 50, 0.95)" 
-    card_border = "rgba(200, 160, 0, 0.5)"
-else:
-    card_bg = "rgba(255, 255, 255, 0.85)"
-    card_border = "rgba(255, 255, 255, 0.6)"
 
 st.markdown(f"""
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
@@ -379,24 +358,7 @@ def excluir_registro_diario(registro_id):
 # ==============================================================================
 # SIDEBAR - FILTROS E NAVEGAÇÃO
 # ==============================================================================
-with st.sidebar:
-    try: 
-        st.image("ominisfera.png", width=150)
-    except: 
-        st.markdown("### 🌐 OMNISFERA PAEE")
-    
-    st.markdown("---")
-    
-    # Navegação
-    col_nav1, col_nav2 = st.columns(2)
-    with col_nav1:
-        if st.button("🏠 Home", use_container_width=True):
-            st.switch_page("Home.py")
-    with col_nav2:
-        if st.button("📋 PAE", use_container_width=True):
-            st.switch_page("pages/2_PAE.py")
-    
-    st.markdown("---")
+
     
     # Filtros
     st.markdown("### 🔍 Filtros")
