@@ -303,6 +303,21 @@ def inject_paee_css(theme: str = "teal"):
         unsafe_allow_html=True,
     )
 
+/* ===============================
+   AJUSTE ENTRE MENU SUPERIOR E HERO
+================================ */
+
+/* reduz o espaçamento padrão do Streamlit */
+.block-container {
+    padding-top: 0.3rem !important;   /* teste: 0.2rem ou 0rem se quiser mais colado */
+}
+
+/* garante que o HERO não empurre para baixo */
+.mod-card-wrapper {
+    margin-top: 0 !important;
+}
+
+
 
 def verificar_acesso():
     # ✅ mantém o gate (importante)
