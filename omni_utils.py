@@ -46,7 +46,7 @@ def _get_ws_short(max_len: int = 22) -> str:
     ws = str(ws).strip()
     return (ws[:max_len] + "...") if len(ws) > max_len else ws
 
-def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int = 1):
+def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int = 0):
     """
     CSS base do layout:
     - Topbar fixa
