@@ -39,6 +39,7 @@ except Exception:
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Estratégias & PEI")
 ou.inject_compact_app_css()
+ou.inject_unified_ui_css()  # CSS padronizado: abas (pílulas), botões, selects, etc.
 
 # ==============================================================================
 # HERO - PEI (ÚNICO)
@@ -105,119 +106,8 @@ forcar_layout_hub()
 # Cole logo após o header/navbar
 # ==============================================================================
 
-PEI_ACCENT = "#4A6FA5"        # steel blue moderno
-PEI_ACCENT_DARK = "#3A5A8C"   # steel blue escuro
-PEI_ACCENT_SOFT = "#EEF2F7"   # fundo frio suave
-
-st.markdown(f"""
-<style>
-:root {{
-  --acc: {PEI_ACCENT};
-  --accDark: {PEI_ACCENT_DARK};
-  --accSoft: {PEI_ACCENT_SOFT};
-}}
-
-/* =====================================================
-   BOTÕES
-===================================================== */
-.stButton > button[kind="primary"] {{
-  background: linear-gradient(135deg, var(--acc), var(--accDark)) !important;
-  border: none !important;
-  color: #ffffff !important;
-  font-weight: 700 !important;
-  border-radius: 10px !important;
-  transition: all .18s ease !important;
-}}
-.stButton > button[kind="primary"]:hover {{
-  transform: translateY(-1px) !important;
-  box-shadow: 0 10px 22px rgba(15,23,42,.25) !important;
-}}
-
-.stButton > button[kind="secondary"] {{
-  background: #ffffff !important;
-  color: var(--accDark) !important;
-  border: 1px solid #CBD5E1 !important;
-  font-weight: 700 !important;
-  border-radius: 10px !important;
-}}
-.stButton > button[kind="secondary"]:hover {{
-  background: var(--accSoft) !important;
-  border-color: var(--acc) !important;
-  color: var(--accDark) !important;
-}}
-
-/* =====================================================
-   TABS — SEM UNDERLINE
-===================================================== */
-.stTabs [aria-selected="true"] {{
-  color: var(--accDark) !important;
-  font-weight: 700 !important;
-  background-color: transparent !important;
-}}
-
-.stTabs [aria-selected="true"]::after {{
-  display: none !important;   /* remove o traço */
-}}
-
-.stTabs [data-baseweb="tab"] {{
-  border-radius: 8px !important;
-  transition: background-color .15s ease, color .15s ease;
-}}
-
-.stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{
-  background-color: var(--accSoft) !important;
-  color: var(--accDark) !important;
-}}
-
-/* =====================================================
-   FOCUS RING / BORDAS AO CLICAR
-   (remove vermelho persistente)
-===================================================== */
-*:focus,
-*:focus-visible {{
-  outline: none !important;
-}}
-
-div[data-baseweb="input"] input:focus,
-div[data-baseweb="textarea"] textarea:focus {{
-  border-color: var(--acc) !important;
-  box-shadow: 0 0 0 3px rgba(51,65,85,.18) !important;
-}}
-
-div[data-baseweb="select"] > div:focus-within {{
-  border-color: var(--acc) !important;
-  box-shadow: 0 0 0 3px rgba(51,65,85,.18) !important;
-}}
-
-/* =====================================================
-   MULTISELECT TAGS / CHIPS
-===================================================== */
-div[data-baseweb="tag"] {{
-  background: var(--accSoft) !important;
-  border: 1px solid #CBD5E1 !important;
-}}
-
-div[data-baseweb="tag"] span {{
-  color: var(--accDark) !important;
-  font-weight: 700 !important;
-}}
-
-/* =====================================================
-   CHECKBOX / RADIO (quando marcado)
-===================================================== */
-div[role="checkbox"][aria-checked="true"] {{
-  background-color: var(--acc) !important;
-  border-color: var(--acc) !important;
-}}
-
-/* =====================================================
-   DIVIDERS / HR (suaves, sem chamar atenção)
-===================================================== */
-hr {{
-  border-color: #CBD5E1 !important;
-}}
-</style>
-""", unsafe_allow_html=True)
+# CSS padronizado aplicado via omni_utils
+ou.inject_unified_ui_css()
 
 
 
@@ -1264,63 +1154,14 @@ html, body, [class*="css"] {
 }
 
 /* ===============================
-   TABS — COMPACTAS E ELEGANTES
+   TABS — PADRÃO VIA omni_utils.inject_unified_ui_css()
 ================================ */
-div[data-baseweb="tab-border"],
-div[data-baseweb="tab-highlight"] { 
-    display: none !important; 
-}
-
-.stTabs [data-baseweb="tab-list"] {
-    display: flex;
-    flex-wrap: wrap !important;
-    gap: 6px;
-    padding: 3px 3px;
-    width: 100%;
-    margin-top: 0px !important;    /* 🔽 ENCOSTADO */
-    margin-bottom: 0.15rem !important;
-
-}
-
-
-.stTabs [data-baseweb="tab"] {
-    height: 38px;
-    border-radius: 20px !important;
-    background-color: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    color: #718096;
-    font-weight: 700;
-    font-size: 0.75rem;
-    padding: 0 18px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.stTabs [data-baseweb="tab"]:hover { 
-    border-color: #CBD5E0; 
-    color: #4A5568; 
-    background-color: #EDF2F7; 
-}
-
-.stTabs [aria-selected="true"] {
-    background-color: transparent !important; 
-    color: var(--acc) !important;
-    border: 1px solid var(--acc) !important; 
-    font-weight: 800;
-    box-shadow: 0 0 12px rgba(0,0,0,0.12), inset 0 0 4px rgba(0,0,0,0.05) !important;
-}
+/* Estilos de tabs, botões, selects, etc. são aplicados via função padronizada */
 
 /* ===============================
-   FORMULÁRIOS (SEM EXAGEROS)
+   FORMULÁRIOS — PADRÃO VIA omni_utils.inject_unified_ui_css()
 ================================ */
-.stTextInput input, 
-.stTextArea textarea, 
-.stSelectbox div[data-baseweb="select"], 
-.stMultiSelect div[data-baseweb="select"] { 
-    border-radius: 8px !important; 
-    border-color: #E2E8F0 !important; 
-}
+/* Estilos de inputs, selects, etc. são aplicados via função padronizada */
 
 /* ===============================
    FOOTER
@@ -1376,9 +1217,7 @@ div[data-baseweb="tab-highlight"] {
 /* ===============================
 AJUSTE ENTRE MENU SUPERIOR E HERO (PADRONIZADO)
 ================================ */
-.block-container {
-    padding-top: 0.3rem !important;
-}
+/* O padding-top é controlado pela função forcar_layout_hub() (1rem) - não sobrescrever aqui */
 .mod-card-wrapper {
     margin-top: 0 !important;
 }
