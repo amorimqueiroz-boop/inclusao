@@ -115,6 +115,84 @@ st.markdown(
 # ==============================================================================
 st.markdown("""
 <style>
+    /* CARD HERO - PADRÃO */
+    .mod-card-wrapper { 
+        display: flex; 
+        flex-direction: column; 
+        margin-bottom: 20px; 
+        margin-top: 0 !important;
+        border-radius: 16px; 
+        overflow: hidden; 
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); 
+    }
+    .mod-card-rect { 
+        background: white; 
+        border-radius: 16px 16px 0 0; 
+        padding: 0; 
+        border: 1px solid #E2E8F0; 
+        border-bottom: none; 
+        display: flex; 
+        flex-direction: row; 
+        align-items: center; 
+        height: 130px !important; 
+        width: 100%; 
+        position: relative; 
+        overflow: hidden; 
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+    }
+    .mod-card-rect:hover { 
+        transform: translateY(-4px); 
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08); 
+        border-color: #CBD5E1; 
+    }
+    .mod-bar { 
+        width: 6px; 
+        height: 100%; 
+        flex-shrink: 0; 
+    }
+    .mod-icon-area { 
+        width: 90px; 
+        height: 100%; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 1.8rem; 
+        flex-shrink: 0; 
+        background: #FAFAFA !important; 
+        border-right: 1px solid #F1F5F9; 
+        transition: all 0.3s ease; 
+    }
+    .mod-card-rect:hover .mod-icon-area { 
+        background: white !important;
+        transform: scale(1.05) !important;
+    }
+    .mod-content { 
+        flex-grow: 1; 
+        padding: 0 24px; 
+        display: flex; 
+        flex-direction: column; 
+        justify-content: center; 
+        min-width: 0;
+        align-items: flex-start;
+    }
+    .mod-title { 
+        font-weight: 800; 
+        font-size: 1.1rem; 
+        color: #1E293B; 
+        margin-bottom: 6px; 
+        letter-spacing: -0.3px; 
+        transition: color 0.2s; 
+    }
+    .mod-desc { 
+        font-size: 0.8rem; 
+        color: #64748B; 
+        line-height: 1.4; 
+        display: -webkit-box; 
+        -webkit-line-clamp: 2; 
+        -webkit-box-orient: vertical; 
+        overflow: hidden; 
+    }
+    
     /* CORES ESPECÍFICAS ROSE - Garantir que o ícone tenha cor correta */
     .c-rose { background: #E11D48 !important; }
     .bg-rose-soft {
@@ -127,10 +205,6 @@ st.markdown("""
     .mod-icon-area.bg-rose-soft i.ri-edit-box-fill {
         color: #E11D48 !important;
         font-size: 1.8rem !important;
-    }
-    .mod-content {
-        min-width: 0;
-        align-items: flex-start;
     }
     .mod-card-rect:hover .mod-title {
         color: #E11D48; /* Specific hover color */
