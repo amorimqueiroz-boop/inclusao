@@ -50,6 +50,9 @@ ou.ensure_state()
 # 1. Renderiza o Cabeçalho (Logo + Usuário)
 ou.render_omnisfera_header()
 
+# 2. Renderiza o Menu de Navegação (Aba Ativa: Estudantes) - ANTES DO HERO
+ou.render_navbar(active_tab="Estudantes")
+
 # ==============================================================================
 # AJUSTE FINO DE LAYOUT (Igual ao PEI - PADRONIZADO)
 # ==============================================================================
@@ -80,7 +83,7 @@ def forcar_layout_hub():
         </style>
     """, unsafe_allow_html=True)
 
-# CHAME ESTA FUNÇÃO LOGO NO INÍCIO DO CÓDIGO
+# CHAME ESTA FUNÇÃO DEPOIS DO NAVBAR E ANTES DO HERO
 forcar_layout_hub()
 
 # Cores dos hero cards (mesmas da Home)
@@ -88,7 +91,7 @@ ou.inject_hero_card_colors()
 # CSS padronizado: abas (pílulas), botões, selects, etc.
 ou.inject_unified_ui_css()
 
-# 2. CSS Específico desta página (Cards e Tabelas)
+# CSS Específico desta página (Cards e Tabelas)
 st.markdown("""
 <style>
     /* CARD HERO - PADRÃO VIA omni_utils.inject_hero_card_colors() */
@@ -108,9 +111,6 @@ st.markdown("""
     .delete-confirm-banner { background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; padding: 8px 12px; margin-top: 4px; font-size: 0.8rem; color: #92400E; display: flex; align-items: center; gap: 8px; }
 </style>
 """, unsafe_allow_html=True)
-
-# 3. Renderiza o Menu de Navegação (Aba Ativa: Estudantes)
-ou.render_navbar(active_tab="Estudantes")
 
 # ==============================================================================
 # 3. LÓGICA DE DADOS
@@ -167,7 +167,7 @@ st.markdown(f"""
         <div class="mod-card-rect">
             <div class="mod-bar c-indigo"></div>
             <div class="mod-icon-area bg-indigo-soft">
-                <i class="ri-group-fill"></i>
+                <i class="ri-user-star-fill"></i>
             </div>
             <div class="mod-content">
                 <div class="mod-title">Gestão de Estudantes</div>
