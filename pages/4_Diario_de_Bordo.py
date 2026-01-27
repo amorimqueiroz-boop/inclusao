@@ -10,8 +10,10 @@ from datetime import datetime, date, timedelta
 import requests
 import time
 import plotly.express as px
+import base64
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+
 
 import omni_utils as ou  # módulo atualizado
 
