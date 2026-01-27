@@ -1,11 +1,113 @@
+# pages/5_Monitoramento_Avaliacao.py
 import streamlit as st
 import pandas as pd
 import requests
 import json
 from datetime import datetime
+import os
+import sys
 
 # ==============================================================================
-# 1. FUNÇÕES DO NÚCLEO (Reutilizando seu código base)
+# 0. IMPORTAÇÃO SEGURA DO OMNI_UTILS
+# ==============================================================================
+# Adiciona o diretório raiz ao path para conseguir importar omni_utils
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+try:
+    import omni_utils as ou
+except ImportError:
+    st.error("Erro crítico: O arquivo 'omni_utils.py' não foi encontrado na pasta raiz.")
+    st.stop()
+
+# ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
+st.set_page_config(
+    page_title="Omnisfera | Monitoramento",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+APP_VERSION = "v150.0 (SaaS Design)"
+
+# ✅ UI lockdown (não quebra se faltar)
+try:
+    from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
+    hide_streamlit_chrome_if_needed()
+    hide_default_sidebar_nav()
+except Exception:
+    pass
+
+# ✅ Header + Navbar (depois do page_config)
+ou.render_omnisfera_header()
+ou.render_navbar(active_tab="Evolução & Dados")
+ou.inject_compact_app_css()
+
+# Adiciona classe no body para cores específicas das abas
+st.markdown("<script>document.body.classList.add('page-sky');</script>", unsafe_allow_html=True)
+
+# ==============================================================================
+# AJUSTE FINO DE LAYOUT (ANTES DO HERO - PADRONIZADO)
+# ==============================================================================
+def forcar_layout_hub():
+    st.markdown("""
+        <style>
+            /* 1. Remove o cabeçalho padrão do Streamlit e a linha colorida */
+            header[data-testid="stHeader"] {
+                visibility: hidden !important;
+                height: 0px !important;
+            }
+
+            /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) */
+            .block-container {
+                padding-top: 0.3rem !important; /* Espaço mínimo entre navbar e hero */
+                padding-bottom: 1rem !important;
+                margin-top: 0px !important;
+            }
+
+            /* 3. Remove padding extra se houver container de navegação */
+            div[data-testid="stVerticalBlock"] > div:first-child {
+                padding-top: 0px !important;
+            }
+            
+            /* 4. Esconde o menu hambúrguer e rodapé */
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+        </style>
+    """, unsafe_allow_html=True)
+
+# CHAME ESTA FUNÇÃO ANTES DO HERO CARD
+forcar_layout_hub()
+
+# Cores dos hero cards (paleta vibrante)
+ou.inject_hero_card_colors()
+# CSS padronizado: abas (pílulas), botões, selects, etc.
+ou.inject_unified_ui_css()
+
+# ==============================================================================
+# HERO - MONITORAMENTO
+# ==============================================================================
+hora = datetime.now().hour
+saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
+USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
+WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
+
+st.markdown(f"""
+<div class="mod-card-wrapper">
+    <div class="mod-card-rect">
+        <div class="mod-bar c-sky"></div>
+        <div class="mod-icon-area bg-sky-soft">
+            <i class="ri-line-chart-fill"></i>
+        </div>
+        <div class="mod-content">
+            <div class="mod-title">Evolução & Dados</div>
+            <div class="mod-desc">{saudacao}, <strong>{USUARIO_NOME}</strong>! Consolide dados do PEI com evidências do Diário de Bordo e acompanhe o progresso dos alunos.</div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ==============================================================================
+# FUNÇÕES DO NÚCLEO (Supabase)
 # ==============================================================================
 
 def _sb_url() -> str:
@@ -24,22 +126,19 @@ def _headers() -> dict:
     key = _sb_key()
     return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
 
-# --- Carregamento de Alunos (Sua função original integrada) ---
+# --- Carregamento de Alunos ---
 @st.cache_data(ttl=60, show_spinner=False)
 def list_students_rest():
     """Busca estudantes do Supabase incluindo o campo pei_data."""
-    WORKSPACE_ID = st.session_state.get("workspace_id") # Garanta que isso existe na session
+    WORKSPACE_ID = st.session_state.get("workspace_id")
     if not WORKSPACE_ID:
-        # Fallback para teste se não tiver workspace definido ainda
-        # st.warning("Workspace não definido, buscando todos (modo dev)") 
         pass 
 
     try:
-        # URL baseada no seu código anterior
         base = (
             f"{_sb_url()}/rest/v1/students"
             f"?select=id,name,grade,class_group,diagnosis,created_at,pei_data"
-            # f"&workspace_id=eq.{WORKSPACE_ID}" # Descomente quando tiver o workspace ativo
+            f"&workspace_id=eq.{WORKSPACE_ID}"
             f"&order=created_at.desc"
         )
         r = requests.get(base, headers=_headers(), timeout=20)
@@ -79,7 +178,7 @@ def carregar_estudantes_formatados():
     return estudantes
 
 # ==============================================================================
-# 2. FUNÇÕES ESPECÍFICAS DO MONITORAMENTO (Novas)
+# FUNÇÕES ESPECÍFICAS DO MONITORAMENTO
 # ==============================================================================
 
 def get_student_logs(student_id, limit=5):
@@ -104,7 +203,8 @@ def save_assessment(student_id, rubric_data, observation):
         "date_assessed": datetime.now().isoformat(),
         "rubric_data": rubric_data,
         "observation": observation,
-        "evaluator_id": st.session_state.get("user_id", "anon") 
+        "evaluator_id": st.session_state.get("user_id", "anon"),
+        "workspace_id": st.session_state.get("workspace_id")
     }
     
     # POST na tabela 'monitoring_assessments' (Criar essa tabela se não existir)
@@ -113,23 +213,18 @@ def save_assessment(student_id, rubric_data, observation):
     return r.status_code in [200, 201]
 
 # ==============================================================================
-# 3. INTERFACE (STREAMLIT)
+# INTERFACE PRINCIPAL
 # ==============================================================================
 
-# Configuração de Estilo para ficar igual sua imagem (Vermelho)
-st.markdown("""
-<style>
-    .stSlider [data-baseweb="slider"] div[class*="css"] { background-color: #FF4B4B !important; }
-    .stButton>button { border-color: #FF4B4B; color: #FF4B4B; }
-    .stButton>button:hover { background-color: #FF4B4B; color: white; }
-    div[data-testid="stSelectbox"] > div > div { border-color: #FF4B4B; }
-</style>
-""", unsafe_allow_html=True)
+# Verificação de autenticação
+if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
+    st.warning("🔒 Acesso restrito. Faça login na Home.")
+    st.stop()
 
-st.title("📊 Monitoramento & Avaliação")
+st.markdown("### 📊 Consolidação de Dados")
 st.markdown("Consolidação de dados do **PEI** com evidências do **Diário de Bordo**.")
 
-# --- SELETOR DE ESTUDANTE (SIDEBAR OU TOPO) ---
+# --- SELETOR DE ESTUDANTE ---
 lista_alunos = carregar_estudantes_formatados()
 opcoes = {a['nome']: a for a in lista_alunos}
 
@@ -175,10 +270,10 @@ if nome_selecionado != "Selecione...":
         
         if logs:
             for log in logs:
-                data = datetime.fromisoformat(log['created_at']).strftime("%d/%m")
+                data = datetime.fromisoformat(log['created_at'].replace('Z', '+00:00')).strftime("%d/%m")
                 # Cardzinho estilo 'timeline'
                 st.markdown(f"""
-                <div style="border-left: 3px solid #FF4B4B; padding-left: 10px; margin-bottom: 10px;">
+                <div style="border-left: 3px solid #075985; padding-left: 10px; margin-bottom: 10px; background: #F8FAFC; padding: 10px; border-radius: 4px;">
                     <small style="color:gray">{data}</small><br>
                     {log.get('content', '')}
                 </div>
@@ -204,7 +299,7 @@ if nome_selecionado != "Selecione...":
         cols = st.columns(2)
         i = 0
         
-        # Cria os sliders vermelhos dinamicamente
+        # Cria os sliders dinamicamente
         for chave, titulo in criterios.items():
             col_atual = cols[i % 2]
             with col_atual:
@@ -224,5 +319,23 @@ if nome_selecionado != "Selecione...":
             sucesso = save_assessment(student_id, respostas, obs)
             if sucesso:
                 st.success("Avaliação salva com sucesso no banco de dados!")
+                st.rerun()
             else:
                 st.error("Erro ao salvar. Verifique a tabela 'monitoring_assessments' no Supabase.")
+
+# Rodapé
+st.markdown(
+    f"""
+    <div style='
+        text-align: center;
+        color: #64748B;
+        font-size: 0.75rem;
+        padding: 20px;
+        border-top: 1px solid #E2E8F0;
+        margin-top: 40px;
+    '>
+        <strong>Omnisfera {APP_VERSION}</strong> • Monitoramento & Avaliação
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
