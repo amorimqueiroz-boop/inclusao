@@ -212,6 +212,9 @@ def render_navbar():
 
 render_navbar()
 
+# CSS padronizado: abas (pílulas), botões, selects, etc.
+ou.inject_unified_ui_css()
+
 # ==============================================================================
 # 5. LÓGICA DE DADOS (SUPABASE)
 # ==============================================================================
