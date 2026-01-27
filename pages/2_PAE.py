@@ -17,8 +17,8 @@ import omni_utils as ou  # módulo atualizado
 
 # 1. CONFIGURAÇÃO INICIAL (topo absoluto)
 st.set_page_config(
-    page_title="Omnisfera | Nome da Página",
-    page_icon="📘",
+    page_title="Omnisfera | PAE",
+    page_icon="🔧",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -36,17 +36,56 @@ except Exception:
 # 3. HEADER E NAVBAR (do omni_utils)
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Plano de Ação (AEE)")
+ou.inject_compact_app_css()
 
 # Adiciona classe no body para cores específicas das abas
 st.markdown("<script>document.body.classList.add('page-purple');</script>", unsafe_allow_html=True)
 
-# 4. VERIFICAÇÃO DE ACESSO (sem CSS)
+# 4. VERIFICAÇÃO DE ACESSO
 def verificar_acesso():
     if not st.session_state.get("autenticado"):
         st.error("🔒 Acesso Negado.")
         st.stop()
 
 verificar_acesso()
+
+# ==============================================================================
+# AJUSTE FINO DE LAYOUT (ANTES DO HERO - PADRONIZADO)
+# ==============================================================================
+def forcar_layout_hub():
+    st.markdown("""
+        <style>
+            /* 1. Remove o cabeçalho padrão do Streamlit e a linha colorida */
+            header[data-testid="stHeader"] {
+                visibility: hidden !important;
+                height: 0px !important;
+            }
+
+            /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) */
+            .block-container {
+                padding-top: 0.3rem !important; /* Espaço mínimo entre navbar e hero */
+                padding-bottom: 1rem !important;
+                margin-top: 0px !important;
+            }
+
+            /* 3. Remove padding extra se houver container de navegação */
+            div[data-testid="stVerticalBlock"] > div:first-child {
+                padding-top: 0px !important;
+            }
+            
+            /* 4. Esconde o menu hambúrguer e rodapé */
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+        </style>
+    """, unsafe_allow_html=True)
+
+# CHAME ESTA FUNÇÃO ANTES DO HERO CARD (igual ao PEI)
+forcar_layout_hub()
+
+# Cores dos hero cards (paleta vibrante)
+ou.inject_hero_card_colors()
+# CSS padronizado: abas (pílulas), botões, selects, etc.
+ou.inject_unified_ui_css()
 
 
 # ==============================================================================
@@ -226,7 +265,7 @@ def verificar_acesso():
 
 
 # ==============================================================================
-# CARD HERO PRINCIPAL
+# HERO - PAE
 # ==============================================================================
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
@@ -255,58 +294,15 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ==============================================================================
-# AJUSTE FINO DE LAYOUT (Igual ao PEI - PADRONIZADO)
-# ==============================================================================
-def forcar_layout_hub():
-    st.markdown("""
-        <style>
-            /* 1. Remove o cabeçalho padrão do Streamlit e a linha colorida */
-            header[data-testid="stHeader"] {
-                visibility: hidden !important;
-                height: 0px !important;
-            }
+# CSS específico do módulo PAE (após hero card)
+inject_paee_css(theme="purple")
 
-            /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) */
-            .block-container {
-                padding-top: 0.3rem !important; /* Espaço mínimo entre navbar e hero */
-                padding-bottom: 1rem !important;
-                margin-top: 0px !important;
-            }
-
-            /* 3. Remove padding extra se houver container de navegação */
-            div[data-testid="stVerticalBlock"] > div:first-child {
-                padding-top: 0px !important;
-            }
-            
-            /* 4. Esconde o menu hambúrguer e rodapé */
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-        </style>
-    """, unsafe_allow_html=True)
-
-# CHAME ESTA FUNÇÃO DEPOIS DO HERO CARD (igual ao PEI)
-forcar_layout_hub()
-
-# Chamar CSS do módulo (depois do layout)
-inject_paee_css(theme="teal")
-# Cores dos hero cards (mesmas da Home)
-ou.inject_hero_card_colors()
-# CSS padronizado: abas (pílulas), botões, selects, etc.
-ou.inject_unified_ui_css()
+# Espaçamento após hero card
+st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
 # ==============================================================================
 # PARTE 2/4: CONEXÃO COM BANCO DE DADOS E CARREGAMENTO DE ALUNOS
 # ==============================================================================
-
-# ==============================================================================
-# FUNÇÕES SUPABASE (REST) — BLOCO COMPLETO (SUBSTITUIR TUDO AQUI)
-# ==============================================================================
-
-import requests
-import uuid
-from datetime import datetime
-import streamlit as st
 
 # Funções _sb_url(), _sb_key(), _headers() removidas - usar ou._sb_url(), ou._sb_key(), ou._headers() do omni_utils
 # Primeira definição duplicada de list_students_rest() e carregar_estudantes_supabase() removida - usar as definições mais abaixo
