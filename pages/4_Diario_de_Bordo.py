@@ -38,6 +38,9 @@ except Exception:
 # ✅ Header + Navbar (depois do page_config)
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Diário de Bordo")
+
+# Adiciona classe no body para cores específicas das abas
+st.markdown("<script>document.body.classList.add('page-rose');</script>", unsafe_allow_html=True)
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
 # ==============================================================================
