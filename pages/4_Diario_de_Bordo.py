@@ -38,41 +38,6 @@ except Exception:
 # ✅ Header + Navbar (depois do page_config)
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Diário de Bordo")
-
-
-
-# ==============================================================================
-# AJUSTE FINO DE LAYOUT (Igual ao Hub)
-# ==============================================================================
-def forcar_layout_hub():
-    st.markdown("""
-        <style>
-            /* 1. Remove o cabeçalho padrão do Streamlit e a linha colorida */
-            header[data-testid="stHeader"] {
-                visibility: hidden !important;
-                height: 0px !important;
-            }
-
-            /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) */
-            .block-container {
-                padding-top: 1rem !important; /* No Hub é 2rem, tente 1rem se quiser mais colado */
-                padding-bottom: 1rem !important;
-                margin-top: 0px !important;
-            }
-
-            /* 3. Remove padding extra se houver container de navegação */
-            div[data-testid="stVerticalBlock"] > div:first-child {
-                padding-top: 0px !important;
-            }
-            
-            /* 4. Esconde o menu hambúrguer e rodapé */
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-        </style>
-    """, unsafe_allow_html=True)
-
-# CHAME ESTA FUNÇÃO LOGO NO INÍCIO DO CÓDIGO
-forcar_layout_hub()
 # ==============================================================================
 # 1. CONFIGURAÇÃO E SEGURANÇA
 # ==============================================================================
@@ -96,11 +61,7 @@ st.markdown("""
         background-color: transparent !important;
     }
     
-    .block-container {
-        padding-top: 1rem !important;  /* PADRONIZADO: mesma distância do PEI (controlado por forcar_layout_hub) */
-        padding-bottom: 1rem !important;
-        margin-top: 0px !important;
-    }
+    /* O padding-top é controlado pela função forcar_layout_hub() (1rem) - não sobrescrever aqui */
     
     footer { visibility: hidden !important; }
     #MainMenu { visibility: hidden !important; }
@@ -154,30 +115,10 @@ st.markdown("""
 # FUNÇÃO DE VERIFICAÇÃO DE ACESSO
 # ==============================================================================
 def verificar_acesso():
-    """Verifica se o usuário está autenticado e AJUSTA O PADDING DO TOPO."""
+    """Verifica se o usuário está autenticado."""
     if not st.session_state.get("autenticado"):
         st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
         st.stop()
-
-    # ✅ AQUI ESTÁ O SEGREDO DO ESPAÇAMENTO:
-    st.markdown("""
-        <style>
-            /* Esconde rodapé e menu padrão */
-            footer {visibility: hidden !important;}
-            #MainMenu {visibility: hidden !important;}
-            
-            /* Torna o header do Streamlit transparente */
-            [data-testid="stHeader"] {
-                visibility: visible !important; 
-                background-color: transparent !important;
-            }
-            
-            /* REMOVE O ESPAÇO GIGANTE DO TOPO */
-            .block-container {
-                padding-top: 2rem !important; /* O padrão é cerca de 6rem */
-            }
-        </style>
-    """, unsafe_allow_html=True)
 
 
 # ==============================================================================
@@ -208,6 +149,39 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# ==============================================================================
+# AJUSTE FINO DE LAYOUT (Igual ao PEI - PADRONIZADO)
+# ==============================================================================
+def forcar_layout_hub():
+    st.markdown("""
+        <style>
+            /* 1. Remove o cabeçalho padrão do Streamlit e a linha colorida */
+            header[data-testid="stHeader"] {
+                visibility: hidden !important;
+                height: 0px !important;
+            }
+
+            /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) */
+            .block-container {
+                padding-top: 1rem !important; /* Padronizado: mesma distância do PEI */
+                padding-bottom: 1rem !important;
+                margin-top: 0px !important;
+            }
+
+            /* 3. Remove padding extra se houver container de navegação */
+            div[data-testid="stVerticalBlock"] > div:first-child {
+                padding-top: 0px !important;
+            }
+            
+            /* 4. Esconde o menu hambúrguer e rodapé */
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+        </style>
+    """, unsafe_allow_html=True)
+
+# CHAME ESTA FUNÇÃO DEPOIS DO HERO CARD (igual ao PEI)
+forcar_layout_hub()
 
 # ==============================================================================
 # FUNÇÕES SUPABASE (REST)
