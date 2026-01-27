@@ -1947,7 +1947,6 @@ with tab1:
 # 13. ABA EVIDÊNCIAS (COMPLETA)
 # ==============================================================================
 with tab2:
-    render_progresso()
     st.markdown("### <i class='ri-search-eye-line'></i> Coleta de Evidências", unsafe_allow_html=True)
 
     atual = st.session_state.dados.get("nivel_alfabetizacao")
@@ -2005,7 +2004,6 @@ with tab2:
 # 14. ABA REDE DE APOIO (COMPLETA)
 # ==============================================================================
 with tab3:
-    render_progresso()
     st.markdown("### <i class='ri-team-line'></i> Rede de Apoio", unsafe_allow_html=True)
 
     # Garantias (caso algo não tenha entrado no default_state)
@@ -2094,7 +2092,6 @@ with tab3:
 # 15. ABA MAPEAMENTO (3 colunas | hiperfoco + potências + barreiras + nível de apoio + observações)
 # ==============================================================================
 with tab4:
-    render_progresso()
     st.markdown("### <i class='ri-radar-line'></i> Mapeamento", unsafe_allow_html=True)
     st.caption("Mapeie forças, hiperfocos e barreiras. Para cada barreira selecionada, indique a intensidade de apoio necessária.")
 
@@ -2257,7 +2254,6 @@ with tab4:
 # 16. ABA PLANO DE AÇÃO (COMPLETA)
 # ==============================================================================
 with tab5:
-    render_progresso()
     st.markdown("### <i class='ri-tools-line'></i> Plano de Ação", unsafe_allow_html=True)
 
     c1, c2, c3 = st.columns(3)
@@ -2332,7 +2328,6 @@ with tab5:
 # 17. ABA MONITORAMENTO (COMPLETA)
 # ==============================================================================
 with tab6:
-    render_progresso()
     st.markdown("### <i class='ri-loop-right-line'></i> Monitoramento", unsafe_allow_html=True)
 
     st.session_state.dados["monitoramento_data"] = st.date_input(
@@ -2400,7 +2395,6 @@ with tab6:
 # 18. ABA CONSULTORIA IA (COMPLETA: gerar + revisar + aprovar + ajustar)
 # ==============================================================================
 with tab7:
-    render_progresso()
     st.markdown("### <i class='ri-robot-2-line'></i> Consultoria Pedagógica", unsafe_allow_html=True)
 
     if not st.session_state.dados.get("serie"):
