@@ -108,30 +108,23 @@ def inject_paee_css(theme: str = "teal"):
         ACCENT_SOFT = "#F0FDFA"
 
     st.markdown(
-        f"""
+    f"""
 <style>
 
-/* ===============================
-   AJUSTE ENTRE MENU SUPERIOR E HERO (PAE/PAEE)
-================================ */
+ /* ===============================
+    AJUSTE ENTRE MENU SUPERIOR E HERO (PAE/PAEE)
+ ================================ */
+.block-container {{
+   padding-top: 0.3rem !important;  /* teste: 0.2rem / 0.1rem / 0 */
+}}
 
-/* reduz o espaçamento padrão do Streamlit */
-.block-container{
-  padding-top: .3rem !important;  /* teste: .2rem / .1rem / 0 */
-}
-
-/* garante que o HERO encoste mais no topo */
-.mod-card-wrapper{
-  margin-top: 0 !important;
-}
-
-/* opcional: se quiser MENOS espaço abaixo do hero */
-.mod-card-wrapper{
-  margin-bottom: 14px !important; /* era 20px; teste 12px ou 10px */
-}
+.mod-card-wrapper {{
+    margin-top: 0 !important;
+    margin-bottom: 14px !important;  /* era 20px; teste 12px/10px */
+}}
 
 
-  /* ============================
+ /* ============================
      COMPONENTES BASE (REUSO)
      ============================ */
 
