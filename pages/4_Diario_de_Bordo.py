@@ -97,7 +97,7 @@ st.markdown("""
     }
     
     .block-container {
-        padding-top: 0.3rem !important;  /* PADRONIZADO: mesma distância do menu */
+        padding-top: 1rem !important;  /* PADRONIZADO: mesma distância do PEI (controlado por forcar_layout_hub) */
         padding-bottom: 1rem !important;
         margin-top: 0px !important;
     }
