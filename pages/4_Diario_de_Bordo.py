@@ -97,7 +97,7 @@ st.markdown("""
     }
     
     .block-container {
-        padding-top: 2rem !important; /* Cola o conteúdo no topo */
+        padding-top: 0.3rem !important;  /* PADRONIZADO: mesma distância do menu */
         padding-bottom: 1rem !important;
         margin-top: 0px !important;
     }
@@ -105,20 +105,19 @@ st.markdown("""
     footer { visibility: hidden !important; }
     #MainMenu { visibility: hidden !important; }
 
-    /* --- 2. ESTILOS DO CARD HERO (COM O MARGIN-TOP CORRIGIDO) --- */
+    /* --- 2. ESTILOS DO CARD HERO (PADRONIZADO) --- */
     
     .mod-card-wrapper { 
         display: flex; 
         flex-direction: column; 
         margin-bottom: 20px; 
-        /* AQUI ESTÁ A MÁGICA DO ALINHAMENTO COM A PÁGINA ALUNOS: */
-        margin-top: 15px !important;  
+        margin-top: 0 !important;  /* PADRONIZADO: mesma distância do menu */
         border-radius: 16px; 
         overflow: hidden; 
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); 
     }
 
-    .mod-card-rect { background: white; border-radius: 16px 16px 0 0; padding: 0; border: 1px solid #E2E8F0; border-bottom: none; display: flex; flex-direction: row; align-items: center; height: 130px; width: 100%; position: relative; overflow: hidden; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+    .mod-card-rect { background: white; border-radius: 16px 16px 0 0; padding: 0; border: 1px solid #E2E8F0; border-bottom: none; display: flex; flex-direction: row; align-items: center; height: 130px !important; width: 100%; position: relative; overflow: hidden; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
     .mod-card-rect:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08); border-color: #CBD5E1; }
     .mod-bar { width: 6px; height: 100%; flex-shrink: 0; }
     .mod-icon-area { width: 90px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0; background: transparent !important; border-right: 1px solid #F1F5F9; transition: all 0.3s ease; }
