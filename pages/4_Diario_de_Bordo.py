@@ -38,126 +38,13 @@ except Exception:
 # ✅ Header + Navbar (depois do page_config)
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Diário de Bordo")
+ou.inject_compact_app_css()
 
 # Adiciona classe no body para cores específicas das abas
 st.markdown("<script>document.body.classList.add('page-rose');</script>", unsafe_allow_html=True)
-# ==============================================================================
-# 1. CONFIGURAÇÃO E SEGURANÇA
-# ==============================================================================
-# st.set_page_config já foi chamado na linha 21 - REMOVIDO DUPLICADO
 
 # ==============================================================================
-# BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA
-# ==============================================================================
-# ==============================================================================
-# BLOCO VISUAL INTELIGENTE: HEADER OMNISFERA + CSS CORRIGIDO
-# ==============================================================================
-st.markdown("""
-<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
-
-<style>
-    /* --- 1. CORREÇÃO ESTRUTURAL ( IGUAL AO HUB/ALUNOS ) --- */
-    
-    /* Remove cabeçalho padrão e sobe o conteúdo */
-    [data-testid="stHeader"] {
-        visibility: visible !important;
-        background-color: transparent !important;
-    }
-    
-    /* O padding-top é controlado pela função forcar_layout_hub() (1rem) - não sobrescrever aqui */
-    
-    footer { visibility: hidden !important; }
-    #MainMenu { visibility: hidden !important; }
-
-    /* --- 2. ESTILOS DO CARD HERO (PADRONIZADO) --- */
-    
-    .mod-card-wrapper { 
-        display: flex; 
-        flex-direction: column; 
-        margin-bottom: 20px; 
-        margin-top: 0 !important;  /* PADRONIZADO: mesma distância do menu */
-        border-radius: 16px; 
-        overflow: hidden; 
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); 
-    }
-
-    .mod-card-rect { background: white; border-radius: 16px 16px 0 0; padding: 0; border: 1px solid #E2E8F0; border-bottom: none; display: flex; flex-direction: row; align-items: center; height: 130px !important; width: 100%; position: relative; overflow: hidden; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
-    .mod-card-rect:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08); border-color: #CBD5E1; }
-    .mod-bar { width: 6px; height: 100%; flex-shrink: 0; }
-    .mod-icon-area { width: 90px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0; background: #FAFAFA !important; border-right: 1px solid #F1F5F9; transition: all 0.3s ease; }
-    .mod-card-rect:hover .mod-icon-area { 
-        background: white !important;
-        transform: scale(1.05) !important;
-    }
-    .mod-content { flex-grow: 1; padding: 0 24px; display: flex; flex-direction: column; justify-content: center; }
-    .mod-title { font-weight: 800; font-size: 1.1rem; color: #1E293B; margin-bottom: 6px; letter-spacing: -0.3px; transition: color 0.2s; }
-    .mod-card-rect:hover .mod-title { color: #4F46E5; }
-    .mod-desc { font-size: 0.8rem; color: #64748B; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-    /* CORES */
-    .c-teal { background: #0D9488 !important; }
-    .bg-teal-soft { background: transparent !important; color: #0D9488 !important; }
-
-    /* Demais estilos mantidos... */
-    .diario-card { background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-bottom: 15px; transition: all 0.2s ease; }
-    .diario-card:hover { border-color: #0D9488; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.1); }
-    .badge-individual { background: #DBEAFE; color: #1E40AF; }
-    .badge-grupo { background: #D1FAE5; color: #065F46; }
-    .badge-observacao { background: #FEF3C7; color: #92400E; }
-    .prog-bar-bg { width: 100%; height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden; margin-top: 8px; }
-    .prog-bar-fill { height: 100%; background: linear-gradient(90deg, #0D9488, #14B8A6); transition: width 1s; }
-    .stat-card { background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; text-align: center; }
-    .stat-value { font-size: 2rem; font-weight: 800; color: #0D9488; margin-bottom: 5px; }
-    .stat-label { font-size: 0.85rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; }
-    .form-section { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 25px; margin-bottom: 20px; }
-    .timeline-item { position: relative; padding-left: 30px; margin-bottom: 20px; }
-    .timeline-dot { position: absolute; left: 0; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: #0D9488; }
-    .timeline-content { background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; }
-</style>
-""", unsafe_allow_html=True)
-
-
-# ==============================================================================
-# FUNÇÃO DE VERIFICAÇÃO DE ACESSO
-# ==============================================================================
-def verificar_acesso():
-    """Verifica se o usuário está autenticado."""
-    if not st.session_state.get("autenticado"):
-        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
-        st.stop()
-
-
-# ==============================================================================
-# CARD HERO PRINCIPAL
-# ==============================================================================
-hora = datetime.now().hour
-saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
-USUARIO_NOME = (st.session_state.get("usuario_nome", "Visitante") or "Visitante").split()[0]
-WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace") or "Workspace"
-
-st.markdown(
-    f"""
-    <div class="mod-card-wrapper">
-        <div class="mod-card-rect">
-            <div class="mod-bar c-rose"></div>
-            <div class="mod-icon-area bg-rose-soft">
-                <i class="ri-edit-box-fill"></i>
-            </div>
-            <div class="mod-content">
-                <div class="mod-title">Diário de Bordo PAEE</div>
-                <div class="mod-desc">
-                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Registre sessões, acompanhe progresso e documente intervenções
-                    no workspace <strong>{WORKSPACE_NAME}</strong>. Sistema integrado para registro profissional do Atendimento Educacional Especializado.
-                </div>
-            </div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-# ==============================================================================
-# AJUSTE FINO DE LAYOUT (Igual ao PEI - PADRONIZADO)
+# AJUSTE FINO DE LAYOUT (ANTES DO HERO - PADRONIZADO)
 # ==============================================================================
 def forcar_layout_hub():
     st.markdown("""
@@ -186,13 +73,89 @@ def forcar_layout_hub():
         </style>
     """, unsafe_allow_html=True)
 
-# CHAME ESTA FUNÇÃO DEPOIS DO HERO CARD (igual ao PEI)
+# CHAME ESTA FUNÇÃO ANTES DO HERO CARD (igual ao PEI)
 forcar_layout_hub()
 
-# Cores dos hero cards (mesmas da Home)
+# Cores dos hero cards (paleta vibrante)
 ou.inject_hero_card_colors()
 # CSS padronizado: abas (pílulas), botões, selects, etc.
 ou.inject_unified_ui_css()
+
+# ==============================================================================
+# HERO - DIÁRIO DE BORDO
+# ==============================================================================
+hora = datetime.now().hour
+saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
+USUARIO_NOME = (st.session_state.get("usuario_nome", "Visitante") or "Visitante").split()[0]
+WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace") or "Workspace"
+
+st.markdown(
+    f"""
+    <div class="mod-card-wrapper">
+        <div class="mod-card-rect">
+            <div class="mod-bar c-rose"></div>
+            <div class="mod-icon-area bg-rose-soft">
+                <i class="ri-edit-box-fill"></i>
+            </div>
+            <div class="mod-content">
+                <div class="mod-title">Diário de Bordo PAEE</div>
+                <div class="mod-desc">
+                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Registre sessões, acompanhe progresso e documente intervenções
+                    no workspace <strong>{WORKSPACE_NAME}</strong>. Sistema integrado para registro profissional do Atendimento Educacional Especializado.
+                </div>
+            </div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ==============================================================================
+# CSS ESPECÍFICO DO DIÁRIO DE BORDO (após hero card)
+# ==============================================================================
+st.markdown("""
+<style>
+    /* Estilos específicos do Diário de Bordo */
+    .diario-card { 
+        background: white; 
+        border: 1px solid #E2E8F0; 
+        border-radius: 12px; 
+        padding: 20px; 
+        margin-bottom: 15px; 
+        transition: all 0.2s ease; 
+    }
+    .diario-card:hover { 
+        border-color: #E11D48; 
+        box-shadow: 0 4px 12px rgba(225, 29, 72, 0.1); 
+    }
+    .badge-individual { background: #DBEAFE; color: #1E40AF; }
+    .badge-grupo { background: #D1FAE5; color: #065F46; }
+    .badge-observacao { background: #FEF3C7; color: #92400E; }
+    .prog-bar-bg { width: 100%; height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+    .prog-bar-fill { height: 100%; background: linear-gradient(90deg, #F43F5E, #E11D48); transition: width 1s; }
+    .stat-card { background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; text-align: center; }
+    .stat-value { font-size: 2rem; font-weight: 800; color: #E11D48; margin-bottom: 5px; }
+    .stat-label { font-size: 0.85rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-section { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 25px; margin-bottom: 20px; }
+    .timeline-item { position: relative; padding-left: 30px; margin-bottom: 20px; }
+    .timeline-dot { position: absolute; left: 0; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: #E11D48; }
+    .timeline-content { background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; }
+</style>
+""", unsafe_allow_html=True)
+
+# Espaçamento após hero card
+st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+
+# ==============================================================================
+# VERIFICAÇÃO DE ACESSO
+# ==============================================================================
+def verificar_acesso():
+    """Verifica se o usuário está autenticado."""
+    if not st.session_state.get("autenticado"):
+        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
+        st.stop()
+
+verificar_acesso()
 
 # ==============================================================================
 # FUNÇÕES SUPABASE (REST)
