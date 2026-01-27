@@ -1,11 +1,22 @@
 # pages/1_PEI.py
 import streamlit as st
-from datetime import date, datetime
+from datetime import date
+from io import BytesIO
+from docx import Document
+from openai import OpenAI
+from pypdf import PdfReader
+from fpdf import FPDF
+import requests
+import base64
 import json
 import os
+import time
+import re
+from datetime import date, datetime
 
-import omni_utils as ou
-from pei_functions import *
+import omni_utils as ou  # módulo atualizado
+
+
 
 # ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
 st.set_page_config(
@@ -25,8 +36,13 @@ try:
 except Exception:
     pass
 
+# ✅ Header + Navbar (depois do page_config)
+ou.render_omnisfera_header()
+ou.render_navbar(active_tab="Estratégias & PEI")
+ou.inject_compact_app_css()
+
 # ==============================================================================
-# CSS E ESTILOS
+# AJUSTE FINO DE LAYOUT (Igual ao Hub)
 # ==============================================================================
 def forcar_layout_hub():
     st.markdown("""
@@ -39,7 +55,7 @@ def forcar_layout_hub():
 
             /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) */
             .block-container {
-                padding-top: 1rem !important;
+                padding-top: 1rem !important; /* No Hub é 2rem, tente 1rem se quiser mais colado */
                 padding-bottom: 1rem !important;
                 margin-top: 0px !important;
             }
@@ -55,212 +71,1462 @@ def forcar_layout_hub():
         </style>
     """, unsafe_allow_html=True)
 
-# Tema PEI
-PEI_ACCENT = "#4A6FA5"
-PEI_ACCENT_DARK = "#3A5A8C"
-PEI_ACCENT_SOFT = "#EEF2F7"
+# CHAME ESTA FUNÇÃO LOGO NO INÍCIO DO CÓDIGO
+forcar_layout_hub()
+# ==============================================================================
+# THEME — PEI (accent por página: botões + tabs + foco + chips/tags)
+# Azul acinzentado, elegante, SEM underline nas tabs
+# Cole logo após o header/navbar
+# ==============================================================================
 
-def inject_pei_css():
-    st.markdown(f"""
-    <style>
-    :root {{
-      --acc: {PEI_ACCENT};
-      --accDark: {PEI_ACCENT_DARK};
-      --accSoft: {PEI_ACCENT_SOFT};
-    }}
-    
-    /* BOTÕES */
-    .stButton > button[kind="primary"] {{
-      background: linear-gradient(135deg, var(--acc), var(--accDark)) !important;
-      border: none !important;
-      color: #ffffff !important;
-      font-weight: 700 !important;
-      border-radius: 10px !important;
-      transition: all .18s ease !important;
-    }}
-    .stButton > button[kind="primary"]:hover {{
-      transform: translateY(-1px) !important;
-      box-shadow: 0 10px 22px rgba(15,23,42,.25) !important;
-    }}
-    
-    /* TABS — SEM UNDERLINE */
-    .stTabs [aria-selected="true"] {{
-      color: var(--accDark) !important;
-      font-weight: 700 !important;
-      background-color: transparent !important;
-    }}
-    
-    .stTabs [aria-selected="true"]::after {{
-      display: none !important;
-    }}
-    
-    /* PROGRESS BAR */
-    .progress-container {{
-        margin: 10px 0 20px 0;
-        padding: 0;
-    }}
-    
-    .segmento-badge {{
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 12px;
-        color: white;
-        font-size: 0.8rem;
-        font-weight: bold;
-        margin-top: 5px;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
+PEI_ACCENT = "#4A6FA5"        # steel blue moderno
+PEI_ACCENT_DARK = "#3A5A8C"   # steel blue escuro
+PEI_ACCENT_SOFT = "#EEF2F7"   # fundo frio suave
+
+st.markdown(f"""
+<style>
+:root {{
+  --acc: {PEI_ACCENT};
+  --accDark: {PEI_ACCENT_DARK};
+  --accSoft: {PEI_ACCENT_SOFT};
+}}
+
+/* =====================================================
+   BOTÕES
+===================================================== */
+.stButton > button[kind="primary"] {{
+  background: linear-gradient(135deg, var(--acc), var(--accDark)) !important;
+  border: none !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  transition: all .18s ease !important;
+}}
+.stButton > button[kind="primary"]:hover {{
+  transform: translateY(-1px) !important;
+  box-shadow: 0 10px 22px rgba(15,23,42,.25) !important;
+}}
+
+.stButton > button[kind="secondary"] {{
+  background: #ffffff !important;
+  color: var(--accDark) !important;
+  border: 1px solid #CBD5E1 !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+}}
+.stButton > button[kind="secondary"]:hover {{
+  background: var(--accSoft) !important;
+  border-color: var(--acc) !important;
+  color: var(--accDark) !important;
+}}
+
+/* =====================================================
+   TABS — SEM UNDERLINE
+===================================================== */
+.stTabs [aria-selected="true"] {{
+  color: var(--accDark) !important;
+  font-weight: 700 !important;
+  background-color: transparent !important;
+}}
+
+.stTabs [aria-selected="true"]::after {{
+  display: none !important;   /* remove o traço */
+}}
+
+.stTabs [data-baseweb="tab"] {{
+  border-radius: 8px !important;
+  transition: background-color .15s ease, color .15s ease;
+}}
+
+.stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{
+  background-color: var(--accSoft) !important;
+  color: var(--accDark) !important;
+}}
+
+/* =====================================================
+   FOCUS RING / BORDAS AO CLICAR
+   (remove vermelho persistente)
+===================================================== */
+*:focus,
+*:focus-visible {{
+  outline: none !important;
+}}
+
+div[data-baseweb="input"] input:focus,
+div[data-baseweb="textarea"] textarea:focus {{
+  border-color: var(--acc) !important;
+  box-shadow: 0 0 0 3px rgba(51,65,85,.18) !important;
+}}
+
+div[data-baseweb="select"] > div:focus-within {{
+  border-color: var(--acc) !important;
+  box-shadow: 0 0 0 3px rgba(51,65,85,.18) !important;
+}}
+
+/* =====================================================
+   MULTISELECT TAGS / CHIPS
+===================================================== */
+div[data-baseweb="tag"] {{
+  background: var(--accSoft) !important;
+  border: 1px solid #CBD5E1 !important;
+}}
+
+div[data-baseweb="tag"] span {{
+  color: var(--accDark) !important;
+  font-weight: 700 !important;
+}}
+
+/* =====================================================
+   CHECKBOX / RADIO (quando marcado)
+===================================================== */
+div[role="checkbox"][aria-checked="true"] {{
+  background-color: var(--acc) !important;
+  border-color: var(--acc) !important;
+}}
+
+/* =====================================================
+   DIVIDERS / HR (suaves, sem chamar atenção)
+===================================================== */
+hr {{
+  border-color: #CBD5E1 !important;
+}}
+</style>
+""", unsafe_allow_html=True)
+
+
+
 
 # ==============================================================================
-# INICIALIZAÇÃO
+# OPENAI
 # ==============================================================================
-def init_session_state():
-    """Inicializa o estado da sessão"""
-    default_state = {
-        "nome": "",
-        "nasc": date(2015, 1, 1),
-        "serie": None,
-        "turma": "",
-        "diagnostico": "",
-        "lista_medicamentos": [],
-        "composicao_familiar_tags": [],
-        "historico": "",
-        "familia": "",
-        "hiperfoco": "",
-        "potencias": [],
-        "rede_apoio": [],
-        "orientacoes_especialistas": "",
-        "orientacoes_por_profissional": {},
-        "checklist_evidencias": {},
-        "nivel_alfabetizacao": "Não se aplica (Educação Infantil)",
-        "barreiras_selecionadas": {k: [] for k in LISTAS_BARREIRAS.keys()},
-        "niveis_suporte": {},
-        "observacoes_barreiras": {},
-        "estrategias_acesso": [],
-        "estrategias_ensino": [],
-        "estrategias_avaliacao": [],
-        "ia_sugestao": "",
-        "ia_mapa_texto": "",
-        "outros_acesso": "",
-        "outros_ensino": "",
-        "monitoramento_data": date.today(),
-        "status_meta": "Não Iniciado",
-        "parecer_geral": "Manter Estratégias",
-        "proximos_passos_select": [],
-        "status_validacao_pei": "rascunho",
-        "feedback_ajuste": "",
-        "status_validacao_game": "rascunho",
-        "feedback_ajuste_game": "",
-        "matricula": "",
-        "meds_extraidas_tmp": [],
-        "status_meds_extraidas": "idle",
+api_key = st.secrets.get("OPENAI_API_KEY", "")
+
+
+# ==============================================================================
+# 1. GUARDAS (LOGIN + SUPABASE)
+# ==============================================================================
+def verificar_login_app():
+    if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
+        st.error("🔒 Acesso Negado. Faça login na Página Inicial.")
+        st.stop()
+
+def verificar_login_supabase():
+    # Supabase é necessário para SALVAR/CARREGAR, mas o PEI pode abrir como rascunho.
+    # Então aqui só garantimos chaves mínimas (não bloqueia).
+    if "supabase_jwt" not in st.session_state:
+        st.session_state["supabase_jwt"] = ""
+    if "supabase_user_id" not in st.session_state:
+        st.session_state["supabase_user_id"] = ""
+
+verificar_login_app()
+verificar_login_supabase()
+
+
+# =============================================================================
+# 2. SUPABASE (CRUD students) — REST (compatível com omni_utils.py)
+#    Remove dependência de: sb / OWNER_ID / supabase-py
+# =============================================================================
+
+def _rest_ready(debug: bool = False):
+    """
+    Checa se a nuvem está pronta para operar via REST:
+    - autenticado
+    - workspace_id presente
+    - SUPABASE_URL e alguma KEY (SERVICE ou ANON) presentes
+    """
+    details = {}
+    details["autenticado"] = bool(st.session_state.get("autenticado", False))
+    details["has_workspace_id"] = bool(st.session_state.get("workspace_id"))
+
+    try:
+        details["has_supabase_url"] = bool(str(st.secrets.get("SUPABASE_URL", "")).strip())
+    except Exception:
+        details["has_supabase_url"] = False
+
+    try:
+        service = str(st.secrets.get("SUPABASE_SERVICE_KEY", "")).strip()
+        anon = str(st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
+        details["has_supabase_key"] = bool(service or anon)
+    except Exception:
+        details["has_supabase_key"] = False
+
+    ok = all(details.values())
+    if debug:
+        details["missing"] = [k for k, v in details.items() if not v]
+    return ok, details
+
+
+def _sb_url() -> str:
+    url = str(st.secrets.get("SUPABASE_URL", "")).strip()
+    if not url:
+        raise RuntimeError("SUPABASE_URL não encontrado nos secrets.")
+    return url.rstrip("/")
+
+
+def _sb_key() -> str:
+    # Preferência: SERVICE_KEY (server-side), fallback: ANON_KEY
+    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "")).strip()
+    if not key:
+        key = str(st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
+    if not key:
+        raise RuntimeError("SUPABASE_SERVICE_KEY/ANON_KEY não encontrado nos secrets.")
+    return key
+
+
+def _headers() -> dict:
+    key = _sb_key()
+    return {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+    }
+
+
+def _http_error(prefix: str, r):
+    raise RuntimeError(f"{prefix}: {r.status_code} {r.text}")
+
+
+def db_create_student(payload: dict):
+    """
+    Cria aluno em public.students usando REST.
+    - injeta workspace_id automaticamente
+    - retorna o registro criado
+    """
+    ok, details = _rest_ready(debug=True)
+    if not ok:
+        raise RuntimeError(f"Supabase não está pronto (REST). Missing: {details.get('missing')}")
+
+    ws_id = st.session_state.get("workspace_id")
+    row = dict(payload or {})
+    row["workspace_id"] = ws_id
+
+    url = f"{_sb_url()}/rest/v1/students"
+    h = _headers()
+    h["Prefer"] = "return=representation"
+
+    r = requests.post(url, headers=h, json=row, timeout=20)
+    if r.status_code >= 400:
+        _http_error("Insert em students falhou", r)
+
+    data = r.json()
+    if isinstance(data, list) and len(data) > 0:
+        return data[0]
+    if isinstance(data, dict):
+        return data
+    return None
+
+
+def db_update_student(student_id: str, payload: dict):
+    """
+    Atualiza aluno em public.students (por id) via REST
+    - garante workspace_id no filtro
+    """
+    ok, details = _rest_ready(debug=True)
+    if not ok:
+        raise RuntimeError(f"Supabase não está pronto (REST). Missing: {details.get('missing')}")
+
+    ws_id = st.session_state.get("workspace_id")
+    row = dict(payload or {})
+
+    url = f"{_sb_url()}/rest/v1/students?id=eq.{student_id}&workspace_id=eq.{ws_id}"
+    h = _headers()
+    h["Prefer"] = "return=representation"
+
+    r = requests.patch(url, headers=h, json=row, timeout=20)
+    if r.status_code >= 400:
+        _http_error("Update em students falhou", r)
+
+    data = r.json()
+    if isinstance(data, list) and len(data) > 0:
+        return data[0]
+    if isinstance(data, dict):
+        return data
+    return None
+
+
+def db_delete_student(student_id: str):
+    """
+    Deleta aluno em public.students (por id) via REST
+    - garante workspace_id no filtro
+    """
+    ok, details = _rest_ready(debug=True)
+    if not ok:
+        raise RuntimeError(f"Supabase não está pronto (REST). Missing: {details.get('missing')}")
+
+    ws_id = st.session_state.get("workspace_id")
+
+    url = f"{_sb_url()}/rest/v1/students?id=eq.{student_id}&workspace_id=eq.{ws_id}"
+    h = _headers()
+    h["Prefer"] = "return=representation"
+
+    r = requests.delete(url, headers=h, timeout=20)
+    if r.status_code >= 400:
+        _http_error("Delete em students falhou", r)
+
+    return r.json()
+
+
+def db_list_students(search: str | None = None):
+    """
+    Lista alunos do workspace atual.
+    Se search vier preenchido, filtra por nome (ilike).
+    """
+    ok, _ = _rest_ready(debug=False)
+    if not ok:
+        return []
+
+    ws_id = st.session_state.get("workspace_id")
+    base = f"{_sb_url()}/rest/v1/students?select=*&workspace_id=eq.{ws_id}&order=created_at.desc"
+
+    if search:
+        s = str(search).strip()
+        if s:
+            base += f"&name=ilike.*{s}*"
+
+    r = requests.get(base, headers=_headers(), timeout=20)
+    if r.status_code >= 400:
+        _http_error("List students falhou", r)
+
+    data = r.json()
+    return data if isinstance(data, list) else []
+
+def db_update_pei_content(student_id: str, pei_dict: dict):
+    """
+    Salva o dicionário completo do PEI na coluna 'pei_data' do Supabase.
+    """
+    # URL para atualizar o aluno específico
+    url = f"{_sb_url()}/rest/v1/students?id=eq.{student_id}"
+    
+    h = _headers()
+    h["Prefer"] = "return=representation"
+    
+    # Prepara o JSON. Convertemos para string/dict puro para garantir que datas não quebrem
+    import json
+    payload_json = json.loads(json.dumps(pei_dict, default=str))
+    
+    # Envia apenas o campo pei_data e a data de atualização
+    body = {
+        "pei_data": payload_json,
+        "updated_at": datetime.now().isoformat()
     }
     
-    if "dados" not in st.session_state:
-        st.session_state.dados = default_state
-    else:
-        for k, v in default_state.items():
-            if k not in st.session_state.dados:
-                st.session_state.dados[k] = v
+    r = requests.patch(url, headers=h, json=body, timeout=20)
     
-    st.session_state.setdefault("pdf_text", "")
-    st.session_state.setdefault("selected_student_id", None)
-    st.session_state.setdefault("selected_student_name", "")
+    if r.status_code >= 400:
+        raise RuntimeError(f"Erro ao salvar conteúdo do PEI: {r.text}")
+        
+    return r.json()
+    
+def db_update_pei_content(student_id: str, pei_dict: dict):
+    """Salva o JSON completo na coluna pei_data do Supabase"""
+    # Verifica credenciais
+    url = str(st.secrets.get("SUPABASE_URL", "")).strip()
+    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "") or st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
+    
+    if not url or not key: return None
+
+    api_url = f"{url.rstrip('/')}/rest/v1/students?id=eq.{student_id}"
+    headers = {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    }
+    
+    # Prepara o JSON seguro (datas viram string)
+    import json
+    payload_json = json.loads(json.dumps(pei_dict, default=str))
+    
+    body = {
+        "pei_data": payload_json,
+        "updated_at": datetime.now().isoformat()
+    }
+    
+    r = requests.patch(api_url, headers=headers, json=body, timeout=20)
+    return r.json() if r.status_code < 400 else None
 
 # ==============================================================================
-# FUNÇÕES DE RENDERIZAÇÃO
+# 
 # ==============================================================================
-def render_header():
-    """Renderiza o cabeçalho e navbar"""
-    ou.render_omnisfera_header()
-    ou.render_navbar(active_tab="Estratégias & PEI")
-    ou.inject_compact_app_css()
 
-def render_hero_card():
-    """Renderiza o card hero"""
-    hora = datetime.now().hour
-    saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
-    USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
-    WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
-    
-    st.markdown(f"""
-    <div class="mod-card-wrapper">
-        <div class="mod-card-rect">
-            <div class="mod-bar c-blue"></div>
-            <div class="mod-icon-area bg-blue-soft">
-                <i class="ri-book-open-fill"></i>
-            </div>
-            <div class="mod-content">
-                <div class="mod-title">Plano Educacional Individualizado (PEI)</div>
-                <div class="mod-desc">
-                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie e gerencie Planos Educacionais Individualizados 
-                    para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>. 
-                    Desenvolva estratégias personalizadas e acompanhe o progresso de cada aluno.
-                </div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
 
-def render_progress_bar():
-    """Renderiza a barra de progresso"""
-    def calcular_progresso() -> int:
-        try:
-            dados = st.session_state.get("dados", {}) or {}
-            campos = ["nome", "nasc", "turma", "ano"]
-            total = len(campos)
-            ok = sum(1 for c in campos if dados.get(c))
-            return int(round((ok / total) * 100)) if total else 0
-        except Exception:
-            return 0
+
+# ==============================================================================
+# 4. LISTAS DE DADOS
+# ==============================================================================
+LISTA_SERIES = [
+    "Educação Infantil (Creche)", "Educação Infantil (Pré-Escola)",
+    "1º Ano (Fund. I)", "2º Ano (Fund. I)", "3º Ano (Fund. I)", "4º Ano (Fund. I)", "5º Ano (Fund. I)",
+    "6º Ano (Fund. II)", "7º Ano (Fund. II)", "8º Ano (Fund. II)", "9º Ano (Fund. II)",
+    "1ª Série (EM)", "2ª Série (EM)", "3ª Série (EM)", "EJA (Educação de Jovens e Adultos)"
+]
+
+LISTA_ALFABETIZACAO = [
+    "Não se aplica (Educação Infantil)",
+    "Pré-Silábico (Garatuja/Desenho sem letras)",
+    "Pré-Silábico (Letras aleatórias sem valor sonoro)",
+    "Silábico (Sem valor sonoro convencional)",
+    "Silábico (Com valor sonoro vogais/consoantes)",
+    "Silábico-Alfabético (Transição)",
+    "Alfabético (Escrita fonética, com erros ortográficos)",
+    "Ortográfico (Escrita convencional consolidada)"
+]
+
+LISTAS_BARREIRAS = {
+    "Funções Cognitivas": ["Atenção Sustentada/Focada", "Memória de Trabalho (Operacional)", "Flexibilidade Mental", "Planejamento e Organização", "Velocidade de Processamento", "Abstração e Generalização"],
+    "Comunicação e Linguagem": ["Linguagem Expressiva (Fala)", "Linguagem Receptiva (Compreensão)", "Pragmática (Uso social da língua)", "Processamento Auditivo", "Intenção Comunicativa"],
+    "Socioemocional": ["Regulação Emocional (Autocontrole)", "Tolerância à Frustração", "Interação Social com Pares", "Autoestima e Autoimagem", "Reconhecimento de Emoções"],
+    "Sensorial e Motor": ["Praxias Globais (Coordenação Grossa)", "Praxias Finas (Coordenação Fina)", "Hipersensibilidade Sensorial", "Hipossensibilidade (Busca Sensorial)", "Planejamento Motor"],
+    "Acadêmico": ["Decodificação Leitora", "Compreensão Textual", "Raciocínio Lógico-Matemático", "Grafomotricidade (Escrita manual)", "Produção Textual"]
+}
+
+LISTA_POTENCIAS = ["Memória Visual", "Musicalidade/Ritmo", "Interesse em Tecnologia", "Hiperfoco Construtivo", "Liderança Natural", "Habilidades Cinestésicas (Esportes)", "Expressão Artística (Desenho)", "Cálculo Mental Rápido", "Oralidade/Vocabulário", "Criatividade/Imaginação", "Empatia/Cuidado com o outro", "Resolução de Problemas", "Curiosidade Investigativa"]
+
+LISTA_PROFISSIONAIS = ["Psicólogo Clínico", "Neuropsicólogo", "Fonoaudiólogo", "Terapeuta Ocupacional", "Neuropediatra", "Psiquiatra Infantil", "Psicopedagogo Clínico", "Professor de Apoio (Mediador)", "Acompanhante Terapêutico (AT)", "Musicoterapeuta", "Equoterapeuta", "Oftalmologista"]
+
+LISTA_FAMILIA = ["Mãe", "Mãe 2", "Pai", "Pai 2", "Madrasta", "Padrasto", "Avó Materna", "Avó Paterna", "Avô Materno", "Avô Paterno", "Irmãos", "Tios", "Primos", "Tutor Legal", "Abrigo Institucional"]
+
+
+# ==============================================================================
+# 5. ESTADO DEFAULT (RASCUNHO)
+# ==============================================================================
+default_state = {
+    "nome": "",
+    "nasc": date(2015, 1, 1),
+    "serie": None,
+    "turma": "",
+    "diagnostico": "",
+    "lista_medicamentos": [],
+    "composicao_familiar_tags": [],
+    "historico": "",
+    "familia": "",
+    "hiperfoco": "",
+    "potencias": [],
+    "rede_apoio": [],
+    "orientacoes_especialistas": "",
+    "orientacoes_por_profissional": {},
+    "checklist_evidencias": {},
+    "nivel_alfabetizacao": "Não se aplica (Educação Infantil)",
+    "barreiras_selecionadas": {k: [] for k in LISTAS_BARREIRAS.keys()},
+    "niveis_suporte": {},
+    "observacoes_barreiras": {},
+    "estrategias_acesso": [],
+    "estrategias_ensino": [],
+    "estrategias_avaliacao": [],
+    "ia_sugestao": "",
+    "ia_mapa_texto": "",
+    "outros_acesso": "",
+    "outros_ensino": "",
+    "monitoramento_data": date.today(),
+    "status_meta": "Não Iniciado",
+    "parecer_geral": "Manter Estratégias",
+    "proximos_passos_select": [],
+    "status_validacao_pei": "rascunho",
+    "feedback_ajuste": "",
+    "status_validacao_game": "rascunho",
+    "feedback_ajuste_game": "",
+    "matricula": "",
+    "meds_extraidas_tmp": [],
+    "status_meds_extraidas": "idle",
+}
+
+if "dados" not in st.session_state:
+    st.session_state.dados = default_state
+else:
+    for k, v in default_state.items():
+        if k not in st.session_state.dados:
+            st.session_state.dados[k] = v
+
+st.session_state.setdefault("pdf_text", "")
+
+# vínculo supabase
+st.session_state.setdefault("selected_student_id", None)
+st.session_state.setdefault("selected_student_name", "")
+
+
+
+
+# ==============================================================================
+# 7. UTILITÁRIOS
+# ==============================================================================
+def _is_filled(v):
+    if v is None:
+        return False
+    if isinstance(v, str):
+        return bool(v.strip())
+    if isinstance(v, (list, tuple, set, dict)):
+        return len(v) > 0
+    return True
+
+def _aba_ok(d, key):
+    # Define o que significa "aba preenchida"
+    if key == "INICIO":
+        # “Início” é mais informativa; não precisa contar ou conta quando tiver nome
+        return _is_filled(d.get("nome"))
+
+    if key == "ESTUDANTE":
+        return _is_filled(d.get("nome")) and _is_filled(d.get("serie")) and _is_filled(d.get("turma"))
+
+    if key == "EVIDENCIAS":
+        chk = d.get("checklist_evidencias", {}) or {}
+        # pelo menos 1 evidência marcada OU texto de orientação
+        return any(bool(v) for v in chk.values()) or _is_filled(d.get("orientacoes_especialistas"))
+
+    if key == "REDE":
+        # ao menos 1 profissional OU alguma orientação geral
+        return _is_filled(d.get("rede_apoio")) or _is_filled(d.get("orientacoes_especialistas")) or _is_filled(d.get("orientacoes_por_profissional"))
+
+    if key == "MAPEAMENTO":
+        barreiras = d.get("barreiras_selecionadas", {}) or {}
+        n_bar = sum(len(v) for v in barreiras.values()) if isinstance(barreiras, dict) else 0
+        return _is_filled(d.get("hiperfoco")) or _is_filled(d.get("potencias")) or (n_bar > 0)
+
+    if key == "PLANO":
+        return _is_filled(d.get("estrategias_acesso")) or _is_filled(d.get("estrategias_ensino")) or _is_filled(d.get("estrategias_avaliacao")) \
+               or _is_filled(d.get("outros_acesso")) or _is_filled(d.get("outros_ensino"))
+
+    if key == "MONITORAMENTO":
+        return _is_filled(d.get("monitoramento_data")) and _is_filled(d.get("status_meta"))
+
+    if key == "IA":
+        return _is_filled(d.get("ia_sugestao")) and d.get("status_validacao_pei") in ["revisao", "aprovado"]
+
+    if key == "DASH":
+        # dashboard depende do IA
+        return _is_filled(d.get("ia_sugestao"))
+
+    if key == "JORNADA":
+        return _is_filled(d.get("ia_mapa_texto")) and d.get("status_validacao_game") in ["revisao", "aprovado"]
+
+    return False
+
+def calcular_progresso() -> int:
+    d = st.session_state.get("dados", {}) or {}
+
+    # quais “abas” contam no progresso
+    checkpoints = ["ESTUDANTE", "EVIDENCIAS", "REDE", "MAPEAMENTO", "PLANO", "MONITORAMENTO", "IA", "DASH", "JORNADA"]
+
+    done = sum(1 for k in checkpoints if _aba_ok(d, k))
+    total = len(checkpoints)
+    return int(round((done / total) * 100)) if total else 0
+
+# ==============================================================================
+# 7B. UTILITÁRIOS AVANÇADOS (idade, segmento, metas, radar, etc.)
+# ==============================================================================
+
+def calcular_idade(data_nasc):
+    if not data_nasc:
+        return ""
+    hoje = date.today()
+    idade = hoje.year - data_nasc.year - ((hoje.month, hoje.day) < (data_nasc.month, data_nasc.day))
+    return f"{idade} anos"
+
+def detectar_nivel_ensino(serie_str: str | None):
+    if not serie_str:
+        return "INDEFINIDO"
+    s = serie_str.lower()
+    if "infantil" in s:
+        return "EI"
+    if "1º ano" in s or "2º ano" in s or "3º ano" in s or "4º ano" in s or "5º ano" in s:
+        return "FI"
+    if "6º ano" in s or "7º ano" in s or "8º ano" in s or "9º ano" in s:
+        return "FII"
+    if "série" in s or "médio" in s or "eja" in s:
+        return "EM"
+    return "INDEFINIDO"
+
+def get_segmento_info_visual(serie: str | None):
+    nivel = detectar_nivel_ensino(serie or "")
+    if nivel == "EI":
+        return "Educação Infantil", "#4299e1", "Foco: Campos de Experiência (BNCC)."
+    if nivel == "FI":
+        return "Anos Iniciais (Fund. I)", "#48bb78", "Foco: Alfabetização e BNCC."
+    if nivel == "FII":
+        return "Anos Finais (Fund. II)", "#ed8936", "Foco: Autonomia e Identidade."
+    if nivel == "EM":
+        return "Ensino Médio / EJA", "#9f7aea", "Foco: Projeto de Vida."
+    return "Selecione a Série", "grey", "Aguardando seleção..."
+
+def get_hiperfoco_emoji(texto: str | None):
+    if not texto:
+        return "🚀"
+    t = texto.lower()
+    if "jogo" in t or "game" in t or "minecraft" in t or "roblox" in t:
+        return "🎮"
+    if "dino" in t:
+        return "🦖"
+    if "fute" in t or "bola" in t:
+        return "⚽"
+    if "desenho" in t or "arte" in t:
+        return "🎨"
+    if "músic" in t or "music" in t:
+        return "🎵"
+    if "anim" in t or "gato" in t or "cachorro" in t:
+        return "🐾"
+    if "carro" in t:
+        return "🏎️"
+    if "espaço" in t or "espaco" in t:
+        return "🪐"
+    return "🚀"
+
+def calcular_complexidade_pei(dados: dict):
+    n_bar = sum(len(v) for v in (dados.get("barreiras_selecionadas") or {}).values())
+    n_suporte_alto = sum(
+        1 for v in (dados.get("niveis_suporte") or {}).values()
+        if v in ["Substancial", "Muito Substancial"]
+    )
+    recursos = 0
+    if dados.get("rede_apoio"):
+        recursos += 3
+    if dados.get("lista_medicamentos"):
+        recursos += 2
+    saldo = (n_bar + n_suporte_alto) - recursos
+    if saldo <= 2:
+        return "FLUIDA", "#F0FFF4", "#276749"
+    if saldo <= 7:
+        return "ATENÇÃO", "#FFFFF0", "#D69E2E"
+    return "CRÍTICA", "#FFF5F5", "#C53030"
+
+def extrair_tag_ia(texto: str, tag: str):
+    if not texto:
+        return ""
+    padrao = fr"\[{tag}\](.*?)(\[|$)"
+    match = re.search(padrao, texto, re.DOTALL)
+    return match.group(1).strip() if match else ""
+
+def extrair_metas_estruturadas(texto: str):
+    bloco = extrair_tag_ia(texto or "", "METAS_SMART")
+    metas = {"Curto": "Definir...", "Medio": "Definir...", "Longo": "Definir..."}
+    if bloco:
+        linhas = bloco.split("\n")
+        for l in linhas:
+            l_clean = re.sub(r"^[\-\*]+", "", l).strip()
+            if not l_clean:
+                continue
+            if "Curto" in l or "2 meses" in l:
+                metas["Curto"] = l_clean.split(":")[-1].strip()
+            elif "Médio" in l or "Semestre" in l or "Medio" in l:
+                metas["Medio"] = l_clean.split(":")[-1].strip()
+            elif "Longo" in l or "Ano" in l:
+                metas["Longo"] = l_clean.split(":")[-1].strip()
+    return metas
+
+def get_pro_icon(nome_profissional: str | None):
+    p = (nome_profissional or "").lower()
+    if "psic" in p:
+        return "🧠"
+    if "fono" in p:
+        return "🗣️"
+    if "terapeuta" in p or "equo" in p or "musico" in p:
+        return "🧩"
+    if "neuro" in p or "psiq" in p or "medico" in p:
+        return "🩺"
+    return "👨‍⚕️"
+
+def inferir_componentes_impactados(dados: dict):
+    barreiras = dados.get("barreiras_selecionadas", {}) or {}
+    serie = (dados.get("serie") or "")
+    nivel = detectar_nivel_ensino(serie)
+    impactados = set()
+
+    # Leitura
+    if barreiras.get("Acadêmico") and any("Leitora" in b for b in barreiras["Acadêmico"]):
+        impactados.add("Língua Portuguesa")
+        impactados.add("História/Sociologia/Filosofia" if nivel == "EM" else "História/Geografia")
+
+    # Matemática
+    if barreiras.get("Acadêmico") and any("Matemático" in b for b in barreiras["Acadêmico"]):
+        impactados.add("Matemática")
+        if nivel == "EM":
+            impactados.add("Física/Química")
+        elif nivel == "FII":
+            impactados.add("Ciências")
+
+    # Cognitivas (transversal)
+    if barreiras.get("Funções Cognitivas"):
+        impactados.add("Transversal (Todas as áreas)")
+
+    # Motor fino
+    if barreiras.get("Sensorial e Motor") and any("Fina" in b for b in barreiras["Sensorial e Motor"]):
+        impactados.add("Arte")
+        impactados.add("Geometria")
+
+    if not impactados and dados.get("diagnostico"):
+        return ["Análise Geral (Baseada no Diagnóstico)"]
+
+    return list(impactados) if impactados else ["Nenhum componente específico detectado automaticamente"]
+
+
+# ==============================================================================
+# 7C. PDF / DOCX (Exportação)
+# ==============================================================================
+
+def limpar_texto_pdf(texto: str):
+    if not texto:
+        return ""
+    t = texto.replace("**", "").replace("__", "").replace("#", "").replace("•", "-")
+    t = t.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
+    t = t.replace("–", "-").replace("—", "-")
+    return t.encode("latin-1", "replace").decode("latin-1")
+
+class PDF_Classic(FPDF):
+    def header(self):
+        self.set_fill_color(248, 248, 248)
+        self.rect(0, 0, 210, 40, "F")
+        logo = finding_logo()
+        x_offset = 40 if logo else 12
+        if logo:
+            self.image(logo, 10, 8, 25)
+        self.set_xy(x_offset, 12)
+        self.set_font("Arial", "B", 14)
+        self.set_text_color(50, 50, 50)
+        self.cell(0, 8, "PEI - PLANO DE ENSINO INDIVIDUALIZADO", 0, 1, "L")
+        self.set_xy(x_offset, 19)
+        self.set_font("Arial", "", 9)
+        self.set_text_color(100, 100, 100)
+        self.cell(0, 5, "Documento de Planejamento e Flexibilização Curricular", 0, 1, "L")
+        self.ln(15)
+
+    def footer(self):
+        self.set_y(-15)
+        self.set_font("Arial", "I", 8)
+        self.set_text_color(150, 150, 150)
+        self.cell(0, 10, f"Página {self.page_no()} | Gerado via Omnisfera", 0, 0, "C")
+
+    def section_title(self, label):
+        self.ln(6)
+        self.set_fill_color(230, 230, 230)
+        self.rect(10, self.get_y(), 190, 8, "F")
+        self.set_font("ZapfDingbats", "", 10)
+        self.set_text_color(80, 80, 80)
+        self.set_xy(12, self.get_y() + 1)
+        self.cell(5, 6, "o", 0, 0)
+        self.set_font("Arial", "B", 11)
+        self.set_text_color(50, 50, 50)
+        self.cell(0, 6, label.upper(), 0, 1, "L")
+        self.ln(4)
+
+    def add_flat_icon_item(self, texto, bullet_type="check"):
+        self.set_font("ZapfDingbats", "", 10)
+        self.set_text_color(80, 80, 80)
+        char = "3" if bullet_type == "check" else "l"
+        self.cell(6, 5, char, 0, 0)
+        self.set_font("Arial", "", 10)
+        self.set_text_color(0)
+        self.multi_cell(0, 5, texto)
+        self.ln(1)
+
+class PDF_Simple_Text(FPDF):
+    def header(self):
+        self.set_font("Arial", "B", 16)
+        self.set_text_color(50)
+        self.cell(0, 10, "ROTEIRO DE MISSÃO", 0, 1, "C")
+        self.set_draw_color(150)
+        self.line(10, 25, 200, 25)
+        self.ln(10)
+
+def gerar_pdf_final(dados: dict):
+    pdf = PDF_Classic()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=20)
+
+    pdf.section_title("Identificação e Contexto")
+    pdf.set_font("Arial", "B", 10)
+    pdf.cell(35, 6, "Estudante:", 0, 0)
+    pdf.set_font("Arial", "", 10)
+    pdf.cell(0, 6, dados.get("nome", ""), 0, 1)
+
+    pdf.set_font("Arial", "B", 10)
+    pdf.cell(35, 6, "Série/Turma:", 0, 0)
+    pdf.set_font("Arial", "", 10)
+    pdf.cell(0, 6, f"{dados.get('serie','')} - {dados.get('turma','')}", 0, 1)
+
+    pdf.set_font("Arial", "B", 10)
+    pdf.cell(35, 6, "Diagnóstico:", 0, 0)
+    pdf.set_font("Arial", "", 10)
+    pdf.multi_cell(0, 6, dados.get("diagnostico", ""))
+    pdf.ln(2)
+
+    if any((dados.get("barreiras_selecionadas") or {}).values()):
+        pdf.section_title("Plano de Suporte (Barreiras x Nível)")
+        for area, itens in (dados.get("barreiras_selecionadas") or {}).items():
+            if itens:
+                pdf.set_font("Arial", "B", 10)
+                pdf.cell(0, 8, limpar_texto_pdf(area), 0, 1)
+                for item in itens:
+                    nivel = (dados.get("niveis_suporte") or {}).get(f"{area}_{item}", "Monitorado")
+                    pdf.add_flat_icon_item(limpar_texto_pdf(f"{item} (Nível: {nivel})"), "check")
+
+    if dados.get("ia_sugestao"):
+        pdf.add_page()
+        pdf.section_title("Planejamento Pedagógico Detalhado")
+        texto_limpo = limpar_texto_pdf(dados["ia_sugestao"])
+        texto_limpo = re.sub(r"\[.*?\]", "", texto_limpo)
+
+        for linha in texto_limpo.split("\n"):
+            l = linha.strip()
+            if not l:
+                continue
+            if l.startswith("###") or l.startswith("##"):
+                pdf.ln(5)
+                pdf.set_font("Arial", "B", 12)
+                pdf.set_text_color(0, 51, 102)
+                pdf.cell(0, 8, l.replace("#", "").strip(), 0, 1, "L")
+                pdf.set_font("Arial", "", 10)
+                pdf.set_text_color(0, 0, 0)
+            elif l.startswith("-") or l.startswith("*"):
+                pdf.add_flat_icon_item(l.replace("-", "").replace("*", "").strip(), "dot")
+            else:
+                pdf.multi_cell(0, 6, l)
+
+    return pdf.output(dest="S").encode("latin-1", "replace")
+
+def gerar_pdf_tabuleiro_simples(texto: str):
+    pdf = PDF_Simple_Text()
+    pdf.add_page()
+    pdf.set_font("Arial", size=11)
+    for linha in limpar_texto_pdf(texto).split("\n"):
+        l = linha.strip()
+        if not l:
+            continue
+        if l.isupper() or "**" in linha:
+            pdf.ln(4)
+            pdf.set_font("Arial", "B", 11)
+            pdf.set_fill_color(240, 240, 240)
+            pdf.cell(0, 8, l.replace("**", ""), 0, 1, "L", fill=True)
+            pdf.set_font("Arial", "", 11)
+        else:
+            pdf.multi_cell(0, 6, l)
+    return pdf.output(dest="S").encode("latin-1", "ignore")
+
+def gerar_docx_final(dados: dict):
+    doc = Document()
+    doc.add_heading("PEI - " + (dados.get("nome") or "Sem Nome"), 0)
+    if dados.get("ia_sugestao"):
+        doc.add_paragraph(re.sub(r"\[.*?\]", "", dados["ia_sugestao"]))
+    b = BytesIO()
+    doc.save(b)
+    b.seek(0)
+    return b
+
+
+# ==============================================================================
+# 7D. IA (Extração PDF + Consultoria + Gamificação)
+# ==============================================================================
+
+def extrair_dados_pdf_ia(api_key: str, texto_pdf: str):
+    if not api_key:
+        return None, "Configure a Chave API OpenAI."
+    try:
+        client = OpenAI(api_key=api_key)
+        prompt = (
+            "Analise este laudo médico/escolar. Extraia: 1) Diagnóstico; 2) Medicamentos. "
+            'Responda em JSON no formato: { "diagnostico": "...", "medicamentos": [ {"nome": "...", "posologia": "..."} ] }. '
+            f"Texto: {texto_pdf[:4000]}"
+        )
+        res = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"},
+        )
+        return json.loads(res.choices[0].message.content), None
+    except Exception as e:
+        return None, str(e)
+
+def consultar_gpt_pedagogico(api_key: str, dados: dict, contexto_pdf: str = "", modo_pratico: bool = False, feedback_usuario: str = ""):
+    if not api_key:
+        return None, "⚠️ Configure a Chave API OpenAI."
+    try:
+        client = OpenAI(api_key=api_key)
+
+        evid = "\n".join([f"- {k.replace('?', '')}" for k, v in (dados.get("checklist_evidencias") or {}).items() if v])
+        meds_info = "\n".join(
+            [f"- {m.get('nome','')} ({m.get('posologia','')})." for m in (dados.get("lista_medicamentos") or [])]
+        ) if dados.get("lista_medicamentos") else "Nenhuma medicação informada."
+
+        hiperfoco_txt = f"HIPERFOCO DO ALUNO: {dados.get('hiperfoco','')}" if dados.get("hiperfoco") else "Hiperfoco: Não identificado."
+        serie = dados.get("serie") or ""
+        nivel_ensino = detectar_nivel_ensino(serie)
+        alfabetizacao = dados.get("nivel_alfabetizacao", "Não Avaliado")
+
+        prompt_identidade = f"""
+[PERFIL_NARRATIVO]
+Inicie com "👤 QUEM É O ESTUDANTE?". Crie um parágrafo humanizado. {hiperfoco_txt}.
+Use o hiperfoco para conectar com a aprendizagem.
+[/PERFIL_NARRATIVO]
+""".strip()
+
+        prompt_diagnostico = """
+### 1. 🏥 DIAGNÓSTICO E IMPACTO (FUNDAMENTAL):
+- Cite o Diagnóstico (e o CID se disponível).
+- Descreva os impactos diretos na aprendizagem.
+- Liste cuidados/pontos de atenção.
+""".strip()
+
+        prompt_literacia = ""
+        if "Alfabético" not in alfabetizacao and alfabetizacao != "Não se aplica (Educação Infantil)":
+            prompt_literacia = f"""[ATENÇÃO CRÍTICA: ALFABETIZAÇÃO] Fase: {alfabetizacao}. Inclua 2 ações de consciência fonológica.[/ATENÇÃO CRÍTICA]"""
+
+        prompt_hub = """
+### 6. 🧩 CHECKLIST DE ADAPTAÇÃO E ACESSIBILIDADE:
+**A. Mediação (Triângulo de Ouro):**
+1) Instruções passo a passo
+2) Fragmentação de tarefas
+3) Scaffolding
+
+**B. Acessibilidade:**
+4) Inferências/figuras de linguagem
+5) Descrição de imagens (alt text)
+6) Adaptação visual (fonte/espaçamento)
+7) Adequação de desafio
+""".strip()
+
+        prompt_componentes = ""
+        if nivel_ensino != "EI":
+            prompt_componentes = f"""
+### 4. ⚠️ COMPONENTES CURRICULARES DE ATENÇÃO:
+Com base no diagnóstico ({dados.get('diagnostico','')}) e nas barreiras citadas, identifique componentes que exigirão maior flexibilização.
+- Liste componentes
+- Para cada um, explique o motivo técnico
+""".strip()
+
+        prompt_metas = """
+[METAS_SMART]
+- Meta de Curto Prazo (2 meses): [Descreva a meta]
+- Meta de Médio Prazo (1 semestre): [Descreva a meta]
+- Meta de Longo Prazo (1 ano): [Descreva a meta]
+[/METAS_SMART]
+""".strip()
+
+        if nivel_ensino == "EI":
+            perfil_ia = "Especialista em EDUCAÇÃO INFANTIL e BNCC."
+            estrutura_req = f"""
+{prompt_identidade}
+{prompt_diagnostico}
+
+### 2. 🌟 AVALIAÇÃO DE REPERTÓRIO:
+[CAMPOS_EXPERIENCIA_PRIORITARIOS] Destaque 2 ou 3 Campos BNCC. [/CAMPOS_EXPERIENCIA_PRIORITARIOS]
+
+### 3. 🚀 ESTRATÉGIAS DE INTERVENÇÃO:
+(Estratégias de acolhimento, rotina e adaptação sensorial).
+
+{prompt_metas}
+
+### 5. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
+[ANALISE_FARMA] Se houver medicação, cite efeitos colaterais para atenção pedagógica. [/ANALISE_FARMA]
+
+{prompt_hub}
+""".strip()
+        else:
+            perfil_ia = "Especialista em Inclusão Escolar e BNCC."
+            instrucao_bncc = "[MAPEAMENTO_BNCC] Separe por Componente Curricular. Inclua código alfanumérico (ex: EF01LP02). [/MAPEAMENTO_BNCC]"
+            instrucao_bloom = "[TAXONOMIA_BLOOM] Explique a categoria cognitiva escolhida. [/TAXONOMIA_BLOOM]"
+            estrutura_req = f"""
+{prompt_identidade}
+{prompt_diagnostico}
+
+### 2. 🌟 AVALIAÇÃO DE REPERTÓRIO:
+- Defasagens (anos anteriores)
+- Foco do ano atual
+{instrucao_bncc}
+{instrucao_bloom}
+
+### 3. 🚀 ESTRATÉGIAS DE INTERVENÇÃO:
+(Adaptações curriculares e de acesso).
+{prompt_literacia}
+
+{prompt_componentes}
+
+{prompt_metas}
+
+### 5. ⚠️ PONTOS DE ATENÇÃO FARMACOLÓGICA:
+[ANALISE_FARMA] Se houver medicação, cite efeitos colaterais para atenção pedagógica. [/ANALISE_FARMA]
+
+{prompt_hub}
+""".strip()
+
+        prompt_feedback = f"AJUSTE SOLICITADO: {feedback_usuario}" if feedback_usuario else ""
+        prompt_formatacao = "IMPORTANTE: Use Markdown simples. Use títulos H3 (###). Evite tabelas."
+
+        prompt_sys = f"""{perfil_ia}
+MISSÃO: Criar PEI Técnico Oficial.
+ESTRUTURA OBRIGATÓRIA:
+{estrutura_req}
+
+{prompt_feedback}
+{prompt_formatacao}
+""".strip()
+
+        if modo_pratico:
+            prompt_sys = f"""{perfil_ia}
+GUIA PRÁTICO PARA SALA DE AULA.
+{prompt_feedback}
+
+{prompt_hub}
+""".strip()
+
+        prompt_user = (
+            f"ALUNO: {dados.get('nome','')} | SÉRIE: {serie} | HISTÓRICO: {dados.get('historico','')} | "
+            f"DIAGNÓSTICO: {dados.get('diagnostico','')} | MEDS: {meds_info} | "
+            f"EVIDÊNCIAS: {evid} | LAUDO: {(contexto_pdf or '')[:3000]}"
+        )
+
+        res = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": prompt_sys}, {"role": "user", "content": prompt_user}],
+        )
+        return res.choices[0].message.content, None
+
+    except Exception as e:
+        return None, str(e)
+
+def gerar_roteiro_gamificado(api_key: str, dados: dict, pei_tecnico: str, feedback_game: str = ""):
+    if not api_key:
+        return None, "Configure a chave OpenAI."
+    try:
+        client = OpenAI(api_key=api_key)
+        serie = dados.get("serie") or ""
+        nivel_ensino = detectar_nivel_ensino(serie)
+        hiperfoco = dados.get("hiperfoco") or "brincadeiras"
+        nome_curto = (dados.get("nome","").split() or ["Estudante"])[0]
+
+        contexto_seguro = (
+            f"ALUNO: {nome_curto} | HIPERFOCO: {hiperfoco} | "
+            f"PONTOS FORTES: {', '.join(dados.get('potencias',[]))}"
+        )
+
+        prompt_feedback = f"AJUSTE: {feedback_game}" if feedback_game else ""
+
+        if nivel_ensino == "EI":
+            prompt_sys = "Crie uma história visual (4-5 anos) com emojis. Estrutura: começo, desafio, ajuda, conquista, rotina."
+        elif nivel_ensino == "FI":
+            prompt_sys = "Crie um quadro de missões RPG (6-10 anos). Estrutura: mapa, missões, recompensas, superpoder."
+        else:
+            prompt_sys = "Crie uma ficha RPG (adolescente). Estrutura: quest, skills, buffs, checklists e metas."
+
+        full_sys = f"{prompt_sys}\n{prompt_feedback}"
+        res = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": full_sys}, {"role": "user", "content": contexto_seguro}],
+        )
+        return res.choices[0].message.content, None
+    except Exception as e:
+        return None, str(e)
+
+
+# ==============================================================================
+# 7E. AÇÕES AUXILIARES (Reset)
+# ==============================================================================
+def limpar_formulario():
+    # recria um "rascunho limpo" preservando a estrutura do dicionário
+    st.session_state.dados = {
+        'nome': '',
+        'nasc': date(2015, 1, 1),
+        'serie': None,
+        'turma': '',
+        'diagnostico': '',
+        'lista_medicamentos': [],
+        'composicao_familiar_tags': [],
+        'historico': '',
+        'familia': '',
+        'hiperfoco': '',
+        'potencias': [],
+        'rede_apoio': [],
+        'orientacoes_especialistas': '',
+        'checklist_evidencias': {},
+        'nivel_alfabetizacao': 'Não se aplica (Educação Infantil)',
+        'barreiras_selecionadas': {k: [] for k in LISTAS_BARREIRAS.keys()},
+        'niveis_suporte': {},
+        'estrategias_acesso': [],
+        'estrategias_ensino': [],
+        'estrategias_avaliacao': [],
+        'ia_sugestao': '',
+        'ia_mapa_texto': '',
+        'outros_acesso': '',
+        'outros_ensino': '',
+        'monitoramento_data': date.today(),
+        'status_meta': 'Não Iniciado',
+        'parecer_geral': 'Manter Estratégias',
+        'proximos_passos_select': [],
+        'status_validacao_pei': 'rascunho',
+        'feedback_ajuste': '',
+        'status_validacao_game': 'rascunho',
+        'feedback_ajuste_game': ''
+    }
+    st.session_state.pdf_text = ""
+
+
+# ==============================================================================
+# 8. ESTILO VISUAL - BLOCO UNIFICADO
+# ==============================================================================
+st.markdown("""
+<style>
+    /* FONTES E FUNDO */
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
     
+    html, body, [class*="css"] { 
+        font-family: 'Nunito', sans-serif; 
+        color: #2D3748; 
+        background-color: #F7FAFC; 
+        margin: 0 !important; 
+        padding: 0 !important; 
+    }
+    
+    /* CARD HERO TAMANHO ORIGINAL */
+    .mod-card-rect {
+        background: white;
+        border-radius: 16px;
+        padding: 0;
+        border: 1px solid #E2E8F0;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        height: 130px !important;  /* TAMANHO ORIGINAL */
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .mod-card-rect:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        border-color: #CBD5E1;
+    }
+    
+    .mod-bar {
+        width: 6px;
+        height: 100%;
+        flex-shrink: 0;
+    }
+    
+    .mod-icon-area {
+        width: 90px;  /* TAMANHO ORIGINAL */
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;  /* TAMANHO ORIGINAL */
+        flex-shrink: 0;
+        background: transparent !important;
+        border-right: 1px solid #F1F5F9;
+        transition: all 0.3s ease;
+    }
+    
+    .mod-content {
+        flex-grow: 1;
+        padding: 0 24px;  /* TAMANHO ORIGINAL */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .mod-title {
+        font-weight: 800;
+        font-size: 1.1rem;  /* TAMANHO ORIGINAL */
+        color: #1E293B;
+        margin-bottom: 6px;  /* TAMANHO ORIGINAL */
+        letter-spacing: -0.2px;
+        transition: color 0.2s;
+    }
+    
+    .mod-desc {
+        font-size: 0.8rem;  /* TAMANHO ORIGINAL */
+        color: #64748B;
+        line-height: 1.4;  /* TAMANHO ORIGINAL */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: 0 !important;
+    }
+    
+    /* CORES DO CARD */
+    /* CORES DO CARD (USA O ACCENT DO PEI) */
+    .c-blue{
+        background: var(--acc) !important;              /* detalhe lateral */
+    }
+
+    .bg-blue-soft{
+         background: transparent !important;
+         color: var(--acc) !important;                  /* cor do ícone */
+    }
+
+    /* garante que o <i> herde a cor */
+     .mod-icon-area i{
+          color: inherit !important;
+    }
+    
+    
+    /* TABS - MANTÉM COMPACTOS */
+    div[data-baseweb="tab-border"],
+    div[data-baseweb="tab-highlight"] { 
+        display: none !important; 
+    }
+    
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        display: flex;
+        flex-wrap: wrap !important;
+        white-space: normal !important;
+        overflow-x: visible !important;
+        padding: 10px 5px;
+        width: 100%;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        height: 38px;
+        border-radius: 20px !important;
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        color: #718096;
+        font-weight: 700;
+        font-size: 0.8rem;
+        padding: 0 20px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+    
+    .stTabs [data-baseweb="tab"]:hover { 
+        border-color: #CBD5E0; 
+        color: #4A5568; 
+        background-color: #EDF2F7; 
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background-color: transparent !important; 
+        color: #3182CE !important;
+        border: 1px solid #3182CE !important; 
+        font-weight: 800;
+        box-shadow: 0 0 12px rgba(49, 130, 206, 0.4), inset 0 0 5px rgba(49, 130, 206, 0.1) !important;
+    }
+    
+    /* ELEMENTOS DO FORMULÁRIO */
+    .stTextInput input, 
+    .stTextArea textarea, 
+    .stSelectbox div[data-baseweb="select"], 
+    .stMultiSelect div[data-baseweb="select"] { 
+        border-radius: 8px !important; 
+        border-color: #E2E8F0 !important; 
+    }
+    
+    div[data-testid="column"] .stButton button { 
+        border-radius: 8px !important; 
+        font-weight: 700 !important; 
+        height: 45px !important; 
+        background-color: #0F52BA !important; 
+        color: white !important; 
+        border: none !important; 
+    }
+    
+    div[data-testid="column"] .stButton button:hover { 
+        background-color: #0A3D8F !important; 
+    }
+    
+    /* FOOTER */
+    .footer-signature { 
+        text-align:center; 
+        opacity:0.55; 
+        font-size:0.75rem; 
+        padding:30px 0 10px 0; 
+    }
+    
+    /* ANIMAÇÃO DO LOGO */
+    @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .omni-logo-spin {
+        animation: spin-slow 10s linear infinite;
+    }
+    
+    /* RESPONSIVIDADE */
+    @media (max-width: 768px) {
+        .mod-card-rect {
+            flex-direction: column;
+            height: auto !important;
+            padding: 12px;
+        }
+        
+        .mod-bar {
+            width: 100%;
+            height: 4px;
+        }
+        
+        .mod-icon-area {
+            width: 100%;
+            height: 50px;
+            border-right: none;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        
+        .mod-content {
+            padding: 12px 0 0 0;
+        }
+    }
+    
+    /* REMOVER QUALQUER ESPAÇO RESIDUAL DO HEADER DO STREAMLIT */
+    section[data-testid="stHeader"] {
+        display: none !important;
+    }
+</style>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+""", unsafe_allow_html=True)
+
+# ============================================================================== 
+# 9. LOGO E PROGRESSO
+# ============================================================================== 
+
+def get_logo_base64() -> str | None:
+    """Obtém o logo em base64"""
+    for c in ["omni_icone.png", "logo.png", "iconeaba.png"]:
+        if os.path.exists(c):
+            with open(c, "rb") as f:
+                return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return None
+
+src_logo_giratoria = get_logo_base64()
+
+def calcular_progresso() -> int:
+    """Calcula o progresso do formulário"""
+    try:
+        dados = st.session_state.get("dados", {}) or {}
+        campos = ["nome", "nasc", "turma", "ano"]
+        total = len(campos)
+        ok = sum(1 for c in campos if dados.get(c))
+        return int(round((ok / total) * 100)) if total else 0
+    except Exception:
+        return 0
+
+def render_progresso():
+    """Renderiza a barra de progresso compacta"""
     p = max(0, min(100, int(calcular_progresso())))
+    icon_html = ""
+    
+    if src_logo_giratoria:
+        icon_html = f'<img src="{src_logo_giratoria}" class="omni-logo-spin" style="width:25px;height:25px;">'
+    
+    bar_color = "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)"
+    if p >= 100:
+        bar_color = "linear-gradient(90deg, #00C6FF 0%, #0072FF 100%)"
     
     st.markdown(f"""
     <div class="progress-container">
-        <div style="width:100%; height:8px; background:#E2E8F0; border-radius:4px; position:relative; margin:10px 0 20px 0;">
-            <div style="height:8px; width:{p}%; background:linear-gradient(90deg, var(--acc), var(--accDark)); border-radius:4px;"></div>
-            <div style="position:absolute; top:-5px; left:{p}%; transform:translateX(-50%); font-size:0.8rem; font-weight:bold; color:var(--accDark);">
-                {p}%
-            </div>
+        <div style="width:100%; height:3px; background:#E2E8F0; border-radius:2px; position:relative;">
+            <div style="height:3px; width:{p}%; background:{bar_color}; border-radius:2px;"></div>
+            <div style="position:absolute; top:-14px; left:{p}%; transform:translateX(-50%);">{icon_html}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# ABA INÍCIO
+# 10. CARD HERO - RENDERIZAÇÃO DIRETA SEM ESPAÇO
 # ==============================================================================
-def render_aba_inicio():
-    """Renderiza a aba Início"""
+hora = datetime.now().hour
+saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
+USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
+WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
+
+# Container ultra compacto - sem margens
+st.markdown(f"""
+<div class="mod-card-wrapper">
+    <div class="mod-card-rect">
+        <div class="mod-bar c-blue"></div>
+        <div class="mod-icon-area bg-blue-soft">
+            <i class="ri-book-open-fill"></i>
+        </div>
+        <div class="mod-content">
+            <div class="mod-title">Plano Educacional Individualizado (PEI)</div>
+            <div class="mod-desc">
+                {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie e gerencie Planos Educacionais Individualizados 
+                para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>. 
+                Desenvolva estratégias personalizadas e acompanhe o progresso de cada aluno.
+            </div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# Renderizar progresso (se necessário)
+render_progresso()
+# ==============================================================================
+# ABAS DO PEI (TEXTO EM MAIÚSCULAS, SEM EMOJIS)
+# ==============================================================================
+abas = [
+    "INÍCIO", "ESTUDANTE", "EVIDÊNCIAS", "REDE DE APOIO", "MAPEAMENTO",
+    "PLANO DE AÇÃO", "MONITORAMENTO", "CONSULTORIA IA", "DASHBOARD & DOCS", "JORNADA GAMIFICADA"
+]
+
+tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_9= st.tabs(abas)
+# ==============================================================================
+# 11. ABA INÍCIO — CENTRAL (Gestão de Alunos + Backups)
+# ==============================================================================
+with tab0:
     st.markdown("### 🏛️ Central de Fundamentos e Gestão")
     st.caption("Aqui você gerencia alunos (backup local e nuvem/Supabase) e acessa fundamentos do PEI.")
-    
+
+    # -------------------------
+    # Helpers locais (somente UI)
+    # -------------------------
+    def _coerce_dates_in_payload(d: dict):
+        """Converte campos de data salvos como string de volta para date (sem depender de Supabase)."""
+        if not isinstance(d, dict):
+            return d
+        for k in ["nasc", "monitoramento_data"]:
+            try:
+                if k in d and isinstance(d[k], str) and d[k]:
+                    d[k] = date.fromisoformat(d[k])
+            except Exception:
+                pass
+        return d
+
+    # -------------------------
+    # LAYOUT 2 COLUNAS
+    # -------------------------
     col_left, col_right = st.columns([1.15, 0.85])
-    
+
+    # =========================
+    # ESQUERDA: Fundamentos
+    # =========================
     with col_left:
         with st.container(border=True):
             st.markdown("#### 📚 Fundamentos do PEI")
-            st.markdown("""
-            - O **PEI** organiza o planejamento individualizado com foco em **barreiras** e **apoios**.
-            - A lógica é **equidade**: ajustar **acesso, ensino e avaliação**, sem baixar expectativas.
-            - Base: **LBI (Lei 13.146/2015)**, LDB e diretrizes de Educação Especial na Perspectiva Inclusiva.
-            """)
-        
+            st.markdown(
+                """
+- O **PEI** organiza o planejamento individualizado com foco em **barreiras** e **apoios**.
+- A lógica é **equidade**: ajustar **acesso, ensino e avaliação**, sem baixar expectativas.
+- Base: **LBI (Lei 13.146/2015)**, LDB e diretrizes de Educação Especial na Perspectiva Inclusiva.
+                """
+            )
+
         with st.container(border=True):
             st.markdown("#### 🧭 Como usar a Omnisfera")
-            st.markdown("""
-            1) **Estudante**: identificação + contexto + laudo (opcional)  
-            2) **Evidências**: o que foi observado e como aparece na rotina  
-            3) **Mapeamento**: barreiras + nível de apoio + potências  
-            4) **Plano de Ação**: acesso/ensino/avaliação  
-            5) **Consultoria IA**: gerar o documento técnico (validação do educador)  
-            6) **Dashboard**: KPIs + exportações + sincronização  
-            """)
-    
+            st.markdown(
+                """
+1) **Estudante**: identificação + contexto + laudo (opcional)  
+2) **Evidências**: o que foi observado e como aparece na rotina  
+3) **Mapeamento**: barreiras + nível de apoio + potências  
+4) **Plano de Ação**: acesso/ensino/avaliação  
+5) **Consultoria IA**: gerar o documento técnico (validação do educador)  
+6) **Dashboard**: KPIs + exportações + sincronização  
+                """
+            )
+
+    # =========================
+    # DIREITA: Gestão de alunos
+    # =========================
     with col_right:
         st.markdown("#### 👤 Gestão de Alunos")
-        
+
+        # garante d (se seu código já define antes, isso não atrapalha)
+        d = st.session_state.get("dados", {})
+        if not isinstance(d, dict):
+            d = {}
+
         # Status vínculo
         student_id = st.session_state.get("selected_student_id")
         if student_id:
@@ -268,29 +1534,180 @@ def render_aba_inicio():
             st.caption(f"student_id: {str(student_id)[:8]}...")
         else:
             st.warning("📝 Modo rascunho (sem vínculo na nuvem)")
-        
-        # Backup Local
+
+        # ------------------------------------------------------------------
+        # (1) BACKUP LOCAL: upload JSON NÃO aplica sozinho (evita loop)
+        # ------------------------------------------------------------------
         with st.container(border=True):
             st.markdown("##### 1) Carregar Backup Local (.JSON)")
             st.caption("✅ Não comunica com Supabase. Envie o arquivo e clique em **Carregar no formulário**.")
-            
+
+            # estados do fluxo local (cache em memória)
+            if "local_json_pending" not in st.session_state:
+                st.session_state["local_json_pending"] = None
+            if "local_json_name" not in st.session_state:
+                st.session_state["local_json_name"] = ""
+
             up_json = st.file_uploader(
                 "Envie um arquivo .json",
                 type="json",
                 key="inicio_uploader_json",
             )
-            
+
+            # 1) Ao enviar: só guardar em memória (não aplicar)
             if up_json is not None:
                 try:
                     payload = json.load(up_json)
-                    # Aplicar dados
-                    if st.button("📥 Carregar no formulário", type="primary", use_container_width=True):
-                        st.session_state.dados.update(payload)
-                        st.session_state["selected_student_id"] = None
-                        st.success("Backup aplicado ao formulário ✅")
-                        st.rerun()
+                    payload = _coerce_dates_in_payload(payload)
+
+                    st.session_state["local_json_pending"] = payload
+                    st.session_state["local_json_name"] = getattr(up_json, "name", "") or "backup.json"
+
+                    st.success(f"Arquivo pronto ✅ ({st.session_state['local_json_name']})")
+                    st.caption("Agora clique no botão abaixo para aplicar os dados no formulário.")
                 except Exception as e:
+                    st.session_state["local_json_pending"] = None
+                    st.session_state["local_json_name"] = ""
                     st.error(f"Erro ao ler JSON: {e}")
+
+            pending = st.session_state.get("local_json_pending")
+
+            # 2) Prévia (opcional)
+            if isinstance(pending, dict) and pending:
+                with st.expander("👀 Prévia do backup", expanded=False):
+                    st.write({
+                        "nome": pending.get("nome"),
+                        "serie": pending.get("serie"),
+                        "turma": pending.get("turma"),
+                        "diagnostico": pending.get("diagnostico"),
+                        "tem_ia_sugestao": bool(pending.get("ia_sugestao")),
+                    })
+
+            # 3) Botões
+            b1, b2 = st.columns(2)
+
+            with b1:
+                if st.button(
+                    "📥 Carregar no formulário",
+                    type="primary",
+                    use_container_width=True,
+                    disabled=not isinstance(pending, dict),
+                    key="inicio_btn_aplicar_json_local",
+                ):
+                    # aplica no estado do formulário
+                    if "dados" in st.session_state and isinstance(st.session_state.dados, dict):
+                        st.session_state.dados.update(pending)
+                    else:
+                        st.session_state.dados = pending
+
+                    # JSON local NÃO cria vínculo com nuvem
+                    st.session_state["selected_student_id"] = None
+                    st.session_state["selected_student_name"] = ""
+
+                    # limpa pendência pra não reaplicar
+                    st.session_state["local_json_pending"] = None
+                    st.session_state["local_json_name"] = ""
+
+                    st.success("Backup aplicado ao formulário ✅")
+                    st.toast("Dados aplicados.", icon="✅")
+                    st.rerun()
+
+            with b2:
+                if st.button(
+                    "🧹 Limpar pendência",
+                    use_container_width=True,
+                    key="inicio_btn_limpar_json_local",
+                ):
+                    st.session_state["local_json_pending"] = None
+                    st.session_state["local_json_name"] = ""
+                    st.rerun()
+
+        # ------------------------------------------------------------------
+        # (2) CLOUD — SINCRONIZAÇÃO COMPLETA
+        # ------------------------------------------------------------------
+        with st.container(border=True):
+            st.caption("🌐 Omnisfera Cloud")
+            st.markdown(
+                "<div style='font-size:.85rem; color:#4A5568; margin-bottom:8px;'>"
+                "Sincroniza o cadastro e <b>salva todo o conteúdo do PEI</b> na nuvem (coluna pei_data)."
+                "</div>",
+                unsafe_allow_html=True
+            )
+
+            def _cloud_ready_check():
+                try:
+                    url = str(st.secrets.get("SUPABASE_URL", "")).strip()
+                    key = str(
+                        st.secrets.get("SUPABASE_SERVICE_KEY", "")
+                        or st.secrets.get("SUPABASE_ANON_KEY", "")
+                        or ""
+                    ).strip()
+                    return bool(url and key)
+                except Exception:
+                    return False
+
+            if st.button("🔗 Sincronizar Tudo", type="primary", use_container_width=True, key="btn_sync_full_final"):
+                if not _cloud_ready_check():
+                    st.error("⚠️ Configure os Secrets do Supabase.")
+                else:
+                    try:
+                        with st.spinner("Sincronizando dados completos..."):
+                            # 1) Datas
+                            nasc_iso = d.get("nasc").isoformat() if hasattr(d.get("nasc"), "isoformat") else None
+
+                            # 2) Payload básico (tabela students)
+                            student_payload = {
+                                "name": d.get("nome"),
+                                "birth_date": nasc_iso,
+                                "grade": d.get("serie"),
+                                "class_group": d.get("turma") or None,
+                                "diagnosis": d.get("diagnostico") or None,
+                                "workspace_id": st.session_state.get("workspace_id"),
+                            }
+
+                            # 3) Identificar / Criar
+                            sid = st.session_state.get("selected_student_id")
+
+                            if not sid:
+                                created = db_create_student(student_payload)
+                                if created and isinstance(created, dict):
+                                    sid = created.get("id")
+                                    st.session_state["selected_student_id"] = sid
+                            else:
+                                db_update_student(sid, student_payload)
+
+                            # 4) SALVAR conteúdo completo (JSONB pei_data)
+                            if sid:
+                                db_update_pei_content(sid, d)
+
+                                # 5) Backup local pós-sync
+                                st.session_state["ultimo_backup_json"] = json.dumps(d, default=str, ensure_ascii=False)
+                                st.session_state["sync_sucesso"] = True
+
+                                st.toast("PEI completo salvo na nuvem com sucesso!", icon="☁️")
+                                st.rerun()
+                            else:
+                                st.error("Erro: Não foi possível obter o ID do estudante no banco.")
+
+                    except Exception as e:
+                        st.error(f"Erro na sincronização: {e}")
+
+            # Pós sucesso: botão de download
+            if st.session_state.get("sync_sucesso"):
+                st.success("✅ Tudo salvo no Supabase!")
+
+                timestamp = datetime.now().strftime("%d-%m_%Hh%M")
+                nome_clean = (d.get("nome") or "Aluno").replace(" ", "_")
+
+                st.download_button(
+                    label="📂 BAIXAR BACKUP (.JSON)",
+                    data=st.session_state.get("ultimo_backup_json", "{}"),
+                    file_name=f"PEI_{nome_clean}_{timestamp}.json",
+                    mime="application/json",
+                    type="secondary",
+                    use_container_width=True,
+                    key="btn_post_sync_download_final"
+                )
 
 # ==============================================================================
 # 12. ABA ESTUDANTE
