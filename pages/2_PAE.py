@@ -1307,7 +1307,7 @@ if is_ei:
             
             if st.button("🔍 Mapear Barreiras", type="primary", use_container_width=True):
                 if not api_key:
-                    st.error("Insira a chave OpenAI na sidebar.")
+                    st.error("Insira a chave OpenAI nas configurações.")
                 elif not obs_aee:
                     st.warning("Por favor, descreva suas observações antes de mapear.")
                 else:
@@ -1358,7 +1358,7 @@ else:
             
             if st.button("🔍 Analisar Barreiras", type="primary", use_container_width=True):
                 if not api_key:
-                    st.error("Insira a chave OpenAI na sidebar.")
+                    st.error("Insira a chave OpenAI nas configurações.")
                 elif not obs_aee:
                     st.warning("Por favor, descreva suas observações antes de analisar.")
                 else:
@@ -1413,7 +1413,7 @@ if is_ei:
             
             if st.button("✨ Gerar Atividades", type="primary", use_container_width=True):
                 if not api_key:
-                    st.error("Insira a chave OpenAI na sidebar.")
+                    st.error("Insira a chave OpenAI nas configurações.")
                 else:
                     with st.spinner("Criando banco de experiências..."):
                         resultado = gerar_projetos_ei_bncc(api_key, aluno, campo_bncc)
@@ -1462,7 +1462,7 @@ else:
             
             if st.button("📋 Gerar Plano", type="primary", use_container_width=True):
                 if not api_key:
-                    st.error("Insira a chave OpenAI na sidebar.")
+                    st.error("Insira a chave OpenAI nas configurações.")
                 else:
                     with st.spinner("Elaborando plano de intervenção..."):
                         resultado = gerar_plano_habilidades(api_key, aluno, foco)
@@ -1513,7 +1513,7 @@ if is_ei:
             
             if st.button("🛠️ Sugerir Adaptação", type="primary", use_container_width=True):
                 if not api_key:
-                    st.error("Insira a chave OpenAI na sidebar.")
+                    st.error("Insira a chave OpenAI nas configurações.")
                 elif not dif_rotina:
                     st.warning("Por favor, descreva a dificuldade específica.")
                 else:
@@ -1564,7 +1564,7 @@ else:
             
             if st.button("🔧 Sugerir Recursos", type="primary", use_container_width=True):
                 if not api_key:
-                    st.error("Insira a chave OpenAI na sidebar.")
+                    st.error("Insira a chave OpenAI nas configurações.")
                 elif not dif_especifica:
                     st.warning("Por favor, descreva a dificuldade específica.")
                 else:
