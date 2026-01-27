@@ -634,10 +634,88 @@ def inject_hero_card_css():
         unsafe_allow_html=True,
     )
 
+def inject_hero_card_colors():
+    """
+    Injeta as classes de cores dos hero cards (mesmas da Home).
+    Cada página deve usar sua cor específica no hero card.
+    """
+    st.markdown(
+        """
+<style>
+/* ===============================
+   CORES DOS CARDS DE MÓDULO (MESMAS DA HOME)
+================================ */
+.c-indigo { background: #4F46E5 !important; }
+.bg-indigo-soft { 
+    background: #EEF2FF !important; 
+    color: #4F46E5 !important;
+}
+
+.c-blue { background: #3B82F6 !important; }
+.bg-blue-soft { 
+    background: #EFF6FF !important;
+    color: #2563EB !important;
+}
+
+.c-purple { background: #8B5CF6 !important; }
+.bg-purple-soft { 
+    background: #F5F3FF !important;
+    color: #7C3AED !important;
+}
+
+.c-teal { background: #14B8A6 !important; }
+.bg-teal-soft { 
+    background: #F0FDFA !important;
+    color: #0D9488 !important;
+}
+
+.c-rose { background: #E11D48 !important; }
+.bg-rose-soft { 
+    background: #FFF1F2 !important;
+    color: #BE123C !important;
+}
+
+.c-sky { background: #0284C7 !important; }
+.bg-sky-soft { 
+    background: #F0F9FF !important;
+    color: #0369A1 !important;
+}
+
+/* ===============================
+   MOVIMENTO DO HERO CARD (IGUAL À HOME)
+================================ */
+.mod-card-rect {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.mod-card-rect:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+    border-color: #CBD5E1 !important;
+}
+
+.mod-icon-area {
+    background: #FAFAFA !important;
+    transition: all 0.3s ease !important;
+}
+
+.mod-card-rect:hover .mod-icon-area {
+    background: white !important;
+    transform: scale(1.05) !important;
+}
+
+.mod-card-rect:hover .mod-title {
+    color: #4F46E5 !important;
+}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 def inject_unified_ui_css():
     """
-    CSS padronizado para toda a UI: abas (pílulas), botões, selects, checkboxes, radio, tags.
-    Usa cor neutra (#64748B - slate-500) para combinar com o visual geral.
+    CSS padronizado para toda a UI: abas (pílulas), botões, selects, checkboxes, radio, tags, multiselect, slider.
+    Usa cor neutra (#64748B - slate-500) que funciona com todas as cores dos cards da Home.
     """
     st.markdown(
         """
@@ -745,6 +823,100 @@ div[data-baseweb="select"] > div:focus-within {
 }
 
 /* ===============================
+   MULTISELECT
+================================ */
+div[data-baseweb="select"][aria-multiselectable="true"] > div {
+    border-radius: 8px !important;
+    border-color: var(--ui-neutral-border) !important;
+}
+
+div[data-baseweb="select"][aria-multiselectable="true"] > div:focus-within {
+    border-color: var(--ui-neutral) !important;
+    box-shadow: 0 0 0 3px rgba(100,116,139,0.18) !important;
+}
+
+/* ===============================
+   SLIDER
+================================ */
+.stSlider {
+    border-radius: 8px !important;
+}
+
+/* Track do slider */
+.stSlider > div > div[data-baseweb="slider"] > div[data-baseweb="slider-track"] {
+    background-color: var(--ui-neutral-border) !important;
+}
+
+/* Fill do slider (parte preenchida) */
+.stSlider > div > div[data-baseweb="slider"] > div[data-baseweb="slider-track"] > div[data-baseweb="slider-fill"] {
+    background: linear-gradient(135deg, var(--ui-neutral), var(--ui-neutral-dark)) !important;
+}
+
+/* Thumb do slider (bolinha) */
+.stSlider > div > div[data-baseweb="slider"] > div[data-baseweb="slider-thumb"] {
+    background-color: var(--ui-neutral) !important;
+    border-color: var(--ui-neutral) !important;
+}
+
+.stSlider > div > div[data-baseweb="slider"] > div[data-baseweb="slider-thumb"]:hover {
+    background-color: var(--ui-neutral-dark) !important;
+    border-color: var(--ui-neutral-dark) !important;
+}
+
+/* Fallback para estrutura alternativa do slider */
+.stSlider div[data-baseweb="slider-thumb"] {
+    background-color: var(--ui-neutral) !important;
+    border-color: var(--ui-neutral) !important;
+}
+
+.stSlider div[data-baseweb="slider-fill"] {
+    background: linear-gradient(135deg, var(--ui-neutral), var(--ui-neutral-dark)) !important;
+}
+
+/* ===============================
+   CHECKBOX
+================================ */
+div[role="checkbox"] {
+    border-radius: 4px !important;
+    border-color: var(--ui-neutral-border) !important;
+}
+
+div[role="checkbox"][aria-checked="true"] {
+    background-color: var(--ui-neutral) !important;
+    border-color: var(--ui-neutral) !important;
+}
+
+div[role="checkbox"]:hover {
+    border-color: var(--ui-neutral) !important;
+}
+
+div[role="checkbox"][aria-checked="true"]:hover {
+    background-color: var(--ui-neutral-dark) !important;
+    border-color: var(--ui-neutral-dark) !important;
+}
+
+/* ===============================
+   RADIO
+================================ */
+div[role="radio"] {
+    border-color: var(--ui-neutral-border) !important;
+}
+
+div[role="radio"][aria-checked="true"] {
+    background-color: var(--ui-neutral) !important;
+    border-color: var(--ui-neutral) !important;
+}
+
+div[role="radio"]:hover {
+    border-color: var(--ui-neutral) !important;
+}
+
+div[role="radio"][aria-checked="true"]:hover {
+    background-color: var(--ui-neutral-dark) !important;
+    border-color: var(--ui-neutral-dark) !important;
+}
+
+/* ===============================
    INPUTS / TEXTAREAS
 ================================ */
 .stTextInput input,
@@ -757,20 +929,6 @@ div[data-baseweb="select"] > div:focus-within {
 .stTextArea textarea:focus {
     border-color: var(--ui-neutral) !important;
     box-shadow: 0 0 0 3px rgba(100,116,139,0.18) !important;
-}
-
-/* ===============================
-   CHECKBOX / RADIO
-================================ */
-div[role="checkbox"][aria-checked="true"],
-div[role="radio"][aria-checked="true"] {
-    background-color: var(--ui-neutral) !important;
-    border-color: var(--ui-neutral) !important;
-}
-
-div[role="checkbox"]:hover,
-div[role="radio"]:hover {
-    border-color: var(--ui-neutral) !important;
 }
 
 /* ===============================
