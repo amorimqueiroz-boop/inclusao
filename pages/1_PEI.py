@@ -2550,7 +2550,6 @@ with tab7:
 # 19. ABA DASHBOARD & DOCS (Dashboard + Metas + Exportações + Sincronização 'rico')
 # ==============================================================================
 with tab8:
-    render_progresso()
     st.markdown("### <i class='ri-file-pdf-line'></i> Dashboard e Exportação", unsafe_allow_html=True)
 
     # --------------------------------------------------------------------------
@@ -2971,7 +2970,7 @@ with tab8:
 # ==============================================================================
 
 with tab_9:
-    render_progresso()
+    
 
     nome_aluno = st.session_state.dados.get("nome") or "Estudante"
     serie = st.session_state.dados.get("serie") or ""
