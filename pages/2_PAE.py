@@ -14,6 +14,9 @@ import time
 import uuid
 
 import omni_utils as ou  # módulo atualizado
+from omni_utils import apply_page_theme
+
+apply_page_theme("PAE") 
 
 # 1. CONFIGURAÇÃO INICIAL (topo absoluto)
 st.set_page_config(
