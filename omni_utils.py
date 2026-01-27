@@ -728,16 +728,16 @@ def inject_unified_ui_css():
         """
 <style>
 :root {
-    --ui-primary: #2563EB;        /* blue-600 - azul vibrante que dialoga com vermelho */
+    --ui-primary: #1E3A8A;        /* blue-900 - azul marinho que dialoga com vermelho */
     --ui-primary-dark: #1E40AF;   /* blue-800 - mais escuro */
-    --ui-primary-light: #3B82F6;  /* blue-500 - mais claro */
+    --ui-primary-light: #2563EB;  /* blue-600 - mais claro */
     --ui-primary-soft: #DBEAFE;   /* blue-100 - fundo suave */
     --ui-primary-border: #93C5FD; /* blue-300 - bordas */
     
     /* Mantém variáveis neutras para compatibilidade */
-    --ui-neutral: #2563EB;        /* usa azul vibrante */
+    --ui-neutral: #1E3A8A;        /* usa azul marinho */
     --ui-neutral-dark: #1E40AF;   
-    --ui-neutral-light: #3B82F6;  
+    --ui-neutral-light: #2563EB;  
     --ui-neutral-soft: #DBEAFE;   
     --ui-neutral-border: #93C5FD; 
 }
@@ -770,7 +770,7 @@ div[data-baseweb="tab-highlight"] {
     font-weight: 700 !important;
     font-size: 0.75rem !important;
     padding: 0 18px !important;
-    box-shadow: 0 1px 2px rgba(37,99,235,0.1) !important;
+    box-shadow: 0 1px 2px rgba(30,58,138,0.1) !important;
     text-transform: uppercase !important;
     letter-spacing: 0.5px !important;
     transition: all 0.2s ease !important;
@@ -787,7 +787,58 @@ div[data-baseweb="tab-highlight"] {
     color: var(--ui-primary-dark) !important;
     border: 1px solid var(--ui-primary) !important; 
     font-weight: 800 !important;
-    box-shadow: 0 2px 4px rgba(37,99,235,0.2) !important;
+    box-shadow: 0 2px 4px rgba(30,58,138,0.2) !important;
+}
+
+/* ===============================
+   TABS - CORES ESPECÍFICAS POR PÁGINA (via classe no body)
+================================ */
+/* Estudantes - Índigo */
+.page-indigo .stTabs [aria-selected="true"] {
+    background-color: #DBEAFE !important;
+    color: #1E40AF !important;
+    border: 1px solid #2563EB !important;
+    box-shadow: 0 2px 4px rgba(30,58,138,0.2) !important;
+}
+
+/* PEI - Azul Céu */
+.page-blue .stTabs [aria-selected="true"] {
+    background-color: #E0F2FE !important;
+    color: #0284C7 !important;
+    border: 1px solid #0EA5E9 !important;
+    box-shadow: 0 2px 4px rgba(14,165,233,0.2) !important;
+}
+
+/* PAEE - Roxo */
+.page-purple .stTabs [aria-selected="true"] {
+    background-color: #F3E8FF !important;
+    color: #9333EA !important;
+    border: 1px solid #A855F7 !important;
+    box-shadow: 0 2px 4px rgba(168,85,247,0.2) !important;
+}
+
+/* Hub - Verde Água */
+.page-teal .stTabs [aria-selected="true"] {
+    background-color: #CFFAFE !important;
+    color: #0891B2 !important;
+    border: 1px solid #06B6D4 !important;
+    box-shadow: 0 2px 4px rgba(6,182,212,0.2) !important;
+}
+
+/* Diário - Rosa */
+.page-rose .stTabs [aria-selected="true"] {
+    background-color: #FFE4E6 !important;
+    color: #E11D48 !important;
+    border: 1px solid #F43F5E !important;
+    box-shadow: 0 2px 4px rgba(244,63,94,0.2) !important;
+}
+
+/* Monitoramento - Azul Oceano */
+.page-sky .stTabs [aria-selected="true"] {
+    background-color: #BAE6FD !important;
+    color: #075985 !important;
+    border: 1px solid #0C4A6E !important;
+    box-shadow: 0 2px 4px rgba(12,74,110,0.2) !important;
 }
 
 /* ===============================
@@ -807,7 +858,7 @@ div[data-baseweb="tab-highlight"] {
 
 .stButton > button[kind="primary"]:hover {
     transform: translateY(-1px) !important;
-    box-shadow: 0 10px 22px rgba(37,99,235,0.3) !important;
+    box-shadow: 0 10px 22px rgba(30,58,138,0.3) !important;
     background: linear-gradient(135deg, var(--ui-primary-dark), var(--ui-primary)) !important;
 }
 
@@ -833,7 +884,7 @@ div[data-baseweb="select"] > div {
 
 div[data-baseweb="select"] > div:focus-within {
     border-color: var(--ui-primary) !important;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.18) !important;
+    box-shadow: 0 0 0 3px rgba(30,58,138,0.18) !important;
 }
 
 /* ===============================
@@ -846,7 +897,7 @@ div[data-baseweb="select"][aria-multiselectable="true"] > div {
 
 div[data-baseweb="select"][aria-multiselectable="true"] > div:focus-within {
     border-color: var(--ui-primary) !important;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.18) !important;
+    box-shadow: 0 0 0 3px rgba(30,58,138,0.18) !important;
 }
 
 /* ===============================
@@ -942,7 +993,7 @@ div[role="radio"][aria-checked="true"]:hover {
 .stTextInput input:focus,
 .stTextArea textarea:focus {
     border-color: var(--ui-primary) !important;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.18) !important;
+    box-shadow: 0 0 0 3px rgba(30,58,138,0.18) !important;
 }
 
 /* ===============================
