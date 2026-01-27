@@ -219,6 +219,9 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+# Espaçamento após hero card
+st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+
 # ==============================================================================
 # FUNÇÕES DO NÚCLEO (Supabase)
 # ==============================================================================
