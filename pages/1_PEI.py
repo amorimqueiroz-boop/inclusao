@@ -1141,15 +1141,7 @@ st.markdown("""
         padding-right: 0.8rem !important;
         padding-top: 0rem !important;
     }
-    
-    /* Remove espaço do navbar (option_menu) */
-    div[data-testid="stHorizontalBlock"] {
-        margin-top: 0 !important;
-        margin-bottom: -4px !important; /* Puxa o conteúdo para cima */
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
+      
     /* Remove espaço residual após o navbar */
     .after-navbar-anchor {
         margin-top: -6px !important;
