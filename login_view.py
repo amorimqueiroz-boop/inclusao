@@ -28,7 +28,7 @@ def hide_streamlit():
         <style>
             #MainMenu, footer, header { visibility: hidden; }
             [data-testid="stToolbar"] { visibility: hidden; }
-            .block-container { padding-top: 1.2rem; }
+            .block-container { padding-top: 0.5rem !important; }
         </style>
         """,
         unsafe_allow_html=True
@@ -68,8 +68,13 @@ def inject_css():
         .wrap {
             max-width: 480px;
             margin: auto;
-            padding-top: 40px;
+            padding-top: 20px; /* Reduzido de 40px para 20px */
             padding-bottom: 60px;
+        }
+        
+        /* Remove espaço extra do Streamlit */
+        .block-container {
+            padding-top: 0.5rem !important;
         }
 
         /* Logo Centralizada (Ícone EM CIMA do Texto) */
