@@ -54,6 +54,9 @@ except Exception:
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Hub de Recursos")
 
+# Adiciona classe no body para cores específicas das abas
+st.markdown("<script>document.body.classList.add('page-teal');</script>", unsafe_allow_html=True)
+
 # ==============================================================================
 # CONSTANTES E DADOS GLOBAIS
 # ==============================================================================
