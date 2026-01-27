@@ -163,6 +163,7 @@ def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int =
     align-items:center !important;
     justify-content:center !important;
     pointer-events: none;
+    padding: 4px 0 !important; /* Espaço mínimo entre topbar e navbar */
   }}
   .omni-navbar-inner {{
     width: min(1200px, calc(100% - 48px));
@@ -244,35 +245,35 @@ def inject_compact_app_css(accent: str = "#0D9488"):
      TABS (compactas)
      ========================= */
   .stTabs [data-baseweb="tab-list"] {{
-    gap: 2px !important;
+    gap: 6px !important;
     background: transparent !important;
-    padding: 0 !important;
-    border-bottom: 2px solid #E2E8F0 !important;
+    padding: 3px 3px !important;
+    border-bottom: none !important; /* Remove linha embaixo */
     flex-wrap: wrap !important;
-    margin-top: 12px !important; /* mais colado */
+    margin-top: 8px !important;
+    justify-content: center !important; /* Centraliza as abas */
   }}
   .stTabs [data-baseweb="tab"] {{
-    height: 34px !important;
-    padding: 0 16px !important;
-    border-radius: 10px 10px 0 0 !important;
-    font-size: 0.80rem !important;
+    height: 38px !important;
+    padding: 0 18px !important;
+    border-radius: 20px !important; /* Pílulas arredondadas */
+    font-size: 0.75rem !important;
     font-weight: 700 !important;
-    letter-spacing: .3px !important;
+    letter-spacing: 0.5px !important;
     color: #64748B !important;
-    border: none !important;
-    background: transparent !important;
+    border: 1px solid #E2E8F0 !important;
+    background: #FFFFFF !important;
     position: relative !important;
+    text-transform: uppercase !important;
   }}
   .stTabs [aria-selected="true"] {{
     color: {accent} !important;
+    background-color: rgba(13,148,136,0.1) !important;
+    border: 1px solid {accent} !important;
   }}
+  /* Traço embaixo removido - não fica bonito */
   .stTabs [aria-selected="true"]::after {{
-    content: '';
-    position: absolute;
-    bottom: -2px; left: 0; right: 0;
-    height: 3px;
-    background: {accent};
-    border-radius: 3px 3px 0 0;
+    display: none !important;
   }}
   .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{
     background: #F8FAFC !important;
@@ -295,8 +296,8 @@ def render_omnisfera_header():
     TOPBAR_H = 56
     NAVBAR_H = 52
 
-    # 🔥 BEM PERTO: content_gap=2 (se quiser mais ainda: 0)
-    inject_layout_css(topbar_h=TOPBAR_H, navbar_h=NAVBAR_H, content_gap=2)
+    # 🔥 MUITO PERTO: content_gap=0.5 (espaço mínimo entre navbar e hero)
+    inject_layout_css(topbar_h=TOPBAR_H, navbar_h=NAVBAR_H, content_gap=0.5)
 
     icone = get_base64_image("omni_icone.png")
     texto = get_base64_image("omni_texto.png")
@@ -398,6 +399,33 @@ def render_navbar(active_tab: str = "Início"):
     )
 
     st.markdown("</div></div>", unsafe_allow_html=True)
+    
+    # Adiciona CSS para cor específica da página no navbar selecionado
+    page_colors = {
+        "Início": {"bg": "#F1F5F9", "color": "#0F172A"},
+        "Estudantes": {"bg": "#DBEAFE", "color": "#1E40AF"},
+        "Estratégias & PEI": {"bg": "#E0F2FE", "color": "#0284C7"},
+        "Plano de Ação (AEE)": {"bg": "#F3E8FF", "color": "#9333EA"},
+        "Hub de Recursos": {"bg": "#CFFAFE", "color": "#0891B2"},
+        "Diário de Bordo": {"bg": "#FFE4E6", "color": "#E11D48"},
+        "Evolução & Dados": {"bg": "#BAE6FD", "color": "#075985"},
+    }
+    
+    if active_tab in page_colors:
+        color_info = page_colors[active_tab]
+        st.markdown(f"""
+        <style>
+        /* Aplica cor específica da página no navbar selecionado */
+        .omni-navbar .stMarkdownContainer div[role="button"][aria-selected="true"],
+        .omni-navbar button[aria-selected="true"],
+        .omni-navbar a[aria-selected="true"],
+        .omni-navbar [class*="nav-link-selected"] {{
+            background-color: {color_info['bg']} !important;
+            color: {color_info['color']} !important;
+            border: 1px solid {color_info['color']} !important;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
 
     if selected != active_tab:
         routes = {
