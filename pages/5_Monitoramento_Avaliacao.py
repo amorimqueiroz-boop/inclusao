@@ -1,155 +1,151 @@
 import streamlit as st
-import gspread
-from google.oauth2.service_account import Credentials
 import pandas as pd
-import plotly.express as px
 
-# ==============================================================================
-# 1. CONFIGURAÇÃO E CONEXÃO
-# ==============================================================================
-st.set_page_config(page_title="Avaliação por Rubrica", page_icon="📊", layout="wide")
+# Configuração visual (Mantendo o padrão vermelho do Omnisfera)
+st.markdown("""
+<style>
+    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
+        font-size: 1.1rem;
+    }
+    .stTabs [data-baseweb="tab-highlight"] {
+        background-color: #FF4B4B;
+    }
+    h3 { color: #FF4B4B; }
+</style>
+""", unsafe_allow_html=True)
 
-st.title("📊 Painel de Resultados (Rubrica Automática)")
-st.markdown("Diagnóstico baseado nas validações diárias dos professores.")
+st.title("📚 Guia de Práticas e Fundamentos")
+st.markdown("Base de conhecimento para suporte à gestão e prática da educação inclusiva.")
 
-@st.cache_resource
-def conectar_banco():
-    try:
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        credentials = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
-        client = gspread.authorize(credentials)
-        return client.open("Omnisfera_Dados")
-    except Exception as e:
-        st.error(f"Erro de conexão: {e}")
-        return None
+# Criação das Abas para organizar o conteúdo do PDF
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🏛️ Fundamentos & Legal", 
+    "🏫 Gestão Escolar", 
+    "👩‍🏫 Prática Pedagógica",
+    "🤝 Equipe & Papéis"
+])
 
-# Conecta e carrega dados
-sh = conectar_banco()
-if not sh: st.stop()
-
-try:
-    ws = sh.worksheet("Diario_Bordo")
-    dados = ws.get_all_records()
-    df = pd.DataFrame(dados)
-except:
-    st.warning("Ainda não há dados no Diário de Bordo para analisar.")
-    st.stop()
-
-if df.empty:
-    st.info("O Diário de Bordo está vazio. Comece a validar atividades para ver os gráficos.")
-    st.stop()
-
-# ==============================================================================
-# 2. FILTROS
-# ==============================================================================
-# Identifica coluna de aluno
-col_aluno = next((c for c in df.columns if 'aluno' in c.lower()), None)
-if not col_aluno:
-    st.error("Erro: Não encontrei a coluna de Aluno na planilha.")
-    st.stop()
-
-lista_alunos = df["Aluno"].unique()
-aluno_selecionado = st.selectbox("Selecione o Estudante:", lista_alunos)
-
-# Filtra dados do aluno
-df_aluno = df[df["Aluno"] == aluno_selecionado].copy()
-
-if df_aluno.empty:
-    st.warning("Sem registros para este aluno.")
-    st.stop()
-
-st.divider()
-
-# ==============================================================================
-# 3. CÁLCULO DA RUBRICA (A MÁGICA)
-# ==============================================================================
-
-# Mapa de Conversão: Texto -> Nota (0 a 10)
-# Ajustado para os textos que usamos no Diário
-mapa_notas = {
-    # Respostas do Calendário/Hub
-    "🚀 Sim, fluiu bem!": 10,
-    "✅ Sim, Perfeito": 10,
-    "✅ Sim": 10,
-    "⚠️ Parcial (Com ajuda)": 6,
-    "⚠️ Com Adaptação": 6,
-    "❌ Não funcionou": 2,
-    "❌ Não": 2,
-    # Respostas antigas (caso tenha)
-    "🟢 Independente": 10,
-    "🟡 Ajuda Parcial": 7,
-    "🟠 Ajuda Total": 4,
-    "🔴 Não Realizou": 0
-}
-
-# Procura a coluna de Validação/Resultado
-col_resultado = next((c for c in df_aluno.columns if 'funcionou' in c.lower() or 'valida' in c.lower() or 'resultado' in c.lower()), None)
-
-if col_resultado:
-    # Cria coluna de Nota Numérica
-    df_aluno['Nota_Calculada'] = df_aluno[col_resultado].map(lambda x: mapa_notas.get(str(x).strip(), 5))
+# --- ABA 1: FUNDAMENTOS E MARCOS LEGAIS ---
+with tab1:
+    st.header("Filosofia e Legislação")
     
-    # 1. MÉTRICAS DE TOPO
-    media = df_aluno['Nota_Calculada'].mean()
-    total_atividades = len(df_aluno)
-    taxa_sucesso = len(df_aluno[df_aluno['Nota_Calculada'] >= 7])
-    
-    # Define o Diagnóstico (Rubrica)
-    if media >= 8:
-        nivel = "🟢 CONSOLIDADO"
-        msg = "O aluno responde muito bem às estratégias atuais."
-    elif media >= 5:
-        nivel = "🟡 EM CONSTRUÇÃO"
-        msg = "Há progresso, mas o aluno ainda depende de muito suporte/adaptação."
-    else:
-        nivel = "🔴 NECESSITA REVISÃO DO PEI"
-        msg = "As estratégias atuais não estão funcionando. É hora de pivotar."
-
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Atividades Validadas", total_atividades)
-    c2.metric("Eficácia Média", f"{media:.1f}/10")
-    c3.metric("Nível Atual", nivel)
-    
-    st.info(f"💡 **Diagnóstico:** {msg}")
-    
-    st.divider()
-
-    # 2. GRÁFICOS
-    g1, g2 = st.columns(2)
-    
-    with g1:
-        st.subheader("📈 Evolução da Autonomia")
-        # Tenta achar coluna de data
-        col_data = next((c for c in df_aluno.columns if 'data' in c.lower()), None)
-        if col_data:
-            fig = px.line(df_aluno, x=col_data, y='Nota_Calculada', markers=True, 
-                          title="Histórico de Validação (0=Falha, 10=Sucesso)")
-            fig.update_yaxes(range=[0, 11])
-            st.plotly_chart(fig, use_container_width=True)
-            
-    with g2:
-        st.subheader("🤖 Impacto do Hub")
-        # Vamos verificar se a descrição diz que veio do HUB
-        # Procura coluna de atividade/descrição
-        col_desc = next((c for c in df_aluno.columns if 'atividade' in c.lower() or 'desc' in c.lower()), None)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("### O Conceito de 'Outrar-se'")
+        st.info("""
+        *"Outrar-se é sentir o mundo do outro como se fosse o seu próprio mundo... 
+        numa relação empática sem se envolver, no entanto, com os sentimentos da pessoa."*
         
-        if col_desc:
-            # Cria categoria simples
-            df_aluno['Origem'] = df_aluno[col_desc].apply(lambda x: 'HUB/IA' if '[HUB]' in str(x) or 'Hub' in str(x) else 'Manual')
-            
-            # Compara as médias
-            df_comp = df_aluno.groupby('Origem')['Nota_Calculada'].mean().reset_index()
-            
-            fig_bar = px.bar(df_comp, x='Origem', y='Nota_Calculada', 
-                             title="Eficácia: Hub vs Manual", color='Origem',
-                             range_y=[0, 11])
-            st.plotly_chart(fig_bar, use_container_width=True)
-            st.caption("Este gráfico mostra se as atividades do Hub funcionam melhor que as manuais.")
+        **Bernardo Soares (Fernando Pessoa)**
+        """)
+        st.markdown("**Aplicação:** A inclusão corre o risco de ser retórica vazia se não houver a 'outragem'. O educador deve ter proximidade para interpretar necessidades, mas distanciamento para atuar profissionalmente.")
 
-else:
-    st.warning("Não consegui identificar a coluna de resultados ('Funcionou?') na planilha.")
+    with col2:
+        st.markdown("### 🚫 Inimigo Invisível: Capacitismo")
+        st.warning("""
+        **Definição:** Qualquer distinção, restrição ou exclusão que prejudique direitos da PcD, baseada na premissa de que a deficiência é uma 'falta'.
+        """)
+        st.markdown("""
+        **Duas Frentes de Combate:**
+        1.  **Físico:** Barreiras estruturais (rampas, banheiros).
+        2.  **Simbólico:** Viés inconsciente e metáforas (ex: 'fingir de cego').
+        """)
 
-# 3. TABELA ANALÍTICA
+    st.divider()
+    
+    st.subheader("📜 Evolução dos Marcos Legais")
+    timeline = [
+        {"Ano": "1988", "Marco": "Constituição Federal", "Resumo": "Educação como direito de todos."},
+        {"Ano": "1994", "Marco": "Declaração de Salamanca", "Resumo": "Compromisso global com o sistema inclusivo."},
+        {"Ano": "1996", "Marco": "LDB (Lei 9.394)", "Resumo": "Obrigatoriedade da oferta de educação especial."},
+        {"Ano": "2008", "Marco": "PNEEPEI", "Resumo": "Política Nacional focada na escola comum."},
+        {"Ano": "2015", "Marco": "LBI (Lei 13.146)", "Resumo": "Lei Brasileira de Inclusão e definição de capacitismo."}
+    ]
+    st.table(pd.DataFrame(timeline))
+
+# --- ABA 2: GESTÃO ESCOLAR ---
+with tab2:
+    st.header("Gestão e Estratégia")
+    
+    with st.expander("📌 PGEI – Plano Geral de Educação Inclusiva", expanded=True):
+        st.write("Ferramenta estratégica que organiza as ações institucionais e rotina escolar.")
+        st.markdown("""
+        **Checklist de Elaboração:**
+        1.  **Censo Escolar:** Total de alunos vs. PCD matriculados.
+        2.  **Perfis:** Mapeamento de necessidades (TEA, Altas Habilidades, Física).
+        3.  **Recursos:** Intérpretes, material adaptado, acessibilidade.
+        4.  **Dimensionamento:** Cálculo da carga horária da equipe vs. demanda.
+        """)
+    
+    with st.expander("🛠️ A Escola Necessária (Papel da Gestão)"):
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Prioridade", "Adaptação Curricular", "Necessidades Reais")
+        c2.metric("Investimento", "Espaço e Equipamentos", "Acessibilidade")
+        c3.metric("Legalidade", "Respeito às Leis", "Sem recusas")
+        st.markdown("**O Mandato do Diretor:** Liderança pelo exemplo (cultura anticapacitista) e comunicação transparente (PPP).")
+
+# --- ABA 3: PRÁTICA PEDAGÓGICA ---
+with tab3:
+    st.header("Estratégias de Sala de Aula")
+    
+    st.markdown("### 🧠 Estratégias para Transtornos de Aprendizagem (TDAH, Dislexia)")
+    
+    cols = st.columns(4)
+    cols[0].success("**1. Tempo:** Flexibilidade em tarefas e provas.")
+    cols[1].success("**2. Avaliação:** Métodos diversificados (oral, projetos).")
+    cols[2].success("**3. Consignas:** Instruções claras e diretas.")
+    cols[3].success("**4. Feedback:** Contínuo e construtivo (erro = aprendizado).")
+    
+    cols2 = st.columns(3)
+    cols2[0].info("**5. Ambiente:** Posição estratégica e iluminação.")
+    cols2[1].info("**6. Materiais:** Pautas espaçadas, fontes adaptadas.")
+    cols2[2].info("**7. Supervisão:** Tutoria e monitoramento.")
+
+    st.divider()
+    
+    st.markdown("### 🔄 O Fluxo do PEI e Justiça Curricular")
+    st.markdown("""
+    > **Objetivo:** Personalização de metas sem reduzir a expectativa de aprendizado.
+    
+    * **Coleta:** Orientador recebe laudos e histórico.
+    * **Filtro:** Equipe filtra dados confidenciais (Sigilo é vital).
+    * **Ação:** Pedagógico traduz dados clínicos em adaptações práticas.
+    """)
+
+# --- ABA 4: EQUIPE E PAPÉIS (AT vs AP) ---
+with tab4:
+    st.header("Quem faz o quê?")
+    
+    st.markdown("### ⚔️ A Diferença Crucial: AT vs. AP")
+    st.markdown("Muitas escolas confundem esses papéis. Use a tabela abaixo para orientação:")
+    
+    data_papeis = {
+        "Característica": ["Foco", "Vínculo", "Função Principal", "Exemplo de atuação"],
+        "AT (Atendente Terapêutico)": [
+            "Clínico / Saúde", 
+            "Família ou Estado (Externo)", 
+            "Atendimento individual exclusivo",
+            "Suporte em casos de autismo severo, manejo de crises."
+        ],
+        "AP (Atendente Pedagógico)": [
+            "Escolar / Suporte", 
+            "Escola", 
+            "Apoio ao acesso ao currículo e rotina",
+            "Auxílio em locomoção, higiene, organização e interação social."
+        ]
+    }
+    df_papeis = pd.DataFrame(data_papeis)
+    st.dataframe(df_papeis, use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("**Coordenador Pedagógico**")
+        st.caption("Responsável pela adaptação curricular (PEI) e suporte docente.")
+    with col_b:
+        st.markdown("**Psicólogo Escolar**")
+        st.caption("Estudos de caso, supervisão e mediação. **Não faz clínica na escola.**")
+
+# Rodapé com a fonte
 st.markdown("---")
-st.subheader("📑 Detalhamento das Evidências")
-st.dataframe(df_aluno, use_container_width=True)
+st.caption("Fonte: Material 'Inclusão Escolar: Gestão e Prática' - Baseado na obra de Leila Rentroia Iannone e Jurjo Torres Santomé.")
