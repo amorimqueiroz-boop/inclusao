@@ -993,11 +993,11 @@ def render_central_conhecimento():
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04);
         }
         .stTabs [aria-selected="true"] {
-            background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%) !important;
+            background: linear-gradient(135deg, #2563EB 0%, #0EA5E9 100%) !important;
             color: white !important; 
-            border-color: #1E3A8A !important;
+            border-color: #2563EB !important;
             border-bottom: none !important;
-            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3) !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
         }
         .stTabs [aria-selected="true"]::after,
         .stTabs [aria-selected="true"]::before {
@@ -1044,7 +1044,7 @@ def render_central_conhecimento():
     
     # Título elegante com ícone
     st.markdown(f"""
-    <div style="margin-bottom: 8px; margin-top: -32px;">
+    <div style="margin-bottom: 8px; margin-top: -48px;">
         <h2 style="font-size: 2rem; font-weight: 800; color: #1E293B; margin-bottom: 8px; letter-spacing: -0.5px; display: flex; align-items: center; gap: 12px;">
             {get_icon("hub", 32, "#2563EB")}
             <span>Central de Inteligência Inclusiva</span>
