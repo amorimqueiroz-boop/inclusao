@@ -9,8 +9,10 @@ from datetime import date
 APP_VERSION = "v116.0"
 
 def verificar_ambiente():
-    try: return st.secrets.get("ENV") == "TESTE"
-    except: return False
+    try: 
+        return st.secrets.get("ENV") == "TESTE"
+    except: 
+        return False
 
 IS_TEST_ENV = verificar_ambiente()
 
@@ -18,7 +20,8 @@ IS_TEST_ENV = verificar_ambiente()
 # 2. UTILITÁRIOS (IMAGENS)
 # ==============================================================================
 def get_base64_image(image_path):
-    if not image_path or not os.path.exists(image_path): return ""
+    if not image_path or not os.path.exists(image_path): 
+        return ""
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
@@ -33,7 +36,7 @@ def aplicar_estilo_global(logo_pagina=None):
     3. Constrói o menu lateral personalizado.
     """
     
-    # Define fonte e cores básicas
+    # Define fonte e cores básicas via CSS
     st.markdown("""
     <style>
         /* Importação das Fontes */
@@ -49,12 +52,24 @@ def aplicar_estilo_global(logo_pagina=None):
             background-color: #FFFFFF !important;
             border-right: 1px solid #E2E8F0;
         }
+
+        /* Ajuste fino para remover o padding excessivo do topo padrão do Streamlit */
+        .block-container {
+            padding-top: 2rem !important;
+        }
     </style>
     """, unsafe_allow_html=True)
 
     # Constrói a Sidebar (Logo + Navegação)
     logo_para_usar = logo_pagina if logo_pagina else "omni_icone.png"
-    construir_sidebar_manual(get_base64_image(logo_para_usar))
+    
+    # Tenta carregar imagem, se falhar usa string vazia para não quebrar
+    try:
+        img_b64 = get_base64_image(logo_para_usar)
+    except:
+        img_b64 = ""
+        
+    construir_sidebar_manual(img_b64)
 
 # ==============================================================================
 # 4. SIDEBAR E NAVEGAÇÃO
@@ -64,7 +79,7 @@ def construir_sidebar_manual(img_b64):
         # Espaço no topo
         st.write("") 
         
-        # Logo da Página (Se houver)
+        # Logo da Página (Se houver e for válida)
         if img_b64: 
             st.markdown(f"""
             <div style="text-align: center; margin-bottom: 20px;">
@@ -74,8 +89,8 @@ def construir_sidebar_manual(img_b64):
 
         # Dados do Usuário (Se logado)
         if st.session_state.get("autenticado"):
-            nome = st.session_state["usuario_nome"].split()[0]
-            cargo = st.session_state["usuario_cargo"]
+            nome = st.session_state.get("usuario_nome", "Usuário").split()[0]
+            cargo = st.session_state.get("usuario_cargo", "Membro")
             st.markdown(f"""
             <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
                 <small style="color: #718096; font-weight: bold;">USUÁRIO</small><br>
@@ -88,10 +103,12 @@ def construir_sidebar_manual(img_b64):
         st.markdown("---")
         st.caption("NAVEGAÇÃO")
         
+        # Certifique-se que estes arquivos existem na sua pasta pages/
         st.page_link("Home.py", label="Dashboard", icon="🏠")
         st.page_link("pages/1_PEI.py", label="PEI 360º", icon="📘")
         st.page_link("pages/2_PAE.py", label="PAEE & T.A.", icon="🧩")
         st.page_link("pages/3_Hub_Inclusao.py", label="Hub Inclusão", icon="🚀")
+        st.page_link("pages/Monitoramento.py", label="Monitoramento", icon="📊")
         
         # Botão Sair
         st.markdown("---")
@@ -103,7 +120,12 @@ def construir_sidebar_manual(img_b64):
 # 5. SISTEMA DE LOGIN
 # ==============================================================================
 def verificar_acesso():
-    if st.session_state.get("autenticado", False): return True
+    """
+    Retorna True se o usuário estiver autenticado.
+    Caso contrário, exibe a tela de login e retorna False.
+    """
+    if st.session_state.get("autenticado", False): 
+        return True
     
     # Layout de Login Limpo
     c1, c2, c3 = st.columns([1, 2, 1])
@@ -122,20 +144,24 @@ def verificar_acesso():
                 st.session_state.update({"autenticado": True, "usuario_nome": "Tester", "usuario_cargo": "Dev"})
                 st.rerun()
         else:
-            nome = st.text_input("Nome")
-            cargo = st.text_input("Cargo")
-            senha = st.text_input("Senha", type="password")
-            
-            if st.button("🔒 ACESSAR", use_container_width=True, type="primary"):
-                hoje = date.today()
-                senha_ok = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
+            with st.form("login_form"):
+                nome = st.text_input("Nome")
+                cargo = st.text_input("Cargo")
+                senha = st.text_input("Senha", type="password")
                 
-                if not nome or not cargo: 
-                    st.warning("Preencha todos os campos.")
-                elif senha != senha_ok: 
-                    st.error("Senha incorreta.")
-                else:
-                    st.session_state.update({"autenticado": True, "usuario_nome": nome, "usuario_cargo": cargo})
-                    st.rerun()
+                submitted = st.form_submit_button("🔒 ACESSAR", use_container_width=True, type="primary")
+                
+                if submitted:
+                    hoje = date.today()
+                    # Lógica de senha temporária
+                    senha_ok = "PEI_START_2026" if hoje <= date(2026, 1, 19) else "OMNI_PRO"
+                    
+                    if not nome or not cargo: 
+                        st.warning("Preencha todos os campos.")
+                    elif senha != senha_ok: 
+                        st.error("Senha incorreta.")
+                    else:
+                        st.session_state.update({"autenticado": True, "usuario_nome": nome, "usuario_cargo": cargo})
+                        st.rerun()
     
     return False
