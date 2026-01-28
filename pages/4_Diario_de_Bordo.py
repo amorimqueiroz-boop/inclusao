@@ -304,85 +304,199 @@ def carregar_alunos_workspace():
         return []
 
 def salvar_registro_diario(registro):
-    """Salva um registro no diário de bordo"""
+    """
+    Salva um registro do diário de bordo no campo students.daily_logs (lista de registros).
+    Segue a mesma lógica do PEI (pei_data) e PAE (paee_ciclos).
+    """
     try:
-        url = f"{ou._sb_url()}/rest/v1/pei_diario_bordo"
+        import uuid
+        student_id = registro.get('student_id')
+        if not student_id:
+            return {"sucesso": False, "erro": "ID do estudante não fornecido"}
         
-        # Garantir que o workspace_id está no registro
-        registro['workspace_id'] = st.session_state.get("workspace_id")
-        registro['professor_id'] = st.session_state.get("user_id", "")
+        # 1) Buscar estudante atual
+        url = f"{ou._sb_url()}/rest/v1/students"
+        params_get = {"select": "id,daily_logs", "id": f"eq.{student_id}"}
+        r = requests.get(url, headers=ou._headers(), params=params_get, timeout=15)
+
+        if not (r.status_code == 200 and r.json()):
+            return {"sucesso": False, "erro": "Estudante não encontrado"}
+
+        student_row = r.json()[0]
+        registros_existentes = student_row.get("daily_logs") or []
         
-        response = requests.post(url, headers=ou._headers(), json=registro, timeout=20)
-        
-        if response.status_code in [200, 201]:
-            return {"sucesso": True, "id": response.json().get('id')}
+        # 2) Preparar novo registro
+        registro_id = registro.get('registro_id')
+        if not registro_id:
+            registro_id = str(uuid.uuid4())
+            registro['registro_id'] = registro_id
+            registro['criado_em'] = datetime.now().isoformat()
+            registro['criado_por'] = st.session_state.get("user_id", "")
+            registros_existentes.append(registro)
         else:
-            return {"sucesso": False, "erro": f"HTTP {response.status_code}: {response.text}"}
+            # Atualiza registro existente
+            updated = False
+            for i, r in enumerate(registros_existentes):
+                if r.get("registro_id") == registro_id:
+                    registro['atualizado_em'] = datetime.now().isoformat()
+                    registros_existentes[i] = registro
+                    updated = True
+                    break
+            if not updated:
+                # Se veio com id mas não achou, adiciona como novo
+                registro['criado_em'] = datetime.now().isoformat()
+                registro['criado_por'] = st.session_state.get("user_id", "")
+                registros_existentes.append(registro)
+
+        # 3) Preparar update
+        update_data = {
+            "daily_logs": registros_existentes
+        }
+
+        # 4) PATCH
+        params_patch = {"id": f"eq.{student_id}"}
+        rp = requests.patch(url, headers=ou._headers(), params=params_patch, json=update_data, timeout=25)
+
+        if rp.status_code in [200, 204]:
+            return {"sucesso": True, "registro_id": registro_id}
+        return {"sucesso": False, "erro": f"HTTP {rp.status_code}: {rp.text}"}
+
     except Exception as e:
         return {"sucesso": False, "erro": str(e)}
 
-def atualizar_registro_diario(registro_id, dados):
-    """Atualiza um registro existente"""
+def atualizar_registro_diario(student_id, registro_id, dados):
+    """Atualiza um registro existente dentro do array daily_logs"""
     try:
-        url = f"{ou._sb_url()}/rest/v1/pei_diario_bordo"
-        params = {"id": f"eq.{registro_id}"}
+        # 1) Buscar estudante
+        url = f"{ou._sb_url()}/rest/v1/students"
+        params_get = {"select": "id,daily_logs", "id": f"eq.{student_id}"}
+        r = requests.get(url, headers=ou._headers(), params=params_get, timeout=15)
+
+        if not (r.status_code == 200 and r.json()):
+            return False
+
+        student_row = r.json()[0]
+        registros_existentes = student_row.get("daily_logs") or []
         
-        response = requests.patch(url, headers=ou._headers(), params=params, json=dados, timeout=20)
-        return response.status_code in [200, 204]
+        # 2) Atualizar registro no array
+        updated = False
+        for i, registro in enumerate(registros_existentes):
+            if registro.get("registro_id") == registro_id:
+                dados['atualizado_em'] = datetime.now().isoformat()
+                registros_existentes[i] = dados
+                updated = True
+                break
+        
+        if not updated:
+            return False
+
+        # 3) Salvar array atualizado
+        update_data = {"daily_logs": registros_existentes}
+        params_patch = {"id": f"eq.{student_id}"}
+        rp = requests.patch(url, headers=ou._headers(), params=params_patch, json=update_data, timeout=25)
+        
+        return rp.status_code in [200, 204]
     except Exception as e:
         st.error(f"Erro ao atualizar registro: {str(e)}")
         return False
 
 def carregar_registros_aluno(aluno_id, limite=50):
-    """Carrega registros de um estudante específico"""
+    """Carrega registros de um estudante específico da coluna daily_logs"""
     try:
-        url = f"{ou._sb_url()}/rest/v1/pei_diario_bordo"
+        url = f"{ou._sb_url()}/rest/v1/students"
         params = {
-            "select": "*",
-            "student_id": f"eq.{aluno_id}",
-            "order": "data_sessao.desc",
-            "limit": str(limite)
+            "select": "id,daily_logs",
+            "id": f"eq.{aluno_id}"
         }
         
         response = requests.get(url, headers=ou._headers(), params=params, timeout=20)
-        if response.status_code == 200:
-            return response.json()
+        if response.status_code == 200 and response.json():
+            student = response.json()[0]
+            registros = student.get("daily_logs") or []
+            # Ordenar por data_sessao (mais recente primeiro) e limitar
+            registros_ordenados = sorted(
+                registros, 
+                key=lambda x: x.get('data_sessao', ''), 
+                reverse=True
+            )[:limite]
+            # Adicionar student_id a cada registro para compatibilidade
+            for r in registros_ordenados:
+                r['student_id'] = aluno_id
+            return registros_ordenados
         return []
     except Exception as e:
         st.error(f"Erro ao carregar registros: {str(e)}")
         return []
 
 def carregar_todos_registros(limite=100):
-    """Carrega todos os registros do workspace"""
+    """Carrega todos os registros do workspace da coluna daily_logs de cada estudante"""
     WORKSPACE_ID = st.session_state.get("workspace_id")
     if not WORKSPACE_ID: 
         return []
     
     try:
-        url = f"{ou._sb_url()}/rest/v1/pei_diario_bordo"
+        url = f"{ou._sb_url()}/rest/v1/students"
         params = {
-            "select": "*,students(name,grade,class_group)",
-            "workspace_id": f"eq.{WORKSPACE_ID}",
-            "order": "data_sessao.desc,created_at.desc",
-            "limit": str(limite)
+            "select": "id,name,grade,class_group,daily_logs",
+            "workspace_id": f"eq.{WORKSPACE_ID}"
         }
         
         response = requests.get(url, headers=ou._headers(), params=params, timeout=20)
         if response.status_code == 200:
-            return response.json()
+            estudantes = response.json()
+            todos_registros = []
+            
+            for estudante in estudantes:
+                registros = estudante.get("daily_logs") or []
+                for registro in registros:
+                    # Adicionar informações do estudante ao registro
+                    registro['student_id'] = estudante.get('id')
+                    registro['students'] = {
+                        'name': estudante.get('name'),
+                        'grade': estudante.get('grade'),
+                        'class_group': estudante.get('class_group')
+                    }
+                    todos_registros.append(registro)
+            
+            # Ordenar por data_sessao (mais recente primeiro) e limitar
+            todos_registros_ordenados = sorted(
+                todos_registros,
+                key=lambda x: x.get('data_sessao', ''),
+                reverse=True
+            )[:limite]
+            
+            return todos_registros_ordenados
         return []
     except Exception as e:
         st.error(f"Erro ao carregar registros: {str(e)}")
         return []
 
-def excluir_registro_diario(registro_id):
-    """Exclui um registro do diário"""
+def excluir_registro_diario(student_id, registro_id):
+    """Exclui um registro do array daily_logs"""
     try:
-        url = f"{ou._sb_url()}/rest/v1/pei_diario_bordo"
-        params = {"id": f"eq.{registro_id}"}
+        # 1) Buscar estudante
+        url = f"{ou._sb_url()}/rest/v1/students"
+        params_get = {"select": "id,daily_logs", "id": f"eq.{student_id}"}
+        r = requests.get(url, headers=ou._headers(), params=params_get, timeout=15)
+
+        if not (r.status_code == 200 and r.json()):
+            return False
+
+        student_row = r.json()[0]
+        registros_existentes = student_row.get("daily_logs") or []
         
-        response = requests.delete(url, headers=ou._headers(), params=params, timeout=20)
-        return response.status_code in [200, 204]
+        # 2) Remover registro do array
+        registros_filtrados = [r for r in registros_existentes if r.get("registro_id") != registro_id]
+        
+        if len(registros_filtrados) == len(registros_existentes):
+            return False  # Registro não encontrado
+
+        # 3) Salvar array atualizado
+        update_data = {"daily_logs": registros_filtrados}
+        params_patch = {"id": f"eq.{student_id}"}
+        rp = requests.patch(url, headers=ou._headers(), params=params_patch, json=update_data, timeout=25)
+        
+        return rp.status_code in [200, 204]
     except Exception as e:
         st.error(f"Erro ao excluir registro: {str(e)}")
         return False
@@ -684,7 +798,7 @@ with tab_novo:
             else:
                 # Preparar registro
                 registro = {
-                    "student_id": aluno_id,
+                    "student_id": aluno_id,  # Necessário para salvar na coluna daily_logs do estudante
                     "data_sessao": data_sessao.isoformat(),
                     "duracao_minutos": duracao,
                     "modalidade_atendimento": modalidade,
@@ -838,18 +952,24 @@ with tab_lista:
                     # Botões de ação
                     col_btn1, col_btn2 = st.columns(2)
                     with col_btn1:
-                        if st.button("✏️ Editar", key=f"edit_{registro['id']}", use_container_width=True):
-                            st.session_state.editar_registro_id = registro['id']
+                        registro_id = registro.get('registro_id') or registro.get('id')
+                        if st.button("✏️ Editar", key=f"edit_{registro_id}", use_container_width=True):
+                            st.session_state.editar_registro_id = registro_id
                             st.switch_page("#")  # Poderia abrir modal de edição
                     
                     with col_btn2:
-                        if st.button("🗑️ Excluir", key=f"del_{registro['id']}", type="secondary", use_container_width=True):
-                            if excluir_registro_diario(registro['id']):
-                                st.success("Registro excluído!")
-                                time.sleep(1)
-                                st.rerun()
+                        registro_id = registro.get('registro_id') or registro.get('id')
+                        student_id = registro.get('student_id')
+                        if st.button("🗑️ Excluir", key=f"del_{registro_id}", type="secondary", use_container_width=True):
+                            if student_id and registro_id:
+                                if excluir_registro_diario(student_id, registro_id):
+                                    st.success("Registro excluído!")
+                                    time.sleep(1)
+                                    st.rerun()
+                                else:
+                                    st.error("Erro ao excluir registro")
                             else:
-                                st.error("Erro ao excluir registro")
+                                st.error("Dados do registro incompletos")
         
         # Paginação (simplificada)
         if len(registros_filtrados) > 10:
