@@ -1,5 +1,5 @@
 # ==============================================================================
-# DIÁRIO DE BORDO PAEE - SUPABASE INTEGRATION
+# DIÁRIO DE BORDO AEE - SUPABASE INTEGRATION
 # ==============================================================================
 
 import streamlit as st
@@ -118,7 +118,7 @@ st.markdown(
                 <i class="ri-edit-box-fill"></i>
             </div>
             <div class="mod-content">
-                <div class="mod-title">Diário de Bordo PAEE</div>
+                <div class="mod-title">Diário de Bordo AEE</div>
                 <div class="mod-desc">
                     {saudacao}, <strong>{USUARIO_NOME}</strong>! Registre sessões, acompanhe progresso e documente intervenções
                     no workspace <strong>{WORKSPACE_NAME}</strong>. Sistema integrado para registro profissional do Atendimento Educacional Especializado.
@@ -310,7 +310,7 @@ def salvar_registro_diario(registro):
         
         # Garantir que o workspace_id está no registro
         registro['workspace_id'] = st.session_state.get("workspace_id")
-        registro['professor_id'] = USER_ID
+        registro['professor_id'] = st.session_state.get("user_id", "")
         
         response = requests.post(url, headers=ou._headers(), json=registro, timeout=20)
         
