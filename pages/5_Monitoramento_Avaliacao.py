@@ -2,7 +2,7 @@ import streamlit as st
 import graphviz
 
 # ==============================================================================
-# 1. SETUP & DESIGN SYSTEM (VISUAL "PREMIUM GLASS")
+# 1. SETUP & DESIGN SYSTEM (VISUAL PREMIUM)
 # ==============================================================================
 st.set_page_config(page_title="Central de Conhecimento", page_icon="🧠", layout="wide")
 
@@ -14,7 +14,7 @@ st.markdown("""
     html, body, [class*="css"] { font-family: 'Inter', sans-serif; color: #1e293b; }
     .stApp { background-color: #f8fafc; }
 
-    /* Hero Section Gradient */
+    /* Hero Section */
     .hero-container {
         background: linear-gradient(135deg, #0F52BA 0%, #3b82f6 100%);
         padding: 3rem 2rem;
@@ -27,52 +27,33 @@ st.markdown("""
     .hero-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; }
     .hero-subtitle { font-size: 1.1rem; opacity: 0.9; font-weight: 300; }
 
-    /* Cards de Conteúdo (Glass Effect) */
+    /* Cards de Conteúdo */
     .content-card {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        transition: transform 0.2s, box-shadow 0.2s;
-        height: 100%;
-        margin-bottom: 20px;
+        background: white; border: 1px solid #e2e8f0; border-radius: 16px;
+        padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s; height: 100%; margin-bottom: 20px;
     }
-    .content-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.1);
-        border-color: #0F52BA;
-    }
+    .content-card:hover { transform: translateY(-3px); border-color: #0F52BA; }
     
-    /* Destaques do Flowchart */
-    .flow-container {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 40px;
-        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
-        text-align: center;
+    /* Estilo do Glossário */
+    .glossary-term {
+        color: #0F52BA; font-weight: 700; font-size: 1.1rem; margin-bottom: 5px;
+    }
+    .glossary-def { color: #475569; line-height: 1.6; font-size: 0.95rem; }
+    .glossary-box {
+        background: white; padding: 20px; border-radius: 10px;
+        border-left: 4px solid #0F52BA; margin-bottom: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
-    /* Bibliografia Estilo "Estante" */
-    .biblio-card {
-        border-left: 5px solid #0F52BA;
-        background: white;
-        padding: 20px;
-        border-radius: 0 12px 12px 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        margin-bottom: 15px;
+    /* Estilo da Biblioteca */
+    .biblio-link {
+        text-decoration: none; color: white; background-color: #0F52BA;
+        padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; display: inline-block;
+        margin-top: 10px; transition: background 0.3s;
     }
-    .biblio-tag {
-        font-size: 0.7rem; text-transform: uppercase; font-weight: bold; 
-        padding: 3px 8px; border-radius: 10px; color: white;
-    }
-
-    /* Glossário */
-    .term-bad { color: #dc2626; font-weight: bold; text-decoration: line-through; }
-    .term-good { color: #16a34a; font-weight: bold; }
-
+    .biblio-link:hover { background-color: #0b3d91; color: white; }
+    
     /* Abas Customizadas */
     .stTabs [data-baseweb="tab-list"] { gap: 10px; padding: 10px 0; }
     .stTabs [data-baseweb="tab"] {
@@ -91,308 +72,212 @@ st.markdown("""
 st.markdown("""
 <div class="hero-container">
     <div class="hero-title">🧠 Central de Inteligência Inclusiva</div>
-    <div class="hero-subtitle">Base de conhecimento atualizada: Decretos 2025, Fundamentos Pedagógicos e Manual Operacional.</div>
+    <div class="hero-subtitle">Fundamentos, Legislação, Glossário Técnico e Biblioteca Virtual.</div>
 </div>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. NAVEGAÇÃO ESTRUTURADA
+# 3. NAVEGAÇÃO
 # ==============================================================================
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab_panorama, tab_glossario, tab_biblio, tab_manual = st.tabs([
     "📊 Panorama & Fluxos", 
-    "⚖️ Legislação 2025", 
-    "📚 Biblioteca Completa",
-    "📖 Dicionário Técnico",
+    "📖 Glossário de Termos", 
+    "📚 Biblioteca Virtual",
     "⚙️ Manual do Sistema"
 ])
 
 # ==============================================================================
-# ABA 1: PANORAMA & FLUXOS (REORGANIZADO)
+# ABA 1: PANORAMA & FLUXOS
 # ==============================================================================
-with tab1:
-    # --- PARTE 1: O FLUXO (EM DESTAQUE TOTAL) ---
+with tab_panorama:
     st.markdown("### 🔄 O Fluxo da Inclusão (Omnisfera 2025)")
-    st.caption("O novo processo de entrada e permanência, atualizado com a substituição do laudo pelo Estudo de Caso.")
+    st.caption("Processo atualizado com a substituição do laudo médico pelo Estudo de Caso (Decretos 2025).")
     
-    st.markdown('<div class="flow-container">', unsafe_allow_html=True)
-    
+    # Diagrama Graphviz
     try:
         fluxo = graphviz.Digraph()
         fluxo.attr(rankdir='LR', bgcolor='transparent', margin='0')
         fluxo.attr('node', shape='box', style='rounded,filled', fontname='Inter', fontsize='11', height='0.6')
         
-        # Nós com cores estratégicas
         fluxo.node('A', '1. ACOLHIMENTO\n(Matrícula Garantida)', fillcolor='#dbeafe', color='#3b82f6')
         fluxo.node('B', '2. ESTUDO DE CASO\n(Avaliação Pedagógica)', fillcolor='#0F52BA', fontcolor='white', color='#0F52BA')
-        fluxo.node('C', '3. IDENTIFICAÇÃO\n(Público-Alvo)', fillcolor='#dcfce7', color='#22c55e')
-        fluxo.node('D', '4. PLANEJAMENTO\n(PEI + PAEE)', fillcolor='#f3e8ff', color='#a855f7')
-        fluxo.node('E', '5. AEE\n(Sala de Recursos)', fillcolor='#ffedd5', color='#f97316')
+        fluxo.node('C', '3. PEI + PAEE\n(Planejamento)', fillcolor='#f3e8ff', color='#a855f7')
+        fluxo.node('D', '4. AEE\n(Duplo Fundo)', fillcolor='#ffedd5', color='#f97316')
         
-        # Conexões
         fluxo.edge('A', 'B', label=' Equipe Escolar')
         fluxo.edge('B', 'C', label=' Substitui Laudo')
-        fluxo.edge('C', 'D', label=' Adaptação')
-        fluxo.edge('D', 'E', label=' Duplo Fundo')
-        fluxo.edge('E', 'D', label=' Retroalimentação', style='dashed')
+        fluxo.edge('C', 'D', label=' Financiamento')
         
         st.graphviz_chart(fluxo, use_container_width=True)
     except:
-        st.error("Visualizador gráfico indisponível no momento.")
-        
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.error("Visualizador gráfico indisponível.")
 
-    # --- PARTE 2: FUNDAMENTOS E PILARES (ABAIXO DO FLUXO) ---
-    st.markdown("---")
-    st.markdown("### 🏛️ Fundamentos da Prática")
+    st.divider()
     
-    c_intro, c_conc = st.columns(2)
-    
-    with c_intro:
-        st.markdown("""
-        <div class="content-card" style="border-left: 5px solid #0F52BA;">
-            <div class="card-header">
-                <span class="card-icon">🤝</span>
-                <span class="card-title">Filosofia: "Outrar-se"</span>
-            </div>
-            <p style="font-size:0.95rem; color:#475569;">
-                Baseado em <em>Fernando Pessoa/Bernardo Soares</em>. É a capacidade de sentir o mundo do outro mantendo o 
-                distanciamento profissional. <br><br>
-                <em>"Temos direito à igualdade quando a diferença nos inferioriza, e direito à diferença quando a igualdade nos descaracteriza."</em> (Boaventura de Sousa Santos)
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with c_conc:
-        st.markdown("""
-        <div class="content-card" style="border-left: 5px solid #a855f7;">
-            <div class="card-header">
-                <span class="card-icon">⚖️</span>
-                <span class="card-title">Justiça Curricular</span>
-            </div>
-            <p style="font-size:0.95rem; color:#475569;">
-                Conceito de <em>Jurjo Torres Santomé</em>. O currículo não pode ser uma barreira. <br><br>
-                O PEI é a ferramenta que materializa a justiça curricular, garantindo que o aluno tenha acesso ao conhecimento de forma adaptada, e não apenas socialize.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-# ==============================================================================
-# ABA 2: LEGISLAÇÃO (ATUALIZADA)
-# ==============================================================================
-with tab2:
-    st.markdown("### 📜 O Novo Marco Regulatório (2025)")
-    st.markdown("Impactos imediatos na gestão escolar com os novos decretos.")
-
+    # Cards de Fundamentos
     c1, c2 = st.columns(2)
-    
     with c1:
         st.markdown("""
-        <div class="content-card" style="border-left: 5px solid #22c55e;">
-            <div class="card-header">
-                <span class="card-icon">💰</span>
-                <span class="card-title">Decreto 12.686/2025</span>
-            </div>
-            <p><strong>Foco: Financiamento (Duplo Fundo)</strong></p>
-            <ul>
-                <li>O aluno da Educação Especial conta <strong>duas vezes</strong> no repasse do FUNDEB (Matrícula + AEE).</li>
-                <li>Garante recursos específicos para Salas Multifuncionais e profissionais de apoio.</li>
-            </ul>
-            <span class="tag tag-green">Gestão Financeira</span>
+        <div class="content-card">
+            <h4>🤝 Filosofia: "Outrar-se"</h4>
+            <p style="color:#64748b;">A capacidade de sentir o mundo do outro mantendo o distanciamento profissional. É ter empatia sem confundir papéis, superando o capacitismo.</p>
         </div>
         """, unsafe_allow_html=True)
-
     with c2:
         st.markdown("""
-        <div class="content-card" style="border-left: 5px solid #ef4444;">
-            <div class="card-header">
-                <span class="card-icon">🚫</span>
-                <span class="card-title">Decreto 12.773/2025</span>
-            </div>
-            <p><strong>Foco: Garantia de Matrícula</strong></p>
-            <ul>
-                <li>Proíbe cobrança de taxas extras em escolas privadas.</li>
-                <li>Criminaliza a recusa de matrícula sob alegação de deficiência.</li>
-                <li>Torna o "Estudo de Caso" o instrumento oficial de entrada.</li>
-            </ul>
-            <span class="tag tag-red">Proteção Legal</span>
+        <div class="content-card">
+            <h4>⚖️ Justiça Curricular</h4>
+            <p style="color:#64748b;">O currículo não pode ser uma barreira. O PEI materializa a justiça curricular, garantindo acesso ao conhecimento através da adaptação.</p>
         </div>
         """, unsafe_allow_html=True)
 
 # ==============================================================================
-# ABA 3: BIBLIOTECA COMPLETA (EXPANDIDA)
+# ABA 2: GLOSSÁRIO DE TERMOS (NOVO CONTEÚDO)
 # ==============================================================================
-with tab3:
-    st.markdown("### 📚 Acervo Bibliográfico & Referências")
-    st.markdown("Compilação de todas as obras, leis e artigos fundamentais da Omnisfera.")
+with tab_glossario:
+    st.markdown("### 📖 Glossário de Termos-Chave")
+    st.markdown("Conceitos fundamentais para alinhar a linguagem da equipe escolar.")
+    
+    termo_busca = st.text_input("🔍 Pesquisar termo...", placeholder="Ex: Capacitismo, PEI, AEE...")
 
-    # Lista Expandida baseada nos uploads (NotebookLM, PDFs, Textos)
-    bibliografia = [
-        {
-            "titulo": "Inclusão Escolar: O que é? Por quê? Como fazer?",
-            "autor": "Maria Teresa Eglér Mantoan (2003)",
-            "tipo": "Filosofia",
-            "cor": "#0F52BA",
-            "resumo": "Obra seminal. Diferencia 'integração' (o aluno muda para caber na escola) de 'inclusão' (a escola muda para acolher o aluno). Defende a escola comum para todos."
-        },
-        {
-            "titulo": "Lei Brasileira de Inclusão (LBI)",
-            "autor": "Lei Federal nº 13.146/2015",
-            "tipo": "Legislação",
-            "cor": "#e11d48",
-            "resumo": "Estatuto da Pessoa com Deficiência. Define deficiência como interação entre impedimentos e barreiras. Criminaliza discriminação e define o direito ao Acompanhante."
-        },
-        {
-            "titulo": "Declaração de Salamanca",
-            "autor": "UNESCO (1994)",
-            "tipo": "Marco Mundial",
-            "cor": "#059669",
-            "resumo": "Documento fundador da inclusão global. Estabelece que escolas regulares com orientação inclusiva são o meio mais eficaz de combater o preconceito."
-        },
-        {
-            "titulo": "Os Benefícios da Educação Inclusiva",
-            "autor": "Instituto Alana / ABT Associates (2016)",
-            "tipo": "Evidência Científica",
-            "cor": "#7c3aed",
-            "resumo": "Revisão de 89 estudos que comprova: alunos sem deficiência em salas inclusivas desenvolvem melhores habilidades sociais e não têm prejuízo acadêmico."
-        },
-        {
-            "titulo": "Política Nacional de Educação Especial (PNEEPEI)",
-            "autor": "MEC (2008)",
-            "tipo": "Política Pública",
-            "cor": "#e11d48",
-            "resumo": "Diretriz que rompeu com o modelo de escolas especiais segregadas, focando o financiamento público na escola comum."
-        },
-        {
-            "titulo": "Currículo e Justiça Curricular",
-            "autor": "Jurjo Torres Santomé (2013)",
-            "tipo": "Pedagogia",
-            "cor": "#0F52BA",
-            "resumo": "Conceito de que um currículo justo deve representar todos os grupos sociais e culturais, evitando a exclusão pelo conteúdo."
-        },
-        {
-            "titulo": "Convenção sobre os Direitos das Pessoas com Deficiência",
-            "autor": "ONU (2006) / Brasil (2008)",
-            "tipo": "Direitos Humanos",
-            "cor": "#059669",
-            "resumo": "Primeiro tratado de direitos humanos do século XXI, incorporado à Constituição Brasileira com status de Emenda Constitucional."
-        },
-        {
-            "titulo": "Decretos da Nova Política (12.686 e 12.773)",
-            "autor": "Governo Federal (2025)",
-            "tipo": "Legislação Atual",
-            "cor": "#e11d48",
-            "resumo": "Atualização do PNEEPEI, focando na garantia de financiamento, profissional de apoio e proibição de barreiras na matrícula privada."
-        }
+    # Dados do Glossário (Copiados do seu input)
+    glossario_db = [
+        {"t": "AEE (Atendimento Educacional Especializado)", "d": "Serviços educacionais suplementares que potencializam habilidades para que o aluno adquira autonomia. É transversal a todos os níveis, mas não substitui a escolarização regular."},
+        {"t": "Alteridade", "d": "Conceito relacionado à capacidade de reconhecer e respeitar o 'outro' em sua diferença, incorporado por uma escola com responsabilidade social."},
+        {"t": "Capacitismo", "d": "Toda forma de distinção, restrição ou exclusão que tenha o propósito de prejudicar o exercício dos direitos da pessoa com deficiência. Preconceito que pressupõe incapacidade."},
+        {"t": "Cultura do Pertencimento", "d": "Uma cultura escolar onde o aluno realmente faz parte da comunidade, sendo condição essencial para o desenvolvimento do público-alvo da educação inclusiva."},
+        {"t": "Declaração de Salamanca", "d": "Resolução da ONU (1994) que estabeleceu princípios para a educação especial, formalizando o compromisso com a escola inclusiva."},
+        {"t": "Educação Inclusiva", "d": "Direito constitucional. Garante que todos aprendam juntos nos mesmos ambientes, independentemente de diferenças. Engloba a educação especial e a regular."},
+        {"t": "Estudo de Caso", "d": "Metodologia de produção e registro de informações. Na legislação de 2025, é a etapa inicial (porta de entrada) que substitui o laudo médico para identificação de necessidades."},
+        {"t": "Justiça Curricular", "d": "Conceito que busca um currículo relevante e representativo, capaz de promover igualdade de condições respeitando as particularidades."},
+        {"t": "Outragem / Outrar-se", "d": "Postura de quem é capaz de se colocar no lugar do outro, sentir o mundo do outro como se fosse seu próprio, numa relação empática e acolhedora."},
+        {"t": "PcD", "d": "Sigla utilizada para se referir à Pessoa com Deficiência (termo legal correto)."},
+        {"t": "PEI (Plano Educacional Individualizado)", "d": "Documento pedagógico de natureza obrigatória e atualização contínua ('documento vivo'), que visa garantir o atendimento personalizado."},
+        {"t": "PNAD Contínua", "d": "Pesquisa do IBGE que em 2022 produziu estatísticas inéditas: 18,6 milhões de brasileiros com deficiência e grandes disparidades na educação/trabalho."},
+        {"t": "Profissional de Apoio Escolar", "d": "Atua no suporte (higiene, alimentação, locomoção). Conforme 2025, exige nível médio + 180h de formação. Substitui o termo 'cuidador'."},
+        {"t": "Tecnologias Assistivas", "d": "Ferramentas e recursos que auxiliam na funcionalidade e autonomia, como pranchas de comunicação, softwares adaptados, etc."},
+        {"t": "Vieses Inconscientes", "d": "Processos automáticos do cérebro que levam a reproduzir comportamentos preconceituosos por associações aprendidas socialmente."}
     ]
 
-    # Renderização em Grid (2 colunas)
-    col_a, col_b = st.columns(2)
+    # Filtragem e Renderização
+    termos_filtrados = [item for item in glossario_db if termo_busca.lower() in item['t'].lower() or termo_busca.lower() in item['d'].lower()]
+
+    if not termos_filtrados:
+        st.warning("Nenhum termo encontrado.")
     
-    for i, item in enumerate(bibliografia):
-        # Distribui entre as colunas
-        with (col_a if i % 2 == 0 else col_b):
-            st.markdown(f"""
-            <div class="biblio-card" style="border-left-color: {item['cor']};">
-                <div style="display:flex; justify-content:space-between; align-items:start;">
-                    <div style="font-weight:700; font-size:1.05rem; color:#1e293b;">{item['titulo']}</div>
-                    <span class="biblio-tag" style="background-color:{item['cor']};">{item['tipo']}</span>
-                </div>
-                <div style="font-size:0.85rem; color:#64748b; margin:5px 0 10px 0; font-style:italic;">{item['autor']}</div>
-                <div style="font-size:0.9rem; color:#334155; line-height:1.5;">{item['resumo']}</div>
-            </div>
-            """, unsafe_allow_html=True)
+    for item in termos_filtrados:
+        st.markdown(f"""
+        <div class="glossary-box">
+            <div class="glossary-term">{item['t']}</div>
+            <div class="glossary-def">{item['d']}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
 # ==============================================================================
-# ABA 4: GLOSSÁRIO TÉCNICO
+# ABA 3: BIBLIOTECA VIRTUAL (EXPANSIVA COM LINKS)
 # ==============================================================================
-with tab4:
-    st.markdown("### 📖 Dicionário Anticapacitista")
-    st.markdown("A linguagem cria cultura. Guia de alinhamento para a equipe.")
+with tab_biblio:
+    st.markdown("### 📚 Biblioteca Virtual & Referências")
+    st.markdown("Clique nos itens para expandir o resumo e acessar o documento original.")
 
-    c1, c2 = st.columns(2)
+    # Função auxiliar para gerar card de livro
+    def render_book(titulo, autor, resumo, link=None, tag="Referência"):
+        with st.expander(f"📖 {titulo}"):
+            st.markdown(f"**Autor(es):** {autor}")
+            st.markdown(f"**Sobre:** {resumo}")
+            if link:
+                st.markdown(f"""<a href="{link}" target="_blank" class="biblio-link">🔗 Acessar Documento Oficial</a>""", unsafe_allow_html=True)
+            else:
+                st.caption("Documento disponível no acervo físico ou restrito.")
+
+    # --- LISTA CURADA (Baseada no seu upload) ---
     
-    with c1:
-        st.markdown("#### ✅ Termos Corretos")
-        termos_bons = [
-            ("Pessoa com Deficiência (PcD)", "Termo legal (LBI). Marca que a deficiência é um atributo, não a pessoa inteira."),
-            ("Barreira", "Qualquer entrave (físico ou atitudinal) que limite a participação."),
-            ("Estudo de Caso", "Avaliação pedagógica que substitui a exigência de laudo médico inicial."),
-            ("Neurodivergente", "Funcionamento cerebral atípico (TEA, TDAH), sem conotação de doença."),
-            ("Cultura do Pertencimento", "Ambiente onde o aluno é parte ativa, não apenas 'visitante'.")
-        ]
-        for t, d in termos_bons:
-            st.markdown(f"""
-            <div style="background:#f0fdf4; border-left:4px solid #16a34a; padding:12px; margin-bottom:10px; border-radius:4px;">
-                <strong style="color:#166534;">{t}</strong><br>
-                <small style="color:#334155;">{d}</small>
-            </div>
-            """, unsafe_allow_html=True)
+    st.markdown("#### 🏛️ Legislação e Políticas Públicas")
+    
+    render_book(
+        "Lei Brasileira de Inclusão (Lei 13.146/2015)",
+        "Governo Federal (Brasil)",
+        "O Estatuto da Pessoa com Deficiência. Define o conceito moderno de deficiência (impedimento + barreira), criminaliza a discriminação e garante o direito ao acompanhante e à acessibilidade.",
+        "http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm"
+    )
+    
+    render_book(
+        "Decreto 12.686 e 12.773 (2025)",
+        "Governo Federal (Nova Política)",
+        "Atualizam o financiamento do AEE (Duplo Fundo) e endurecem regras contra recusa de matrícula em escolas privadas. Estabelecem o Estudo de Caso como padrão.",
+        "https://www.planalto.gov.br" # Link genérico pois o decreto é muito recente
+    )
 
-    with c2:
-        st.markdown("#### 🚫 Termos a Abolir")
-        termos_ruins = [
-            ("Portador de Deficiência", "Ninguém 'porta' deficiência. Ela é intrínseca à condição."),
-            ("Aluno de Inclusão", "Estigmatizante. Use 'Público-alvo da Ed. Especial'."),
-            ("Criança Especial", "Eufemismo que infantiliza. Use o nome da criança."),
-            ("Surdo-Mudo", "Incorreto. A surdez não implica mudez."),
-            ("Atrasado / Lento", "Preconceituoso. Use 'Ritmo próprio de aprendizagem'.")
-        ]
-        for t, d in termos_ruins:
-            st.markdown(f"""
-            <div style="background:#fef2f2; border-left:4px solid #dc2626; padding:12px; margin-bottom:10px; border-radius:4px;">
-                <strong style="color:#991b1b; text-decoration: line-through;">{t}</strong><br>
-                <small style="color:#334155;">{d}</small>
-            </div>
-            """, unsafe_allow_html=True)
+    render_book(
+        "Política Nacional de Educação Especial (PNEEPEI 2008)",
+        "MEC / SEESP",
+        "Documento histórico que rompeu com o modelo de escolas segregadas e consolidou a matrícula na escola comum.",
+        "http://portal.mec.gov.br/seesp/arquivos/pdf/politica.pdf"
+    )
+
+    st.markdown("#### 🧠 Fundamentos e Evidências")
+
+    render_book(
+        "Os Benefícios da Educação Inclusiva (2016)",
+        "Instituto Alana / ABT Associates",
+        "Revisão sistemática de mais de 80 estudos que comprova: estudantes sem deficiência em salas inclusivas desenvolvem melhores habilidades socioemocionais e acadêmicas.",
+        "https://alana.org.br/wp-content/uploads/2016/11/Os_Beneficios_da_Ed_Inclusiva_final.pdf"
+    )
+
+    render_book(
+        "Declaração de Salamanca (1994)",
+        "UNESCO",
+        "Marco mundial. Estabelece que as escolas regulares com orientação inclusiva são os meios mais eficazes de combater atitudes discriminatórias.",
+        "https://unesdoc.unesco.org/ark:/48223/pf0000139394"
+    )
+
+    st.markdown("#### 📘 Pedagogia e Prática")
+
+    render_book(
+        "Inclusão Escolar: O que é? Por quê? Como fazer?",
+        "Maria Teresa Eglér Mantoan (2003)",
+        "Obra clássica que diferencia 'Integração' de 'Inclusão' e oferece caminhos práticos para a diferenciação pedagógica.",
+        None 
+    )
+
+    render_book(
+        "Base Nacional Comum Curricular (BNCC)",
+        "Ministério da Educação",
+        "Documento normativo que define as aprendizagens essenciais. A inclusão na BNCC pressupõe que todos alcancem os objetivos, com as devidas adaptações.",
+        "https://www.gov.br/mec/pt-br/escola-em-tempo-integral/BNCC_EI_EF_110518_versaofinal.pdf"
+    )
+
+    render_book(
+        "Capacitismo: o que é, onde vive, como se reproduz?",
+        "Sidney Andrade",
+        "Artigo fundamental para entender o preconceito estrutural contra pessoas com deficiência.",
+        "https://medium.com/@sidneyandrade23/capacitismo-o-que-%C3%A9-onde-vive-como-sereproduz-5f68c5fdf73e"
+    )
 
 # ==============================================================================
-# ABA 5: MANUAL DO SISTEMA
+# ABA 4: MANUAL DO SISTEMA
 # ==============================================================================
-with tab5:
+with tab_manual:
     st.markdown("### ⚙️ Manual de Uso Omnisfera")
-    st.info("Passo a passo para operacionalizar a inclusão na plataforma.")
-
-    step1, step2, step3 = st.columns(3)
     
-    with step1:
+    col_steps1, col_steps2 = st.columns(2)
+    
+    with col_steps1:
+        st.info("**1. Módulo PEI 360º (Professor Regente)**")
         st.markdown("""
-        <div class="content-card" style="background:#f8fafc;">
-            <h4>1️⃣ Módulo PEI 360º</h4>
-            <p><strong>Para quem:</strong> Professor Regente.</p>
-            <ol style="font-size:0.9rem; padding-left:15px;">
-                <li>Cadastre os dados na aba <strong>Estudante</strong> (Hiperfoco é vital!).</li>
-                <li>Mapeie habilidades nas abas Acadêmico/Social.</li>
-                <li>Gere o PEI Técnico na <strong>Consultoria IA</strong>.</li>
-                <li>Crie a missão na aba <strong>Jornada</strong>.</li>
-            </ol>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with step2:
+        1.  **Cadastro:** Preencha os dados e o Hiperfoco.
+        2.  **Mapeamento:** Use os sliders nas abas Acadêmico/Social.
+        3.  **IA:** Gere o PEI Técnico na aba Consultoria IA.
+        4.  **Gamificação:** Crie a missão na aba Jornada.
+        """)
+        
+    with col_steps2:
+        st.info("**2. Módulo PAEE (Sala de Recursos)**")
         st.markdown("""
-        <div class="content-card" style="background:#f8fafc;">
-            <h4>2️⃣ Módulo PAEE</h4>
-            <p><strong>Para quem:</strong> Sala de Recursos (AEE).</p>
-            <ol style="font-size:0.9rem; padding-left:15px;">
-                <li>Foque no <strong>Diagnóstico de Barreiras</strong>.</li>
-                <li>Defina metas de Habilidades (não conteúdo).</li>
-                <li>Gere a <strong>Carta de Articulação</strong> para alinhar com a sala comum.</li>
-            </ol>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with step3:
-        st.markdown("""
-        <div class="content-card" style="background:#f8fafc;">
-            <h4>3️⃣ Monitoramento</h4>
-            <p><strong>Para quem:</strong> Coordenação.</p>
-            <ol style="font-size:0.9rem; padding-left:15px;">
-                <li>Acesse bimestralmente.</li>
-                <li>Compare as metas do PEI com o Diário.</li>
-                <li>Verifique se o PEI está sendo um "documento vivo".</li>
-            </ol>
-        </div>
-        """, unsafe_allow_html=True)
+        1.  **Diagnóstico:** Identifique barreiras de acesso.
+        2.  **Plano:** Defina metas de habilidades (ex: uso de tesoura).
+        3.  **Articulação:** Gere a carta para o professor da sala.
+        """)
 
 # Rodapé
 st.markdown("---")
