@@ -501,37 +501,88 @@ def render_navbar(active_tab: str = "Início"):
     st.markdown(
         """
         <style>
-          /* Navbar nativo via st.radio */
+          /* Navbar nativo via st.radio (Render-safe, estilo "tabs pills") */
+          .omni-navbar{
+            width: 100%;
+            margin-top: 0px !important;
+            margin-bottom: 0px !important;
+          }
+          .omni-navbar-inner{
+            width: min(1200px, calc(100% - 48px));
+            margin: 0 auto;
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.72);
+            border: 1px solid rgba(226,232,240,0.9);
+            border-radius: 16px;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+            backdrop-filter: blur(10px);
+          }
+
+          /* limpa espaçamento do componente */
+          .omni-navbar .stRadio{
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .omni-navbar .stRadio > div{
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+
+          /* Em telas pequenas: permite scroll horizontal */
           .omni-navbar .stRadio [role="radiogroup"]{
             display:flex;
-            flex-wrap: wrap;
-            gap: 6px;
+            flex-wrap: nowrap;
+            gap: 8px;
             align-items:center;
-            justify-content:center;
+            justify-content:flex-start;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 2px 2px;
+            scrollbar-width: none; /* firefox */
           }
+          .omni-navbar .stRadio [role="radiogroup"]::-webkit-scrollbar{
+            display:none;
+          }
+
+          /* Base pill */
           .omni-navbar .stRadio label{
             margin: 0 !important;
           }
           .omni-navbar .stRadio div[role="radio"]{
-            border: 1px solid #E2E8F0;
-            background: rgba(255,255,255,0.92);
+            border: 1px solid rgba(226,232,240,0.95);
+            background: rgba(255,255,255,0.88);
             border-radius: 999px;
-            padding: 7px 12px;
+            padding: 8px 12px;
             font-size: 12px;
-            color: #64748B;
+            color: #475569;
             line-height: 1;
             box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
             backdrop-filter: blur(6px);
+            transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+            user-select: none;
+            white-space: nowrap;
           }
           .omni-navbar .stRadio div[role="radio"]:hover{
-            border-color:#CBD5E1;
-            background:#ffffff;
+            border-color: rgba(203,213,225,1);
+            background: rgba(255,255,255,0.98);
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+            transform: translateY(-1px);
           }
           .omni-navbar .stRadio div[role="radio"][aria-checked="true"]{
-            background: #F1F5F9;
-            color: #0F172A;
-            border-color: #CBD5E1;
-            font-weight: 800;
+            background: #0F172A;
+            color: #ffffff;
+            border-color: rgba(15, 23, 42, 0.25);
+            font-weight: 900;
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.18);
+          }
+
+          /* Em telas maiores: centraliza e permite quebrar */
+          @media (min-width: 900px){
+            .omni-navbar .stRadio [role="radiogroup"]{
+              justify-content:center;
+              flex-wrap: wrap;
+              overflow-x: visible;
+            }
           }
         </style>
         """,
@@ -567,8 +618,8 @@ def render_navbar(active_tab: str = "Início"):
         <style>
         /* Aplica cor específica da página no navbar selecionado */
         .omni-navbar .stRadio div[role="radio"][aria-checked="true"] {{
-            background-color: {color_info['bg']} !important;
-            color: {color_info['color']} !important;
+            background-color: {color_info['color']} !important;
+            color: #ffffff !important;
             border: 1px solid {color_info['color']} !important;
         }}
         </style>
