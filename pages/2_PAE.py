@@ -1738,7 +1738,7 @@ with tab_planejamento:
     # ============================
     # HEADER TOP (mais clean)
     # ============================
-    st.markdown("""
+    st.markdown(f"""
     <div class="timeline-header">
       <div>
         <div style="font-size:.78rem;color:#64748B;font-weight:800;letter-spacing:.08em;text-transform:uppercase;">
