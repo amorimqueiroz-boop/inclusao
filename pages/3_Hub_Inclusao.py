@@ -1690,18 +1690,35 @@ def render_aba_adaptar_prova(aluno, api_key):
     </div>
     """, unsafe_allow_html=True)
     
-    # Dropdowns BNCC simplificados
-    ano_bncc, disciplina_bncc, unidade_bncc, objeto_bncc, _ = criar_dropdowns_bncc_completos_melhorado(key_suffix="adaptar_prova", mostrar_habilidades=False)
+    # Dropdowns BNCC simplificados - layout compacto (2 linhas em vez de várias)
+    # Primeira linha: Ano, Componente, Unidade (3 colunas)
+    col_bncc1, col_bncc2, col_bncc3 = st.columns(3)
+    with col_bncc1:
+        ano_bncc = st.selectbox("Ano", ordenar_anos(["1", "2", "3", "4", "5", "6", "7", "8", "9", "1EM", "2EM", "3EM"]), 
+                              key="ano_adaptar_prova_compact")
+    with col_bncc2:
+        disciplina_bncc = st.selectbox("Componente Curricular", 
+                                     ["Língua Portuguesa", "Matemática", "Ciências", "História", "Geografia", "Arte", "Educação Física", "Inglês"],
+                                     key="disc_adaptar_prova_compact")
+    with col_bncc3:
+        unidade_bncc = st.text_input("Unidade Temática", placeholder="Ex: Números", 
+                                   key="unid_adaptar_prova_compact")
+    
+    # Segunda linha: Objeto do Conhecimento e Assunto lado a lado (2 colunas)
+    col_obj, col_ass = st.columns(2)
+    with col_obj:
+        objeto_bncc = st.text_input("Objeto do Conhecimento", placeholder="Ex: Frações", 
+                                   key="obj_adaptar_prova_compact")
+    with col_ass:
+        assunto_livre = st.text_input(
+            "📝 Assunto (opcional)",
+            value="",
+            placeholder="Ex: Frações, Sistema Solar...",
+            help="Preencha se quiser direcionar a adaptação para um assunto específico.",
+            key="assunto_adaptar_prova_compact"
+        )
     
     st.markdown("---")
-    
-    # Campo livre de assunto (opcional)
-    assunto_livre = st.text_input(
-        "📝 Assunto (opcional - para direcionar melhor a adaptação)",
-        value="",
-        placeholder="Ex: Frações, Sistema Solar, Independência do Brasil...",
-        help="Preencha se quiser direcionar a adaptação para um assunto específico. Pode deixar em branco."
-    )
     
     # Layout simplificado (Tipo e Upload)
     c1, c2 = st.columns([1, 2])
