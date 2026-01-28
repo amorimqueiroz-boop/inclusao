@@ -1654,7 +1654,6 @@ st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
 
 # Nova Seção: Central de Conhecimento
 st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
-st.markdown("---")
 render_central_conhecimento()
 
 # ==============================================================================
