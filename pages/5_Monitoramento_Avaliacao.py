@@ -35,10 +35,20 @@ st.markdown("""
     }
     .content-card:hover { transform: translateY(-3px); border-color: #0F52BA; }
     
-    /* Estilo do Glossário Técnico */
-    .glossary-term {
-        color: #0F52BA; font-weight: 700; font-size: 1.1rem; margin-bottom: 5px;
+    /* Estilos Específicos do Manual */
+    .manual-step {
+        border-left: 5px solid #0F52BA; background: white; padding: 20px;
+        border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
+    .manual-title { font-size: 1.2rem; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
+    .manual-quote { font-style: italic; color: #64748b; font-size: 0.9rem; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;}
+    .key-concept {
+        background-color: #eff6ff; border-radius: 6px; padding: 10px;
+        font-size: 0.9rem; color: #1e40af; margin-top: 15px; border: 1px solid #dbeafe;
+    }
+
+    /* Estilo do Glossário */
+    .glossary-term { color: #0F52BA; font-weight: 700; font-size: 1.1rem; margin-bottom: 5px; }
     .glossary-def { color: #475569; line-height: 1.6; font-size: 0.95rem; text-align: justify; }
     .glossary-box {
         background: white; padding: 20px; border-radius: 10px;
@@ -92,14 +102,13 @@ st.markdown("""
 # ==============================================================================
 # 3. NAVEGAÇÃO
 # ==============================================================================
-# Definindo as abas separadas conforme solicitado
 tab_panorama, tab_legal, tab_glossario, tab_linguagem, tab_biblio, tab_manual = st.tabs([
     "📊 Panorama & Fluxos", 
     "⚖️ Legislação & Marcos", 
     "📖 Glossário Técnico",
     "🗣️ Linguagem Inclusiva",
     "📚 Biblioteca Virtual",
-    "⚙️ Manual do Sistema"
+    "📘 Manual da Jornada"
 ])
 
 # ==============================================================================
@@ -361,28 +370,111 @@ with tab_biblio:
     )
 
 # ==============================================================================
-# ABA 6: MANUAL DO SISTEMA
+# ABA 6: MANUAL DA JORNADA (NOVO E COMPLETO)
 # ==============================================================================
 with tab_manual:
-    st.markdown("### ⚙️ Manual de Uso Omnisfera")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.info("**1. Módulo PEI 360º (Professor Regente)**")
-        st.markdown("""
-        1.  **Cadastro:** Preencha os dados e o Hiperfoco.
-        2.  **Mapeamento:** Use os sliders nas abas Acadêmico/Social.
-        3.  **IA:** Gere o PEI Técnico na aba Consultoria IA.
-        """)
-        
-    with col2:
-        st.info("**2. Módulo PAEE (Sala de Recursos)**")
-        st.markdown("""
-        1.  **Diagnóstico:** Identifique barreiras de acesso.
-        2.  **Plano:** Defina metas de habilidades (ex: uso de tesoura).
-        3.  **Articulação:** Gere a carta para a sala comum.
-        """)
+    st.markdown("### 📘 Manual da Jornada Omnisfera: O Ciclo da Inclusão")
+    st.markdown("Fluxo de trabalho ideal conectando planejamento, AEE e prática em sala.")
+
+    # Passo 1: PEI
+    st.markdown("""
+    <div class="manual-step" style="border-left-color: #3b82f6;">
+        <div class="manual-title">1. O Alicerce: Planejamento (PEI)</div>
+        <div class="manual-quote">"Não há inclusão sem intenção. Conhecer para incluir."</div>
+        <p>Tudo começa na página <strong>Estratégias & PEI</strong>. Antes de pensar em recursos, precisamos mapear quem é o estudante.</p>
+        <p><strong>Ação na Plataforma:</strong></p>
+        <ul>
+            <li>Registre o histórico e o diagnóstico na aba Estudante.</li>
+            <li>Mapeie as barreiras de aprendizagem (cognitivas, sensoriais ou físicas).</li>
+            <li>Use a IA para estruturar metas de curto, médio e longo prazo.</li>
+        </ul>
+        <div class="key-concept">
+            💡 <strong>Conceito Chave:</strong> O PEI não é um "laudo", é um projeto de futuro. Ele define o que vamos ensinar e quais barreiras precisamos remover.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Passo 2: PAEE
+    st.markdown("""
+    <div class="manual-step" style="border-left-color: #8b5cf6;">
+        <div class="manual-title">2. A Estratégia: O AEE e o Plano de Ação (PAEE)</div>
+        <div class="manual-quote">"A articulação entre o suporte especializado e a sala comum."</div>
+        <p>Aqui entra a execução técnica do PEI. Na página <strong>Plano de Ação / PAEE</strong>, organizamos o Atendimento Educacional Especializado.</p>
+        <p><strong>Ação na Plataforma:</strong></p>
+        <ul>
+            <li>Defina a frequência e o foco dos atendimentos no contraturno.</li>
+            <li>Estabeleça a ponte com o professor regente: quais estratégias do AEE serão levadas para a sala de aula?</li>
+            <li>Organize os recursos de Tecnologia Assistiva necessários.</li>
+        </ul>
+        <div class="key-concept">
+            💡 <strong>Conceito Chave:</strong> O AEE não funciona isolado. Ele é o laboratório onde se testam as ferramentas que permitirão ao aluno acessar o currículo comum.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Passo 3: Hub
+    st.markdown("""
+    <div class="manual-step" style="border-left-color: #10b981;">
+        <div class="manual-title">3. A Ferramenta: Adaptação (Hub de Inclusão)</div>
+        <div class="manual-quote">"Acessibilidade é garantir que o conteúdo chegue a todos."</div>
+        <p>Com o plano (PEI) e a estratégia (AEE) definidos, vamos construir a aula. A página <strong>Hub de Recursos</strong> é sua "oficina pedagógica".</p>
+        <p><strong>Ação na Plataforma:</strong></p>
+        <ul>
+            <li>Busque ou gere atividades adaptadas ao nível de desenvolvimento do aluno.</li>
+            <li>Crie pranchas de comunicação alternativa ou textos simplificados.</li>
+            <li>Acesse modelos validados por especialistas.</li>
+        </ul>
+        <div class="key-concept">
+            💡 <strong>Conceito Chave:</strong> Adaptar não é empobrecer o currículo, é torná-lo flexível. O gestor e o educador devem equilibrar o currículo prescrito com a necessidade de personalização.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Passo 4: Diário
+    st.markdown("""
+    <div class="manual-step" style="border-left-color: #f59e0b;">
+        <div class="manual-title">4. O Registro: Diário de Bordo</div>
+        <div class="manual-quote">"O olhar atento transforma a prática."</div>
+        <p>A inclusão acontece nos detalhes do dia a dia. A página <strong>Diário de Bordo</strong> captura a realidade da execução.</p>
+        <p><strong>Ação na Plataforma:</strong></p>
+        <ul>
+            <li>Documente o que funcionou e o que falhou nas atividades adaptadas.</li>
+            <li>Registre a frequência e o engajamento do aluno.</li>
+            <li>Use o conceito de "outrar-se" para interpretar as reações do aluno.</li>
+        </ul>
+        <div class="key-concept">
+            💡 <strong>Conceito Chave:</strong> Sem registro, não há memória pedagógica. O Diário é a prova de que a inclusão está acontecendo.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Passo 5: Avaliação
+    st.markdown("""
+    <div class="manual-step" style="border-left-color: #ef4444;">
+        <div class="manual-title">5. O Fechamento: Avaliação (Evolução & Dados)</div>
+        <div class="manual-quote">"Avaliar para recalcular a rota, não para rotular."</div>
+        <p>Por fim, consolidamos tudo na página <strong>Avaliação e Monitoramento</strong>.</p>
+        <p><strong>Ação na Plataforma:</strong></p>
+        <ul>
+            <li>Use as Rubricas de Avaliação para medir o avanço nas competências do PEI.</li>
+            <li>Visualize gráficos de evolução.</li>
+            <li>Decida: a meta foi atingida? Se sim, avançamos. Se não, voltamos ao Passo 2 (AEE) para ajustar a estratégia.</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Tabela Resumo
+    st.markdown("#### 🧭 Resumo do Ecossistema")
+    st.markdown("""
+    | Passo | Módulo | Função |
+    | :--- | :--- | :--- |
+    | 1 | 📘 PEI | **Fundamentar:** Quem é o aluno e o que ele precisa? |
+    | 2 | 🧩 PAEE (AEE) | **Estruturar:** Como o suporte especializado vai atuar? |
+    | 3 | 🚀 Hub | **Instrumentalizar:** Criar os recursos para a aula. |
+    | 4 | 📓 Diário | **Registrar:** Acompanhar a execução diária. |
+    | 5 | 📊 Dados | **Validar:** Medir o sucesso e evoluir o plano. |
+    """)
 
 # Rodapé
 st.markdown("---")
-st.caption("Central de Conhecimento Omnisfera • Atualizada 2025/2026")
+st.caption("Central de Conhecimento Omnisfera • Atualizado com Decretos 2025")
