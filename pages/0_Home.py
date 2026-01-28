@@ -1,11 +1,18 @@
 import streamlit as st
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 import base64
 import os
 import graphviz
 import time
 
 import omni_utils as ou
+
+# Importar OpenAI para gerar mensagem de boas-vindas
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 
 # ==============================================================================
 # 1. CONFIGURAÇÃO INICIAL
@@ -1425,17 +1432,84 @@ def render_resources():
 # Renderiza a topbar fixa (OCULTA SIDEBAR NATIVA)
 render_topbar()
 
+# ==============================================================================
+# FUNÇÃO PARA GERAR MENSAGEM DE BOAS-VINDAS COM IA
+# ==============================================================================
+@st.cache_data(ttl=3600)  # Cache por 1 hora
+def gerar_mensagem_boas_vindas_ia(api_key: str, nome_user: str, dia_semana: str, hora: int, saudacao: str):
+    """Gera uma mensagem personalizada de boas-vindas usando IA"""
+    if not api_key or not OpenAI:
+        return None
+    
+    try:
+        client = OpenAI(api_key=api_key)
+        
+        dias_semana_pt = {
+            "Monday": "segunda-feira",
+            "Tuesday": "terça-feira", 
+            "Wednesday": "quarta-feira",
+            "Thursday": "quinta-feira",
+            "Friday": "sexta-feira",
+            "Saturday": "sábado",
+            "Sunday": "domingo"
+        }
+        
+        dia_pt = dias_semana_pt.get(dia_semana, dia_semana)
+        
+        prompt = f"""
+        Você é um assistente educacional da plataforma Omnisfera, uma ferramenta de inclusão educacional.
+        
+        Crie uma mensagem de boas-vindas calorosa e inspiradora para o educador {nome_user}.
+        
+        CONTEXTO:
+        - Dia da semana: {dia_pt}
+        - Horário: {hora}h ({saudacao})
+        - Plataforma: Omnisfera - Ecossistema de Inclusão Educacional
+        
+        DIRETRIZES:
+        - Seja acolhedor e inspirador
+        - Mencione o dia da semana de forma natural (ex: "Nesta segunda-feira", "Neste fim de semana")
+        - Adapte o tom ao horário (manhã = energia, tarde = produtividade, noite = reflexão)
+        - Mantenha o foco na inclusão e no impacto positivo na educação
+        - Seja breve (máximo 2 frases)
+        - Use linguagem calorosa mas profissional
+        
+        Retorne APENAS a mensagem, sem aspas ou formatação adicional.
+        """
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.8,
+            max_tokens=100
+        )
+        
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return None
+
 # HERO SECTION
-hora = datetime.now().hour
+agora_brasilia = datetime.now(ZoneInfo("America/Sao_Paulo"))
+hora = agora_brasilia.hour
+dia_semana = agora_brasilia.strftime("%A")
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
 nome_user = st.session_state.get("usuario_nome", "Visitante").split()[0]
+
+# Tentar gerar mensagem com IA
+mensagem_ia = None
+api_key = st.secrets.get("OPENAI_API_KEY", "")
+if api_key:
+    mensagem_ia = gerar_mensagem_boas_vindas_ia(api_key, nome_user, dia_semana, hora, saudacao)
+
+# Mensagem padrão caso IA não funcione
+mensagem_final = mensagem_ia if mensagem_ia else f'"{saudacao}! A inclusão acontece quando aprendemos com as diferenças e não com as igualdades."'
 
 st.markdown(
     f"""
     <div class="hero-wrapper">
         <div class="hero-content">
             <div class="hero-greet">{saudacao}, {nome_user}!</div>
-            <div class="hero-text">"A inclusão acontece quando aprendemos com as diferenças e não com as igualdades."</div>
+            <div class="hero-text">{mensagem_final}</div>
         </div>
         <div class="hero-icon"><i class="ri-heart-pulse-fill"></i></div>
     </div>
