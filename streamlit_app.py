@@ -18,7 +18,7 @@ ENV = get_env()
 
 st.set_page_config(
     page_title="Omnisfera | Ecossistema",
-    page_icon="🌐",
+    page_icon="iconeaba.png" if os.path.exists("iconeaba.png") else "🌐",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
