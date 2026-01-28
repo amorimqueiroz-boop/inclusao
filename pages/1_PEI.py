@@ -1801,7 +1801,7 @@ with tab0:
     # DIREITA: Gestão de alunos
     # =========================
     with col_right:
-            st.markdown(f"#### {icon_title('Gestão de Estudantes', 'estudantes', 20, '#0EA5E9')}", unsafe_allow_html=True)
+        st.markdown(f"#### {icon_title('Gestão de Estudantes', 'estudantes', 20, '#0EA5E9')}", unsafe_allow_html=True)
 
         # garante d (se seu código já define antes, isso não atrapalha)
         d = st.session_state.get("dados", {})
