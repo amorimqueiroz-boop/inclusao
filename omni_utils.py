@@ -562,6 +562,21 @@ def render_navbar(active_tab: str = "Início"):
             user-select: none;
             white-space: nowrap;
           }
+          /* Remove o "pontinho" do radio (deixa só a pill clicável) */
+          .omni-navbar .stRadio div[role="radio"] > div:first-child{
+            display: none !important;
+          }
+          /* Tipografia do conteúdo (ícone + texto) */
+          .omni-navbar .stRadio div[role="radio"] p{
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: 12px !important;
+            line-height: 1 !important;
+            font-weight: 800 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+          }
           .omni-navbar .stRadio div[role="radio"]:hover{
             border-color: rgba(203,213,225,1);
             background: rgba(255,255,255,0.98);
