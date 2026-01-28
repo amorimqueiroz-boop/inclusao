@@ -420,17 +420,16 @@ def inject_compact_app_css(accent: str = "#0D9488"):
         unsafe_allow_html=True,
     )
 
-def render_omnisfera_header():
+def render_omnisfera_header(active_tab: str = "Início"):
     """
-    Topbar fixa (apenas render).
+    Topbar fixa com navegação integrada (botões no mesmo padrão dos cards).
     O espaço do conteúdo é controlado por inject_layout_css().
     """
     ensure_state()
 
-    TOPBAR_H = 56
-    NAVBAR_H = 44  # Reduzido de 52 para 44 para diminuir espaço total
+    TOPBAR_H = 72  # Aumentado para acomodar botões
+    NAVBAR_H = 0   # Navbar removido, integrado na topbar
 
-    # 🔥 MUITO PERTO: content_gap=0 (espaço mínimo entre navbar e hero)
     inject_layout_css(topbar_h=TOPBAR_H, navbar_h=NAVBAR_H, content_gap=0)
 
     icone = get_base64_image("omni_icone.png")
@@ -451,196 +450,118 @@ def render_omnisfera_header():
         '<span style="font-weight:900;color:#0F172A;font-size:15px;letter-spacing:0.05em;">OMNISFERA</span>'
     )
 
+    # Configuração dos botões de navegação (mesmos ícones dos cards)
+    nav_items = [
+        {"key": "Início", "icon": "ri-home-4-fill", "label": "Início", "color": "#0F172A", "bg": "#F1F5F9", "page": "pages/0_Home.py"},
+        {"key": "Estudantes", "icon": "ri-user-star-fill", "label": "Estudantes", "color": "#1E40AF", "bg": "#DBEAFE", "page": "pages/Alunos.py"},
+        {"key": "Estratégias & PEI", "icon": "ri-book-3-fill", "label": "PEI", "color": "#0284C7", "bg": "#E0F2FE", "page": "pages/1_PEI.py"},
+        {"key": "Plano de Ação (AEE)", "icon": "ri-puzzle-fill", "label": "PAE", "color": "#9333EA", "bg": "#F3E8FF", "page": "pages/2_PAE.py"},
+        {"key": "Hub de Recursos", "icon": "ri-rocket-fill", "label": "Hub", "color": "#0891B2", "bg": "#CFFAFE", "page": "pages/3_Hub_Inclusao.py"},
+        {"key": "Diário de Bordo", "icon": "ri-edit-box-fill", "label": "Diário", "color": "#E11D48", "bg": "#FFE4E6", "page": "pages/4_Diario_de_Bordo.py"},
+        {"key": "Evolução & Dados", "icon": "ri-line-chart-fill", "label": "Dados", "color": "#075985", "bg": "#BAE6FD", "page": "pages/5_Monitoramento_Avaliacao.py"},
+    ]
+
+    # CSS para botões de navegação integrados
+    nav_buttons_html = ""
+    for item in nav_items:
+        is_active = item["key"] == active_tab
+        active_class = "nav-btn-active" if is_active else ""
+        active_style = f'background: {item["bg"]} !important; color: {item["color"]} !important; border-color: {item["color"]} !important;' if is_active else ""
+        
+        nav_buttons_html += f'''
+        <button class="omni-nav-btn {active_class}" 
+                data-page="{item["page"]}" 
+                data-key="{item["key"]}"
+                style="{active_style}"
+                onclick="window.parent.postMessage({{type: 'streamlit:setFrameHeight', height: 0}}, '*'); window.location.href='?nav_key={item["key"]}'">
+            <i class="{item["icon"]}"></i>
+            <span>{item["label"]}</span>
+        </button>
+        '''
+
     st.markdown(
         f"""
-<div class="omni-topbar">
-  <div class="omni-brand">
-    {img_logo}
-    {img_text}
-  </div>
-  <div class="omni-user-info">
-    <div class="omni-workspace" title="{ws_name}">{ws_name}</div>
-    <div class="omni-avatar" title="{user_name}">{_get_initials(user_name)}</div>
-  </div>
-</div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-def render_navbar(active_tab: str = "Início"):
-    """
-    Navbar horizontal FIXA (abaixo da topbar), sem margin negativa.
-    """
-    ensure_state()
-
-    opcoes = [
-        "Início",
-        "Estudantes",
-        "Estratégias & PEI",
-        "Plano de Ação (AEE)",
-        "Hub de Recursos",
-        "Diário de Bordo",
-        "Evolução & Dados",
-    ]
-    # Navbar nativo (sem streamlit_option_menu) para funcionar na Render e Streamlit Cloud
-    labels = {
-        "Início": "🏠 Início",
-        "Estudantes": "👥 Estudantes",
-        "Estratégias & PEI": "📘 PEI",
-        "Plano de Ação (AEE)": "🧩 Plano de Ação",
-        "Hub de Recursos": "🚀 Hub",
-        "Diário de Bordo": "📝 Diário",
-        "Evolução & Dados": "📊 Dados",
-    }
-
-    try:
-        default_idx = opcoes.index(active_tab)
-    except ValueError:
-        default_idx = 0
-
-    st.markdown(
-        """
         <style>
-          /* Navbar nativo via st.radio (Render-safe, estilo "tabs pills") */
-          .omni-navbar{
-            width: 100%;
-            margin-top: 0px !important;
-            margin-bottom: 0px !important;
-          }
-          .omni-navbar-inner{
-            width: min(1200px, calc(100% - 48px));
-            margin: 0 auto;
-            padding: 6px 10px;
-            background: rgba(255,255,255,0.72);
-            border: 1px solid rgba(226,232,240,0.9);
-            border-radius: 16px;
-            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
-            backdrop-filter: blur(10px);
-          }
-
-          /* limpa espaçamento do componente */
-          .omni-navbar .stRadio{
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          .omni-navbar .stRadio > div{
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-
-          /* Em telas pequenas: permite scroll horizontal */
-          .omni-navbar .stRadio [role="radiogroup"]{
-            display:flex;
-            flex-wrap: nowrap;
-            gap: 8px;
-            align-items:center;
-            justify-content:flex-start;
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding: 2px 2px;
-            scrollbar-width: none; /* firefox */
-          }
-          .omni-navbar .stRadio [role="radiogroup"]::-webkit-scrollbar{
-            display:none;
-          }
-
-          /* Base pill */
-          .omni-navbar .stRadio label{
-            margin: 0 !important;
-          }
-          .omni-navbar .stRadio div[role="radio"]{
-            border: 1px solid rgba(226,232,240,0.95);
-            background: rgba(255,255,255,0.88);
-            border-radius: 999px;
-            padding: 8px 12px;
-            font-size: 12px;
-            color: #475569;
-            line-height: 1;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-            backdrop-filter: blur(6px);
-            transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
-            user-select: none;
-            white-space: nowrap;
-          }
-          /* Remove o "pontinho" do radio (deixa só a pill clicável) */
-          .omni-navbar .stRadio div[role="radio"] > div:first-child{
+          /* Topbar com navegação integrada */
+          .omni-topbar {{
+            height: 72px !important;
+            flex-direction: column !important;
+            padding: 8px 24px !important;
+          }}
+          .omni-topbar-main {{
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+          }}
+          .omni-nav-buttons {{
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            flex-wrap: wrap !important;
+            justify-content: center !important;
+            margin-top: 4px !important;
+            width: 100% !important;
+            overflow-x: auto !important;
+            scrollbar-width: none !important;
+            padding: 2px 0 !important;
+          }}
+          .omni-nav-buttons::-webkit-scrollbar {{
             display: none !important;
-          }
-          /* Tipografia do conteúdo (ícone + texto) */
-          .omni-navbar .stRadio div[role="radio"] p{
-            margin: 0 !important;
-            padding: 0 !important;
-            font-size: 12px !important;
-            line-height: 1 !important;
-            font-weight: 800 !important;
+          }}
+          .omni-nav-btn {{
             display: inline-flex !important;
             align-items: center !important;
             gap: 6px !important;
-          }
-          .omni-navbar .stRadio div[role="radio"]:hover{
-            border-color: rgba(203,213,225,1);
-            background: rgba(255,255,255,0.98);
-            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
-            transform: translateY(-1px);
-          }
-          .omni-navbar .stRadio div[role="radio"][aria-checked="true"]{
-            background: #0F172A;
-            color: #ffffff;
-            border-color: rgba(15, 23, 42, 0.25);
-            font-weight: 900;
-            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.18);
-          }
-
-          /* Em telas maiores: centraliza e permite quebrar */
-          @media (min-width: 900px){
-            .omni-navbar .stRadio [role="radiogroup"]{
-              justify-content:center;
-              flex-wrap: wrap;
-              overflow-x: visible;
-            }
-          }
+            padding: 6px 10px !important;
+            border: 1px solid #E2E8F0 !important;
+            background: rgba(255,255,255,0.9) !important;
+            border-radius: 999px !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            color: #64748B !important;
+            cursor: pointer !important;
+            transition: all 0.15s ease !important;
+            white-space: nowrap !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+          }}
+          .omni-nav-btn i {{
+            font-size: 14px !important;
+            line-height: 1 !important;
+          }}
+          .omni-nav-btn:hover {{
+            background: #ffffff !important;
+            border-color: #CBD5E1 !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08) !important;
+          }}
+          .omni-nav-btn.nav-btn-active {{
+            font-weight: 900 !important;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.12) !important;
+          }}
         </style>
+        <div class="omni-topbar">
+          <div class="omni-topbar-main">
+            <div class="omni-brand">
+              {img_logo}
+              {img_text}
+            </div>
+            <div class="omni-user-info">
+              <div class="omni-workspace" title="{ws_name}">{ws_name}</div>
+              <div class="omni-avatar" title="{user_name}">{_get_initials(user_name)}</div>
+            </div>
+          </div>
+          <div class="omni-nav-buttons">
+            {nav_buttons_html}
+          </div>
+        </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="omni-navbar"><div class="omni-navbar-inner">', unsafe_allow_html=True)
-    selected = st.radio(
-        label="",
-        options=opcoes,
-        index=default_idx,
-        horizontal=True,
-        key="omni_nav_radio",
-        format_func=lambda x: labels.get(x, x),
-        label_visibility="collapsed",
-    )
-    st.markdown("</div></div>", unsafe_allow_html=True)
-    
-    # Adiciona CSS para cor específica da página no navbar selecionado
-    page_colors = {
-        "Início": {"bg": "#F1F5F9", "color": "#0F172A"},
-        "Estudantes": {"bg": "#DBEAFE", "color": "#1E40AF"},
-        "Estratégias & PEI": {"bg": "#E0F2FE", "color": "#0284C7"},
-        "Plano de Ação (AEE)": {"bg": "#F3E8FF", "color": "#9333EA"},
-        "Hub de Recursos": {"bg": "#CFFAFE", "color": "#0891B2"},
-        "Diário de Bordo": {"bg": "#FFE4E6", "color": "#E11D48"},
-        "Evolução & Dados": {"bg": "#BAE6FD", "color": "#075985"},
-    }
-    
-    if active_tab in page_colors:
-        color_info = page_colors[active_tab]
-        st.markdown(f"""
-        <style>
-        /* Aplica cor específica da página no navbar selecionado */
-        .omni-navbar .stRadio div[role="radio"][aria-checked="true"] {{
-            background-color: {color_info['color']} !important;
-            color: #ffffff !important;
-            border: 1px solid {color_info['color']} !important;
-        }}
-        </style>
-        """, unsafe_allow_html=True)
-
-    if selected != active_tab:
+    # Navegação via query params (Render-safe)
+    nav_key = st.query_params.get("nav_key")
+    if nav_key and nav_key != active_tab:
         routes = {
             "Início": "pages/0_Home.py" if os.path.exists("pages/0_Home.py") else "Home.py",
             "Estudantes": "pages/Alunos.py",
@@ -650,11 +571,18 @@ def render_navbar(active_tab: str = "Início"):
             "Diário de Bordo": "pages/4_Diario_de_Bordo.py",
             "Evolução & Dados": "pages/5_Monitoramento_Avaliacao.py",
         }
-        target = routes.get(selected)
+        target = routes.get(nav_key)
         if target:
-            if selected == "Início" and not os.path.exists(target):
+            if nav_key == "Início" and not os.path.exists(target):
                 target = "Home.py"
             st.switch_page(target)
+
+def render_navbar(active_tab: str = "Início"):
+    """
+    Navbar removido - agora integrado na topbar via render_omnisfera_header().
+    Mantido para compatibilidade (não faz nada).
+    """
+    pass
 
 # =============================================================================
 # 3) SUPABASE & UTILS (LÓGICA PRESERVADA)
