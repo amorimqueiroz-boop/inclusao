@@ -1311,7 +1311,7 @@ Se todas as missões forem cumpridas, você desbloqueia 15 minutos livres para p
                 <p style="font-weight:600;">Aguardando Configuração</p>
                 <p style="font-size:0.9rem;">Configure ao lado e clique em 'Gerar'</p>
             </div>
-            """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True) 
 
 
 
