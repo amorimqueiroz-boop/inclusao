@@ -2523,7 +2523,8 @@ def render_aba_criar_do_zero(aluno, api_key, unsplash_key):
         res = st.session_state['res_create']
         
         st.markdown("---")
-        st.markdown(f"### {icon_title(f'Atividade Criada: {res.get(\"mat_c\", \"\")} - {res.get(\"obj_c\", \"\")}', 'criar_zero', 20, '#06B6D4')}", unsafe_allow_html=True)
+        titulo_atividade = f"Atividade Criada: {res.get('mat_c', '')} - {res.get('obj_c', '')}"
+        st.markdown(f"### {icon_title(titulo_atividade, 'criar_zero', 20, '#06B6D4')}", unsafe_allow_html=True)
         
         # Barra de status
         if res.get('valid'):
