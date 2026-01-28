@@ -1190,10 +1190,10 @@ def renderizar_hub_recurso(tipo_recurso, conteudo_gerado, aluno_nome, dados_entr
         
         # 1. MODO REVISÃO (após geração inicial)
         if status == 'revisao':
-            # Mostra o conteúdo gerado em container formatado
+            # Mostra o conteúdo gerado em container formatado (texto simples, sem Markdown)
             st.markdown("### 📝 Conteúdo Gerado")
             with st.container(border=True):
-                st.markdown(conteudo_gerado)
+                st.text(conteudo_gerado)
             
             st.markdown("---")
             st.markdown("### 🔧 Ações Disponíveis")
@@ -1259,10 +1259,10 @@ def renderizar_hub_recurso(tipo_recurso, conteudo_gerado, aluno_nome, dados_entr
         elif status == 'aprovado':
             st.success("✅ **Recurso Validado e Pronto para Uso**")
             
-            # Mostra o conteúdo final em container formatado
+            # Mostra o conteúdo final em container formatado (texto simples, sem Markdown)
             st.markdown("### 📋 Conteúdo Final")
             with st.container(border=True):
-                st.markdown(conteudo_gerado)
+                st.text(conteudo_gerado)
             
             st.markdown("---")
             st.markdown("### 💾 Opções de Download")
