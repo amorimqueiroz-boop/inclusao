@@ -2404,7 +2404,10 @@ with tab4:
     # 1) POTENCIALIDADES + HIPERFOCO
     # -------------------------
     with st.container(border=True):
-        st.markdown("#### Potencialidades e Hiperfoco")
+        st.markdown(
+            f"#### {icon_title('Potencialidades e Hiperfoco', 'pei', 20, '#0EA5E9')}",
+            unsafe_allow_html=True
+        )
         c1, c2 = st.columns(2)
 
         st.session_state.dados["hiperfoco"] = c1.text_input(
@@ -2422,7 +2425,10 @@ with tab4:
 
     st.divider()
 
-    st.markdown("#### Barreiras e nível de apoio")
+    st.markdown(
+        f"#### {icon_title('Barreiras e nível de apoio', 'configurar', 20, '#0EA5E9')}",
+        unsafe_allow_html=True
+    )
     st.caption("Selecione as barreiras observadas e defina o nível de apoio para a rotina escolar (não é DUA).")
 
     # -------------------------
@@ -3493,4 +3499,3 @@ with tab_9:
 # RODAPÉ COM ASSINATURA
 # ==============================================================================
 ou.render_footer_assinatura()
-
