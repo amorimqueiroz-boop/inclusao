@@ -656,7 +656,88 @@ footer {
 )
 
 # ==============================================================================
-# 3. FUNÇÕES AUXILIARES
+# 3. BIBLIOTECA DE ÍCONES FLAT (REMIXICON)
+# ==============================================================================
+ICON_LIBRARY = {
+    # Módulos Principais
+    "estudantes": {"icon": "ri-user-star-line", "color": "#2563EB"},
+    "pei": {"icon": "ri-book-open-line", "color": "#0EA5E9"},
+    "pae": {"icon": "ri-tools-line", "color": "#A855F7"},
+    "hub": {"icon": "ri-lightbulb-flash-line", "color": "#06B6D4"},
+    "diario": {"icon": "ri-edit-box-line", "color": "#F43F5E"},
+    "monitoramento": {"icon": "ri-line-chart-line", "color": "#0C4A6E"},
+    
+    # Central de Conhecimento - Abas
+    "panorama": {"icon": "ri-bar-chart-box-line", "color": "#2563EB"},
+    "legislacao": {"icon": "ri-scales-3-line", "color": "#2563EB"},
+    "glossario": {"icon": "ri-book-2-line", "color": "#2563EB"},
+    "linguagem": {"icon": "ri-chat-3-line", "color": "#2563EB"},
+    "biblioteca": {"icon": "ri-library-line", "color": "#2563EB"},
+    "manual": {"icon": "ri-book-mark-line", "color": "#2563EB"},
+    
+    # Ações e Estados
+    "fluxo": {"icon": "ri-flow-chart", "color": "#2563EB"},
+    "filosofia": {"icon": "ri-heart-line", "color": "#2563EB"},
+    "justica": {"icon": "ri-scales-line", "color": "#2563EB"},
+    "buscar": {"icon": "ri-search-line", "color": "#64748B"},
+    "preferir": {"icon": "ri-checkbox-circle-line", "color": "#16A34A"},
+    "evitar": {"icon": "ri-close-circle-line", "color": "#DC2626"},
+    "legislacao_doc": {"icon": "ri-government-line", "color": "#2563EB"},
+    "pedagogia": {"icon": "ri-brain-line", "color": "#2563EB"},
+    "livro": {"icon": "ri-book-line", "color": "#2563EB"},
+    
+    # Hub de Inclusão
+    "adaptar_prova": {"icon": "ri-file-edit-line", "color": "#06B6D4"},
+    "adaptar_atividade": {"icon": "ri-scissors-cut-line", "color": "#06B6D4"},
+    "criar_zero": {"icon": "ri-magic-line", "color": "#06B6D4"},
+    "estudio_visual": {"icon": "ri-image-edit-line", "color": "#06B6D4"},
+    "roteiro": {"icon": "ri-file-list-3-line", "color": "#06B6D4"},
+    "papo_mestre": {"icon": "ri-chat-smile-2-line", "color": "#06B6D4"},
+    "dinamica": {"icon": "ri-group-line", "color": "#06B6D4"},
+    "plano_aula": {"icon": "ri-calendar-todo-line", "color": "#06B6D4"},
+    
+    # Educação Infantil
+    "experiencia": {"icon": "ri-lightbulb-line", "color": "#06B6D4"},
+    "rotina": {"icon": "ri-time-line", "color": "#06B6D4"},
+    "brincar": {"icon": "ri-gamepad-line", "color": "#06B6D4"},
+}
+
+def get_icon(key: str, size: int = 20, color: str = None) -> str:
+    """
+    Retorna HTML do ícone RemixIcon com cor personalizada.
+    
+    Args:
+        key: Chave do ícone na biblioteca
+        size: Tamanho em pixels (padrão 20)
+        color: Cor personalizada (sobrescreve a cor padrão)
+    
+    Returns:
+        String HTML com o ícone
+    """
+    icon_data = ICON_LIBRARY.get(key.lower(), {"icon": "ri-question-line", "color": "#64748B"})
+    icon_class = icon_data["icon"]
+    icon_color = color or icon_data["color"]
+    
+    return f'<i class="{icon_class}" style="font-size: {size}px; color: {icon_color}; vertical-align: middle;"></i>'
+
+def icon_title(text: str, icon_key: str, size: int = 24, color: str = None) -> str:
+    """
+    Cria um título com ícone integrado.
+    
+    Args:
+        text: Texto do título
+        icon_key: Chave do ícone na biblioteca
+        size: Tamanho do ícone
+        color: Cor personalizada
+    
+    Returns:
+        String HTML formatada
+    """
+    icon_html = get_icon(icon_key, size, color)
+    return f'{icon_html} <span style="vertical-align: middle;">{text}</span>'
+
+# ==============================================================================
+# 4. FUNÇÕES AUXILIARES
 # ==============================================================================
 def get_base64_image(image_path: str) -> str:
     """Carrega imagem e converte para base64"""
@@ -970,6 +1051,10 @@ def render_central_conhecimento():
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             font-size: 0.9rem;
             letter-spacing: -0.2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         .stTabs [data-baseweb="tab"]:hover {
             background-color: #F8FAFC;
@@ -986,19 +1071,20 @@ def render_central_conhecimento():
     </style>
     """, unsafe_allow_html=True)
     
-    # Título elegante
-    st.markdown("""
+    # Título elegante com ícone
+    st.markdown(f"""
     <div style="margin-bottom: 32px;">
-        <h2 style="font-size: 2rem; font-weight: 800; color: #1E293B; margin-bottom: 8px; letter-spacing: -0.5px;">
-            🧠 Central de Inteligência Inclusiva
+        <h2 style="font-size: 2rem; font-weight: 800; color: #1E293B; margin-bottom: 8px; letter-spacing: -0.5px; display: flex; align-items: center; gap: 12px;">
+            {get_icon("hub", 32, "#2563EB")}
+            <span>Central de Inteligência Inclusiva</span>
         </h2>
-        <p style="color: #64748B; font-size: 1rem; font-weight: 500;">
+        <p style="color: #64748B; font-size: 1rem; font-weight: 500; margin-left: 44px;">
             Fundamentos Pedagógicos, Marcos Legais e Ferramentas Práticas.
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Navegação Principal
+    # Navegação Principal (emojis mantidos nas abas - limitação do Streamlit)
     tab_panorama, tab_legal, tab_glossario, tab_linguagem, tab_biblio, tab_manual = st.tabs([
         "📊 Panorama & Fluxos", 
         "⚖️ Legislação & IA", 
@@ -1010,7 +1096,7 @@ def render_central_conhecimento():
     
     # ABA 1: PANORAMA
     with tab_panorama:
-        st.markdown("### 🔄 O Fluxo da Inclusão (Omnisfera 2025)")
+        st.markdown(f"### {icon_title('O Fluxo da Inclusão (Omnisfera 2025)', 'fluxo', 24, '#2563EB')}", unsafe_allow_html=True)
         st.caption("Visualização do ecossistema escolar atualizado com os novos decretos.")
         
         try:
@@ -1037,16 +1123,16 @@ def render_central_conhecimento():
         
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown("""
+            st.markdown(f"""
             <div class="content-card">
-                <h4>🤝 Filosofia: "Outrar-se"</h4>
+                <h4>{icon_title('Filosofia: "Outrar-se"', 'filosofia', 20, '#2563EB')}</h4>
                 <p style="color:#64748b;">A capacidade de sentir o mundo do outro mantendo o distanciamento profissional. É ter empatia sem confundir papéis, superando o capacitismo.</p>
             </div>
             """, unsafe_allow_html=True)
         with c2:
-            st.markdown("""
+            st.markdown(f"""
             <div class="content-card">
-                <h4>⚖️ Justiça Curricular</h4>
+                <h4>{icon_title('Justiça Curricular', 'justica', 20, '#2563EB')}</h4>
                 <p style="color:#64748b;">O currículo não pode ser uma barreira. O PEI materializa a justiça curricular, garantindo acesso ao conhecimento através da adaptação.</p>
             </div>
             """, unsafe_allow_html=True)
@@ -1056,16 +1142,16 @@ def render_central_conhecimento():
         c_info, c_ai = st.columns([1.5, 1])
         
         with c_info:
-            st.markdown("### 📜 Legislação em Foco (2025)")
+            st.markdown(f"### {icon_title('Legislação em Foco (2025)', 'legislacao', 24, '#2563EB')}", unsafe_allow_html=True)
             
-            with st.expander("💰 Decreto 12.686/2025: O Financiamento (Duplo Fundo)", expanded=True):
+            with st.expander(f"{get_icon('legislacao', 18, '#2563EB')} Decreto 12.686/2025: O Financiamento (Duplo Fundo)", expanded=True):
                 st.markdown("""
                 **Mudança Estrutural:**
                 1.  **Dupla Matrícula:** O aluno público-alvo da educação especial é contabilizado **duas vezes** no FUNDEB (Matrícula Comum + AEE).
                 2.  **Destinação:** A verba extra deve ser usada para Sala de Recursos, materiais adaptados e contratação de profissionais de apoio.
                 """)
                 
-            with st.expander("🚫 Decreto 12.773/2025: Garantia de Acesso (Escolas Privadas)"):
+            with st.expander(f"{get_icon('evitar', 18, '#DC2626')} Decreto 12.773/2025: Garantia de Acesso (Escolas Privadas)"):
                 st.markdown("""
                 **Tolerância Zero para Barreiras:**
                 1.  **Taxas Extras:** É **ilegal** cobrar valor adicional na mensalidade para custear monitor ou material.
@@ -1104,10 +1190,10 @@ def render_central_conhecimento():
 
     # ABA 3: GLOSSÁRIO TÉCNICO
     with tab_glossario:
-        st.markdown("### 📖 Glossário Técnico Conceitual")
+        st.markdown(f"### {icon_title('Glossário Técnico Conceitual', 'glossario', 24, '#2563EB')}", unsafe_allow_html=True)
         st.markdown("Definições oficiais para embasar relatórios e PEIs.")
         
-        termo_busca = st.text_input("🔍 Filtrar conceitos:", placeholder="Digite para buscar...")
+        termo_busca = st.text_input(f"{get_icon('buscar', 18, '#64748B')} Filtrar conceitos:", placeholder="Digite para buscar...")
 
         glossario_db = [
             {"t": "AEE (Atendimento Educacional Especializado)", "d": "Serviços educacionais suplementares que potencializam habilidades para que o aluno adquira autonomia. É transversal a todos os níveis, mas não substitui a escolarização regular."},
@@ -1140,13 +1226,13 @@ def render_central_conhecimento():
 
     # ABA 4: DICIONÁRIO ANTICAPACITISTA
     with tab_linguagem:
-        st.markdown("### 🗣️ Guia de Linguagem Inclusiva")
+        st.markdown(f"### {icon_title('Guia de Linguagem Inclusiva', 'linguagem', 24, '#2563EB')}", unsafe_allow_html=True)
         st.markdown("Termos para adotar e termos para abolir, baseados no respeito e na técnica.")
 
         col_g1, col_g2 = st.columns(2)
         
         with col_g1:
-            st.markdown("#### ✅ PREFIRA (Termos Corretos)")
+            st.markdown(f"#### {icon_title('PREFIRA (Termos Corretos)', 'preferir', 20, '#16A34A')}", unsafe_allow_html=True)
             termos_bons = [
                 ("Pessoa com Deficiência (PcD)", "Termo legal da LBI. Marca a deficiência como atributo, não identidade total."),
                 ("Estudante com Deficiência", "Foco na pessoa primeiro."),
@@ -1163,7 +1249,7 @@ def render_central_conhecimento():
                 </div>""", unsafe_allow_html=True)
 
         with col_g2:
-            st.markdown("#### 🚫 EVITE (Termos Ofensivos)")
+            st.markdown(f"#### {icon_title('EVITE (Termos Ofensivos)', 'evitar', 20, '#DC2626')}", unsafe_allow_html=True)
             termos_ruins = [
                 ("Portador de Deficiência", "Deficiência não se porta (como uma bolsa). É intrínseca."),
                 ("Aluno de Inclusão", "Segrega. Todos são alunos de inclusão."),
@@ -1182,17 +1268,17 @@ def render_central_conhecimento():
 
     # ABA 5: BIBLIOTECA VIRTUAL
     with tab_biblio:
-        st.markdown("### 📚 Acervo Bibliográfico Completo")
+        st.markdown(f"### {icon_title('Acervo Bibliográfico Completo', 'biblioteca', 24, '#2563EB')}", unsafe_allow_html=True)
         st.markdown("Clique nos itens para expandir o resumo e acessar o link (quando disponível).")
 
         def render_livro(titulo, autor, resumo, link=None, tag="Referência"):
-            with st.expander(f"📕 {titulo}"):
+            with st.expander(f"{get_icon('livro', 18, '#2563EB')} {titulo}"):
                 st.markdown(f"**Autor/Fonte:** {autor}")
                 st.markdown(f"**Sobre:** {resumo}")
                 if link:
-                    st.markdown(f"""<a href="{link}" target="_blank" class="biblio-link">🔗 Acessar Documento</a>""", unsafe_allow_html=True)
+                    st.markdown(f"""<a href="{link}" target="_blank" class="biblio-link">{get_icon('buscar', 16, '#2563EB')} Acessar Documento</a>""", unsafe_allow_html=True)
 
-        st.markdown("#### 🏛️ Legislação e Documentos Oficiais")
+        st.markdown(f"#### {icon_title('Legislação e Documentos Oficiais', 'legislacao_doc', 20, '#2563EB')}", unsafe_allow_html=True)
         render_livro("Lei Brasileira de Inclusão (13.146/2015)", "Brasil", "Estatuto da PcD. Define barreira e criminaliza discriminação.", "http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm")
         render_livro("Decretos 12.686 e 12.773 (2025)", "Governo Federal", "Regulamentam o financiamento do AEE (Duplo Fundo) e proíbem cobranças extras.", "https://www.planalto.gov.br")
         render_livro("Política Nacional de Educação Especial (2008)", "MEC", "Consolidou a matrícula na escola comum.", "http://portal.mec.gov.br/seesp/arquivos/pdf/politica.pdf")
@@ -1200,7 +1286,7 @@ def render_central_conhecimento():
         render_livro("Base Nacional Comum Curricular (BNCC)", "MEC", "Define as aprendizagens essenciais.", "https://www.gov.br/mec/pt-br/escola-em-tempo-integral/BNCC_EI_EF_110518_versaofinal.pdf")
         render_livro("Convenção sobre os Direitos das Pessoas com Deficiência", "ONU/Brasil (2008)", "Tratado internacional com status de emenda constitucional.", "https://www.planalto.gov.br/ccivil_03/_ato2007-2010/2009/decreto/d6949.htm")
 
-        st.markdown("#### 🧠 Fundamentos Pedagógicos e Autores")
+        st.markdown(f"#### {icon_title('Fundamentos Pedagógicos e Autores', 'pedagogia', 20, '#2563EB')}", unsafe_allow_html=True)
         render_livro("Inclusão Escolar: O que é? Como fazer?", "Maria Teresa Eglér Mantoan (2003)", "Diferencia integração de inclusão. Obra clássica.", None)
         render_livro("O Currículo e seus desafios: em busca da justiça curricular", "Branca Jurema Ponce (2018)", "Discute a justiça curricular como base da inclusão.", "http://www.curriculosemfronteiras.org/vol18iss3articles/ponce.pdf")
         render_livro("Altas Habilidades/Superdotação: inteligência e criatividade", "Virgolim, A. M. R. (2014)", "Conceitos de Renzulli e modelo dos três anéis.", None)
@@ -1210,13 +1296,13 @@ def render_central_conhecimento():
 
     # ABA 6: MANUAL DA JORNADA
     with tab_manual:
-        st.markdown("### 📘 Manual da Jornada Omnisfera: O Ciclo da Inclusão")
+        st.markdown(f"### {icon_title('Manual da Jornada Omnisfera: O Ciclo da Inclusão', 'manual', 24, '#2563EB')}", unsafe_allow_html=True)
         st.markdown("Fluxo de trabalho ideal conectando planejamento, AEE e prática.")
 
         # PASSO 1
-        st.markdown("""
+        st.markdown(f"""
         <div class="manual-box">
-            <div class="manual-header"><span style="font-size:2rem;">1️⃣</span> O Alicerce: Planejamento (PEI)</div>
+            <div class="manual-header">{get_icon('pei', 28, '#0EA5E9')} <span>O Alicerce: Planejamento (PEI)</span></div>
             <div class="manual-quote">"Não há inclusão sem intenção. Conhecer para incluir."</div>
             <p>Tudo começa na página <strong>Estratégias & PEI</strong>. Antes de pensar em recursos, precisamos mapear quem é o estudante.</p>
             <p><strong>Ação na Plataforma:</strong></p>
@@ -1232,9 +1318,9 @@ def render_central_conhecimento():
         """, unsafe_allow_html=True)
 
         # PASSO 2
-        st.markdown("""
+        st.markdown(f"""
         <div class="manual-box">
-            <div class="manual-header"><span style="font-size:2rem;">2️⃣</span> A Estratégia: O AEE e o Plano de Ação (PAEE)</div>
+            <div class="manual-header">{get_icon('pae', 28, '#A855F7')} <span>A Estratégia: O AEE e o Plano de Ação (PAEE)</span></div>
             <div class="manual-quote">"A articulação entre o suporte especializado e a sala comum."</div>
             <p>Aqui entra a execução técnica do PEI. Na página <strong>Plano de Ação / PAEE</strong>, organizamos o Atendimento Especializado.</p>
             <p><strong>Ação na Plataforma:</strong></p>
@@ -1250,9 +1336,9 @@ def render_central_conhecimento():
         """, unsafe_allow_html=True)
 
         # PASSO 3
-        st.markdown("""
+        st.markdown(f"""
         <div class="manual-box">
-            <div class="manual-header"><span style="font-size:2rem;">3️⃣</span> A Ferramenta: Adaptação (Hub de Inclusão)</div>
+            <div class="manual-header">{get_icon('hub', 28, '#06B6D4')} <span>A Ferramenta: Adaptação (Hub de Inclusão)</span></div>
             <div class="manual-quote">"Acessibilidade é garantir que o conteúdo chegue a todos."</div>
             <p>Com o plano definido, vamos construir a aula. A página <strong>Hub de Recursos</strong> é sua oficina.</p>
             <div class="key-concept">
@@ -1264,33 +1350,33 @@ def render_central_conhecimento():
         # PASSO 4 e 5 (Agrupados)
         c_log, c_data = st.columns(2)
         with c_log:
-            st.markdown("""
-            <div class="content-card" style="border-left:5px solid #f59e0b;">
-                <h4>4️⃣ O Registro: Diário de Bordo</h4>
+            st.markdown(f"""
+            <div class="content-card" style="border-left:5px solid #F43F5E;">
+                <h4>{icon_title('O Registro: Diário de Bordo', 'diario', 20, '#F43F5E')}</h4>
                 <p><em>"O olhar atento transforma a prática."</em></p>
                 <p>Registre o que funcionou e o engajamento. Use o conceito de <strong>"outrar-se"</strong>.</p>
             </div>
             """, unsafe_allow_html=True)
         with c_data:
-            st.markdown("""
-            <div class="content-card" style="border-left:5px solid #ef4444;">
-                <h4>5️⃣ O Fechamento: Avaliação</h4>
+            st.markdown(f"""
+            <div class="content-card" style="border-left:5px solid #0C4A6E;">
+                <h4>{icon_title('O Fechamento: Avaliação', 'monitoramento', 20, '#0C4A6E')}</h4>
                 <p><em>"Avaliar para recalcular a rota."</em></p>
                 <p>Use as <strong>Rubricas</strong> para fugir do "achismo". Se a meta foi atingida, avançamos.</p>
             </div>
             """, unsafe_allow_html=True)
 
         # Tabela Resumo Final
-        st.markdown("#### 🧭 Resumo do Ecossistema")
-        st.markdown("""
+        st.markdown(f"#### {icon_title('Resumo do Ecossistema', 'fluxo', 20, '#2563EB')}", unsafe_allow_html=True)
+        st.markdown(f"""
         | Passo | Módulo | Função |
         | :--- | :--- | :--- |
-        | 1 | 📘 PEI | **Fundamentar:** Quem é o aluno? |
-        | 2 | 🧩 PAEE | **Estruturar:** Suporte especializado. |
-        | 3 | 🚀 Hub | **Instrumentalizar:** Criar recursos. |
-        | 4 | 📓 Diário | **Registrar:** Execução diária. |
-        | 5 | 📊 Dados | **Validar:** Medir sucesso. |
-        """)
+        | 1 | {get_icon('pei', 18, '#0EA5E9')} PEI | **Fundamentar:** Quem é o aluno? |
+        | 2 | {get_icon('pae', 18, '#A855F7')} PAEE | **Estruturar:** Suporte especializado. |
+        | 3 | {get_icon('hub', 18, '#06B6D4')} Hub | **Instrumentalizar:** Criar recursos. |
+        | 4 | {get_icon('diario', 18, '#F43F5E')} Diário | **Registrar:** Execução diária. |
+        | 5 | {get_icon('monitoramento', 18, '#0C4A6E')} Dados | **Validar:** Medir sucesso. |
+        """, unsafe_allow_html=True)
 
 
 def render_resources():
