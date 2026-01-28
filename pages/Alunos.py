@@ -21,7 +21,7 @@ except ImportError:
 # ==============================================================================
 st.set_page_config(
     page_title="Omnisfera • Estudantes",
-    page_icon="👥",
+    page_icon="omni_icone.png" if os.path.exists("omni_icone.png") else "👥",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -344,5 +344,5 @@ else:
     
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Rodapé Simples
-st.markdown(f"<div style='text-align:center;color:#94A3B8;font-size:0.7rem;padding:20px;margin-top:20px;'>{len(alunos)} estudantes • {APP_VERSION}</div>", unsafe_allow_html=True)
+# Rodapé com assinatura
+ou.render_footer_assinatura()
