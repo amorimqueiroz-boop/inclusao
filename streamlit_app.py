@@ -5,22 +5,27 @@ from login_view import render_login
 
 
 def get_env() -> str:
+    v = (os.environ.get("ENV") or "").strip()
+    if v:
+        return v.upper()
     try:
-        v = st.secrets.get("ENV", None)
-        if v:
-            return str(v).strip().upper()
+        v2 = st.secrets.get("ENV", None)
+        return str(v2).strip().upper() if v2 else ""
     except Exception:
-        pass
-    return (os.getenv("ENV") or "").strip().upper()
+        return ""
 
 
 ENV = get_env()
+
+# Desabilita menu completamente se não estiver em TESTE
+menu_items = {} if ENV != "TESTE" else None
 
 st.set_page_config(
     page_title="Omnisfera | Ecossistema",
     page_icon="iconeaba.png" if os.path.exists("iconeaba.png") else "🌐",
     layout="wide",
     initial_sidebar_state="collapsed",
+    menu_items=menu_items,
 )
 
 # Esconde chrome só fora do TESTE
@@ -28,10 +33,19 @@ if ENV != "TESTE":
     st.markdown(
         """
         <style>
-          #MainMenu {visibility: hidden;}
-          footer {visibility: hidden;}
-          header {visibility: hidden;}
-          [data-testid="stToolbar"] {visibility: hidden;}
+          #MainMenu {visibility: hidden !important; display: none !important;}
+          footer {visibility: hidden !important; display: none !important;}
+          header {visibility: hidden !important; display: none !important;}
+          [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+          [data-testid="stDecoration"] {display: none !important; visibility: hidden !important;}
+          [data-testid="stStatusWidget"] {display: none !important; visibility: hidden !important;}
+          [data-testid="stDeployButton"] {display: none !important; visibility: hidden !important;}
+          button[title="View app source"] {display: none !important; visibility: hidden !important;}
+          button[title="Get help"] {display: none !important; visibility: hidden !important;}
+          button[title="Report a bug"] {display: none !important; visibility: hidden !important;}
+          button[title="Settings"] {display: none !important; visibility: hidden !important;}
+          [data-testid="stHeader"] {display: none !important; visibility: hidden !important;}
+          [data-testid="stToolbarActions"] {display: none !important; visibility: hidden !important;}
         </style>
         """,
         unsafe_allow_html=True,
