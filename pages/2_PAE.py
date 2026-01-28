@@ -109,6 +109,10 @@ ou.inject_hero_card_colors()
 # CSS padronizado: abas (pílulas), botões, selects, etc.
 ou.inject_unified_ui_css()
 
+# Garantir que RemixIcon está carregado para os ícones aparecerem
+st.markdown("""
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+""", unsafe_allow_html=True)
 
 # ==============================================================================
 # BLOCO VISUAL (GLOBAL) — CSS DO MÓDULO + GATE (REAPROVEITÁVEL)
@@ -189,9 +193,33 @@ def inject_paee_css(theme: str = "teal"):
       transition:all .3s ease;
       color:{ACCENT} !important;
   }}
+  .mod-icon-area i {{
+      color:{ACCENT} !important;
+      font-size:2rem !important;
+      display:inline-block !important;
+      line-height:1 !important;
+      visibility:visible !important;
+      opacity:1 !important;
+      font-style:normal !important;
+      font-weight:normal !important;
+  }}
+  /* Classe bg-purple-soft para hero card */
+  .bg-purple-soft {{
+      background:#F3E8FF !important;
+  }}
+  .bg-purple-soft i {{
+      color:#9333EA !important;
+      visibility:visible !important;
+      opacity:1 !important;
+      display:inline-block !important;
+      font-size:2rem !important;
+  }}
   .mod-card-rect:hover .mod-icon-area {{
       background:white !important;
       transform:scale(1.05) !important;
+  }}
+  .mod-card-rect:hover .mod-icon-area i {{
+      color:{ACCENT} !important;
   }}
   .mod-content {{
       flex-grow:1;
@@ -298,8 +326,8 @@ st.markdown(
     <div class="mod-card-wrapper">
         <div class="mod-card-rect">
             <div class="mod-bar c-purple"></div>
-            <div class="mod-icon-area bg-purple-soft">
-                <i class="ri-puzzle-fill"></i>
+            <div class="mod-icon-area bg-purple-soft" style="display: flex; align-items: center; justify-content: center;">
+                <i class="ri-puzzle-fill" style="font-size: 2rem; color: #9333EA; display: inline-block; visibility: visible; opacity: 1; font-style: normal;"></i>
             </div>
             <div class="mod-content">
                 <div class="mod-title">Atendimento Educacional Especializado (AEE) & Tecnologia Assistiva</div>
