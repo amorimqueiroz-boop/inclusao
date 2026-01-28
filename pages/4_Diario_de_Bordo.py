@@ -629,7 +629,7 @@ with tab_filtros:
     st.markdown(f"### {icon_title('Estatísticas', 'monitoramento', 24, '#F43F5E')}", unsafe_allow_html=True)
     
     # Botão para carregar estatísticas
-        if st.button("📊 Carregar Estatísticas", type="primary", use_container_width=True):
+    if st.button("📊 Carregar Estatísticas", type="primary", use_container_width=True):
         registros = []
         try:
             with st.spinner("Carregando registros..."):
