@@ -5,219 +5,274 @@ import plotly.graph_objects as go
 import graphviz
 
 # ==============================================================================
-# 1. ESTILIZAÇÃO CUSTOMIZADA (CSS PREMIUM)
+# 1. CONFIGURAÇÃO VISUAL & CSS (Design System Omnisfera)
 # ==============================================================================
+st.set_page_config(page_title="Guia de Práticas | Omnisfera", page_icon="📚", layout="wide")
+
 st.markdown("""
 <style>
-    /* Cards Flutuantes */
+    /* Cards e Containers */
     .stCard {
         background-color: white;
-        padding: 20px;
+        padding: 24px;
         border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        border-left: 5px solid #FF4B4B;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #E2E8F0;
         margin-bottom: 20px;
+        transition: transform 0.2s;
     }
-    .stCardBlue {
-        background-color: #F0F7FF;
-        padding: 20px;
-        border-radius: 12px;
-        border-left: 5px solid #0F52BA;
-        color: #0F52BA;
+    .stCard:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+    
+    .card-red { border-left: 5px solid #FF4B4B; }
+    .card-blue { border-left: 5px solid #0F52BA; }
+    .card-green { border-left: 5px solid #00CC96; }
+    .card-purple { border-left: 5px solid #8856F5; }
+
+    /* Tipografia */
+    h1, h2, h3 { font-family: 'Nunito', sans-serif; }
+    h3 { color: #2D3748 !important; font-weight: 700; }
+    .highlight { color: #FF4B4B; font-weight: bold; }
+    
+    /* Abas Personalizadas */
+    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
+    .stTabs [data-baseweb="tab"] {
+        background-color: #F7FAFC;
+        border-radius: 8px 8px 0 0;
+        padding: 10px 20px;
+        border: none;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #FFFFFF !important;
+        border-top: 3px solid #FF4B4B !important;
+        color: #FF4B4B !important;
+        font-weight: bold;
     }
     
-    /* Títulos e Métricas */
-    h3 { color: #FF4B4B !important; }
-    div[data-testid="stMetricValue"] { color: #0F52BA !important; }
-    
-    /* Abas */
-    .stTabs [data-baseweb="tab-highlight"] { background-color: #FF4B4B; }
+    /* Métricas */
+    div[data-testid="stMetric"] { background-color: #F8FAFC; padding: 15px; border-radius: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("📚 Guia de Práticas e Fundamentos")
-st.markdown("Base de conhecimento visual para suporte à gestão e prática da educação inclusiva.")
+# ==============================================================================
+# 2. HEADER E INTRODUÇÃO
+# ==============================================================================
+c1, c2 = st.columns([3, 1])
+with c1:
+    st.title("📚 Central de Conhecimento Inclusivo")
+    st.markdown("Base estratégica para gestão do **PEI**, **PAEE** e fundamentação legal.")
 
-# Abas
-tab1, tab2, tab3, tab4 = st.tabs([
+# Navegação Principal
+tab_fundamentos, tab_paee, tab_pratica, tab_equipe = st.tabs([
     "🏛️ Fundamentos & Legal", 
-    "📊 Gestão & Dados", 
-    "🧠 Prática Pedagógica",
-    "🤝 Equipe & Papéis"
+    "📝 PEI vs PAEE (Gestão)", 
+    "🧠 Práticas (BNCC & Socioemocional)",
+    "🤝 Papéis & Equipe"
 ])
 
 # ==============================================================================
-# ABA 1: FUNDAMENTOS & TIMELINE INTERATIVA
+# 3. ABA FUNDAMENTOS: TIMELINE & CONCEITOS
 # ==============================================================================
-with tab1:
-    st.header("Filosofia e Legislação")
-    
-    # Bloco Conceitual (Cards Lado a Lado)
-    c1, c2 = st.columns(2)
-    with c1:
+with tab_fundamentos:
+    st.header("Filosofia e Marcos Legais")
+    st.markdown("Os pilares que sustentam a educação inclusiva no Brasil.")
+
+    # Bloco 1: Conceitos Chave
+    col1, col2 = st.columns(2)
+    with col1:
         st.markdown("""
-        <div class="stCardBlue">
-            <h4>💡 O Conceito de 'Outrar-se'</h4>
-            <p><em>"Sentir o mundo do outro como se fosse o seu... numa relação empática sem se envolver com os sentimentos da pessoa."</em></p>
-            <small>— Fernando Pessoa (Bernardo Soares)</small>
-            <br><br>
-            <strong>Aplicação:</strong> Empatia Técnica. Interpretar a necessidade sem perder a postura profissional.
+        <div class="stCard card-blue">
+            <h3>💡 O Princípio de 'Outrar-se'</h3>
+            <p style="font-style: italic; color: #555;">
+                "Sentir o mundo do outro como se fosse o seu... numa relação empática sem se perder nos sentimentos alheios."
+            </p>
+            <hr>
+            <p><strong>Aplicação Prática:</strong> Empatia Técnica. O educador deve acolher a diferença sem perder a postura profissional de mediador do conhecimento.</p>
         </div>
         """, unsafe_allow_html=True)
     
-    with c2:
+    with col2:
         st.markdown("""
-        <div class="stCard" style="border-left-color: #FF4B4B;">
-            <h4>🚫 Inimigo: Capacitismo</h4>
-            <p>Preconceito que pressupõe a deficiência como uma 'falta' ou 'diminuição'.</p>
+        <div class="stCard card-red">
+            <h3>🚫 O Inimigo: Capacitismo</h3>
+            <p>Concepção que reduz a pessoa à sua deficiência, pressupondo incapacidade.</p>
+            <hr>
             <ul>
-                <li><strong>Físico:</strong> Falta de rampas, banheiros.</li>
-                <li><strong>Simbólico:</strong> Metáforas ("fingir de cego") e viés inconsciente.</li>
+                <li><strong>Capacitismo Físico:</strong> Barreiras arquitetônicas.</li>
+                <li><strong>Capacitismo Atitudinal:</strong> "Ele é um anjo", "Apesar da deficiência...", infantilização.</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
 
     st.divider()
-    st.subheader("📜 Evolução dos Marcos Legais")
+
+    # Bloco 2: Linha do Tempo Interativa
+    st.subheader("📜 Evolução Histórica (Brasil)")
     
-    # CRIAÇÃO DA TIMELINE COM PLOTLY (Visual Gráfico)
     timeline_data = [
-        dict(Ano="1988", Marco="Constituição Federal", Desc="Direito de todos"),
-        dict(Ano="1994", Marco="Declaração de Salamanca", Desc="Compromisso Global"),
-        dict(Ano="1996", Marco="LDB (Lei 9.394)", Desc="Obrig. Educação Especial"),
-        dict(Ano="2008", Marco="PNEEPEI", Desc="Política Nacional na Escola Comum"),
-        dict(Ano="2015", Marco="LBI (Lei 13.146)", Desc="Lei Brasileira de Inclusão")
+        dict(Ano="1988", Marco="Constituição Federal", Desc="Art. 205: Educação como direito de todos e dever do Estado."),
+        dict(Ano="1996", Marco="LDB (Lei 9.394)", Desc="Capítulo V: Define a Educação Especial como modalidade transversal."),
+        dict(Ano="2008", Marco="Política Nacional (PNEEPEI)", Desc="Ruptura com o modelo segregacionista. Foco na escola comum."),
+        dict(Ano="2015", Marco="LBI (Lei 13.146)", Desc="Estatuto da Pessoa com Deficiência. Crime de discriminação e recusa de matrícula."),
+        dict(Ano="2020", Marco="Decreto 10.502 (Suspenso)", Desc="Tentativa de retorno de classes especiais (polêmica jurídica).")
     ]
     df_time = pd.DataFrame(timeline_data)
     
     fig_time = px.scatter(df_time, x="Ano", y=[1]*len(df_time), text="Marco", 
-                          hover_data=["Desc"], size=[30]*5, color="Marco")
+                          hover_data=["Desc"], size=[40]*5, color="Marco",
+                          color_discrete_sequence=px.colors.qualitative.Set2)
     
-    fig_time.update_traces(textposition='top center', marker=dict(symbol="circle", line=dict(width=2, color='DarkSlateGrey')))
+    fig_time.update_traces(textposition='top center', marker=dict(line=dict(width=2, color='DarkSlateGrey')))
     fig_time.update_layout(
-        showlegend=False, 
-        height=250, 
-        yaxis=dict(visible=False),
-        xaxis=dict(type='category'),
-        margin=dict(l=20, r=20, t=20, b=20),
+        showlegend=False, height=220, yaxis=dict(visible=False, range=[0.5, 2]),
+        xaxis=dict(type='category', title=""), margin=dict(l=20, r=20, t=10, b=20),
         plot_bgcolor="white"
     )
     st.plotly_chart(fig_time, use_container_width=True)
     
-    with st.expander("Ver detalhes da legislação"):
+    with st.expander("📖 Ver Detalhes Legislativos"):
         st.table(df_time[['Ano', 'Marco', 'Desc']])
 
 # ==============================================================================
-# ABA 2: GESTÃO & DADOS (Gráficos do IBGE citados no PDF)
+# 4. ABA GESTÃO: PEI VS PAEE
 # ==============================================================================
-with tab2:
-    st.header("Gestão Estratégica Baseada em Dados")
-    st.caption("Dados extraídos do Cenário Brasileiro (IBGE) citados no material de referência.")
+with tab_paee:
+    st.header("Gestão Estratégica: PEI x PAEE")
+    st.markdown("A distinção crucial para a organização da escola inclusiva.")
 
-    # KPI Cards
-    k1, k2, k3 = st.columns(3)
-    k1.metric("População PcD (Brasil)", "18.6 Mi", "8.9% da População")
-    k2.metric("Gap Analfabetismo", "19.5%", "vs 4.1% Geral")
-    k3.metric("Gap Trabalho Informal", "57.3%", "Maior Precarização")
-
-    st.markdown("---")
-
-    g1, g2 = st.columns([1, 1.5])
+    # Comparativo Lado a Lado
+    c_pei, c_paee = st.columns(2)
     
-    with g1:
-        st.subheader("🎓 Escolaridade")
-        # Gráfico de Rosca comparando Ensino Médio
-        labels = ['PcD', 'População Geral']
-        values = [25.6, 55] # Dados do PDF (Ensino Médio Completo)
+    with c_pei:
+        st.markdown("""
+        <div class="stCard card-purple">
+            <h3 style="color: #8856F5 !important;">📘 PEI (Plano Educacional Individualizado)</h3>
+            <p><strong>Foco:</strong> O ALUNO na SALA DE AULA.</p>
+            <ul>
+                <li><strong>Responsável:</strong> Professor Regente (com apoio).</li>
+                <li><strong>O que é:</strong> Adaptação curricular, objetivos de aprendizagem, metodologia de ensino.</li>
+                <li><strong>Exemplo:</strong> "João vai aprender soma com material dourado enquanto a turma faz exercícios no caderno."</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
         
-        fig_educ = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.6, marker_colors=['#FF4B4B', '#0F52BA'])])
-        fig_educ.update_layout(title_text="Conclusão Ensino Médio (%)", height=300, margin=dict(t=30, b=0, l=0, r=0))
-        st.plotly_chart(fig_educ, use_container_width=True)
-        st.caption("*Apenas 25,6% das PcD concluem o Ensino Médio (IBGE).")
-
-    with g2:
-        st.subheader("📋 Checklist do PGEI")
-        st.markdown("Passo a passo para o **Plano Geral de Educação Inclusiva**:")
-        
-        # Barra de Progresso Visual (Steps)
-        steps = ["1. Censo Escolar", "2. Mapear Perfis", "3. Recursos Físicos", "4. Dimensionar Equipe"]
-        current = st.selectbox("Status da sua escola:", steps)
-        
-        if current == steps[0]: prog = 25
-        elif current == steps[1]: prog = 50
-        elif current == steps[2]: prog = 75
-        else: prog = 100
-        
-        st.progress(prog)
-        st.info(f"**Próxima Ação:** {current} - Garanta que estes dados estejam no sistema Omnisfera.")
-
-# ==============================================================================
-# ABA 3: PRÁTICA PEDAGÓGICA (Fluxogramas e Toolkit)
-# ==============================================================================
-with tab3:
-    st.header("Toolkit Pedagógico")
-    
-    # 1. Fluxograma do PEI (Graphviz)
-    st.subheader("🔄 O Fluxo da Justiça Curricular")
-    
-    graph = graphviz.Digraph()
-    graph.attr(rankdir='LR', bgcolor='transparent')
-    graph.attr('node', shape='box', style='filled', fillcolor='white', color='#0F52BA', fontname='Nunito')
-    
-    graph.node('A', '1. COLETA\n(Laudos + Família)')
-    graph.node('B', '2. FILTRO\n(Equipe Multidisciplinar)')
-    graph.node('C', '3. AÇÃO\n(Adaptação Curricular)')
-    graph.node('D', 'ALUNO\n(Aprendizado Real)')
-    
-    graph.edge('A', 'B', label=' Sigilo')
-    graph.edge('B', 'C', label=' Tradução Pedagógica')
-    graph.edge('C', 'D', label=' Inclusão')
-    
-    st.graphviz_chart(graph)
-    
-    st.divider()
-    
-    # 2. Grid de Estratégias (Cards Coloridos)
-    st.subheader("🧠 Estratégias Neurocompatíveis (TDAH/Dislexia)")
-    
-    row1 = st.columns(4)
-    strategies = [
-        ("⏱️ Tempo", "Flexibilidade em provas e tarefas.", "⏳"),
-        ("🗣️ Consignas", "Instruções curtas e diretas.", "📢"),
-        ("📝 Avaliação", "Oral, projetos, múltipla escolha.", "✅"),
-        ("💡 Ambiente", "Longe de janelas/portas.", "🪑")
-    ]
-    
-    for col, (title, desc, icon) in zip(row1, strategies):
-        col.markdown(f"""
-        <div style="background:#f9f9f9; padding:15px; border-radius:10px; text-align:center; height:180px; border-top: 4px solid #FF4B4B;">
-            <div style="font-size:30px;">{icon}</div>
-            <div style="font-weight:bold; color:#333;">{title}</div>
-            <div style="font-size:12px; color:#666; margin-top:10px;">{desc}</div>
+    with c_paee:
+        st.markdown("""
+        <div class="stCard card-green">
+            <h3 style="color: #00CC96 !important;">🧩 PAEE (Plano de AEE)</h3>
+            <p><strong>Foco:</strong> O RECURSO e a BARREIRA.</p>
+            <ul>
+                <li><strong>Responsável:</strong> Professor do AEE (Sala de Recursos).</li>
+                <li><strong>O que é:</strong> Eliminação de barreiras, produção de materiais, ensino de Libras/Braille.</li>
+                <li><strong>Exemplo:</strong> "Ensinar João a usar a prancha de comunicação para que ele possa responder ao Professor Regente."</li>
+            </ul>
         </div>
         """, unsafe_allow_html=True)
 
+    st.markdown("---")
+    
+    # Wizard de Construção do PAEE
+    st.subheader("🛠️ Construtor de PAEE (Passo a Passo)")
+    st.caption("Fluxo baseado no Decreto 7.611/2011 e Nota Técnica MEC/SEESP.")
+
+    steps = ["1. Estudo de Caso", "2. Plano de AEE", "3. Atendimento", "4. Avaliação"]
+    active_step = st.radio("Etapa do Processo:", steps, horizontal=True, label_visibility="collapsed")
+    
+    if active_step == "1. Estudo de Caso":
+        st.info("Investigação inicial para identificar as barreiras.")
+        st.checkbox("Entrevista com a Família (Anamnese)")
+        st.checkbox("Observação em Sala de Aula (Vínculo e Interação)")
+        st.checkbox("Análise de Laudos Clínicos (Saúde)")
+        
+    elif active_step == "2. Plano de AEE":
+        st.info("Documento formal que organiza o serviço.")
+        c1, c2 = st.columns(2)
+        c1.text_input("Objetivos Específicos (ex: Autonomia no banheiro)")
+        c1.selectbox("Frequência de Atendimento", ["1x Semana", "2x Semana", "Diário"])
+        c2.multiselect("Recursos Necessários", ["Engrossadores", "Libras", "Pranchas", "Software", "Mobiliário"])
+        
+    elif active_step == "3. Atendimento":
+        st.warning("Execução das atividades na Sala de Recursos ou em classe.")
+        st.markdown("* **Foco:** Não é reforço escolar! É ensino de habilidades para autonomia.")
+        st.markdown("* **Articulação:** O Prof. AEE deve conversar com o Regente semanalmente.")
+        
+    elif active_step == "4. Avaliação":
+        st.success("Revisão periódica do plano.")
+        st.slider("Eficácia das Estratégias Atuais", 0, 10, 5)
+        st.text_area("Justificativa para Reestruturação do Plano")
+
 # ==============================================================================
-# ABA 4: EQUIPE (Comparativo Visual)
+# 5. ABA PRÁTICA: BNCC & SOCIOEMOCIONAL
 # ==============================================================================
-with tab4:
-    st.header("Definição de Papéis")
-    st.warning("⚠️ Confusão comum: A escola contrata AT achando que é AP, ou vice-versa.")
+with tab_pratica:
+    st.header("Toolkit Pedagógico (Baseado na BNCC)")
+    
+    # Diagrama de Fluxo (Graphviz)
+    st.subheader("🔄 Fluxo da Adaptação Curricular")
+    
+    fluxo = graphviz.Digraph()
+    fluxo.attr(rankdir='LR', bgcolor='transparent')
+    fluxo.attr('node', shape='box', style='rounded,filled', fillcolor='#F0F2F6', color='#0F52BA', fontname='Nunito')
+    
+    fluxo.node('BNCC', 'Objetivo da Turma\n(BNCC)', fillcolor='#E2E8F0')
+    fluxo.node('BAR', 'Identificar Barreira\n(Acesso)')
+    fluxo.node('EST', 'Estratégia\n(Flexibilização)')
+    fluxo.node('ALUNO', 'Aprendizagem\n(Equidade)', fillcolor='#D4EDDA')
+    
+    fluxo.edge('BNCC', 'BAR')
+    fluxo.edge('BAR', 'EST', label=' Desenho Universal')
+    fluxo.edge('EST', 'ALUNO')
+    
+    st.graphviz_chart(fluxo)
+    
+    st.divider()
+    
+    # Estratégias Práticas
+    st.subheader("🧠 Estratégias Neurocompatíveis (TDAH, TEA, Dislexia)")
+    
+    col_s1, col_s2, col_s3 = st.columns(3)
+    
+    with col_s1:
+        st.markdown("**1. Gestão do Tempo**")
+        st.success("Permitir tempo estendido em provas. Uso de relógios visuais (Timer).")
+        
+    with col_s2:
+        st.markdown("**2. Instruções (Consignas)**")
+        st.info("Fatiar tarefas complexas em passos menores. Uso de pistas visuais junto com a fala.")
+        
+    with col_s3:
+        st.markdown("**3. Ambiente Físico**")
+        st.warning("Reduzir estímulos visuais na parede frontal. Aluno sentado longe de portas/janelas.")
+
+    # Seção Sócioemocional
+    st.markdown("---")
+    with st.expander("❤️ Competências Socioemocionais e Habilidades de Vida", expanded=True):
+        st.markdown("""
+        A inclusão não é apenas cognitiva, é afetiva. O currículo deve prever o desenvolvimento integral:
+        * **Autoconhecimento:** O aluno reconhecer suas próprias emoções e limites.
+        * **Consciência Social:** A turma entender e respeitar a neurodiversidade (combate ao bullying).
+        * **Tomada de Decisão Responsável:** Autonomia para escolher materiais e parceiros.
+        """)
+
+# ==============================================================================
+# 6. ABA EQUIPE: PAPÉIS CLAROS
+# ==============================================================================
+with tab_equipe:
+    st.header("Definição de Papéis e Responsabilidades")
+    st.warning("⚠️ Conflito Comum: A escola contrata AT achando que é AP, ou vice-versa.")
 
     col_at, col_ap = st.columns(2)
     
     # Card AT
     with col_at:
         st.markdown("""
-        <div style="background-color: #FFF5F5; border: 1px solid #FF4B4B; border-radius: 10px; padding: 20px;">
-            <h3 style="color:#FF4B4B; text-align:center;">AT</h3>
-            <p style="text-align:center; font-weight:bold;">Atendente Terapêutico</p>
+        <div class="stCard" style="background-color: #FFF5F5; border-color: #FF4B4B;">
+            <h3 style="color:#FF4B4B;">🏥 AT (Acompanhante Terapêutico)</h3>
+            <p><strong>Natureza:</strong> Clínica / Saúde</p>
             <hr>
-            <ul style="list-style-type: none; padding: 0;">
-                <li>🏥 <strong>Foco:</strong> Clínico / Saúde</li>
-                <li>🔗 <strong>Vínculo:</strong> Família ou Estado</li>
-                <li>🎯 <strong>Missão:</strong> Manejo de comportamento e crises.</li>
-                <li>❌ <strong>Não faz:</strong> Adaptação de lição.</li>
+            <ul>
+                <li><strong>Vínculo:</strong> Geralmente externo (Família/Plano/SUS).</li>
+                <li><strong>Função:</strong> Manejo de comportamento, crises agressivas, suporte emocional.</li>
+                <li><strong>Não faz:</strong> Não ensina conteúdo pedagógico.</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
@@ -225,21 +280,20 @@ with tab4:
     # Card AP
     with col_ap:
         st.markdown("""
-        <div style="background-color: #F0F7FF; border: 1px solid #0F52BA; border-radius: 10px; padding: 20px;">
-            <h3 style="color:#0F52BA; text-align:center;">AP</h3>
-            <p style="text-align:center; font-weight:bold;">Atendente Pedagógico</p>
+        <div class="stCard" style="background-color: #F0F7FF; border-color: #0F52BA;">
+            <h3 style="color:#0F52BA;">🏫 AP (Apoio Pedagógico/Escolar)</h3>
+            <p><strong>Natureza:</strong> Escolar / Pedagógica</p>
             <hr>
-            <ul style="list-style-type: none; padding: 0;">
-                <li>🏫 <strong>Foco:</strong> Escolar / Pedagógico</li>
-                <li>🔗 <strong>Vínculo:</strong> Escola</li>
-                <li>🎯 <strong>Missão:</strong> Acesso ao currículo e rotina.</li>
-                <li>✅ <strong>Faz:</strong> Auxílio na lancheira, materiais, interação.</li>
+            <ul>
+                <li><strong>Vínculo:</strong> Escola / Secretaria de Educação.</li>
+                <li><strong>Função:</strong> Acesso ao currículo, higiene, alimentação, locomoção.</li>
+                <li><strong>Faz:</strong> Auxilia na organização do material e rotina.</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("---")
-    st.info("💡 **Dica do Diretor:** O Psicólogo Escolar **não faz clínica** (terapia) dentro da escola. Ele faz mediação institucional e suporte à equipe.")
+    st.info("💡 **Dica para Gestão:** O Psicólogo Escolar **não faz clínica** (terapia) dentro da escola. Ele atua na mediação institucional, formação docente e acolhimento das famílias.")
 
 # Rodapé
-st.markdown("<br><br><div style='text-align:center; color:gray; font-size:0.8em;'>Omnisfera Learning Systems • Baseado na obra 'Inclusão Escolar: Gestão e Prática'</div>", unsafe_allow_html=True)
+st.markdown("<br><div style='text-align:center; color:#A0AEC0; font-size:0.8em;'>Omnisfera • Baseado nas Diretrizes da BNCC e Legislação Vigente</div>", unsafe_allow_html=True)
