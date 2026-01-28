@@ -28,7 +28,7 @@ def hide_streamlit():
         <style>
             #MainMenu, footer, header { visibility: hidden; }
             [data-testid="stToolbar"] { visibility: hidden; }
-            .block-container { padding-top: 0.5rem !important; }
+            .block-container { padding-top: 0.2rem !important; }
         </style>
         """,
         unsafe_allow_html=True
@@ -66,15 +66,22 @@ def inject_css():
 
         /* Container Centralizado */
         .wrap {
-            max-width: 480px;
+            max-width: 420px;
             margin: auto;
-            padding-top: 20px; /* Reduzido de 40px para 20px */
-            padding-bottom: 60px;
+            padding-top: 10px;
+            padding-bottom: 40px;
         }
         
         /* Remove espaço extra do Streamlit */
         .block-container {
-            padding-top: 0.5rem !important;
+            padding-top: 0.2rem !important;
+            max-width: 420px !important;
+            margin: 0 auto !important;
+        }
+        
+        /* Centraliza e limita largura dos inputs */
+        .element-container {
+            max-width: 100% !important;
         }
 
         /* Logo Centralizada (Ícone EM CIMA do Texto) */
@@ -83,8 +90,8 @@ def inject_css():
             flex-direction: column;
             align-items:center;
             justify-content: center;
-            gap: 12px;
-            margin-bottom: 24px;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
         .logoSpin img {
@@ -100,10 +107,10 @@ def inject_css():
 
         .subtitle {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             font-weight: 700;
             color: #64748B;
-            font-size: 15px;
+            font-size: 14px;
         }
 
         /* Cartão de Login */
@@ -111,17 +118,21 @@ def inject_css():
             background: white;
             border-radius: 20px;
             border: 1px solid #E2E8F0;
-            padding: 30px;
+            padding: 24px;
             box-shadow: 0 10px 40px rgba(15,23,42,.06);
         }
 
         /* Inputs Elegantes */
+        div[data-testid="stTextInput"] {
+            max-width: 100% !important;
+        }
         div[data-testid="stTextInput"] input {
             border-radius: 12px;
             border: 1px solid #CBD5E1;
             background-color: #F8FAFC;
             color: #334155;
             padding: 10px 12px;
+            width: 100%;
         }
         div[data-testid="stTextInput"] input:focus {
             border-color: #94A3B8;
