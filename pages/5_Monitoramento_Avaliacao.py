@@ -5,338 +5,313 @@ import plotly.graph_objects as go
 import graphviz
 
 # ==============================================================================
-# 1. SETUP & DESIGN SYSTEM (Visual Premium)
+# 1. SETUP & CSS (VISUAL PREMIUM - GLASSMORPHISM)
 # ==============================================================================
 st.set_page_config(page_title="Central de Conhecimento | Omnisfera", page_icon="🧠", layout="wide")
 
 st.markdown("""
 <style>
-    /* Cards de Informação (Efeito Glass/Clean) */
-    .info-card {
-        background-color: white;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        transition: transform 0.2s;
-        height: 100%;
-    }
-    .info-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-        border-color: #0F52BA;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap');
     
-    /* Referências Bibliográficas (Estilo Livro) */
-    .biblio-card {
-        border-left: 4px solid #CBD5E0;
-        background: #F8FAFC;
-        padding: 15px;
-        margin-bottom: 15px;
-        border-radius: 0 8px 8px 0;
-    }
-    .biblio-title { font-weight: 700; color: #2D3748; font-size: 1.1rem; }
-    .biblio-author { color: #718096; font-size: 0.9rem; font-style: italic; }
+    /* Tipografia Global */
+    html, body, [class*="css"] { font-family: 'Nunito', sans-serif; }
     
-    /* Tags de Era na Timeline */
-    .era-tag {
-        display: inline-block;
-        padding: 4px 12px;
+    /* Cards com Efeito de Vidro (Glassmorphism) */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.5);
         border-radius: 20px;
-        color: white;
-        font-weight: bold;
-        font-size: 0.8rem;
-        margin-bottom: 10px;
+        padding: 30px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        backdrop-filter: blur(4px);
+        margin-bottom: 25px;
+        transition: transform 0.3s ease;
     }
-
-    /* Tipografia */
-    h1, h2, h3, h4 { font-family: 'Nunito', sans-serif; color: #1A202C; }
+    .glass-card:hover { transform: translateY(-5px); border-color: #0F52BA; }
     
-    /* Abas */
-    .stTabs [data-baseweb="tab-list"] { border-bottom: 1px solid #E2E8F0; gap: 20px; }
-    .stTabs [data-baseweb="tab"] { font-weight: 700; color: #A0AEC0; border: none; }
+    /* Hero Section (Degradê Suave) */
+    .hero-box {
+        background: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
+        padding: 40px; border-radius: 20px; text-align: center;
+        margin-bottom: 30px; border-bottom: 4px solid #0F52BA;
+    }
+    
+    /* Glossário: Cards de Erro e Acerto */
+    .term-wrong {
+        background-color: #FFF5F5; border-left: 5px solid #E53E3E;
+        padding: 15px; border-radius: 8px; margin-bottom: 10px; opacity: 0.8;
+    }
+    .term-right {
+        background-color: #F0FFF4; border-left: 5px solid #48BB78;
+        padding: 15px; border-radius: 8px; margin-bottom: 10px;
+    }
+    .arrow-icon { font-size: 1.5rem; color: #A0AEC0; align-self: center; }
+
+    /* Estilo das Abas */
+    .stTabs [data-baseweb="tab-list"] { justify-content: center; gap: 20px; border-bottom: 1px solid #E2E8F0; }
+    .stTabs [data-baseweb="tab"] { font-size: 1rem; font-weight: 700; color: #718096; }
     .stTabs [aria-selected="true"] { color: #0F52BA !important; border-bottom: 3px solid #0F52BA !important; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. HEADER: CONCEITO VISUAL
+# 2. HERO SECTION: MANIFESTO VISUAL
 # ==============================================================================
-c1, c2 = st.columns([3, 1])
-with c1:
-    st.title("🧠 Central de Inteligência Inclusiva")
-    st.markdown("**Design System Educacional:** Conectando legislação, empatia e prática em um ecossistema vivo.")
+st.markdown("""
+<div class="hero-box">
+    <h1 style="color: #2D3748; font-size: 3rem; margin-bottom: 10px;">A Arte de "Outrar-se"</h1>
+    <p style="font-size: 1.2rem; color: #4A5568; max-width: 800px; margin: 0 auto; line-height: 1.6;">
+        <em>"Sentir o mundo do outro como se fosse o seu próprio mundo... numa relação empática sem se envolver, no entanto, com os sentimentos da pessoa."</em><br>
+        — Bernardo Soares (Fernando Pessoa)
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
 # Navegação
-tab_empatia, tab_legal, tab_pratica, tab_equipe, tab_biblio = st.tabs([
-    "1. Empatia (O Aluno)", 
-    "2. Ecossistema Legal (Timeline)", 
-    "3. Toolkit (Estratégias)", 
-    "4. Equipe (Papéis)",
-    "5. Biblioteca (Referências)"
+tab_universo, tab_glossario, tab_legal, tab_toolkit, tab_equipe = st.tabs([
+    "🌌 O Universo do Aluno", 
+    "📖 Glossário Anticapacitista", 
+    "⚖️ Ecossistema Legal", 
+    "🛠️ Toolkit Prático",
+    "🤝 Equipe & Papéis"
 ])
 
 # ==============================================================================
-# 3. ABA EMPATIA: RADAR CHART (MANTIDO E APERFEIÇOADO)
+# 3. ABA 1: O UNIVERSO DO ALUNO (VISUAL SPECTACLE)
 # ==============================================================================
-with tab_empatia:
-    st.header("Design Thinking: A Fase de Empatia")
-    st.markdown("Para projetar soluções (PEI), precisamos primeiro mapear a experiência do usuário (Aluno).")
+with tab_universo:
+    c1, c2 = st.columns([2, 1])
     
-    col_graf, col_txt = st.columns([1.5, 1])
-    
-    with col_graf:
-        # Radar Chart - Visualizando Múltiplas Inteligências
-        categories = ['Lógico-Matemática', 'Linguística', 'Interpessoal (Social)', 'Intrapessoal (Emoção)', 'Corporal', 'Visual']
+    with c1:
+        st.markdown("### 🔭 Mapeamento Multidimensional")
+        st.caption("Visualização Holística das Potencialidades (Sunburst Chart)")
         
-        fig = go.Figure()
-        fig.add_trace(go.Scatterpolar(
-            r=[4, 3, 1, 2, 5, 5], 
-            theta=categories,
-            fill='toself',
-            name='Perfil do Aluno',
-            line_color='#0F52BA',
-            fillcolor='rgba(15, 82, 186, 0.2)'
+        # DADOS PARA O GRÁFICO SUNBURST (Hierarquia Visual Rica)
+        data = dict(
+            character=["Aluno", "Aluno", "Aluno", "Intelectual", "Intelectual", "Social", "Social", "Motor", "Motor", "Sensorial", "Sensorial"],
+            parent=["", "", "", "Aluno", "Aluno", "Aluno", "Aluno", "Aluno", "Aluno", "Aluno", "Aluno"],
+            label=["Aluno", "Foco", "Interesse", "Lógico", "Linguístico", "Pares", "Adultos", "Fino", "Grosso", "Visual", "Auditivo"],
+            value=[10, 5, 5, 8, 3, 2, 4, 3, 5, 9, 2], # Valores simulados de um perfil TEA típico
+            color=["#F7FAFC", "#F7FAFC", "#F7FAFC", "#0F52BA", "#90CDF4", "#E53E3E", "#FEB2B2", "#ED8936", "#FBD38D", "#805AD5", "#D6BCFA"] 
+        )
+        
+        fig = go.Figure(go.Sunburst(
+            labels=["<b>O ALUNO</b>", "Cognitivo", "Social", "Motor", "Sensorial", 
+                    "Lógica", "Leitura", "Pares", "Adultos", "Escrita", "Esportes", "Visual", "Auditivo"],
+            parents=["", "<b>O ALUNO</b>", "<b>O ALUNO</b>", "<b>O ALUNO</b>", "<b>O ALUNO</b>",
+                     "Cognitivo", "Cognitivo", "Social", "Social", "Motor", "Motor", "Sensorial", "Sensorial"],
+            values=[0, 30, 20, 20, 30, 25, 5, 5, 15, 5, 15, 28, 2],
+            branchvalues="total",
+            marker=dict(colors=px.colors.qualitative.Prism),
+            hovertemplate='<b>%{label}</b><br>Potencial: %{value}%<extra></extra>'
         ))
         
         fig.update_layout(
-            polar=dict(
-                radialaxis=dict(visible=True, range=[0, 5], gridcolor='#E2E8F0'),
-                angularaxis=dict(gridcolor='#E2E8F0')
-            ),
-            showlegend=False,
-            height=400,
-            margin=dict(l=50, r=50, t=30, b=30),
-            paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(t=0, l=0, r=0, b=0),
+            height=450,
+            paper_bgcolor='rgba(0,0,0,0)'
         )
         st.plotly_chart(fig, use_container_width=True)
 
-    with col_txt:
+    with c2:
         st.markdown("""
-        <div class="info-card" style="border-left: 5px solid #0F52BA;">
-            <h4>🔍 Leitura do Mapa</h4>
-            <p>Este gráfico representa um aluno com perfil visual e motor forte, mas com barreiras sociais (comum em TEA ou TDAH).</p>
+        <div class="glass-card" style="border-left: 5px solid #805AD5;">
+            <h3 style="color: #2D3748;">🧠 Como ler este Universo?</h3>
+            <p>Este gráfico rompe com a visão linear de "nota". Ele mostra o aluno como um sistema complexo.</p>
+            <hr>
+            <p><strong>Exemplo Visualizado:</strong></p>
+            <ul>
+                <li>🟣 <strong>Sensorial (Grande):</strong> Aluno aprende vendo (Memória Fotográfica).</li>
+                <li>🔴 <strong>Social (Pequeno):</strong> Dificuldade com pares, prefere adultos.</li>
+                <li>🔵 <strong>Cognitivo (Médio):</strong> Ótimo em lógica, dificuldade em leitura.</li>
+            </ul>
             <br>
-            <strong>Insight de Design:</strong>
-            <p>Em vez de forçar a competência "Interpessoal" (o ponto fraco) através de trabalhos em grupo tradicionais, utilize a competência "Visual" (ponto forte) como ponte. Ex: O aluno desenha o projeto e o grupo apresenta.</p>
+            <div style="background:#E9D8FD; color:#553C9A; padding:10px; border-radius:8px; font-weight:bold; text-align:center;">
+                Estratégia: Use o Roxo (Visual) para alavancar o Vermelho (Social).
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. ABA LEGAL: TIMELINE 2.0 & ECOSSISTEMA
+# 4. ABA 2: GLOSSÁRIO ANTICAPACITISTA (NOVA)
+# ==============================================================================
+with tab_glossario:
+    st.header("📖 Dicionário da Inclusão")
+    st.markdown("As palavras constroem realidades. Abaixo, um guia para eliminar o **Capacitismo** do vocabulário escolar.")
+
+    # Filtro de Busca
+    busca = st.text_input("🔍 Pesquisar termo...", placeholder="Digite uma palavra...")
+
+    # Dados do Glossário (Baseado nos seus PDFs)
+    termos = [
+        {"errado": "Portador de deficiência", "certo": "Pessoa com deficiência (PcD)", "desc": "A deficiência não é algo que se 'porta' ou traz consigo como um objeto. Ela é parte da pessoa."},
+        {"errado": "Aluno de inclusão", "certo": "Aluno com deficiência / Público-alvo da Ed. Especial", "desc": "Todos os alunos são 'de inclusão'. Rotular o aluno cria estigma."},
+        {"errado": "Surdo-mudo", "certo": "Surdo", "desc": "A maioria dos surdos tem aparelho fonador intacto. Eles não falam porque não ouvem, mas podem aprender a falar."},
+        {"errado": "Atrasado / Lento", "certo": "Deficiência Intelectual / Ritmo próprio", "desc": "Termos pejorativos que ignoram o funcionamento cognitivo diverso."},
+        {"errado": "Fingir de cego / João sem braço", "certo": "Desentendido / Preguiçoso", "desc": "Metáforas que usam a deficiência como sinônimo de falha de caráter (Capacitismo Recreativo)."},
+        {"errado": "Doente Mental", "certo": "Transtorno Mental / Psicossocial", "desc": "Deficiência não é doença. Doença tem cura, deficiência é uma condição de vida."},
+        {"errado": "Normal", "certo": "Típico / Sem deficiência", "desc": "Usar 'normal' implica que a pessoa com deficiência é 'anormal'."}
+    ]
+
+    c_esq, c_dir = st.columns(2)
+    
+    with c_esq:
+        st.subheader("🚫 Termos a Abolir")
+        st.caption("Expressões carregadas de preconceito ou imprecisão técnica.")
+    with c_dir:
+        st.subheader("✅ Termos Corretos")
+        st.caption("Linguagem baseada na LBI e no Modelo Social da Deficiência.")
+
+    for item in termos:
+        if busca.lower() in item['errado'].lower() or busca.lower() in item['certo'].lower():
+            col_w, col_seta, col_r = st.columns([1, 0.2, 1])
+            
+            with col_w:
+                st.markdown(f"""
+                <div class="term-wrong">
+                    <div style="font-weight:bold; color:#C53030;">❌ {item['errado']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_seta:
+                st.markdown("<div style='text-align:center; margin-top:15px; font-size:1.5rem; color:#CBD5E0;'>➔</div>", unsafe_allow_html=True)
+                
+            with col_r:
+                st.markdown(f"""
+                <div class="term-right">
+                    <div style="font-weight:bold; color:#276749;">✅ {item['certo']}</div>
+                    <div style="font-size:0.85rem; margin-top:5px; color:#4A5568;">💡 {item['desc']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+    st.markdown("---")
+    
+    # Glossário Técnico (Conceitos)
+    st.subheader("📚 Glossário Técnico (Siglas e Conceitos)")
+    
+    col_g1, col_g2, col_g3 = st.columns(3)
+    with col_g1:
+        st.info("**PEI (Plano Ed. Individualizado):** Documento do Professor Regente para adaptação curricular em sala.")
+    with col_g2:
+        st.info("**PAEE (Plano de AEE):** Documento do Professor Especialista para eliminação de barreiras na Sala de Recursos.")
+    with col_g3:
+        st.info("**Desenho Universal:** Planejar a aula pensando em TODOS, para evitar adaptações excessivas depois.")
+
+# ==============================================================================
+# 5. ABA 3: ECOSSISTEMA LEGAL (COM OS NOVOS DECRETOS)
 # ==============================================================================
 with tab_legal:
-    st.header("Ecossistema Legal & Marcos Históricos")
+    st.header("Estrutura Legal")
     
-    # --- PARTE A: O ECOSSISTEMA (VISÃO SISTÊMICA) ---
-    st.subheader("🕸️ A Teia da Inclusão (Ecossistema)")
-    st.markdown("Como as partes se conectam para sustentar o aluno.")
+    # Mapa Mental com Graphviz (Estilo Dark/Tech)
+    st.subheader("🕸️ O Sistema de Proteção")
     
-    # Graphviz para criar um Mapa Mental Limpo
-    sys_map = graphviz.Digraph()
-    sys_map.attr(rankdir='LR', bgcolor='transparent')
-    sys_map.attr('node', shape='box', style='rounded,filled', fontname='Nunito', margin='0.2')
+    mapa = graphviz.Digraph()
+    mapa.attr(rankdir='LR', bgcolor='transparent')
+    mapa.attr('node', shape='note', style='filled', fontname='Nunito', penwidth='0')
     
-    # Nós
-    sys_map.node('LEI', '⚖️ Legislação\n(LBI/Decretos)', fillcolor='#2D3748', fontcolor='white')
-    sys_map.node('ESC', '🏫 Escola\n(Gestão/PPP)', fillcolor='#E2E8F0', color='#CBD5E0')
-    sys_map.node('PEI', '📘 PEI/PAEE\n(Instrumento)', fillcolor='#0F52BA', fontcolor='white')
-    sys_map.node('ALUNO', '👶 Aluno\n(Centro)', fillcolor='#48BB78', fontcolor='white')
-    sys_map.node('FAM', '🏠 Família\n(Parceria)', fillcolor='#F6E05E')
+    mapa.node('CONST', 'Constituição\n(1988)', fillcolor='#2D3748', fontcolor='white')
+    mapa.node('LBI', 'LBI (2015)\nLei Maior', fillcolor='#0F52BA', fontcolor='white')
+    mapa.node('DECRETOS', 'Decretos 2025\n(Financiamento)', fillcolor='#FF4B4B', fontcolor='white')
+    mapa.node('ESCOLA', 'A Escola\n(Prática)', fillcolor='#E2E8F0', fontcolor='#333')
     
-    # Conexões
-    sys_map.edge('LEI', 'ESC', label=' Regula')
-    sys_map.edge('ESC', 'PEI', label=' Produz')
-    sys_map.edge('FAM', 'ESC', label=' Compartilha')
-    sys_map.edge('PEI', 'ALUNO', label=' Garante Acesso')
+    mapa.edge('CONST', 'LBI')
+    mapa.edge('LBI', 'DECRETOS')
+    mapa.edge('LBI', 'ESCOLA', label=' Criminaliza Recusa')
+    mapa.edge('DECRETOS', 'ESCOLA', label=' Garante Verba')
     
-    st.graphviz_chart(sys_map)
+    st.graphviz_chart(mapa)
     
     st.divider()
-
-    # --- PARTE B: TIMELINE 2.0 (COM DECRETOS 2025) ---
-    st.subheader("⏳ Linha do Tempo Evolutiva")
-    st.markdown("Acompanhe a mudança de paradigma: da Exclusão à Inclusão Total.")
-
-    # Dados Enriquecidos
-    data_timeline = [
-        {"Ano": 1988, "Marco": "Constituição Federal", "Era": "Fundação", "Desc": "Educação como direito de TODOS (Art. 205)."},
-        {"Ano": 1994, "Marco": "Declaração de Salamanca", "Era": "Fundação", "Desc": "Documento mundial que baseia a inclusão."},
-        {"Ano": 1996, "Marco": "LDB (Lei 9.394)", "Era": "Estruturação", "Desc": "Cap. V: Educação Especial como modalidade transversal."},
-        {"Ano": 2008, "Marco": "PNEEPEI", "Era": "Estruturação", "Desc": "Política Nacional: Foco na escola comum (fim da segregação)."},
-        {"Ano": 2015, "Marco": "LBI (Lei 13.146)", "Era": "Consolidação", "Desc": "Crime de discriminação. Conceito de Barreira vs Deficiência."},
-        {"Ano": 2024, "Marco": "Política Nac. Equidade", "Era": "Atualização", "Desc": "Foco em populações vulneráveis e interseccionalidade."},
-        {"Ano": 2025, "Marco": "Novos Decretos (12.686/12.773)", "Era": "Atualização", "Desc": "Reforço do financiamento do AEE e combate à discriminação."}
+    
+    # Timeline
+    st.subheader("⏳ Evolução Histórica (Atualizada 2025)")
+    timeline_data = [
+        {"Ano": 1988, "Marco": "Constituição Federal", "Era": "Direito", "Desc": "Educação para todos."},
+        {"Ano": 2008, "Marco": "PNEEPEI", "Era": "Política", "Desc": "Foco na escola comum."},
+        {"Ano": 2015, "Marco": "LBI (Lei 13.146)", "Era": "Garantia", "Desc": "Crime de discriminação."},
+        {"Ano": 2025, "Marco": "Decretos 12.686/773", "Era": "Financiamento", "Desc": "Duplo fundo e combate à recusa."}
     ]
-    df_time = pd.DataFrame(data_timeline)
+    df_time = pd.DataFrame(timeline_data)
     
-    # Gráfico Customizado
-    fig_time = px.scatter(
-        df_time, x="Ano", y=[1]*len(df_time), 
-        color="Era", 
-        hover_name="Marco", hover_data={"Ano":True, "Desc":True, "Era":False},
-        size=[40]*len(df_time),
-        color_discrete_map={"Fundação": "#CBD5E0", "Estruturação": "#90CDF4", "Consolidação": "#0F52BA", "Atualização": "#FF4B4B"}
-    )
-    
-    # Labels e Layout
-    for i, row in df_time.iterrows():
-        fig_time.add_annotation(x=row['Ano'], y=1, text=str(row['Ano']), showarrow=False, yshift=25, font=dict(color="#555"))
-
-    fig_time.update_traces(marker=dict(line=dict(width=2, color='DarkSlateGrey')))
-    fig_time.update_layout(
-        height=250, 
-        yaxis=dict(visible=False, range=[0.8, 1.2]), 
-        xaxis=dict(visible=False, range=[1985, 2027]),
-        showlegend=True,
-        legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
-        margin=dict(l=20, r=20, t=50, b=20),
-        plot_bgcolor="white"
-    )
+    fig_time = px.scatter(df_time, x="Ano", y=[1]*len(df_time), color="Era", size=[40]*4, hover_name="Marco", hover_data=["Desc"])
+    fig_time.update_layout(height=200, yaxis=dict(visible=False), xaxis=dict(visible=True), plot_bgcolor="white")
     st.plotly_chart(fig_time, use_container_width=True)
+
+# ==============================================================================
+# 6. ABA 4: TOOLKIT (ESTRATÉGIAS)
+# ==============================================================================
+with tab_toolkit:
+    st.header("Caixa de Ferramentas Pedagógicas")
     
-    # Detalhamento dos Decretos 2025 (Novo Upload)
-    with st.expander("🔥 Destaque: Decretos de 2025 (Atualização)", expanded=True):
-        c_dec1, c_dec2 = st.columns(2)
-        with c_dec1:
-            st.info("**Decreto 12.686/2025**\n\nFoca na reestruturação do financiamento do AEE (Atendimento Educacional Especializado), garantindo duplo fundo para matrícula de estudantes da educação especial.")
-        with c_dec2:
-            st.error("**Decreto 12.773/2025**\n\nEstabelece diretrizes mais rígidas contra a recusa de matrícula e cobra das escolas privadas a garantia de acessibilidade sem cobrança extra.")
-
-# ==============================================================================
-# 5. ABA TOOLKIT: ESTRATÉGIAS (IDEAR)
-# ==============================================================================
-with tab_pratica:
-    st.header("Toolkit de Adaptação Curricular")
-    st.markdown("Ferramentas para a fase de **Ideação**. Como superar as barreiras identificadas?")
-
-    col1, col2, col3 = st.columns(3)
+    c1, c2, c3 = st.columns(3)
     
-    with col1:
+    with c1:
         st.markdown("""
-        <div class="info-card" style="border-top: 5px solid #E53E3E;">
-            <h4>⏱️ Tempo & Espaço</h4>
-            <p><strong>Barreira:</strong> Atenção/Ansiedade</p>
+        <div class="glass-card" style="border-top: 5px solid #E53E3E;">
+            <h4>⏱️ Tempo</h4>
+            <p>Adapte a duração, não a capacidade.</p>
             <ul>
-                <li>Uso de Timer Visual (Pomodoro).</li>
-                <li>Localização do aluno na frente (foco).</li>
-                <li>Provas com tempo estendido (fator 1.5x).</li>
+                <li>Tempo estendido (1.5x)</li>
+                <li>Pausas ativas</li>
+                <li>Relógio visual</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
-        
-    with col2:
+
+    with c2:
         st.markdown("""
-        <div class="info-card" style="border-top: 5px solid #3182CE;">
-            <h4>📝 Material & Suporte</h4>
-            <p><strong>Barreira:</strong> Leitura/Sensorial</p>
+        <div class="glass-card" style="border-top: 5px solid #3182CE;">
+            <h4>📝 Material</h4>
+            <p>Adapte a forma, não o conteúdo.</p>
             <ul>
-                <li>Fonte Arial 14/16 (Dislexia).</li>
-                <li>Papel fosco (evitar reflexo).</li>
-                <li>Pauta ampliada para escrita.</li>
+                <li>Fonte Arial 14+</li>
+                <li>Contraste visual</li>
+                <li>Textos fatiados</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
-        
-    with col3:
+
+    with c3:
         st.markdown("""
-        <div class="info-card" style="border-top: 5px solid #38B2AC;">
-            <h4>🗣️ Resposta & Avaliação</h4>
-            <p><strong>Barreira:</strong> Motora/Escrita</p>
+        <div class="glass-card" style="border-top: 5px solid #38B2AC;">
+            <h4>🗣️ Resposta</h4>
+            <p>Adapte a saída, não a exigência.</p>
             <ul>
-                <li>Prova Oral ou ditada.</li>
-                <li>Uso de Tablet/Computador.</li>
-                <li>Avaliação por Portfólio/Projeto.</li>
+                <li>Prova Oral</li>
+                <li>Uso de Tablet</li>
+                <li>Escriba</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 6. ABA EQUIPE: AT VS AP
+# 7. ABA 5: EQUIPE E PAPÉIS
 # ==============================================================================
 with tab_equipe:
-    st.header("Definição de Papéis (Role Definition)")
-    st.markdown("Evite o 'Fogo Amigo'. Cada profissional tem um escopo de atuação.")
+    st.header("Quem faz o quê?")
+    st.info("A confusão entre AT e AP é a maior causa de conflitos na escola. Use este guia.")
     
     c_at, c_ap = st.columns(2)
+    
     with c_at:
         st.markdown("""
-        <div class="info-card" style="background-color: #FFF5F5; border-left: 5px solid #F56565;">
+        <div class="glass-card" style="background:#FFF5F5;">
             <h3 style="color:#C53030;">🏥 AT (Saúde)</h3>
             <p><strong>Acompanhante Terapêutico</strong></p>
-            <p>Foco clínico e comportamental. Atua no manejo de crises, regulação emocional e habilidades sociais.</p>
-            <small>Vínculo: Externo (Família/Plano/SUS)</small>
+            <p>Profissional clínico (externo). Foco no comportamento e saúde mental.</p>
         </div>
         """, unsafe_allow_html=True)
         
     with c_ap:
         st.markdown("""
-        <div class="info-card" style="background-color: #EBF8FF; border-left: 5px solid #4299E1;">
+        <div class="glass-card" style="background:#EBF8FF;">
             <h3 style="color:#2B6CB0;">🏫 AP (Educação)</h3>
-            <p><strong>Apoio Pedagógico / Escolar</strong></p>
-            <p>Foco no acesso ao currículo. Auxilia na locomoção, higiene, alimentação e organização dos materiais.</p>
-            <small>Vínculo: Escola / Secretaria</small>
+            <p><strong>Apoio Pedagógico</strong></p>
+            <p>Profissional escolar. Foco na higiene, alimentação e acesso ao material.</p>
         </div>
         """, unsafe_allow_html=True)
-
-# ==============================================================================
-# 7. NOVA ABA: BIBLIOTECA (RESUMIDA)
-# ==============================================================================
-with tab_biblio:
-    st.header("📚 Biblioteca de Referência")
-    st.markdown("Base teórica que fundamenta a Omnisfera. Resumos executivos para consulta rápida.")
-    
-    # Dados Bibliográficos
-    livros = [
-        {
-            "titulo": "Inclusão Escolar: O que é? Por quê? Como fazer?",
-            "autor": "Maria Teresa Eglér Mantoan",
-            "resumo": "Obra fundamental que quebra o paradigma da 'integração' (o aluno se adapta) para a 'inclusão' (a escola muda). Mantoan defende que não existe aluno ineducável.",
-            "tag": "Filosofia"
-        },
-        {
-            "titulo": "Declaração de Salamanca (1994)",
-            "autor": "UNESCO",
-            "resumo": "O documento marco mundial. Estabelece que escolas regulares com orientação inclusiva são os meios mais eficazes de combater atitudes discriminatórias.",
-            "tag": "Legislação"
-        },
-        {
-            "titulo": "Lei Brasileira de Inclusão (Estatuto da PcD)",
-            "autor": "Lei 13.146/2015",
-            "resumo": "Define 'Barreira' (qualquer entrave que limite a participação) e criminaliza a recusa de matrícula. Base jurídica para exigir adaptações.",
-            "tag": "Legislação"
-        },
-        {
-            "titulo": "Os Benefícios da Educação Inclusiva",
-            "autor": "Instituto Alana / ABT Associates",
-            "resumo": "Estudo baseado em evidências que prova: alunos sem deficiência também aprendem mais em ambientes inclusivos (melhora em empatia e resolução de problemas).",
-            "tag": "Evidências"
-        },
-        {
-            "titulo": "NotebookLM Insights (Omnisfera)",
-            "autor": "Compilação IA",
-            "resumo": "Mapeamento das novas diretrizes de 2025 (Decretos 12.686/12.773), focando no financiamento do AEE e na gestão do PAEE.",
-            "tag": "Atualização 2025"
-        }
-    ]
-    
-    # Renderização em Grid
-    for livro in livros:
-        cor_tag = "#48BB78" if livro['tag'] == "Filosofia" else ("#4299E1" if livro['tag'] == "Legislação" else "#ED8936")
-        
-        st.markdown(f"""
-        <div class="biblio-card">
-            <div style="display:flex; justify-content:space-between;">
-                <span class="biblio-title">{livro['titulo']}</span>
-                <span style="background:{cor_tag}; color:white; padding:2px 8px; border-radius:10px; font-size:0.7rem;">{livro['tag']}</span>
-            </div>
-            <div class="biblio-author">{livro['autor']}</div>
-            <p style="margin-top:10px; font-size:0.95rem;">{livro['resumo']}</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.download_button("📥 Baixar Lista Bibliográfica Completa (PDF)", data="Simulação de PDF...", file_name="Bibliografia_Omnisfera.pdf")
 
 # Rodapé
 st.markdown("---")
-st.caption("Omnisfera Knowledge Base • Atualizado com Decretos 2025 • Design Thinking Methodology")
+st.caption("Central de Conhecimento Omnisfera • Atualizada com Decretos 2025 • Design Thinking Methodology")
