@@ -85,13 +85,24 @@ def forcar_layout_hub():
                 margin-top: 0px !important;
             }
             
-            /* 4. Hero card colado no menu - margin negativo mais agressivo */
+            /* 4. Hero card colado no menu - margin negativo MUITO agressivo */
             .mod-card-wrapper {
-                margin-top: -24px !important; /* Puxa o hero para cima, colando no menu */
+                margin-top: -72px !important; /* Puxa o hero para cima, quase colando no menu */
+                position: relative;
+                z-index: 1;
             }
             
-            /* Remove espaçamento do elemento que contém o hero */
-            .main .block-container > div:first-child > div:first-child {
+            /* Remove TODOS os espaçamentos do elemento que contém o hero */
+            .main .block-container > div:first-child,
+            .main .block-container > div:first-child > div:first-child,
+            .main .block-container > div:first-child > div:first-child > div:first-child,
+            .main .block-container > *:first-child {
+                margin-top: 0px !important;
+                padding-top: 0px !important;
+            }
+            
+            /* Remove espaçamento do stMarkdown que renderiza o hero */
+            .main .block-container > div:first-child .stMarkdown {
                 margin-top: 0px !important;
                 padding-top: 0px !important;
             }
@@ -121,7 +132,9 @@ st.markdown("""
         border-radius: 16px; 
         overflow: hidden; 
         box-shadow: 0 4px 6px rgba(0,0,0,0.02); 
-        margin-top: -24px !important; /* Puxa hero para cima, colando no menu */
+        margin-top: -72px !important; /* Puxa hero para cima, quase colando no menu */
+        position: relative;
+        z-index: 1;
     }
     .mod-card-rect { 
         background: white; 
