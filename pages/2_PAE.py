@@ -711,25 +711,43 @@ def gerar_diagnostico_barreiras(api_key, aluno, obs_prof, feedback=None):
     
     prompt += """
     CLASSIFIQUE AS BARREIRAS (LBI):
-    1. **Barreiras Comunicacionais** - dificuldades na comunicação e linguagem
-    2. **Barreiras Metodológicas** - métodos de ensino inadequados
-    3. **Barreiras Atitudinais** - atitudes e preconceitos
-    4. **Barreiras Tecnológicas** - falta de recursos tecnológicos adequados
-    5. **Barreiras Arquitetônicas** - espaço físico inadequado
+    1. Barreiras Comunicacionais - dificuldades na comunicação e linguagem
+    2. Barreiras Metodológicas - métodos de ensino inadequados
+    3. Barreiras Atitudinais - atitudes e preconceitos
+    4. Barreiras Tecnológicas - falta de recursos tecnológicos adequados
+    5. Barreiras Arquitetônicas - espaço físico inadequado
     
     Para cada barreira identificada, forneça:
-    - **Descrição específica** da barreira
-    - **Impacto na aprendizagem** do estudante
-    - **Sugestões de intervenção imediata** práticas e aplicáveis
-    - **Recursos necessários** para implementação
+    - Descrição específica da barreira
+    - Impacto na aprendizagem do estudante
+    - Sugestões de intervenção imediata práticas e aplicáveis
+    - Recursos necessários para implementação
     
     FORMATO DE SAÍDA:
-    Use títulos (##) para cada tipo de barreira encontrada.
-    Use listas com marcadores (-) para organizar as informações.
-    Seja claro, objetivo e prático.
-    Use formatação Markdown para destacar informações importantes (**negrito**).
+    IMPORTANTE: NÃO use tabelas Markdown. Use apenas texto formatado com:
+    - Títulos claros para cada tipo de barreira (ex: "BARREIRAS METODOLÓGICAS")
+    - Parágrafos descritivos
+    - Listas com marcadores simples (-) para organizar informações
+    - Quebras de linha para separar seções
     
-    SAÍDA: Texto em Markdown bem formatado, organizado por seções.
+    Estrutura sugerida:
+    
+    [TÍTULO DA BARREIRA]
+    
+    Descrição: [texto descritivo]
+    
+    Impacto na Aprendizagem: [texto descritivo]
+    
+    Sugestões de Intervenção:
+    - [sugestão 1]
+    - [sugestão 2]
+    - [sugestão 3]
+    
+    Recursos Necessários:
+    - [recurso 1]
+    - [recurso 2]
+    
+    SAÍDA: Texto formatado de forma clara e legível, SEM tabelas Markdown.
     """
     
     try:
@@ -1190,10 +1208,13 @@ def renderizar_hub_recurso(tipo_recurso, conteudo_gerado, aluno_nome, dados_entr
         
         # 1. MODO REVISÃO (após geração inicial)
         if status == 'revisao':
-            # Mostra o conteúdo gerado em container formatado (texto simples, sem Markdown)
+            # Mostra o conteúdo gerado em container formatado
             st.markdown("### 📝 Conteúdo Gerado")
             with st.container(border=True):
-                st.text(conteudo_gerado)
+                # Usa st.markdown mas com escape para não renderizar tabelas
+                # Remove formatação de tabela Markdown se houver
+                conteudo_limpo = conteudo_gerado.replace('|', ' ').replace('---', '')
+                st.markdown(conteudo_limpo)
             
             st.markdown("---")
             st.markdown("### 🔧 Ações Disponíveis")
@@ -1259,10 +1280,12 @@ def renderizar_hub_recurso(tipo_recurso, conteudo_gerado, aluno_nome, dados_entr
         elif status == 'aprovado':
             st.success("✅ **Recurso Validado e Pronto para Uso**")
             
-            # Mostra o conteúdo final em container formatado (texto simples, sem Markdown)
+            # Mostra o conteúdo final em container formatado
             st.markdown("### 📋 Conteúdo Final")
             with st.container(border=True):
-                st.text(conteudo_gerado)
+                # Remove formatação de tabela Markdown se houver
+                conteudo_limpo = conteudo_gerado.replace('|', ' ').replace('---', '')
+                st.markdown(conteudo_limpo)
             
             st.markdown("---")
             st.markdown("### 💾 Opções de Download")
