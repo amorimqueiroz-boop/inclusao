@@ -244,6 +244,12 @@ footer {
     transition: all 0.3s ease;
 }
 
+.mod-icon-area i {
+    display: inline-block !important;
+    font-size: 2rem !important;
+    line-height: 1 !important;
+}
+
 .mod-card-rect:hover .mod-icon-area {
     background: white;
     transform: scale(1.05);
@@ -287,11 +293,17 @@ footer {
     background: #DBEAFE !important; 
     color: #1E40AF !important;
 }
+.bg-indigo-soft i {
+    color: #1E40AF !important;
+}
 
 /* PEI - Azul Céu Vibrante */
 .c-blue { background: #0EA5E9 !important; }
 .bg-blue-soft { 
     background: #E0F2FE !important;
+    color: #0284C7 !important;
+}
+.bg-blue-soft i {
     color: #0284C7 !important;
 }
 
@@ -301,11 +313,17 @@ footer {
     background: #F3E8FF !important;
     color: #9333EA !important;
 }
+.bg-purple-soft i {
+    color: #9333EA !important;
+}
 
 /* Hub - Verde Água Vibrante */
 .c-teal { background: #06B6D4 !important; }
 .bg-teal-soft { 
     background: #CFFAFE !important;
+    color: #0891B2 !important;
+}
+.bg-teal-soft i {
     color: #0891B2 !important;
 }
 
@@ -315,11 +333,17 @@ footer {
     background: #FFE4E6 !important;
     color: #E11D48 !important;
 }
+.bg-rose-soft i {
+    color: #E11D48 !important;
+}
 
 /* Monitoramento - Azul Oceano Vibrante */
 .c-sky { background: #0C4A6E !important; }
 .bg-sky-soft { 
     background: #BAE6FD !important;
+    color: #075985 !important;
+}
+.bg-sky-soft i {
     color: #075985 !important;
 }
 
