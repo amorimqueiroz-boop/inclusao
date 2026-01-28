@@ -6,6 +6,103 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 
 # =============================================================================
+# 0) BIBLIOTECA DE ÍCONES FLAT (REMIXICON) - SISTEMA CENTRALIZADO
+# =============================================================================
+ICON_LIBRARY = {
+    # Módulos Principais
+    "estudantes": {"icon": "ri-user-star-line", "color": "#2563EB"},
+    "pei": {"icon": "ri-book-open-line", "color": "#0EA5E9"},
+    "pae": {"icon": "ri-tools-line", "color": "#A855F7"},
+    "hub": {"icon": "ri-lightbulb-flash-line", "color": "#06B6D4"},
+    "diario": {"icon": "ri-edit-box-line", "color": "#F43F5E"},
+    "monitoramento": {"icon": "ri-line-chart-line", "color": "#0C4A6E"},
+    
+    # Central de Conhecimento - Abas
+    "panorama": {"icon": "ri-bar-chart-box-line", "color": "#2563EB"},
+    "legislacao": {"icon": "ri-scales-3-line", "color": "#2563EB"},
+    "glossario": {"icon": "ri-book-2-line", "color": "#2563EB"},
+    "linguagem": {"icon": "ri-chat-3-line", "color": "#2563EB"},
+    "biblioteca": {"icon": "ri-library-line", "color": "#2563EB"},
+    "manual": {"icon": "ri-book-mark-line", "color": "#2563EB"},
+    
+    # Ações e Estados
+    "fluxo": {"icon": "ri-flow-chart", "color": "#2563EB"},
+    "filosofia": {"icon": "ri-heart-line", "color": "#2563EB"},
+    "justica": {"icon": "ri-scales-line", "color": "#2563EB"},
+    "buscar": {"icon": "ri-search-line", "color": "#64748B"},
+    "preferir": {"icon": "ri-checkbox-circle-line", "color": "#16A34A"},
+    "evitar": {"icon": "ri-close-circle-line", "color": "#DC2626"},
+    "legislacao_doc": {"icon": "ri-government-line", "color": "#2563EB"},
+    "pedagogia": {"icon": "ri-brain-line", "color": "#2563EB"},
+    "livro": {"icon": "ri-book-line", "color": "#2563EB"},
+    
+    # Hub de Inclusão
+    "adaptar_prova": {"icon": "ri-file-edit-line", "color": "#06B6D4"},
+    "adaptar_atividade": {"icon": "ri-scissors-cut-line", "color": "#06B6D4"},
+    "criar_zero": {"icon": "ri-magic-line", "color": "#06B6D4"},
+    "estudio_visual": {"icon": "ri-image-edit-line", "color": "#06B6D4"},
+    "roteiro": {"icon": "ri-file-list-3-line", "color": "#06B6D4"},
+    "papo_mestre": {"icon": "ri-chat-smile-2-line", "color": "#06B6D4"},
+    "dinamica": {"icon": "ri-group-line", "color": "#06B6D4"},
+    "plano_aula": {"icon": "ri-calendar-todo-line", "color": "#06B6D4"},
+    
+    # Educação Infantil
+    "experiencia": {"icon": "ri-lightbulb-line", "color": "#06B6D4"},
+    "rotina": {"icon": "ri-time-line", "color": "#06B6D4"},
+    "brincar": {"icon": "ri-gamepad-line", "color": "#06B6D4"},
+    
+    # Ações Comuns
+    "salvar": {"icon": "ri-save-line", "color": "#2563EB"},
+    "editar": {"icon": "ri-edit-line", "color": "#2563EB"},
+    "deletar": {"icon": "ri-delete-bin-line", "color": "#DC2626"},
+    "adicionar": {"icon": "ri-add-circle-line", "color": "#16A34A"},
+    "validar": {"icon": "ri-checkbox-circle-line", "color": "#16A34A"},
+    "cancelar": {"icon": "ri-close-circle-line", "color": "#DC2626"},
+    "download": {"icon": "ri-download-line", "color": "#2563EB"},
+    "upload": {"icon": "ri-upload-line", "color": "#2563EB"},
+    "visualizar": {"icon": "ri-eye-line", "color": "#2563EB"},
+    "configurar": {"icon": "ri-settings-3-line", "color": "#64748B"},
+    "info": {"icon": "ri-information-line", "color": "#2563EB"},
+    "aviso": {"icon": "ri-alert-line", "color": "#F59E0B"},
+    "erro": {"icon": "ri-error-warning-line", "color": "#DC2626"},
+    "sucesso": {"icon": "ri-check-line", "color": "#16A34A"},
+}
+
+def get_icon(key: str, size: int = 20, color: str = None) -> str:
+    """
+    Retorna HTML do ícone RemixIcon com cor personalizada.
+    
+    Args:
+        key: Chave do ícone na biblioteca
+        size: Tamanho em pixels (padrão 20)
+        color: Cor personalizada (sobrescreve a cor padrão)
+    
+    Returns:
+        String HTML com o ícone
+    """
+    icon_data = ICON_LIBRARY.get(key.lower(), {"icon": "ri-question-line", "color": "#64748B"})
+    icon_class = icon_data["icon"]
+    icon_color = color or icon_data["color"]
+    
+    return f'<i class="{icon_class}" style="font-size: {size}px; color: {icon_color}; vertical-align: middle;"></i>'
+
+def icon_title(text: str, icon_key: str, size: int = 24, color: str = None) -> str:
+    """
+    Cria um título com ícone integrado.
+    
+    Args:
+        text: Texto do título
+        icon_key: Chave do ícone na biblioteca
+        size: Tamanho do ícone
+        color: Cor personalizada
+    
+    Returns:
+        String HTML formatada
+    """
+    icon_html = get_icon(icon_key, size, color)
+    return f'{icon_html} <span style="vertical-align: middle;">{text}</span>'
+
+# =============================================================================
 # 1) ESTADO E CONFIGURAÇÃO INICIAL
 # =============================================================================
 APP_VERSION = "omni_utils v2.5 (Layout colado: menu + hero bem perto)"
