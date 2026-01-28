@@ -1556,7 +1556,7 @@ modules_data = [
     {
         "title": "Plano de Ação / PAEE",
         "desc": "Plano de Atendimento Educacional Especializado e sala de recursos.",
-        "icon": "ri-tools-fill",  # Ícone mais bonito
+        "icon": "ri-puzzle-fill",  # Ícone mais bonito
         "color_cls": "c-purple",
         "bg_cls": "bg-purple-soft",
         "page": "pages/2_PAE.py",
@@ -1565,7 +1565,7 @@ modules_data = [
     {
         "title": "Hub de Recursos",
         "desc": "Biblioteca de materiais, modelos e inteligência artificial para apoio.",
-        "icon": "ri-lightbulb-flash-fill",  # Ícone mais bonito
+        "icon": "ri-rocket-fill",  # Ícone mais bonito
         "color_cls": "c-teal",
         "bg_cls": "bg-teal-soft",
         "page": "pages/3_Hub_Inclusao.py",
