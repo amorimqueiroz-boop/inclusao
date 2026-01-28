@@ -248,13 +248,18 @@ st.markdown(f"""
 # ==============================================================================
 
 def _sb_url() -> str:
-    url = str(st.secrets.get("SUPABASE_URL", "")).strip()
+    url = str(os.environ.get("SUPABASE_URL") or st.secrets.get("SUPABASE_URL", "")).strip()
     if not url:
         raise RuntimeError("SUPABASE_URL missing")
     return url.rstrip("/")
 
 def _sb_key() -> str:
-    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "") or st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
+    key = str(
+        os.environ.get("SUPABASE_SERVICE_KEY")
+        or os.environ.get("SUPABASE_ANON_KEY")
+        or st.secrets.get("SUPABASE_SERVICE_KEY", "")
+        or st.secrets.get("SUPABASE_ANON_KEY", "")
+    ).strip()
     if not key:
         raise RuntimeError("SUPABASE_KEY missing")
     return key
