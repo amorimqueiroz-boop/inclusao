@@ -26,9 +26,15 @@ def hide_streamlit():
     st.markdown(
         """
         <style>
-            #MainMenu, footer, header { visibility: hidden; }
-            [data-testid="stToolbar"] { visibility: hidden; }
-            .block-container { padding-top: 0.2rem !important; }
+            /* Esconde todos os menus e controles do Streamlit */
+            #MainMenu { visibility: hidden !important; }
+            footer { visibility: hidden !important; }
+            header[data-testid="stHeader"] { display: none !important; }
+            [data-testid="stToolbar"] { visibility: hidden !important; }
+            [data-testid="stSidebar"] { display: none !important; }
+            section[data-testid="stSidebar"] { display: none !important; }
+            [data-testid="stSidebarNav"] { display: none !important; }
+            button[data-testid="collapsedControl"] { display: none !important; }
         </style>
         """,
         unsafe_allow_html=True
@@ -66,16 +72,16 @@ def inject_css():
 
         /* Container Centralizado */
         .wrap {
-            max-width: 420px;
+            max-width: 480px;
             margin: auto;
-            padding-top: 10px;
+            padding-top: 30px;
             padding-bottom: 40px;
         }
         
         /* Remove espaço extra do Streamlit */
         .block-container {
-            padding-top: 0.2rem !important;
-            max-width: 420px !important;
+            padding-top: 1rem !important;
+            max-width: 480px !important;
             margin: 0 auto !important;
         }
         
@@ -90,8 +96,8 @@ def inject_css():
             flex-direction: column;
             align-items:center;
             justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
         .logoSpin img {
@@ -107,10 +113,10 @@ def inject_css():
 
         .subtitle {
             text-align: center;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
             font-weight: 700;
             color: #64748B;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         /* Cartão de Login */
@@ -118,7 +124,7 @@ def inject_css():
             background: white;
             border-radius: 20px;
             border: 1px solid #E2E8F0;
-            padding: 24px;
+            padding: 28px;
             box-shadow: 0 10px 40px rgba(15,23,42,.06);
         }
 
@@ -177,12 +183,20 @@ def inject_css():
             text-align: center;
         }
 
-        /* Botão */
+        /* Botão - Cor padrão (azul marinho) */
         div[data-testid="stButton"] button {
             width: 100%;
             border-radius: 12px;
             font-weight: 800;
             padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #1E3A8A, #1E40AF) !important;
+            border: none !important;
+            color: #ffffff !important;
+        }
+        div[data-testid="stButton"] button:hover {
+            background: linear-gradient(135deg, #1E40AF, #1E3A8A) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(30, 58, 138, 0.3) !important;
         }
         </style>
         """,
