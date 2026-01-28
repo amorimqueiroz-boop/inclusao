@@ -17,6 +17,7 @@ from plotly.subplots import make_subplots
 
 
 import omni_utils as ou  # módulo atualizado
+from omni_utils import get_icon, icon_title
 
 # ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
 st.set_page_config(
@@ -574,14 +575,18 @@ except Exception as e:
 
 # Criar abas (filtros e estatísticas agora em uma aba separada)
 tab_filtros, tab_novo, tab_lista, tab_relatorios, tab_config = st.tabs([
-    "🔍 Filtros & Estatísticas", "📝 Novo Registro", "📋 Lista de Registros", "📊 Relatórios", "⚙️ Configurações"
+    f"{get_icon('buscar', 18, '#F43F5E')} Filtros & Estatísticas", 
+    f"{get_icon('adicionar', 18, '#F43F5E')} Novo Registro", 
+    f"{get_icon('diario', 18, '#F43F5E')} Lista de Registros", 
+    f"{get_icon('monitoramento', 18, '#F43F5E')} Relatórios", 
+    f"{get_icon('configurar', 18, '#F43F5E')} Configurações"
 ])
 
 # ==============================================================================
 # ABA 0: FILTROS & ESTATÍSTICAS
 # ==============================================================================
 with tab_filtros:
-    st.markdown("### 🔍 Filtros")
+    st.markdown(f"### {icon_title('Filtros', 'buscar', 24, '#F43F5E')}", unsafe_allow_html=True)
     col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
 
     with col_filtro1:
@@ -621,10 +626,10 @@ with tab_filtros:
     st.markdown("---")
     
     # Estatísticas rápidas (carregamento sob demanda)
-    st.markdown("### 📊 Estatísticas")
+    st.markdown(f"### {icon_title('Estatísticas', 'monitoramento', 24, '#F43F5E')}", unsafe_allow_html=True)
     
     # Botão para carregar estatísticas
-    if st.button("📊 Carregar Estatísticas", type="primary", use_container_width=True):
+        if st.button("📊 Carregar Estatísticas", type="primary", use_container_width=True):
         registros = []
         try:
             with st.spinner("Carregando registros..."):
@@ -662,7 +667,7 @@ with tab_filtros:
             st.metric("Estudantes Atendidos", alunos_com_registros)
         
         # Estatísticas por modalidade
-        st.markdown("#### 📈 Por Modalidade")
+        st.markdown(f"#### {icon_title('Por Modalidade', 'monitoramento', 20, '#F43F5E')}", unsafe_allow_html=True)
         modalidades_count = {}
         for r in registros:
             mod = r.get('modalidade_atendimento', 'N/A')
@@ -691,7 +696,7 @@ with tab_filtros:
 # ABA 2: NOVO REGISTRO
 # ==============================================================================
 with tab_novo:
-    st.markdown("### 📝 Nova Sessão de AEE")
+    st.markdown(f"### {icon_title('Nova Sessão de AEE', 'adicionar', 24, '#F43F5E')}", unsafe_allow_html=True)
     
     with st.form("form_nova_sessao", clear_on_submit=True):
         st.markdown("<div class='form-section'>", unsafe_allow_html=True)
@@ -878,7 +883,7 @@ with tab_novo:
         
         with col_botoes2:
             salvar = st.form_submit_button(
-                "💾 Salvar Registro",
+                f"{get_icon('salvar', 18, 'white')} Salvar Registro",
                 type="primary",
                 use_container_width=True
             )
@@ -917,7 +922,7 @@ with tab_novo:
                     resultado = salvar_registro_diario(registro)
                     
                     if resultado["sucesso"]:
-                        st.success("✅ Registro salvo com sucesso!")
+                        st.success(f"{get_icon('sucesso', 18, '#16A34A')} Registro salvo com sucesso!")
                         
                         # Mostrar resumo
                         with st.expander("📋 Ver Resumo do Registro", expanded=True):
@@ -944,7 +949,7 @@ with tab_novo:
 # ABA 3: LISTA DE REGISTROS
 # ==============================================================================
 with tab_lista:
-    st.markdown("### 📋 Registros de Atendimento")
+    st.markdown(f"### {icon_title('Registros de Atendimento', 'diario', 24, '#F43F5E')}", unsafe_allow_html=True)
     
     # Carregar registros com filtros
     try:
@@ -1113,7 +1118,7 @@ with tab_lista:
 # ABA 4: RELATÓRIOS
 # ==============================================================================
 with tab_relatorios:
-    st.markdown("### 📊 Relatórios e Análises")
+    st.markdown(f"### {icon_title('Relatórios e Análises', 'monitoramento', 24, '#F43F5E')}", unsafe_allow_html=True)
     
     # Carregar dados
     try:
@@ -1138,7 +1143,7 @@ with tab_relatorios:
         
         with col_rel1:
             # Gráfico de atendimentos por mês
-            st.markdown("#### 📅 Atendimentos por Mês")
+            st.markdown(f"#### {icon_title('Atendimentos por Mês', 'monitoramento', 20, '#F43F5E')}", unsafe_allow_html=True)
             if 'mes' in df.columns and len(df) > 0:
                 atendimentos_mes = df.groupby('mes').size().reset_index(name='count')
                 atendimentos_mes['mes'] = atendimentos_mes['mes'].astype(str)
@@ -1179,7 +1184,7 @@ with tab_relatorios:
                 st.info("Dados insuficientes para gerar gráfico de distribuição por modalidade.")
         
         # Gráfico de engajamento ao longo do tempo
-        st.markdown("#### 📈 Evolução do Engajamento")
+        st.markdown(f"#### {icon_title('Evolução do Engajamento', 'monitoramento', 20, '#F43F5E')}", unsafe_allow_html=True)
         
         if 'student_id' in df.columns:
             # Criar dicionário de estudantes
@@ -1228,7 +1233,7 @@ with tab_relatorios:
                         st.metric("Última Sessão", ultima_sessao.strftime('%d/%m'))
         
         # Competências mais trabalhadas
-        st.markdown("#### 🎯 Competências Trabalhadas")
+        st.markdown(f"#### {icon_title('Competências Trabalhadas', 'configurar', 20, '#F43F5E')}", unsafe_allow_html=True)
         
         # Extrair todas as competências
         todas_competencias = []
@@ -1265,7 +1270,7 @@ with tab_relatorios:
         
         # Exportar dados
         st.divider()
-        st.markdown("#### 📥 Exportar Dados")
+        st.markdown(f"#### {icon_title('Exportar Dados', 'download', 20, '#F43F5E')}", unsafe_allow_html=True)
         
         col_exp1, col_exp2, col_exp3 = st.columns(3)
         
@@ -1273,7 +1278,7 @@ with tab_relatorios:
             # Exportar como CSV
             csv = df.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label="📄 Exportar CSV",
+                label=f"{get_icon('download', 18, 'white')} Exportar CSV",
                 data=csv,
                 file_name=f"diario_bordo_{date.today()}.csv",
                 mime="text/csv",
@@ -1284,7 +1289,7 @@ with tab_relatorios:
             # Exportar como JSON
             json_data = df.to_json(orient='records', indent=2, force_ascii=False)
             st.download_button(
-                label="📋 Exportar JSON",
+                label=f"{get_icon('download', 18, 'white')} Exportar JSON",
                 data=json_data,
                 file_name=f"diario_bordo_{date.today()}.json",
                 mime="application/json",
@@ -1313,12 +1318,12 @@ with tab_relatorios:
 # ABA 5: CONFIGURAÇÕES
 # ==============================================================================
 with tab_config:
-    st.markdown("### ⚙️ Configurações do Diário")
+    st.markdown(f"### {icon_title('Configurações do Diário', 'configurar', 24, '#F43F5E')}", unsafe_allow_html=True)
     
     col_config1, col_config2 = st.columns(2)
     
     with col_config1:
-        st.markdown("#### 📋 Configurações de Registro")
+        st.markdown(f"#### {icon_title('Configurações de Registro', 'configurar', 20, '#F43F5E')}", unsafe_allow_html=True)
         
         # Configurações padrão
         if 'config_diario' not in st.session_state:
