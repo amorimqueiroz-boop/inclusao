@@ -1140,115 +1140,178 @@ with tab8:
 
 
 
-with tab_mapa:
-    # 1. GARANTIA DE ESTADO (Para não perder dados ao recarregar)
-    if "dados" not in st.session_state:
-        st.session_state.dados = {}
-    
-    # Inicializa variáveis padrão se não existirem
-    st.session_state.dados.setdefault("status_validacao_game", "rascunho")
-    st.session_state.dados.setdefault("ia_mapa_texto", "") 
-
-    # Dados do Aluno (com falback para não quebrar)
-    nome_aluno = st.session_state.dados.get("nome", "Aventureiro")
-    serie = st.session_state.dados.get("serie", "Nível Base")
-    hiperfoco = st.session_state.dados.get("hiperfoco", "Exploração")
+with tab_9:
+    # ==========================================================================
+    # 1. SETUP DE DADOS & VARIÁVEIS
+    # ==========================================================================
+    nome_aluno = st.session_state.dados.get("nome") or "Aventureiro"
+    serie = st.session_state.dados.get("serie") or ""
+    hiperfoco = st.session_state.dados.get("hiperfoco") or "Exploração"
+    potencias = st.session_state.dados.get("potencias") or []
     pei_ok = bool(st.session_state.dados.get("ia_sugestao"))
+    
+    # Inicializa estados
+    st.session_state.dados.setdefault("status_validacao_game", "rascunho")
+    st.session_state.dados.setdefault("ia_mapa_texto", "")
+    status_game = st.session_state.dados.get("status_validacao_game", "rascunho")
 
-    # Configuração Visual
-    seg_cor = "#CBD5E0" # Cor padrão cinza
+    # Cores e Ícones baseados no Segmento (Fallback se a função não existir)
+    try:
+        if serie:
+            seg_nome, seg_cor, seg_desc = get_segmento_info_visual(serie)
+        else:
+            raise Exception
+    except:
+        seg_nome, seg_cor, seg_desc = ("Nível Base", "#64748B", "Série não definida")
 
-    # --- HEADER VISUAL ---
+    # ==========================================================================
+    # 2. HEADER: FICHA DO PERSONAGEM (VISUAL RICO)
+    # ==========================================================================
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #1A202C 0%, {seg_cor} 100%); padding: 30px; border-radius: 20px; color: white; margin-bottom: 25px;">
-        <h1 style="margin:0; font-size:2rem; color:white;">Missão: {nome_aluno}</h1>
-        <p style="margin:0; opacity:0.9;">🧪 Hiperfoco: <strong>{hiperfoco}</strong> | Status PEI: <strong>{'🔓 OK' if pei_ok else '🔒 Pendente'}</strong></p>
+    <div style="
+        background: linear-gradient(135deg, #1e293b 0%, {seg_cor} 120%);
+        padding: 24px; border-radius: 16px; color: white; margin-bottom: 24px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 1px solid rgba(255,255,255,0.1);
+    ">
+        <div style="display:flex; justify-content:space-between; align-items:start;">
+            <div style="display:flex; gap: 20px; align-items:center;">
+                <div style="background:rgba(255,255,255,0.1); width:60px; height:60px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:30px;">
+                    👤
+                </div>
+                <div>
+                    <div style="font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; opacity:0.8;">FICHA DO AGENTE</div>
+                    <div style="font-size:1.8rem; font-weight:800; line-height:1.2;">{nome_aluno}</div>
+                    <div style="font-size:1rem; opacity:0.9;">Classe: <strong>{serie}</strong> • Guilda: <strong>{seg_nome}</strong></div>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div style="background:rgba(0,0,0,0.3); padding:8px 16px; border-radius:20px; font-size:0.85rem; display:inline-block;">
+                    {'🟢 PEI HABILITADO' if pei_ok else '🔴 PEI BLOQUEADO'}
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+            <span style="background:rgba(255,255,255,0.2); padding:5px 12px; border-radius:8px; font-size:0.9rem;">
+                🔥 Hiperfoco: <strong>{hiperfoco}</strong>
+            </span>
+            {''.join([f'<span style="background:rgba(255,255,255,0.1); padding:5px 12px; border-radius:8px; font-size:0.9rem;">✨ {p}</span>' for p in potencias[:3]])}
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
     if not pei_ok:
-        st.warning("⚠️ Gere o PEI na aba 'Consultoria IA' primeiro.")
+        st.warning("🔒 **Bloqueio de Nível:** Complete a etapa do PEI Técnico na aba 'Consultoria IA' para desbloquear a criação de missões.")
         st.stop()
 
-    # --- ÁREA DE TRABALHO ---
-    c1, c2 = st.columns([1, 1.5])
+    # ==========================================================================
+    # 3. ÁREA DE CRIAÇÃO (INPUTS)
+    # ==========================================================================
     
-    # --- COLUNA ESQUERDA: CONFIGURAÇÃO ---
-    with c1:
-        st.markdown("### 🛠️ Configurar")
-        tema = st.selectbox("Tema", ["Exploração Espacial", "Medieval", "Super-Heróis", "Natureza"], key="tema_sel")
-        tom = st.select_slider("Tom", options=["Lúdico", "Aventura", "Sério"], value="Aventura", key="tom_sel")
-
-        st.write("")
-        st.write("")
+    if status_game == "rascunho":
+        st.markdown("### 🛠️ Configurar Missão")
         
-        # BOTÃO COM CHAVE ÚNICA E DEBUG
-        if st.button("✨ GERAR ARTEFATO AGORA", type="primary", use_container_width=True, key="btn_gerar_game"):
-            try:
-                with st.spinner("Criando missão..."):
-                    # --- SIMULAÇÃO DA IA (Aqui garantimos que funciona sem API Key para teste) ---
-                    texto_gerado = f"""
-# 🚀 MISSÃO: OPERAÇÃO {hiperfoco.upper()}
-**Agente:** {nome_aluno} | **Tema:** {tema}
-
----
-### 🎯 OBJETIVO
-Usar sua habilidade em **{hiperfoco}** para completar os desafios da semana!
-
-### ⚔️ DESAFIOS
-1. **[ ] O Desafio do Foco:** Completar a atividade sem pausas por 15 min.
-2. **[ ] Ajudante da Base:** Organizar os materiais da mesa.
-
-### 🏆 RECOMPENSA
-Desbloqueio de tempo livre no tablet!
-                    """
-                    # -----------------------------------------------------------
-
-                    # Salvar no estado
-                    st.session_state.dados["ia_mapa_texto"] = texto_gerado
-                    st.session_state.dados["status_validacao_game"] = "revisao"
-                    
-                    st.success("Missão gerada! Atualizando...")
-                    st.rerun() # Força atualização da tela
+        with st.container(border=True):
+            c1, c2 = st.columns([2, 1])
+            with c1:
+                st.markdown("**Tema da Aventura**")
+                estilo = st.text_input(
+                    "Defina o universo visual (Opcional)",
+                    placeholder="Ex: Exploradores do Espaço, Detetives, Super-Heróis, Minecraft...",
+                    key="gm_estilo",
+                    label_visibility="collapsed"
+                )
+                st.caption(f"💡 Dica: Se deixar em branco, a IA usará o Hiperfoco: **{hiperfoco}**")
             
-            except Exception as e:
-                st.error(f"❌ Erro ao gerar: {str(e)}")
-                # Se der erro de 'rerun', apenas pare
-                pass
+            with c2:
+                st.markdown("**Ação**")
+                gerar_btn = st.button("🎲 Rolar Dados (Gerar)", type="primary", use_container_width=True)
 
-    # --- COLUNA DIREITA: PREVIEW ---
-    with c2:
-        st.markdown("### 👁️ Preview")
+        if gerar_btn:
+            with st.spinner("🧙‍♂️ O Mestre dos Jogos está escrevendo a missão..."):
+                # Feedback de estilo ou fallback para hiperfoco
+                fb = (f"Estilo visual e narrativo desejado: {estilo}." if estilo else f"Estilo visual baseado no hiperfoco: {hiperfoco}.").strip()
+                
+                # --- SUA FUNÇÃO ORIGINAL AQUI ---
+                texto_game, err = gerar_roteiro_gamificado(api_key, st.session_state.dados, st.session_state.dados["ia_sugestao"], fb)
+                # --------------------------------
+
+                if texto_game:
+                    st.session_state.dados["ia_mapa_texto"] = texto_game.replace("[MAPA_TEXTO_GAMIFICADO]", "").strip()
+                    st.session_state.dados["status_validacao_game"] = "revisao"
+                    st.rerun()
+                else:
+                    st.error(err or "Falha crítica ao gerar missão. Tente novamente.")
+
+    # ==========================================================================
+    # 4. PREVIEW VISUAL RICO (O RESULTADO)
+    # ==========================================================================
+    
+    elif status_game == "revisao":
+        c_preview, c_acoes = st.columns([2, 1])
         
-        # Verifica se tem texto para mostrar
-        texto_atual = st.session_state.dados.get("ia_mapa_texto", "")
-        
-        if texto_atual:
-            # RENDERIZA O PAPEL
+        with c_preview:
+            st.markdown("### 📜 Pergaminho da Missão")
+            texto_final = st.session_state.dados.get("ia_mapa_texto", "")
+            
+            # SIMULAÇÃO DE PAPEL / DOCUMENTO OFICIAL
             st.markdown(f"""
-            <div style="background-color: white; color: #333; padding: 40px; border: 1px solid #DDD; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); font-family: 'Courier New', monospace; margin-bottom: 20px;">
-                <div style="text-align:right; color:#FF4B4B; font-weight:bold;">CONFIDENCIAL</div>
-                {texto_atual.replace('# ', '<h2>').replace('\n', '<br>')}
+            <div style="
+                background-color: #fdfbf7; 
+                color: #2c3e50; 
+                padding: 40px; 
+                border-radius: 4px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+                border: 1px solid #e2e8f0;
+                border-top: 8px solid {seg_cor};
+                font-family: 'Verdana', sans-serif;
+                position: relative;
+            ">
+                <div style="border-bottom: 2px solid #cbd5e1; padding-bottom:15px; margin-bottom:25px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold; color:{seg_cor}; font-size:1.1rem; text-transform:uppercase;">MISSÃO ESPECIAL</span>
+                    <span style="color:#94a3b8; font-size:0.8rem;">REF: {hash(nome_aluno)%9999}</span>
+                </div>
+
+                <div style="line-height:1.6;">
+                    {texto_final.replace('# ', '<h2 style="color:#1e293b; margin-top:0;">').replace('## ', '<h3 style="color:#334155; border-left:4px solid #cbd5e1; padding-left:10px;">').replace('**', '<b>').replace('**', '</b>').replace('\n', '<br>')}
+                </div>
+
+                <div style="margin-top:50px; display:flex; gap:30px; opacity:0.6;">
+                    <div style="border-top:1px solid #000; width:150px; padding-top:5px; font-size:0.7rem; text-align:center;">Agente {nome_aluno}</div>
+                    <div style="border-top:1px solid #000; width:150px; padding-top:5px; font-size:0.7rem; text-align:center;">Mentor(a) Responsável</div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
-            
-            # BOTÃO DE DOWNLOAD (Funcionando)
-            st.download_button(
-                label="📥 BAIXAR ARQUIVO (TXT)",
-                data=texto_atual,
-                file_name=f"Missao_{nome_aluno}.txt",
-                mime="text/plain",
-                type="primary",
-                use_container_width=True
-            )
-            
-            if st.button("🔄 Limpar / Refazer", use_container_width=True):
-                st.session_state.dados["ia_mapa_texto"] = ""
-                st.session_state.dados["status_validacao_game"] = "rascunho"
-                st.rerun()
-        
-        else:
-            # ESTADO VAZIO
-            st.info("👈 Clique em 'GERAR ARTEFATO' ao lado para ver o resultado aqui.")
 
+        with c_acoes:
+            st.markdown("### 🎯 Ações")
+            
+            # Card de Download
+            with st.container(border=True):
+                st.markdown("#### 📥 Exportar")
+                st.caption("Baixe o arquivo para imprimir ou enviar no WhatsApp dos pais.")
+                st.download_button(
+                    label="Baixar Missão (.txt)",
+                    data=texto_final,
+                    file_name=f"Missao_{nome_aluno}.txt",
+                    mime="text/plain",
+                    use_container_width=True,
+                    type="primary"
+                )
+            
+            st.write("")
+            
+            # Card de Refazer
+            with st.container(border=True):
+                st.markdown("#### 🔄 Ajustes")
+                st.caption("O tema não ficou legal? Tente outro estilo.")
+                if st.button("Refazer Missão", use_container_width=True):
+                    st.session_state.dados["status_validacao_game"] = "rascunho"
+                    st.session_state.dados["ia_mapa_texto"] = ""
+                    st.rerun()
+
+    # Rodapé Informativo
+    st.markdown("---")
+    st.caption("Omnisfera Gamification Module • Design Thinking aplicado à autonomia do estudante.")
+            
 st.markdown("<div class='footer-signature'>PEI 360º v123.0 Gold Edition (Hybrid: Cloud + Local) - Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
