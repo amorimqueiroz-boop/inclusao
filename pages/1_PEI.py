@@ -121,7 +121,7 @@ st.markdown(f"""
             <div class="mod-desc">
                 {saudacao}, <strong>{USUARIO_NOME}</strong>! Crie e gerencie Planos Educacionais Individualizados 
                 para estudantes do workspace <strong>{WORKSPACE_NAME}</strong>. 
-                Desenvolva estratégias personalizadas e acompanhe o progresso de cada aluno.
+                Desenvolva estratégias personalizadas e acompanhe o progresso de cada estudante.
             </div>
         </div>
     </div>
@@ -223,7 +223,7 @@ def _http_error(prefix: str, r):
 
 def db_create_student(payload: dict):
     """
-    Cria aluno em public.students usando REST.
+    Cria estudante em public.students usando REST.
     - injeta workspace_id automaticamente
     - retorna o registro criado
     """
@@ -253,7 +253,7 @@ def db_create_student(payload: dict):
 
 def db_update_student(student_id: str, payload: dict):
     """
-    Atualiza aluno em public.students (por id) via REST
+    Atualiza estudante em public.students (por id) via REST
     - garante workspace_id no filtro
     """
     ok, details = _rest_ready(debug=True)
@@ -281,7 +281,7 @@ def db_update_student(student_id: str, payload: dict):
 
 def db_delete_student(student_id: str):
     """
-    Deleta aluno em public.students (por id) via REST
+    Deleta estudante em public.students (por id) via REST
     - garante workspace_id no filtro
     """
     ok, details = _rest_ready(debug=True)
@@ -303,7 +303,7 @@ def db_delete_student(student_id: str):
 
 def db_list_students(search: str | None = None):
     """
-    Lista alunos do workspace atual.
+    Lista estudantes do workspace atual.
     Se search vier preenchido, filtra por nome (ilike).
     """
     ok, _ = _rest_ready(debug=False)
@@ -329,7 +329,7 @@ def db_update_pei_content(student_id: str, pei_dict: dict):
     """
     Salva o dicionário completo do PEI na coluna 'pei_data' do Supabase.
     """
-    # URL para atualizar o aluno específico
+    # URL para atualizar o estudante específico
     url = f"{_sb_url()}/rest/v1/students?id=eq.{student_id}"
     
     h = _headers()
@@ -362,9 +362,9 @@ def db_update_pei_content(student_id: str, pei_dict: dict):
 # 4. LISTAS DE DADOS
 # ==============================================================================
 LISTA_SERIES = [
-    "Educação Infantil (Creche)", "Educação Infantil (Pré-Escola)",
-    "1º Ano (Fund. I)", "2º Ano (Fund. I)", "3º Ano (Fund. I)", "4º Ano (Fund. I)", "5º Ano (Fund. I)",
-    "6º Ano (Fund. II)", "7º Ano (Fund. II)", "8º Ano (Fund. II)", "9º Ano (Fund. II)",
+    "Educação Infantil (0-2 anos)", "Educação Infantil (3-5 anos)",
+    "1º Ano (EFAI)", "2º Ano (EFAI)", "3º Ano (EFAI)", "4º Ano (EFAI)", "5º Ano (EFAI)",
+    "6º Ano (EFAF)", "7º Ano (EFAF)", "8º Ano (EFAF)", "9º Ano (EFAF)",
     "1ª Série (EM)", "2ª Série (EM)", "3ª Série (EM)", "EJA (Educação de Jovens e Adultos)"
 ]
 
@@ -547,9 +547,9 @@ def get_segmento_info_visual(serie: str | None):
     if nivel == "EI":
         return "Educação Infantil", "#4299e1", "Foco: Campos de Experiência (BNCC)."
     if nivel == "FI":
-        return "Anos Iniciais (Fund. I)", "#48bb78", "Foco: Alfabetização e BNCC."
+        return "Ensino Fundamental Anos Iniciais (EFAI)", "#48bb78", "Foco: Alfabetização e BNCC."
     if nivel == "FII":
-        return "Anos Finais (Fund. II)", "#ed8936", "Foco: Autonomia e Identidade."
+        return "Ensino Fundamental Anos Finais (EFAF)", "#ed8936", "Foco: Autonomia e Identidade."
     if nivel == "EM":
         return "Ensino Médio / EJA", "#9f7aea", "Foco: Projeto de Vida."
     return "Selecione a Série", "grey", "Aguardando seleção..."
@@ -851,7 +851,7 @@ def consultar_gpt_pedagogico(api_key: str, dados: dict, contexto_pdf: str = "", 
             [f"- {m.get('nome','')} ({m.get('posologia','')})." for m in (dados.get("lista_medicamentos") or [])]
         ) if dados.get("lista_medicamentos") else "Nenhuma medicação informada."
 
-        hiperfoco_txt = f"HIPERFOCO DO ALUNO: {dados.get('hiperfoco','')}" if dados.get("hiperfoco") else "Hiperfoco: Não identificado."
+        hiperfoco_txt = f"HIPERFOCO DO ESTUDANTE: {dados.get('hiperfoco','')}" if dados.get("hiperfoco") else "Hiperfoco: Não identificado."
         serie = dados.get("serie") or ""
         nivel_ensino = detectar_nivel_ensino(serie)
         alfabetizacao = dados.get("nivel_alfabetizacao", "Não Avaliado")
@@ -1309,11 +1309,11 @@ tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_9 = st.tabs(abas)
 
 
 # ==============================================================================
-# 11. ABA INÍCIO — CENTRAL (Gestão de Alunos + Backups)
+# 11. ABA INÍCIO — CENTRAL (Gestão de Estudantes + Backups)
 # ==============================================================================
 with tab0:
     st.markdown("### 🏛️ Central de Fundamentos e Gestão")
-    st.caption("Aqui você gerencia alunos (backup local e nuvem/Supabase) e acessa fundamentos do PEI.")
+    st.caption("Aqui você gerencia estudantes (backup local e nuvem/Supabase) e acessa fundamentos do PEI.")
 
     # -------------------------
     # Helpers locais (somente UI)
@@ -1366,7 +1366,7 @@ with tab0:
     # DIREITA: Gestão de alunos
     # =========================
     with col_right:
-        st.markdown("#### 👤 Gestão de Alunos")
+        st.markdown("#### 👤 Gestão de Estudantes")
 
         # garante d (se seu código já define antes, isso não atrapalha)
         d = st.session_state.get("dados", {})
@@ -1376,7 +1376,7 @@ with tab0:
         # Status vínculo
         student_id = st.session_state.get("selected_student_id")
         if student_id:
-            st.success("✅ Aluno vinculado ao Supabase (nuvem)")
+            st.success("✅ Estudante vinculado ao Supabase (nuvem)")
             st.caption(f"student_id: {str(student_id)[:8]}...")
         else:
             st.warning("📝 Modo rascunho (sem vínculo na nuvem)")
@@ -1543,7 +1543,7 @@ with tab0:
                 st.success("✅ Tudo salvo no Supabase!")
 
                 timestamp = datetime.now().strftime("%d-%m_%Hh%M")
-                nome_clean = (d.get("nome") or "Aluno").replace(" ", "_")
+                nome_clean = (d.get("nome") or "Estudante").replace(" ", "_")
 
                 st.download_button(
                     label="📂 BAIXAR BACKUP (.JSON)",
@@ -1591,9 +1591,9 @@ with tab1:
         if seg == "EI":
             return "Educação Infantil", "#4299e1", "Foco: Campos de Experiência (BNCC) e rotina estruturante."
         if seg == "EFI":
-            return "Ensino Fundamental — Anos Iniciais", "#48bb78", "Foco: alfabetização, numeracia e consolidação de habilidades basais."
+            return "Ensino Fundamental Anos Iniciais (EFAI)", "#48bb78", "Foco: alfabetização, numeracia e consolidação de habilidades basais."
         if seg == "EFII":
-            return "Ensino Fundamental — Anos Finais", "#ed8936", "Foco: autonomia, funções executivas, organização e aprofundamento conceitual."
+            return "Ensino Fundamental Anos Finais (EFAF)", "#ed8936", "Foco: autonomia, funções executivas, organização e aprofundamento conceitual."
         if seg == "EM":
             return "Ensino Médio / EJA", "#9f7aea", "Foco: projeto de vida, áreas do conhecimento e estratégias de estudo."
         return "Selecione a Série/Ano", "#718096", "Aguardando seleção..."
@@ -1653,7 +1653,7 @@ with tab1:
 
     default_familia_valido = [x for x in st.session_state.dados.get("composicao_familiar_tags", []) if x in LISTA_FAMILIA]
     st.session_state.dados["composicao_familiar_tags"] = st.multiselect(
-        "Quem convive com o aluno?",
+        "Quem convive com o estudante?",
         LISTA_FAMILIA,
         default=default_familia_valido,
         help="Incluímos Mãe 1 / Mãe 2 e Pai 1 / Pai 2 para famílias diversas."
@@ -1772,7 +1772,7 @@ with tab1:
 
     with st.container(border=True):
         usa_med = st.toggle(
-            "💊 O aluno faz uso contínuo de medicação?",
+            "💊 O estudante faz uso contínuo de medicação?",
             value=len(st.session_state.dados.get("lista_medicamentos", [])) > 0,
             key="toggle_usa_med_tab1"
         )
@@ -2715,7 +2715,7 @@ with tab8:
                 st.download_button(
                     "Baixar PDF Oficial",
                     pdf_bytes,
-                    f"PEI_{d.get('nome','Aluno')}.pdf",
+                    f"PEI_{d.get('nome','Estudante')}.pdf",
                     "application/pdf",
                     use_container_width=True
                 )
@@ -2725,7 +2725,7 @@ with tab8:
                 st.download_button(
                     "Baixar Word Editável",
                     docx,
-                    f"PEI_{d.get('nome','Aluno')}.docx",
+                    f"PEI_{d.get('nome','Estudante')}.docx",
                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     use_container_width=True
                 )
@@ -2744,7 +2744,7 @@ with tab8:
             st.download_button(
                 "Salvar Arquivo .JSON",
                 json.dumps(d, default=str, ensure_ascii=False),
-                f"PEI_{d.get('nome','Aluno')}.json",
+                f"PEI_{d.get('nome','Estudante')}.json",
                 "application/json",
                 use_container_width=True
             )
@@ -2809,7 +2809,7 @@ with tab8:
                                 st.toast("Salvo na nuvem com sucesso!", icon="☁️")
                                 st.rerun()
                             else:
-                                st.error("Erro: ID do aluno não encontrado.")
+                                st.error("Erro: ID do estudante não encontrado.")
 
                     except Exception as e:
                         st.error(f"Erro na sincronização: {e}")
@@ -2818,7 +2818,7 @@ with tab8:
             if st.session_state.get("sync_sucesso"):
                 st.success("✅ Tudo salvo!")
                 timestamp = datetime.now().strftime("%d-%m_%Hh%M")
-                nome_clean = (d.get('nome') or 'Aluno').replace(' ', '_')
+                nome_clean = (d.get('nome') or 'Estudante').replace(' ', '_')
                 
                 st.download_button(
                     label="📂 BAIXAR CÓPIA AGORA",
@@ -3043,7 +3043,7 @@ with tab_9:
                     type="primary",
                     use_container_width=True
                 )
-                st.caption("Dica: imprima e cole no caderno / agenda do aluno.")
+                st.caption("Dica: imprima e cole no caderno / agenda do estudante.")
                 st.write("---")
                 if st.button("🆕 Criar Nova Missão", use_container_width=True):
                     st.session_state.dados["status_validacao_game"] = "rascunho"
