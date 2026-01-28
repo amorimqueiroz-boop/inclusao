@@ -1,48 +1,31 @@
 # ==============================================================================
-# HUB DE INCLUSÃO - VERSÃO MODULAR E ORGANIZADA
+# PARTE 1/4: CONFIGURAÇÕES, ESTILOS E AUTENTICAÇÃO
 # ==============================================================================
 
-# --- IMPORTS ---
 import streamlit as st
-from datetime import date, datetime
 import os
-import re
-import base64
-import json
-import requests
-import pandas as pd
-from PIL import Image
-from io import BytesIO
-
-# Importações OpenAI e ML
 from openai import OpenAI
+import json
+import pandas as pd
+from datetime import date, datetime, timedelta
+import base64
+import requests
+import time
+import uuid
 
-# Importações para documentos
-from docx import Document
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.shared import Pt, Inches
-from fpdf import FPDF
-from pypdf import PdfReader
+import omni_utils as ou  # módulo atualizado
 
-# Importações UI
-from streamlit_cropper import st_cropper
-import omni_utils as ou
-
-# ==============================================================================
-# CONFIGURAÇÃO INICIAL
-# ==============================================================================
-
-# ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
+# 1. CONFIGURAÇÃO INICIAL (topo absoluto)
 st.set_page_config(
-    page_title="Omnisfera | Hub de Recursos",
-    page_icon="omni_icone.png" if os.path.exists("omni_icone.png") else "📘",
+    page_title="Omnisfera | PAE",
+    page_icon="omni_icone.png" if os.path.exists("omni_icone.png") else "🔧",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
 APP_VERSION = "v150.0 (SaaS Design)"
 
-# ✅ UI lockdown (não quebra se faltar)
+# 2. UI LOCKDOWN (opcional)
 try:
     from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
     hide_streamlit_chrome_if_needed()
@@ -50,13 +33,21 @@ try:
 except Exception:
     pass
 
-# ✅ Header + Navbar (depois do page_config)
+# 3. HEADER E NAVBAR (do omni_utils)
 ou.render_omnisfera_header()
-ou.render_navbar(active_tab="Hub de Recursos")
+ou.render_navbar(active_tab="Plano de Ação (AEE)")
 ou.inject_compact_app_css()
 
 # Adiciona classe no body para cores específicas das abas
-st.markdown("<script>document.body.classList.add('page-teal');</script>", unsafe_allow_html=True)
+st.markdown("<script>document.body.classList.add('page-purple');</script>", unsafe_allow_html=True)
+
+# 4. VERIFICAÇÃO DE ACESSO
+def verificar_acesso():
+    if not st.session_state.get("autenticado"):
+        st.error("🔒 Acesso Negado.")
+        st.stop()
+
+verificar_acesso()
 
 # ==============================================================================
 # AJUSTE FINO DE LAYOUT (ANTES DO HERO - PADRONIZADO)
@@ -116,2702 +107,1944 @@ ou.inject_hero_card_colors()
 # CSS padronizado: abas (pílulas), botões, selects, etc.
 ou.inject_unified_ui_css()
 
+
 # ==============================================================================
-# HERO - HUB DE INCLUSÃO
+# BLOCO VISUAL (GLOBAL) — CSS DO MÓDULO + GATE (REAPROVEITÁVEL)
+# Mantém: card hero, tabs, caixas, timeline e tema de botões
+# Remove: badge fixo + logo girando (porque conflita com ou.render_omnisfera_header)
+# ==============================================================================
+
+def inject_paee_css(theme: str = "teal"):
+    """
+    Injeta CSS do módulo (reaproveitável em outras páginas).
+    - theme: "teal" (padrão) ou "purple" (se quiser alternar em outro módulo)
+    """
+    if theme == "purple":
+        ACCENT = "#8B5CF6"
+        ACCENT_DARK = "#7C3AED"
+        ACCENT_SOFT = "#F5F3FF"
+    else:
+        ACCENT = "#0D9488"
+        ACCENT_DARK = "#0F766E"
+        ACCENT_SOFT = "#F0FDFA"
+
+    st.markdown(
+    f"""
+<style>
+
+ /* ===============================
+    AJUSTE ENTRE MENU SUPERIOR E HERO (PADRONIZADO)
+ ================================ */
+/* margin-top já aplicado no forcar_layout_hub() - não sobrescrever aqui */
+.mod-card-wrapper {{
+    margin-bottom: 20px !important;
+}}
+
+
+ /* ============================
+     COMPONENTES BASE (REUSO)
+     ============================ */
+
+  /* CARD HERO (header do módulo) */
+  .mod-card-wrapper {{
+      display:flex; flex-direction:column;
+      margin-bottom:20px;
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow:0 4px 6px rgba(0,0,0,0.02);
+  }}
+  .mod-card-rect {{
+      background:white;
+      border-radius:16px 16px 0 0;
+      padding:0;
+      border:1px solid #E2E8F0;
+      border-bottom:none;
+      display:flex;
+      flex-direction:row;
+      align-items:center;
+      height:130px !important;  /* 🔒 ALTURA FIXA PADRONIZADA */
+      width:100%;
+      position:relative;
+      overflow:hidden;
+      transition:all .25s cubic-bezier(.4,0,.2,1);
+  }}
+  .mod-card-rect:hover {{
+      transform:translateY(-4px);
+      box-shadow:0 12px 24px rgba(0,0,0,0.08);
+      border-color:#CBD5E1;
+  }}
+  .mod-bar {{
+      width:6px; height:100%; flex-shrink:0;
+      background:{ACCENT} !important;
+  }}
+  .mod-icon-area {{
+      width:90px; height:100%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.8rem;
+      flex-shrink:0;
+      background:#FAFAFA !important;
+      border-right:1px solid #F1F5F9;
+      transition:all .3s ease;
+      color:{ACCENT} !important;
+  }}
+  .mod-card-rect:hover .mod-icon-area {{
+      background:white !important;
+      transform:scale(1.05) !important;
+  }}
+  .mod-content {{
+      flex-grow:1;
+      padding:0 24px;
+      display:flex; 
+      flex-direction:column; 
+      justify-content:center;
+      align-items:flex-start;
+      min-width:0; /* Previne overflow */
+  }}
+  .mod-title {{
+      font-weight:800;
+      font-size:1.1rem;
+      color:#1E293B;
+      margin-bottom:6px;
+      letter-spacing:-0.3px;
+      transition:color .2s;
+  }}
+  .mod-card-rect:hover .mod-title {{ color:{ACCENT}; }}
+  .mod-desc {{
+      font-size:.8rem;
+      color:#64748B;
+      line-height:1.4;
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+  }}
+
+  /* BOX pedagógico e caixas */
+  .pedagogia-box {{
+      background-color:#F8FAFC;
+      border-left:4px solid #CBD5E1;
+      padding:20px;
+      border-radius:0 12px 12px 0;
+      margin-bottom:25px;
+      font-size:.95rem;
+      color:#4A5568;
+  }}
+
+  .resource-box {{
+      background:#F8FAFC;
+      border:1px solid #E2E8F0;
+      border-radius:12px;
+      padding:20px;
+      margin:15px 0;
+  }}
+
+  .timeline-header {{
+      background:white;
+      border-radius:12px;
+      padding:20px;
+      margin-bottom:20px;
+      border:1px solid #E2E8F0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+  }}
+
+  /* ============================
+     TABS E BOTÕES — PADRÃO VIA omni_utils.inject_unified_ui_css()
+     ============================ */
+  /* Estilos de tabs, botões, selects, etc. são aplicados via função padronizada */
+
+  /* Responsividade do HERO */
+  @media (max-width: 768px) {{
+      .mod-card-rect {{ height:auto; flex-direction:column; padding:16px; }}
+      .mod-icon-area {{ width:100%; height:60px; border-right:none; border-bottom:1px solid #F1F5F9; }}
+      .mod-content {{ padding:16px 0 0 0; }}
+  }}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def verificar_acesso():
+    # ✅ mantém o gate (importante)
+    if not st.session_state.get("autenticado"):
+        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
+        st.stop()
+
+    # ✅ se quiser esconder footer, ok (não mexe em padding)
+    st.markdown(
+        """
+<style>
+  footer {visibility:hidden !important;}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ==============================================================================
+# HERO - PAE
 # ==============================================================================
 hora = datetime.now().hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
 USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
 WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
 
-st.markdown(f"""
-<div class="mod-card-wrapper">
-    <div class="mod-card-rect">
-        <div class="mod-bar c-teal"></div>
-        <div class="mod-icon-area bg-teal-soft">
-            <i class="ri-lightbulb-flash-fill"></i>
-        </div>
-        <div class="mod-content">
-            <div class="mod-title">Hub de Recursos & Inteligência Artificial</div>
-            <div class="mod-desc">
-                {saudacao}, <strong>{USUARIO_NOME}</strong>! Acesse recursos, modelos e ferramentas de IA 
-                para criar adaptações e estratégias personalizadas no workspace <strong>{WORKSPACE_NAME}</strong>.
+st.markdown(
+    f"""
+    <div class="mod-card-wrapper">
+        <div class="mod-card-rect">
+            <div class="mod-bar c-purple"></div>
+            <div class="mod-icon-area bg-purple-soft">
+                <i class="ri-tools-fill"></i>
+            </div>
+            <div class="mod-content">
+                <div class="mod-title">Atendimento Educacional Especializado (AEE) & Tecnologia Assistiva</div>
+                <div class="mod-desc">
+                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Planeje e implemente estratégias de AEE para eliminação de barreiras 
+                    no workspace <strong>{WORKSPACE_NAME}</strong>. Desenvolva recursos, adaptações e tecnologias assistivas 
+                    para promover acessibilidade e participação plena.
+                </div>
             </div>
         </div>
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True,
+)
 
-# CSS específico do hero card do Hub
-st.markdown("""
-<style>
-    /* CARD HERO - PADRÃO */
-    .mod-card-wrapper { 
-        display: flex; 
-        flex-direction: column; 
-        margin-bottom: 4px; 
-        /* margin-top já aplicado no forcar_layout_hub() - não duplicar aqui */
-        border-radius: 16px; 
-        overflow: hidden; 
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); 
-        position: relative;
-        z-index: 1;
-    }
-    .mod-card-rect { 
-        background: white; 
-        border-radius: 16px 16px 0 0; 
-        padding: 0; 
-        border: 1px solid #E2E8F0; 
-        border-bottom: none; 
-        display: flex; 
-        flex-direction: row; 
-        align-items: center; 
-        height: 130px !important; 
-        width: 100%; 
-        position: relative; 
-        overflow: hidden; 
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
-    }
-    .mod-card-rect:hover { 
-        transform: translateY(-4px); 
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08); 
-        border-color: #CBD5E1; 
-    }
-    .mod-bar { 
-        width: 6px; 
-        height: 100%; 
-        flex-shrink: 0; 
-    }
-    .mod-icon-area { 
-        width: 90px; 
-        height: 100%; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        font-size: 1.8rem; 
-        flex-shrink: 0; 
-        background: #FAFAFA !important; 
-        border-right: 1px solid #F1F5F9; 
-        transition: all 0.3s ease; 
-    }
-    .mod-card-rect:hover .mod-icon-area { 
-        background: white !important;
-        transform: scale(1.05) !important;
-    }
-    .mod-content { 
-        flex-grow: 1; 
-        padding: 0 24px; 
-        display: flex; 
-        flex-direction: column; 
-        justify-content: center; 
-        min-width: 0;
-        align-items: flex-start;
-    }
-    .mod-title { 
-        font-weight: 800; 
-        font-size: 1.1rem; 
-        color: #1E293B; 
-        margin-bottom: 6px; 
-        letter-spacing: -0.3px; 
-        transition: color 0.2s; 
-    }
-    .mod-desc { 
-        font-size: 0.8rem; 
-        color: #64748B; 
-        line-height: 1.4; 
-        display: -webkit-box; 
-        -webkit-line-clamp: 2; 
-        -webkit-box-orient: vertical; 
-        overflow: hidden; 
-    }
-    
-    /* CORES ESPECÍFICAS TEAL - Garantir que o ícone tenha cor correta */
-    .c-teal { background: #0D9488 !important; }
-    .bg-teal-soft {
-        background: #CCFBF1 !important;
-        color: #0D9488 !important;
-    }
-    .mod-icon-area i { color: inherit !important; }
-    .bg-teal-soft i,
-    .mod-icon-area.bg-teal-soft i,
-    .mod-icon-area.bg-teal-soft i.ri-lightbulb-flash-fill {
-        color: #0D9488 !important;
-        font-size: 1.8rem !important;
-    }
-    .mod-card-rect:hover .mod-title {
-        color: #0D9488; /* Specific hover color */
-    }
-</style>
-""", unsafe_allow_html=True)
+# CSS específico do módulo PAE (após hero card)
+inject_paee_css(theme="purple")
 
 # Espaçamento após hero card
-st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
 # ==============================================================================
-# VERIFICAÇÃO DE ACESSO
-# ==============================================================================
-def verificar_acesso():
-    """Verifica se o usuário está autenticado"""
-    if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
-        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
-        st.stop()
-
-verificar_acesso()
-
-# ==============================================================================
-# CONSTANTES E DADOS GLOBAIS
+# PARTE 2/4: CONEXÃO COM BANCO DE DADOS E CARREGAMENTO DE ESTUDANTES
 # ==============================================================================
 
-# Dados da Taxonomia de Bloom
-TAXONOMIA_BLOOM = {
-    "1. Lembrar (Memorizar)": ["Citar", "Definir", "Identificar", "Listar", "Nomear", "Reconhecer", "Recordar", "Relacionar", "Repetir", "Sublinhar"],
-    "2. Entender (Compreender)": ["Classificar", "Descrever", "Discutir", "Explicar", "Expressar", "Identificar", "Localizar", "Narrar", "Reafirmar", "Reportar", "Resumir", "Traduzir"],
-    "3. Aplicar": ["Aplicar", "Demonstrar", "Dramatizar", "Empregar", "Esboçar", "Ilustrar", "Interpretar", "Operar", "Praticar", "Programar", "Usar"],
-    "4. Analisar": ["Analisar", "Calcular", "Categorizar", "Comparar", "Contrastar", "Criticar", "Diferenciar", "Discriminar", "Distinguir", "Examinar", "Experimentar", "Testar"],
-    "5. Avaliar": ["Argumentar", "Avaliar", "Defender", "Escolher", "Estimar", "Julgar", "Prever", "Selecionar", "Suportar", "Validar", "Valorizar"],
-    "6. Criar": ["Compor", "Construir", "Criar", "Desenhar", "Desenvolver", "Formular", "Investigar", "Planejar", "Produzir", "Propor"]
-}
-
-# Lista de componentes curriculares padrão
-DISCIPLINAS_PADRAO = ["Matemática", "Português", "Ciências", "História", "Geografia", "Artes", "Educação Física", "Inglês", "Filosofia", "Sociologia"]
-
-# Campos de Experiência (Educação Infantil)
-CAMPOS_EXPERIENCIA_EI = [
-    "O eu, o outro e o nós",
-    "Corpo, gestos e movimentos",
-    "Traços, sons, cores e formas",
-    "Escuta, fala, pensamento e imaginação",
-    "Espaços, tempos, quantidades, relações e transformações"
-]
-
-# Metodologias para Plano de Aula
-METODOLOGIAS = [
-    "Aula Expositiva Dialogada", 
-    "Metodologia Ativa", 
-    "Aprendizagem Baseada em Problemas", 
-    "Ensino Híbrido",
-    "Sala de Aula Invertida", 
-    "Rotação por Estações"
-]
-
-# Técnicas Ativas
-TECNICAS_ATIVAS = [
-    "Gamificação", 
-    "Sala de Aula Invertida", 
-    "Aprendizagem Baseada em Projetos (PBL)", 
-    "Rotação por Estações", 
-    "Peer Instruction",
-    "Estudo de Caso", 
-    "Aprendizagem Cooperativa"
-]
-
-# Recursos disponíveis
-RECURSOS_DISPONIVEIS = [
-    "Quadro/Giz", 
-    "Projetor/Datashow", 
-    "Lousa Digital", 
-    "Tablets/Celulares", 
-    "Internet", 
-    "Materiais Maker (Papel, Cola, etc)", 
-    "Jogos de Tabuleiro", 
-    "Laboratório", 
-    "Material Dourado",
-    "Recursos de CAA", 
-    "Vídeos Educativos"
-]
-
-# ==============================================================================
-# FUNÇÕES DE UTILIDADE GERAL
-# ==============================================================================
-
-def extrair_dados_docx(uploaded_file):
-    """Extrai texto e imagens de um arquivo DOCX"""
-    uploaded_file.seek(0)
-    imagens = []
-    texto = ""
-    try:
-        doc = Document(uploaded_file)
-        texto = "\n".join([p.text for p in doc.paragraphs if p.text.strip() != ""])
-        for rel in doc.part.rels.values():
-            if "image" in rel.target_ref:
-                img_data = rel.target_part.blob
-                if len(img_data) > 1024:
-                    imagens.append(img_data)
-    except Exception as e:
-        print(f"Erro ao extrair DOCX: {e}")
-    return texto, imagens
-
-def sanitizar_imagem(image_bytes):
-    """Converte e otimiza imagem"""
-    try:
-        img = Image.open(BytesIO(image_bytes)).convert("RGB")
-        out = BytesIO()
-        img.save(out, format="JPEG", quality=90)
-        return out.getvalue()
-    except Exception as e:
-        print(f"Erro ao sanitizar imagem: {e}")
-        return None
-
-def baixar_imagem_url(url):
-    """Baixa imagem a partir de uma URL"""
-    try:
-        resp = requests.get(url, timeout=10)
-        if resp.status_code == 200:
-            return BytesIO(resp.content)
-    except Exception as e:
-        print(f"Erro ao baixar imagem: {e}")
-    return None
-
-def buscar_imagem_unsplash(query, access_key):
-    """Busca imagem no Unsplash"""
-    if not access_key:
-        return None
-    url = f"https://api.unsplash.com/search/photos?query={query}&per_page=1&client_id={access_key}&lang=pt"
-    try:
-        resp = requests.get(url, timeout=5)
-        data = resp.json()
-        if data.get('results'):
-            return data['results'][0]['urls']['regular']
-    except Exception as e:
-        print(f"Erro ao buscar no Unsplash: {e}")
-    return None
-
-def garantir_tag_imagem(texto):
-    """Garante que o texto tenha pelo menos uma tag de imagem"""
-    if "[[IMG" not in texto.upper() and "[[GEN_IMG" not in texto.upper():
-        match = re.search(r'(\n|\. )', texto)
-        if match:
-            pos = match.end()
-            return texto[:pos] + "\n\n[[IMG_1]]\n\n" + texto[pos:]
-        return texto + "\n\n[[IMG_1]]"
-    return texto
-
-def construir_docx_final(texto_ia, aluno, materia, mapa_imgs, tipo_atv, sem_cabecalho=False):
-    """Constrói documento DOCX final"""
-    doc = Document()
-    style = doc.styles['Normal']
-    style.font.name = 'Arial'
-    style.font.size = Pt(12)
-    
-    if not sem_cabecalho:
-        doc.add_heading(f'{tipo_atv.upper()} ADAPTADA - {materia.upper()}', 0).alignment = WD_ALIGN_PARAGRAPH.CENTER
-        doc.add_paragraph(f"Estudante: {aluno['nome']}").alignment = WD_ALIGN_PARAGRAPH.CENTER
-        doc.add_paragraph("_"*50)
-        doc.add_heading('Atividades', level=2)
-
-    linhas = texto_ia.split('\n')
-    for linha in linhas:
-        tag_match = re.search(r'\[\[(IMG|GEN_IMG).*?(\d+)\]\]', linha, re.IGNORECASE)
-        if tag_match:
-            partes = re.split(r'(\[\[(?:IMG|GEN_IMG).*?\d+\]\])', linha, flags=re.IGNORECASE)
-            for parte in partes:
-                sub_match = re.search(r'(\d+)', parte)
-                if ("IMG" in parte.upper() or "GEN_IMG" in parte.upper()) and sub_match:
-                    num = int(sub_match.group(1))
-                    img_bytes = mapa_imgs.get(num)
-                    if not img_bytes and len(mapa_imgs) == 1:
-                        img_bytes = list(mapa_imgs.values())[0]
-                    if img_bytes:
-                        try:
-                            p = doc.add_paragraph()
-                            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                            r = p.add_run()
-                            r.add_picture(BytesIO(img_bytes), width=Inches(4.5))
-                        except Exception as e:
-                            print(f"Erro ao adicionar imagem: {e}")
-                elif parte.strip():
-                    doc.add_paragraph(parte.strip())
-        else:
-            if linha.strip():
-                doc.add_paragraph(linha.strip())
-            
-    buffer = BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
-    return buffer
-
-def criar_docx_simples(texto, titulo="Documento"):
-    """Cria um DOCX simples a partir de texto"""
-    doc = Document()
-    doc.add_heading(titulo, 0)
-    for para in texto.split('\n'):
-        if para.strip():
-            doc.add_paragraph(para.strip())
-    buffer = BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
-    return buffer
-
-def criar_pdf_generico(texto):
-    """Cria um PDF simples a partir de texto"""
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    texto_safe = texto.encode('latin-1', 'replace').decode('latin-1')
-    pdf.multi_cell(0, 10, texto_safe)
-    return pdf.output(dest='S').encode('latin-1')
-
-# ==============================================================================
-# FUNÇÕES DE CONEXÃO COM SUPABASE (CORRIGIDO PARA SEPARAR DIAGNÓSTICO DE HIPERFOCO)
-# ==============================================================================
 # Funções _sb_url(), _sb_key(), _headers() removidas - usar ou._sb_url(), ou._sb_key(), ou._headers() do omni_utils
+# Primeira definição duplicada de list_students_rest() e carregar_estudantes_supabase() removida - usar as definições mais abaixo
 
+# ==============================================================================
+# PEI DO ALUNO
+# ==============================================================================
+def carregar_pei_aluno(aluno_id):
+    """Carrega o PEI do estudante do Supabase (campo pei_data na tabela students)."""
+    try:
+        url = f"{ou._sb_url()}/rest/v1/students"
+        params = {"select": "id,pei_data", "id": f"eq.{aluno_id}"}
+        r = requests.get(url, headers=ou._headers(), params=params, timeout=15)
+        if r.status_code == 200 and r.json():
+            return r.json()[0].get("pei_data", {}) or {}
+        return {}
+    except Exception as e:
+        st.error(f"Erro ao carregar PEI: {str(e)}")
+        return {}
+
+
+# ==============================================================================
+# PAEE — SALVAR / CARREGAR CICLOS
+# ==============================================================================
+def salvar_paee_ciclo(aluno_id, ciclo_data):
+    """
+    Salva um ciclo de PAEE no campo students.paee_ciclos (lista de ciclos).
+    Mantém planejamento_ativo e status_planejamento.
+    """
+    try:
+        # 1) Buscar estudante atual
+        url = f"{ou._sb_url()}/rest/v1/students"
+        params_get = {"select": "id,paee_ciclos,planejamento_ativo", "id": f"eq.{aluno_id}"}
+        r = requests.get(url, headers=ou._headers(), params=params_get, timeout=15)
+
+        if not (r.status_code == 200 and r.json()):
+            return {"sucesso": False, "erro": "Estudante não encontrado"}
+
+        aluno_row = r.json()[0]
+        ciclos_existentes = aluno_row.get("paee_ciclos") or []
+        ciclo_id = ciclo_data.get("ciclo_id")
+
+        # 2) Criar ou atualizar
+        if not ciclo_id:
+            ciclo_id = str(uuid.uuid4())
+            ciclo_data["ciclo_id"] = ciclo_id
+            ciclo_data["criado_em"] = datetime.now().isoformat()
+            ciclo_data["criado_por"] = st.session_state.get("user_id", "")
+            ciclo_data["versao"] = 1
+            ciclos_existentes.append(ciclo_data)
+        else:
+            # Atualiza ciclo existente
+            updated = False
+            for i, c in enumerate(ciclos_existentes):
+                if c.get("ciclo_id") == ciclo_id:
+                    ciclo_data["versao"] = (c.get("versao", 1) or 1) + 1
+                    ciclo_data["atualizado_em"] = datetime.now().isoformat()
+                    ciclos_existentes[i] = ciclo_data
+                    updated = True
+                    break
+            if not updated:
+                # se veio com id mas não achou, adiciona como novo
+                ciclo_data["versao"] = 1
+                ciclo_data["criado_em"] = datetime.now().isoformat()
+                ciclos_existentes.append(ciclo_data)
+
+        # 3) Preparar update
+        cfg = (ciclo_data.get("config_ciclo") or {})
+        update_data = {
+            "paee_ciclos": ciclos_existentes,
+            "planejamento_ativo": ciclo_id,
+            "status_planejamento": ciclo_data.get("status", "rascunho"),
+        }
+        if cfg.get("data_inicio"):
+            update_data["data_inicio_ciclo"] = cfg["data_inicio"]
+        if cfg.get("data_fim"):
+            update_data["data_fim_ciclo"] = cfg["data_fim"]
+
+        # 4) PATCH
+        params_patch = {"id": f"eq.{aluno_id}"}
+        rp = requests.patch(url, headers=ou._headers(), params=params_patch, json=update_data, timeout=25)
+
+        if rp.status_code == 204:
+            return {"sucesso": True, "ciclo_id": ciclo_id}
+        return {"sucesso": False, "erro": f"HTTP {rp.status_code}: {rp.text}"}
+
+    except Exception as e:
+        return {"sucesso": False, "erro": str(e)}
+
+
+def carregar_ciclo_ativo(aluno_id):
+    """Carrega o ciclo ativo (students.planejamento_ativo) dentro de students.paee_ciclos."""
+    try:
+        url = f"{ou._sb_url()}/rest/v1/students"
+        params = {"select": "id,paee_ciclos,planejamento_ativo", "id": f"eq.{aluno_id}"}
+        r = requests.get(url, headers=ou._headers(), params=params, timeout=15)
+
+        if r.status_code == 200 and r.json():
+            aluno_row = r.json()[0]
+            ciclo_id = aluno_row.get("planejamento_ativo")
+            ciclos = aluno_row.get("paee_ciclos") or []
+            if ciclo_id and ciclos:
+                for c in ciclos:
+                    if c.get("ciclo_id") == ciclo_id:
+                        return c
+        return None
+    except Exception as e:
+        st.error(f"Erro ao carregar ciclo ativo: {str(e)}")
+        return None
+
+
+# ==============================================================================
+# NOVO — HISTÓRICO DE CICLOS + DEFINIR ATIVO + HELPERS
+# ==============================================================================
+def listar_ciclos_aluno(aluno_id):
+    """Lista todos os ciclos PAEE do estudante (students.paee_ciclos) e retorna (ciclos_ordenados, ciclo_ativo_id)."""
+    try:
+        url = f"{ou._sb_url()}/rest/v1/students"
+        params = {"select": "id,paee_ciclos,planejamento_ativo", "id": f"eq.{aluno_id}"}
+        r = requests.get(url, headers=ou._headers(), params=params, timeout=15)
+
+        if r.status_code == 200 and r.json():
+            aluno_row = r.json()[0]
+            ciclos = aluno_row.get("paee_ciclos") or []
+            ativo = aluno_row.get("planejamento_ativo")
+
+            def _key(c):
+                # ordena por atualizado_em > criado_em
+                return (c.get("atualizado_em") or c.get("criado_em") or "")
+
+            ciclos = sorted(ciclos, key=_key, reverse=True)
+            return ciclos, ativo
+
+        return [], None
+    except Exception as e:
+        st.error(f"Erro ao listar ciclos: {e}")
+        return [], None
+
+
+def definir_ciclo_ativo(aluno_id, ciclo_id, status="ativo"):
+    """Define o ciclo ativo (students.planejamento_ativo) e status_planejamento."""
+    try:
+        url = f"{ou._sb_url()}/rest/v1/students"
+        params = {"id": f"eq.{aluno_id}"}
+        payload = {"planejamento_ativo": ciclo_id, "status_planejamento": status}
+        r = requests.patch(url, headers=ou._headers(), params=params, json=payload, timeout=20)
+        return r.status_code == 204
+    except Exception as e:
+        st.error(f"Erro ao definir ciclo ativo: {e}")
+        return False
+
+
+def _fmt_data_iso(d):
+    try:
+        return datetime.fromisoformat(str(d).replace("Z", "+00:00")).strftime("%d/%m/%Y")
+    except:
+        return str(d) if d else "-"
+
+
+def _badge_status(status):
+    s = (status or "rascunho").lower()
+    mp = {
+        "rascunho": ("🟡", "#F59E0B"),
+        "ativo": ("🟢", "#10B981"),
+        "concluido": ("🔵", "#3B82F6"),
+        "arquivado": ("⚫", "#64748B"),
+    }
+    return mp.get(s, ("⚪", "#94A3B8"))
+
+# ==============================================================================
+# CARREGAR ESTUDANTES DO SUPABASE
+# ==============================================================================
 @st.cache_data(ttl=10, show_spinner=False)
 def list_students_rest():
-    """
-    Busca estudantes do Supabase.
-    Removemos 'hiperfoco' da query direta para evitar erro se a coluna não existir,
-    pois vamos pegar esse dado de dentro do JSON 'pei_data'.
-    """
+    """Busca estudantes do Supabase incluindo o campo PEI_DATA"""
     WORKSPACE_ID = st.session_state.get("workspace_id")
-    if not WORKSPACE_ID:
+    if not WORKSPACE_ID: 
         return []
-
+    
     try:
         base = (
             f"{ou._sb_url()}/rest/v1/students"
-            f"?select=id,name,grade,class_group,diagnosis,created_at,pei_data,paee_ciclos,planejamento_ativo"
+            f"?select=id,name,grade,class_group,diagnosis,created_at,pei_data"
             f"&workspace_id=eq.{WORKSPACE_ID}"
             f"&order=created_at.desc"
         )
         r = requests.get(base, headers=ou._headers(), timeout=20)
         return r.json() if r.status_code == 200 else []
     except Exception as e:
-        print(f"Erro ao carregar estudantes: {str(e)}")
+        st.error(f"Erro ao carregar estudantes: {str(e)}")
         return []
 
 def carregar_estudantes_supabase():
-    """Carrega e processa estudantes, separando Diagnóstico de Hiperfoco."""
+    """Carrega e processa, extraindo dados ricos do PEI"""
     dados = list_students_rest()
     estudantes = []
-
+    
     for item in dados:
-        pei_completo = item.get("pei_data") or {}
-        contexto_ia = ""
-
-        # Tenta pegar texto de contexto da IA dentro do JSON do PEI
-        if isinstance(pei_completo, dict):
-            contexto_ia = pei_completo.get("ia_sugestao", "") or ""
+        pei_completo = item.get('pei_data') or {}
+        contexto_ia = pei_completo.get('ia_sugestao', '')
         
-        # 1. CAPTURA DO DIAGNÓSTICO (Vem da coluna do banco)
-        diagnostico_real = item.get("diagnosis")
-        if not diagnostico_real:
-            diagnostico_real = "Não informado no cadastro"
-
-        # 2. CAPTURA DO HIPERFOCO (Vem de dentro do JSON pei_data)
-        # Tenta várias chaves possíveis onde o hiperfoco pode ter sido salvo
-        hiperfoco_real = ""
-        if isinstance(pei_completo, dict):
-            hiperfoco_real = (
-                pei_completo.get("hiperfoco") or 
-                pei_completo.get("interesses") or 
-                pei_completo.get("habilidades_interesses") or 
-                ""
-            )
-        
-        # Se não achou no JSON, coloca um padrão (mas NÃO usa o diagnóstico)
-        if not hiperfoco_real:
-            hiperfoco_real = "Interesses gerais (A descobrir)"
-
-        # Montagem do resumo de fallback se não houver contexto da IA
         if not contexto_ia:
-            serie = item.get("grade", "")
-            contexto_ia = f"Estudante: {item.get('name')}. Série: {serie}. Diagnóstico: {diagnostico_real}."
+            diag = item.get('diagnosis', 'Não informado')
+            serie = item.get('grade', '')
+            contexto_ia = f"Estudante: {item.get('name')}. Série: {serie}. Diagnóstico: {diag}."
 
         estudante = {
-            "nome": item.get("name", ""),
-            "serie": item.get("grade", ""),
-            
-            # AQUI ESTÁ A CORREÇÃO: Chaves separadas e limpas
-            "diagnosis": diagnostico_real,  
-            "hiperfoco": hiperfoco_real,
-            
-            "ia_sugestao": contexto_ia,
-            "id": item.get("id", ""),
-            "pei_data": pei_completo,
+            'nome': item.get('name', ''),
+            'serie': item.get('grade', ''),
+            'hiperfoco': item.get('diagnosis', ''),
+            'ia_sugestao': contexto_ia,
+            'id': item.get('id', ''),
+            'pei_data': pei_completo
         }
-        
-        if estudante["nome"]:
+        if estudante['nome']:
             estudantes.append(estudante)
-
+            
     return estudantes
 
 # ==============================================================================
-# FUNÇÕES DE IA (OPENAI)
+# FUNÇÕES PARA PAEE NO SUPABASE
 # ==============================================================================
-
-def gerar_imagem_inteligente(api_key, prompt, unsplash_key=None, feedback_anterior="", prioridade="IA"):
-    """
-    Gera imagem com prioridade: IA (DALL-E) ou BANCO (Unsplash)
-    """
-    client = OpenAI(api_key=api_key)
-    
-    prompt_final = prompt
-    if feedback_anterior:
-        prompt_final = f"{prompt}. Adjustment requested: {feedback_anterior}"
-
-    # 1. TENTATIVA BANCO DE IMAGENS (Se solicitado e configurado)
-    if prioridade == "BANCO" and unsplash_key:
-        termo = prompt.split('.')[0] if '.' in prompt else prompt
-        url_banco = buscar_imagem_unsplash(termo, unsplash_key)
-        if url_banco:
-            return url_banco
-
-    # 2. TENTATIVA IA (DALL-E 3) - BLINDAGEM AGRESSIVA CONTRA TEXTO
+def carregar_pei_aluno(aluno_id):
+    """Carrega o PEI do estudante do Supabase"""
     try:
-        # Prompt com TRAVA DE TEXTO ("STRICTLY NO TEXT")
-        didactic_prompt = f"Educational textbook illustration, clean flat vector style, white background. CRITICAL RULE: STRICTLY NO TEXT, NO TYPOGRAPHY, NO ALPHABET, NO NUMBERS, NO LABELS inside the image. Just the visual representation of: {prompt_final}"
-        resp = client.images.generate(model="dall-e-3", prompt=didactic_prompt, size="1024x1024", quality="standard", n=1)
-        return resp.data[0].url
-    except Exception as e:
-        # Se IA falhar e não tentamos banco ainda, tenta agora como fallback
-        if prioridade == "IA" and unsplash_key:
-            termo = prompt.split('.')[0] if '.' in prompt else prompt
-            return buscar_imagem_unsplash(termo, unsplash_key)
-        print(f"Erro ao gerar imagem: {e}")
-        return None
-
-def gerar_pictograma_caa(api_key, conceito, feedback_anterior=""):
-    """
-    Gera símbolo específico para Comunicação Aumentativa e Alternativa.
-    """
-    client = OpenAI(api_key=api_key)
-    
-    ajuste = f" CORREÇÃO PEDIDA: {feedback_anterior}" if feedback_anterior else ""
-    
-    prompt_caa = f"""
-    Create a COMMUNICATION SYMBOL (AAC/PECS) for the concept: '{conceito}'. {ajuste}
-    STYLE GUIDE:
-    - Flat vector icon (ARASAAC/Noun Project style).
-    - Solid WHITE background.
-    - Thick BLACK outlines.
-    - High contrast primary colors.
-    - No background details, no shadows.
-    - CRITICAL MANDATORY RULE: MUTE IMAGE. NO TEXT. NO WORDS. NO LETTERS. NO NUMBERS. 
-    - The image must be a purely visual symbol.
-    """
-    try:
-        resp = client.images.generate(model="dall-e-3", prompt=prompt_caa, size="1024x1024", quality="standard", n=1)
-        return resp.data[0].url
-    except Exception as e:
-        print(f"Erro ao gerar pictograma: {e}")
-        return None
-
-def adaptar_conteudo_docx(api_key, aluno, texto, materia, tema, tipo_atv, remover_resp, questoes_mapeadas, modo_profundo=False):
-    """Adapta conteúdo de um DOCX para o estudante"""
-    client = OpenAI(api_key=api_key)
-    lista_q = ", ".join([str(n) for n in questoes_mapeadas])
-    style = "Seja didático e use uma Cadeia de Pensamento para adaptar." if modo_profundo else "Seja objetivo."
-    
-    prompt = f"""
-    ESPECIALISTA EM DUA E INCLUSÃO. {style}
-    1. ANALISE O PERFIL: {aluno.get('ia_sugestao', '')[:1000]}
-    2. ADAPTE A PROVA: Use o hiperfoco ({aluno.get('hiperfoco', 'Geral')}) em 30% das questões.
-    REGRA SAGRADA DE IMAGEM: O professor indicou imagens nas questões: {lista_q}.
-    Nessas questões, a estrutura OBRIGATÓRIA é: 1. Enunciado -> 2. [[IMG_número]] -> 3. Alternativas.
-    
-    SAÍDA OBRIGATÓRIA (Use EXATAMENTE este divisor):
-    [ANÁLISE PEDAGÓGICA]
-    ...análise...
-    ---DIVISOR---
-    [ATIVIDADE]
-    ...atividade...
-    
-    CONTEXTO: {materia} | {tema}. {"REMOVA GABARITO." if remover_resp else ""}
-    TEXTO ORIGINAL: {texto}
-    """
-    
-    try:
-        resp = client.chat.completions.create(
-            model="gpt-4o-mini", 
-            messages=[{"role": "user", "content": prompt}], 
-            temperature=0.7 if modo_profundo else 0.4
-        )
-        full_text = resp.choices[0].message.content
-        if "---DIVISOR---" in full_text:
-            parts = full_text.split("---DIVISOR---")
-            return parts[0].replace("[ANÁLISE PEDAGÓGICA]", "").strip(), parts[1].replace("[ATIVIDADE]", "").strip()
-        return "Análise indisponível.", full_text
-    except Exception as e:
-        return str(e), ""
-
-def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_atv, livro_professor, modo_profundo=False):
-    """Adapta conteúdo de uma imagem para o estudante"""
-    client = OpenAI(api_key=api_key)
-    if not imagem_bytes:
-        return "Erro: Imagem vazia", ""
-    
-    b64 = base64.b64encode(imagem_bytes).decode('utf-8')
-    instrucao_livro = "ATENÇÃO: IMAGEM COM RESPOSTAS. Remova todo gabarito/respostas." if livro_professor else ""
-    style = "Faça uma análise crítica para melhor adaptação." if modo_profundo else "Transcreva e adapte."
-    
-    prompt = f"""
-    ATUAR COMO: Especialista em Acessibilidade e OCR. {style}
-    1. Transcreva o texto da imagem. {instrucao_livro}
-    2. Adapte para o estudante (PEI: {aluno.get('ia_sugestao', '')[:800]}).
-    3. Hiperfoco ({aluno.get('hiperfoco')}): Conecte levemente.
-    4. REGRA DE OURO: Insira a tag [[IMG_1]] UMA ÚNICA VEZ, logo após o enunciado principal.
-    
-    SAÍDA OBRIGATÓRIA (Respeite o divisor):
-    [ANÁLISE PEDAGÓGICA]
-    ...análise...
-    ---DIVISOR---
-    [ATIVIDADE]
-    ...atividade...
-    """
-    
-    msgs = [
-        {
-            "role": "user", 
-            "content": [
-                {"type": "text", "text": prompt}, 
-                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}}
-            ]
+        url = f"{ou._sb_url()}/rest/v1/students"
+        params = {
+            "select": "id,pei_data",
+            "id": f"eq.{aluno_id}"
         }
-    ]
-    
-    try:
-        resp = client.chat.completions.create(
-            model="gpt-4o-mini", 
-            messages=msgs, 
-            temperature=0.7 if modo_profundo else 0.4
-        )
-        full_text = resp.choices[0].message.content
-        analise = "Análise indisponível."
-        atividade = full_text
-        if "---DIVISOR---" in full_text:
-            parts = full_text.split("---DIVISOR---")
-            analise = parts[0].replace("[ANÁLISE PEDAGÓGICA]", "").strip()
-            atividade = parts[1].replace("[ATIVIDADE]", "").strip()
-        atividade = garantir_tag_imagem(atividade)
-        return analise, atividade
+        
+        response = requests.get(url, headers=ou._headers(), params=params, timeout=10)
+        if response.status_code == 200 and response.json():
+            return response.json()[0].get('pei_data', {})
+        return {}
     except Exception as e:
-        return str(e), ""
+        st.error(f"Erro ao carregar PEI: {str(e)}")
+        return {}
 
-def criar_profissional(api_key, aluno, materia, objeto, qtd, tipo_q, qtd_imgs, verbos_bloom=None, habilidades_bncc=None, modo_profundo=False):
-    """Cria atividade profissional do zero"""
-    client = OpenAI(api_key=api_key)
-    hiperfoco = aluno.get('hiperfoco', 'Geral')
-    
-    # Instrução de imagens
-    instrucao_img = f"Incluir imagens em {qtd_imgs} questões (use [[GEN_IMG: termo]]). REGRA DE POSIÇÃO: A tag da imagem ([[GEN_IMG: termo]]) DEVE vir logo APÓS o enunciado e ANTES das alternativas." if qtd_imgs > 0 else "Sem imagens."
-    
-    # Instrução de Bloom
-    instrucao_bloom = ""
-    if verbos_bloom:
-        lista_verbos = ", ".join(verbos_bloom)
-        instrucao_bloom = f"""
-        6. TAXONOMIA DE BLOOM (RIGOROSO):
-           - Utilize OBRIGATORIAMENTE os seguintes verbos de ação selecionados: {lista_verbos}.
-           - Distribua esses verbos entre as questões criadas.
-           - REGRA DE FORMATAÇÃO: O verbo de comando deve vir no início do enunciado, em **NEGRITO E CAIXA ALTA** (Ex: **ANALISE**, **IDENTIFIQUE**, **EXPLIQUE**).
-           - Use apenas UM verbo de comando por questão.
-        """
-    
-    # Instrução de habilidades BNCC
-    instrucao_habilidades = ""
-    if habilidades_bncc:
-        habilidades_str = "\n".join([f"- {hab}" for hab in habilidades_bncc])
-        instrucao_habilidades = f"""
-        7. HABILIDADES BNCC (RIGOROSO):
-           - Alinhe as questões com as seguintes habilidades da BNCC:
-           {habilidades_str}
-           - Inclua referências às habilidades nos enunciados quando pertinente.
-        """
-    
-    # Formato baseado no tipo
-    if tipo_q == "Discursiva":
-        diretriz_tipo = "3. FORMATO DISCURSIVO (RIGOROSO): Crie apenas questões abertas. NÃO inclua alternativas, apenas linhas para resposta."
-    else:
-        diretriz_tipo = "3. FORMATO OBJETIVO: Crie questões de múltipla escolha com distratores inteligentes."
-    
-    style = "Atue como uma banca examinadora rigorosa." if modo_profundo else "Atue como professor elaborador."
-    
-    prompt = f"""
-    {style}
-    Crie prova de {materia} ({objeto}). QTD: {qtd} ({tipo_q}).
-    
-    DIRETRIZES: 
-    1. Contexto Real. 
-    2. Hiperfoco ({hiperfoco}) em 30%. 
-    {diretriz_tipo}
-    4. Imagens: {instrucao_img} (NUNCA repita a mesma imagem). 
-    5. Divisão Clara.
-    
-    REGRA DE OURO GRAMATICAL (IMPERATIVO):
-    - TODOS os comandos das questões devem estar no modo IMPERATIVO (Ex: "Cite", "Explique", "Calcule", "Analise", "Escreva").
-    - JAMAIS use o infinitivo (Ex: "Citar", "Explicar", "Calcular").
-    - Se houver verbos de Bloom selecionados, CONJUGUE-OS para o IMPERATIVO.
-    - O verbo de comando deve vir no início do enunciado, em **NEGRITO E CAIXA ALTA** (Ex: **ANALISE**, **IDENTIFIQUE**).
-    
-    {instrucao_bloom}
-    {instrucao_habilidades}
-    
-    SAÍDA OBRIGATÓRIA:
-    [ANÁLISE PEDAGÓGICA]
-    ...análise...
-    ---DIVISOR---
-    [ATIVIDADE]
-    ...questões...
-    """
-    
+def salvar_paee_ciclo(aluno_id, ciclo_data):
+    """Salva um ciclo de PAEE no Supabase"""
     try:
-        resp = client.chat.completions.create(
-            model="gpt-4o-mini", 
-            messages=[{"role": "user", "content": prompt}], 
-            temperature=0.8 if modo_profundo else 0.6
-        )
-        full_text = resp.choices[0].message.content
-        if "---DIVISOR---" in full_text:
-            parts = full_text.split("---DIVISOR---")
-            return parts[0].replace("[ANÁLISE PEDAGÓGICA]", "").strip(), parts[1].replace("[ATIVIDADE]", "").strip()
-        return "Análise indisponível.", full_text
-    except Exception as e:
-        return str(e), ""
-
-def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo, feedback_anterior=""):
-    """Gera experiência para Educação Infantil"""
-    client = OpenAI(api_key=api_key)
-    hiperfoco = aluno.get('hiperfoco', 'Brincar')
-    
-    ajuste_prompt = ""
-    if feedback_anterior:
-        ajuste_prompt = f"AJUSTE SOLICITADO PELO PROFESSOR: {feedback_anterior}. Refaça considerando isso."
-
-    prompt = f"""
-    ATUAR COMO: Especialista em Educação Infantil (BNCC) e Inclusão.
-    ESTUDANTE: {aluno['nome']} (Educação Infantil).
-    HIPERFOCO: {hiperfoco}.
-    RESUMO DAS NECESSIDADES (PEI): {aluno.get('ia_sugestao', '')[:600]}
-    
-    SUA MISSÃO: Criar uma EXPERIÊNCIA LÚDICA, CONCRETA E VISUAL focada no Campo de Experiência: "{campo_exp}".
-    Objetivo Específico: {objetivo}
-    {ajuste_prompt}
-    
-    REGRAS:
-    1. Não crie "provas" ou "folhinhas". Crie VIVÊNCIAS.
-    2. Use o hiperfoco para engajar (ex: se gosta de dinossauros, conte dinossauros).
-    3. Liste materiais concretos (massinha, tinta, blocos).
-    4. Dê o passo a passo para o professor.
-    
-    SAÍDA ESPERADA (Markdown):
-    ## 🧸 Experiência: [Nome Criativo]
-    **🎯 Intencionalidade:** ...
-    **📦 Materiais:** ...
-    **👣 Como Acontece:** ...
-    **🎨 Adaptação para {aluno['nome'].split()[0]}:** ...
-    """
-    
-    try:
-        resp = client.chat.completions.create(
-            model="gpt-4o-mini", 
-            messages=[{"role": "user", "content": prompt}], 
-            temperature=0.7
-        )
-        return resp.choices[0].message.content
-    except Exception as e:
-        return str(e)
-
-def gerar_roteiro_aula_completo(api_key, aluno, materia, assunto, habilidades_bncc=None, verbos_bloom=None, ano=None, unidade_tematica=None, objeto_conhecimento=None, feedback_anterior=""):
-    """Gera roteiro de aula completo com BNCC"""
-    client = OpenAI(api_key=api_key)
-    
-    # Construir informações da BNCC
-    info_bncc = ""
-    if habilidades_bncc:
-        info_bncc += f"\nHabilidades BNCC:"
-        for hab in habilidades_bncc:
-            info_bncc += f"\n- {hab}"
-    
-    if ano:
-        info_bncc += f"\nAno: {ano}"
-    
-    if unidade_tematica:
-        info_bncc += f"\nUnidade Temática: {unidade_tematica}"
-    
-    if objeto_conhecimento:
-        info_bncc += f"\nObjeto do Conhecimento: {objeto_conhecimento}"
-    
-    # Construir informações Bloom
-    info_bloom = ""
-    if verbos_bloom:
-        info_bloom = f"\nVerbos da Taxonomia de Bloom: {', '.join(verbos_bloom)}"
-    
-    ajuste = f"\nAJUSTES SOLICITADOS: {feedback_anterior}" if feedback_anterior else ""
-    
-    prompt = f"""
-    Crie um ROTEIRO DE AULA INDIVIDUALIZADO para {aluno['nome']}.
-    
-    INFORMAÇÕES DO ESTUDANTE:
-    - Perfil: {aluno.get('ia_sugestao', '')[:500]}
-    - Hiperfoco: {aluno.get('hiperfoco', 'Geral')}
-    
-    INFORMAÇÕES DA AULA:
-    - Componente Curricular: {materia}
-    - Assunto: {assunto}
-    {info_bncc}
-    {info_bloom}
-    {ajuste}
-    
-    ESTRUTURA OBRIGATÓRIA:
-    
-    1. **CONEXÃO INICIAL COM O HIPERFOCO** (2-3 minutos)
-       - Como conectar o tema com o hiperfoco do estudante
-    
-    2. **OBJETIVOS DA AULA**
-       - Objetivos claros e mensuráveis
-    
-    3. **DESENVOLVIMENTO PASSO A PASSO** (15-20 minutos)
-       - Divida em 3-4 etapas claras
-       - Inclua perguntas mediadoras
-       - Use exemplos relacionados ao hiperfoco
-    
-    4. **ATIVIDADE PRÁTICA INDIVIDUAL** (5-7 minutos)
-       - Tarefa que o estudante pode fazer sozinho
-    
-    5. **FECHAMENTO E REFLEXÃO** (3-5 minutos)
-       - Verificação dos objetivos
-       - Pergunta de reflexão
-    
-    6. **RECURSOS E MATERIAIS**
-    
-    7. **AVALIAÇÃO FORMATIVA**
-       - Como avaliar durante a aula
-    """
-    
-    try:
-        resp = client.chat.completions.create(
-            model="gpt-4o-mini", 
-            messages=[{"role": "user", "content": prompt}], 
-            temperature=0.7
-        )
-        return resp.choices[0].message.content
-    except Exception as e:
-        return str(e)
-
-def gerar_dinamica_inclusiva_completa(api_key, aluno, materia, assunto, qtd_alunos, caracteristicas_turma, habilidades_bncc=None, verbos_bloom=None, ano=None, unidade_tematica=None, objeto_conhecimento=None, feedback_anterior=""):
-    """Gera dinâmica inclusiva completa com BNCC"""
-    client = OpenAI(api_key=api_key)
-    
-    # Construir informações da BNCC
-    info_bncc = ""
-    if habilidades_bncc:
-        info_bncc += f"\nHabilidades BNCC:"
-        for hab in habilidades_bncc:
-            info_bncc += f"\n- {hab}"
-    
-    if ano:
-        info_bncc += f"\nAno: {ano}"
-    
-    if unidade_tematica:
-        info_bncc += f"\nUnidade Temática: {unidade_tematica}"
-    
-    if objeto_conhecimento:
-        info_bncc += f"\nObjeto do Conhecimento: {objeto_conhecimento}"
-    
-    # Construir informações Bloom
-    info_bloom = ""
-    if verbos_bloom:
-        info_bloom = f"\nVerbos da Taxonomia de Bloom: {', '.join(verbos_bloom)}"
-    
-    ajuste = f"\nAJUSTES SOLICITADOS: {feedback_anterior}" if feedback_anterior else ""
-    
-    prompt = f"""
-    Crie uma DINÂMICA INCLUSIVA para {qtd_alunos} estudantes.
-    
-    INFORMAÇÕES DO ESTUDANTE FOCAL:
-    - Nome: {aluno['nome']}
-    - Perfil: {aluno.get('ia_sugestao', '')[:400]}
-    - Hiperfoco: {aluno.get('hiperfoco', 'Geral')}
-    
-    INFORMAÇÕES DA DINÂMICA:
-    - Componente Curricular: {materia}
-    - Tema: {assunto}
-    - Características da turma: {caracteristicas_turma}
-    {info_bncc}
-    {info_bloom}
-    {ajuste}
-    
-    ESTRUTURA OBRIGATÓRIA:
-    
-    1. **NOME DA DINÂMICA E OBJETIVO**
-       - Nome criativo
-       - Objetivo claro
-    
-    2. **MATERIAIS NECESSÁRIOS**
-    
-    3. **PREPARAÇÃO**
-       - Como preparar a sala/ambiente
-    
-    4. **PASSO A PASSO** (detalhado)
-       - Instruções claras para o professor
-       - Inclua adaptações para o estudante focal
-    
-    5. **DURAÇÃO ESTIMADA**
-    
-    6. **AVALIAÇÃO**
-       - Como avaliar a participação de todos
-    
-    7. **VARIAÇÕES**
-       - Sugestões para adaptar a dinâmica
-    """
-    
-    try:
-        resp = client.chat.completions.create(
-            model="gpt-4o-mini", 
-            messages=[{"role": "user", "content": prompt}], 
-            temperature=0.7
-        )
-        return resp.choices[0].message.content
-    except Exception as e:
-        return str(e)
-
-def gerar_plano_aula_completo(api_key, materia, assunto, metodologia, tecnica, qtd_alunos, recursos, habilidades_bncc=None, verbos_bloom=None, ano=None, unidade_tematica=None, objeto_conhecimento=None, aluno_info=None):
-    """Gera plano de aula completo com BNCC"""
-    client = OpenAI(api_key=api_key)
-    
-    # Construir informações da BNCC
-    info_bncc = ""
-    if habilidades_bncc:
-        info_bncc += f"\nHABILIDADES BNCC:"
-        for hab in habilidades_bncc:
-            info_bncc += f"\n- {hab}"
-    
-    if ano:
-        info_bncc += f"\nAno: {ano}"
-    
-    if unidade_tematica:
-        info_bncc += f"\nUnidade Temática: {unidade_tematica}"
-    
-    if objeto_conhecimento:
-        info_bncc += f"\nObjeto do Conhecimento: {objeto_conhecimento}"
-    
-    # Construir informações Bloom
-    info_bloom = ""
-    if verbos_bloom:
-        info_bloom = f"\nVERBOS DA TAXONOMIA DE BLOOM: {', '.join(verbos_bloom)}"
-    
-    # Informações do aluno (para DUA)
-    info_aluno = ""
-    if aluno_info:
-        info_aluno = f"""
-    INFORMAÇÕES DO ESTUDANTE (DUA):
-    - Nome: {aluno_info.get('nome', '')}
-    - Hiperfoco: {aluno_info.get('hiperfoco', '')}
-    - Perfil: {aluno_info.get('ia_sugestao', '')[:300]}
-        """
-    
-    prompt = f"""
-    ATUAR COMO: Coordenador Pedagógico Especialista em BNCC, DUA e Metodologias Ativas.
-    
-    Crie um PLANO DE AULA COMPLETO com as seguintes informações:
-    
-    INFORMAÇÕES BÁSICAS:
-    - Componente Curricular: {materia}
-    - Tema/Assunto: {assunto}
-    - Metodologia: {metodologia}
-    - Técnica: {tecnica if tecnica else 'Não especificada'}
-    - Quantidade de Estudantes: {qtd_alunos}
-    - Recursos Disponíveis: {', '.join(recursos)}
-    
-    {info_bncc}
-    {info_bloom}
-    {info_aluno}
-    
-    ESTRUTURA DO PLANO (Markdown):
-    
-    ## 📋 PLANO DE AULA: {assunto}
-    
-    ### 🎯 OBJETIVOS DE APRENDIZAGEM
-    - Objetivo geral
-    - Objetivos específicos (3-4)
-    - Habilidades da BNCC trabalhadas
-    
-    ### 📚 CONTEÚDOS
-    - Conteúdos conceituais
-    - Conteúdos procedimentais
-    - Conteúdos atitudinais
-    
-    ### ⏰ TEMPO ESTIMADO
-    - Duração total: __ minutos
-    
-    ### 🛠 RECURSOS DIDÁTICOS
-    - Lista de recursos necessários
-    
-    ### 🚀 DESENVOLVIMENTO DA AULA
-    #### 1. ACOLHIDA E MOTIVAÇÃO (__ minutos)
-    - Atividade de engajamento
-    
-    #### 2. APRESENTAÇÃO DO CONTEÚDO (__ minutos)
-    - Explicação do tema
-    - Conexões com conhecimentos prévios
-    
-    #### 3. ATIVIDADE PRÁTICA (__ minutos)
-    - Descrição detalhada da atividade
-    - Papel do professor
-    - Papel dos estudantes
-    
-    #### 4. SOCIALIZAÇÃO (__ minutos)
-    - Compartilhamento dos resultados
-    - Discussão coletiva
-    
-    #### 5. AVALIAÇÃO (__ minutos)
-    - Instrumentos de avaliação
-    - Critérios
-    
-    ### ♿ ADAPTAÇÕES DUA (DESIGN UNIVERSAL PARA APRENDIZAGEM)
-    - Engajamento: Como manter todos motivados
-    - Representação: Múltiplas formas de apresentar o conteúdo
-    - Ação e Expressão: Múltiplas formas de expressar o aprendizado
-    
-    ### 📝 AVALIAÇÃO
-    - Avaliação diagnóstica
-    - Avaliação formativa
-    - Avaliação somativa
-    
-    ### 🔄 RECUPERAÇÃO
-    - Estratégias para estudantes com dificuldades
-    
-    ### 📚 REFERÊNCIAS
-    - Referências bibliográficas
-    - Sites recomendados
-    """
-    
-    try:
-        resp = client.chat.completions.create(
-            model="gpt-4o-mini", 
-            messages=[{"role": "user", "content": prompt}], 
-            temperature=0.7
-        )
-        return resp.choices[0].message.content
-    except Exception as e:
-        return str(e)
-
-def gerar_quebra_gelo_profundo(api_key, aluno, materia, assunto, hiperfoco, tema_turma_extra=""):
-    """Gera quebra-gelo profundo para engajamento"""
-    client = OpenAI(api_key=api_key)
-    
-    prompt = f"""
-    Crie 3 sugestões de 'Papo de Mestre' (Quebra-gelo/Introdução) para conectar o estudante {aluno['nome']} à aula.
-    Componente Curricular: {materia}. Assunto: {assunto}.
-    Hiperfoco do estudante: {hiperfoco}.
-    Tema de interesse da turma (DUA): {tema_turma_extra if tema_turma_extra else 'Não informado'}.
-    
-    O objetivo é usar o hiperfoco ou o interesse da turma como UMA PONTE (estratégia DUA de engajamento) para explicar o conceito de {assunto}.
-    Seja criativo e profundo.
-    """
-    
-    try:
-        resp = client.chat.completions.create(
-            model="gpt-4o-mini", 
-            messages=[{"role": "user", "content": prompt}], 
-            temperature=0.8
-        )
-        return resp.choices[0].message.content
-    except Exception as e:
-        return str(e)
-
-    # ==============================================================================
-# FUNÇÕES DE BNCC (DROPDOWNS)
-# ==============================================================================
-
-def padronizar_ano(ano_str):
-    """Converte diferentes formatos de ano para um padrão ordenável"""
-    if not isinstance(ano_str, str):
-        ano_str = str(ano_str)
-    
-    ano_str = ano_str.strip()
-    
-    # Padrões comuns
-    padroes = [
-        (r'(\d+)\s*º?\s*ano', 'ano'),
-        (r'(\d+)\s*ª?\s*série', 'ano'),
-        (r'(\d+)\s*em', 'em'),
-        (r'ef\s*(\d+)', 'ano'),
-        (r'(\d+)\s*período', 'ano'),
-        (r'(\d+)\s*semestre', 'ano'),
-    ]
-    
-    for padrao, tipo in padroes:
-        match = re.search(padrao, ano_str.lower())
-        if match:
-            num = match.group(1)
-            if tipo == 'em':
-                return f"{int(num):02d}EM"
-            else:
-                return f"{int(num):02d}"
-    
-    return ano_str
-
-def ordenar_anos(anos_lista):
-    """Ordena anos de forma inteligente"""
-    anos_padronizados = []
-    
-    for ano in anos_lista:
-        padrao = padronizar_ano(str(ano))
-        anos_padronizados.append((padrao, ano))
-    
-    anos_padronizados.sort(key=lambda x: x[0])
-    return [ano_original for _, ano_original in anos_padronizados]
-
-@st.cache_data
-def carregar_bncc_completa():
-    """Carrega o CSV da BNCC com todas as colunas necessárias"""
-    try:
-        if not os.path.exists('bncc.csv'):
-            st.warning("📄 Arquivo 'bncc.csv' não encontrado na pasta do script")
-            return None
+        # Primeiro, carrega os ciclos existentes
+        url = f"{ou._sb_url()}/rest/v1/students"
+        params = {"id": f"eq.{aluno_id}"}
         
-        try:
-            df = pd.read_csv('bncc.csv', delimiter=',', encoding='utf-8')
-        except:
-            try:
-                df = pd.read_csv('bncc.csv', delimiter=';', encoding='utf-8')
-            except Exception as e:
-                st.error(f"❌ Erro ao ler CSV: {str(e)[:100]}")
-                return None
-        
-        colunas_necessarias = ['Ano', 'Disciplina', 'Unidade Temática', 
-                              'Objeto do Conhecimento', 'Habilidade']
-        
-        colunas_faltando = []
-        for col in colunas_necessarias:
-            if col not in df.columns:
-                colunas_faltando.append(col)
-        
-        if colunas_faltando:
-            st.error(f"❌ Colunas faltando: {colunas_faltando}")
-            return None
-        
-        df = df.dropna(subset=['Ano', 'Disciplina', 'Objeto do Conhecimento'])
-        df['Ano'] = df['Ano'].astype(str).str.strip()
-        df['Disciplina'] = df['Disciplina'].str.replace('Ed. Física', 'Educação Física')
-        
-        return df
-    
-    except Exception as e:
-        st.error(f"❌ Erro: {str(e)[:100]}")
-        return None
-
-def criar_dropdowns_bncc_completos_melhorado(key_suffix="", mostrar_habilidades=True):
-    """
-    Cria 5 dropdowns hierárquicos conectados com multiselect para habilidades
-    """
-    # Carregar dados se necessário
-    if 'bncc_df_completo' not in st.session_state:
-        st.session_state.bncc_df_completo = carregar_bncc_completa()
-    
-    dados = st.session_state.bncc_df_completo
-    
-    # Se não tem dados, mostrar campos básicos
-    if dados is None or dados.empty:
-        st.warning("⚠️ BNCC não carregada. Usando campos básicos.")
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            ano = st.selectbox("Ano", ordenar_anos(["1", "2", "3", "4", "5", "6", "7", "8", "9", "1EM", "2EM", "3EM"]), 
-                              key=f"ano_basico_{key_suffix}")
-        with col2:
-            disciplina = st.selectbox("Componente Curricular", DISCIPLINAS_PADRAO, key=f"disc_basico_{key_suffix}")
-        with col3:
-            objeto = st.text_input("Objeto do Conhecimento", placeholder="Ex: Frações", 
-                                  key=f"obj_basico_{key_suffix}")
-        
-        col4, col5 = st.columns(2)
-        with col4:
-            unidade = st.text_input("Unidade Temática", placeholder="Ex: Números", 
-                                   key=f"unid_basico_{key_suffix}")
-        
-        habilidades = []
-        if mostrar_habilidades:
-            with col5:
-                habilidades_selecionadas = st.multiselect(
-                    "Habilidades (selecione uma ou mais)",
-                    ["Digite abaixo...", "Habilidade 1", "Habilidade 2"],
-                    default=[],
-                    key=f"hab_multi_basico_{key_suffix}"
-                )
-                
-                if "Digite abaixo..." in habilidades_selecionadas:
-                    habilidade_texto = st.text_area("Digite as habilidades:", 
-                                                   placeholder="Uma por linha", 
-                                                   key=f"hab_texto_basico_{key_suffix}")
-                    habilidades = habilidade_texto.split('\n') if habilidade_texto else []
-                else:
-                    habilidades = habilidades_selecionadas
-        
-        return ano, disciplina, unidade, objeto, habilidades
-    
-    # TEMOS DADOS - criar dropdowns conectados
-    
-    # Linha 1: Ano, Componente Curricular, Unidade Temática
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        anos_originais = dados['Ano'].dropna().unique().tolist()
-        anos_ordenados = ordenar_anos(anos_originais)
-        ano_selecionado = st.selectbox("Ano", anos_ordenados, key=f"ano_bncc_{key_suffix}")
-    
-    with col2:
-        if ano_selecionado:
-            disc_filtradas = dados[dados['Ano'].astype(str) == str(ano_selecionado)]
-            disciplinas = sorted(disc_filtradas['Disciplina'].dropna().unique())
-            disciplina_selecionada = st.selectbox("Componente Curricular", disciplinas, key=f"disc_bncc_{key_suffix}")
-        else:
-            disciplina_selecionada = None
-    
-    with col3:
-        if ano_selecionado and disciplina_selecionada:
-            unid_filtradas = dados[
-                (dados['Ano'].astype(str) == str(ano_selecionado)) & 
-                (dados['Disciplina'] == disciplina_selecionada)
-            ]
-            unidades = sorted(unid_filtradas['Unidade Temática'].dropna().unique())
-            unidade_selecionada = st.selectbox("Unidade Temática", unidades, key=f"unid_bncc_{key_suffix}")
-        else:
-            unidade_selecionada = None
-    
-    # Linha 2: Objeto do Conhecimento
-    st.markdown("---")
-    col4 = st.columns(1)[0]
-    
-    with col4:
-        if ano_selecionado and disciplina_selecionada and unidade_selecionada:
-            obj_filtrados = dados[
-                (dados['Ano'].astype(str) == str(ano_selecionado)) & 
-                (dados['Disciplina'] == disciplina_selecionada) & 
-                (dados['Unidade Temática'] == unidade_selecionada)
-            ]
-            objetos = sorted(obj_filtrados['Objeto do Conhecimento'].dropna().unique())
+        response = requests.get(url, headers=ou._headers(), params=params, timeout=10)
+        if response.status_code == 200 and response.json():
+            aluno = response.json()[0]
+            ciclos_existentes = aluno.get('paee_ciclos', []) if aluno.get('paee_ciclos') else []
             
-            if objetos:
-                objeto_selecionado = st.selectbox("Objeto do Conhecimento", objetos, key=f"obj_bncc_{key_suffix}")
+            # Verifica se é um novo ciclo ou atualização
+            ciclo_id = ciclo_data.get('ciclo_id')
+            if not ciclo_id:
+                ciclo_id = str(uuid.uuid4())
+                ciclo_data['ciclo_id'] = ciclo_id
+                ciclo_data['criado_em'] = datetime.now().isoformat()
+                ciclo_data['criado_por'] = st.session_state.get("user_id", "")
+                ciclo_data['versao'] = 1
+                ciclos_existentes.append(ciclo_data)
             else:
-                objeto_selecionado = st.text_input("Objeto do Conhecimento", 
-                                                  placeholder="Não encontrado, digite", 
-                                                  key=f"obj_input_bncc_{key_suffix}")
-        else:
-            objeto_selecionado = st.text_input("Objeto do Conhecimento", 
-                                              placeholder="Selecione primeiro", 
-                                              key=f"obj_wait_bncc_{key_suffix}")
-    
-    # Habilidades (opcional)
-    habilidades_selecionadas = []
-    if mostrar_habilidades:
-        st.markdown("---")
-        col5 = st.columns(1)[0]
-        
-        with col5:
-            if (ano_selecionado and disciplina_selecionada and 
-                unidade_selecionada and objeto_selecionado and 
-                isinstance(objeto_selecionado, str) and not objeto_selecionado.startswith("Selecione")):
-                
-                hab_filtradas = dados[
-                    (dados['Ano'].astype(str) == str(ano_selecionado)) & 
-                    (dados['Disciplina'] == disciplina_selecionada) & 
-                    (dados['Unidade Temática'] == unidade_selecionada) & 
-                    (dados['Objeto do Conhecimento'] == objeto_selecionado)
-                ]
-                todas_habilidades = sorted(hab_filtradas['Habilidade'].dropna().unique())
-                
-                if todas_habilidades:
-                    st.markdown(f"**🔍 {len(todas_habilidades)} habilidade(s) encontrada(s):**")
-                    
-                    opcoes_habilidades = st.multiselect(
-                        "Selecione uma ou mais habilidades:",
-                        todas_habilidades,
-                        default=todas_habilidades[:min(3, len(todas_habilidades))],
-                        key=f"hab_multi_bncc_{key_suffix}"
-                    )
-                    
-                    with st.expander("➕ Adicionar habilidade personalizada"):
-                        habilidade_extra = st.text_area(
-                            "Digite habilidades adicionais (uma por linha):",
-                            placeholder="Ex:\nEF05MA01 - Ler números\nEF05MA02 - Comparar números",
-                            key=f"hab_extra_bncc_{key_suffix}"
-                        )
-                        
-                        if habilidade_extra:
-                            habilidades_extras = [h.strip() for h in habilidade_extra.split('\n') if h.strip()]
-                            opcoes_habilidades.extend(habilidades_extras)
-                    
-                    habilidades_selecionadas = opcoes_habilidades
-                else:
-                    st.info("ℹ️ Nenhuma habilidade encontrada para este objeto.")
-                    habilidades_padrao = st.multiselect(
-                        "Selecione ou adicione habilidades:",
-                        ["Digite abaixo..."],
-                        default=[],
-                        key=f"hab_vazio_bncc_{key_suffix}"
-                    )
-                    
-                    if "Digite abaixo..." in habilidades_padrao:
-                        habilidade_texto = st.text_area("Digite as habilidades:", 
-                                                       placeholder="Uma por linha", 
-                                                       key=f"hab_texto_{key_suffix}")
-                        habilidades_selecionadas = habilidade_texto.split('\n') if habilidade_texto else []
-                    else:
-                        habilidades_selecionadas = habilidades_padrao
-            else:
-                st.info("ℹ️ Selecione Ano, Componente Curricular, Unidade e Objeto para ver as habilidades.")
-                habilidades_selecionadas = []
-    
-    return (ano_selecionado, disciplina_selecionada, unidade_selecionada, 
-            objeto_selecionado, habilidades_selecionadas)
-
-def criar_dropdowns_bncc_simplificado(key_suffix=""):
-    """Cria dropdowns simplificados da BNCC (apenas até objeto do conhecimento)"""
-    return criar_dropdowns_bncc_completos_melhorado(key_suffix=key_suffix, mostrar_habilidades=False)
-
-    # ==============================================================================
-# COMPONENTES DE INTERFACE (UI)
-# ==============================================================================
-
-def aplicar_estilos():
-    """Aplica estilos CSS específicos do Hub (sem hero card - já renderizado acima)"""
-    st.markdown("""
-    <style>
-        /* PEDAGOGIA BOX */
-        .pedagogia-box { 
-            background-color: #F8FAFC; 
-            border-left: 4px solid #CBD5E1; 
-            padding: 20px; 
-            border-radius: 0 12px 12px 0; 
-            margin-bottom: 25px; 
-            font-size: 0.95rem; 
-            color: #4A5568; 
-        }
-    
-        /* RESOURCE BOX */
-        .resource-box { 
-            background: #F8FAFC; 
-            border: 1px solid #E2E8F0; 
-            border-radius: 12px; 
-            padding: 20px; 
-            margin: 15px 0; 
-        }
-        
-        /* ACTION BUTTONS */
-        .action-buttons { 
-            display: flex; 
-            gap: 10px; 
-            margin-top: 20px; 
-            flex-wrap: wrap; 
-        }
-        
-        /* TIMELINE STYLES */
-        .timeline-header { 
-            background: white; 
-            border-radius: 12px; 
-            padding: 20px;
-            margin-bottom: 20px; 
-            border: 1px solid #E2E8F0;
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-        }
-        .prog-bar-bg { 
-            width: 100%; 
-            height: 8px; 
-            background: #E2E8F0; 
-            border-radius: 4px; 
-            overflow: hidden; 
-            margin-top: 8px; 
-        }
-        .prog-bar-fill { 
-            height: 100%; 
-            background: linear-gradient(90deg, #06B6D4, #0891B2); 
-            transition: width 1s; 
-        }
-        
-        /* HEADER DO ESTUDANTE */
-        .student-header {
-            background-color: #F8FAFC;
-            border: 1px solid #E2E8F0;
-            border-radius: 16px;
-            padding: 18px 24px;
-            margin-bottom: 18px;
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-        .student-info-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .student-label {
-            font-size: 0.78rem; 
-            color: #64748B; 
-            font-weight: 800;
-            text-transform: uppercase; 
-            letter-spacing: 1px;
-        }
-        .student-value { 
-            font-size: 1.15rem; 
-            color: #1E293B; 
-            font-weight: 800; 
-        }
-        
-        /* RESPONSIVIDADE */
-        @media (max-width: 768px) { 
-            .student-header { 
-                flex-direction: column; 
-                align-items:flex-start; 
-                gap: 12px; 
+                # Atualiza ciclo existente
+                for i, ciclo in enumerate(ciclos_existentes):
+                    if ciclo.get('ciclo_id') == ciclo_id:
+                        ciclos_existentes[i] = ciclo_data
+                        ciclos_existentes[i]['versao'] = ciclo.get('versao', 1) + 1
+                        break
+            
+            # Atualiza o estudante
+            update_data = {
+                "paee_ciclos": ciclos_existentes,
+                "planejamento_ativo": ciclo_id,
+                "status_planejamento": ciclo_data.get('status', 'rascunho')
             }
+            
+            if ciclo_data.get('config_ciclo', {}).get('data_inicio'):
+                update_data["data_inicio_ciclo"] = ciclo_data['config_ciclo']['data_inicio']
+            if ciclo_data.get('config_ciclo', {}).get('data_fim'):
+                update_data["data_fim_ciclo"] = ciclo_data['config_ciclo']['data_fim']
+            
+            update_response = requests.patch(
+                url, 
+                headers=ou._headers(), 
+                params=params, 
+                json=update_data,
+                timeout=20
+            )
+            
+            if update_response.status_code == 204:
+                return {"sucesso": True, "ciclo_id": ciclo_id}
+            else:
+                return {"sucesso": False, "erro": f"HTTP {update_response.status_code}: {update_response.text}"}
+                
+        return {"sucesso": False, "erro": "Aluno não encontrado"}
+        
+    except Exception as e:
+        return {"sucesso": False, "erro": str(e)}
+
+def carregar_ciclo_ativo(aluno_id):
+    """Carrega o ciclo ativo do estudante"""
+    try:
+        url = f"{ou._sb_url()}/rest/v1/students"
+        params = {
+            "select": "id,paee_ciclos,planejamento_ativo",
+            "id": f"eq.{aluno_id}"
         }
-    </style>
-    """, unsafe_allow_html=True)
-
-def render_cabecalho_aluno(aluno):
-    """Renderiza o cabeçalho com informações do aluno"""
-    st.markdown(f"""
-        <div class="student-header">
-            <div class="student-info-item"><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div>
-            <div class="student-info-item"><div class="student-label">Série</div><div class="student-value">{aluno.get('serie', '-')}</div></div>
-            <div class="student-info-item"><div class="student-label">Hiperfoco</div><div class="student-value">{aluno.get('hiperfoco', '-')}</div></div>
-        </div>
-    """, unsafe_allow_html=True)
-
-def criar_seletor_bloom(chave_prefixo):
-    """Componente reutilizável para seleção da Taxonomia de Bloom"""
-    usar_bloom = st.checkbox("🎯 Usar Taxonomia de Bloom (Revisada)", key=f"usar_bloom_{chave_prefixo}")
-    
-    if f'bloom_memoria_{chave_prefixo}' not in st.session_state:
-        st.session_state[f'bloom_memoria_{chave_prefixo}'] = {cat: [] for cat in TAXONOMIA_BLOOM.keys()}
-    
-    verbos_finais = []
-    
-    if usar_bloom:
-        col_b1, col_b2 = st.columns(2)
-        with col_b1:
-            cat_atual = st.selectbox("Categoria Cognitiva:", list(TAXONOMIA_BLOOM.keys()),
-                                    key=f"cat_bloom_{chave_prefixo}")
-        with col_b2:
-            selecao_atual = st.multiselect(
-                f"Verbos de '{cat_atual}':", 
-                TAXONOMIA_BLOOM[cat_atual],
-                default=st.session_state[f'bloom_memoria_{chave_prefixo}'][cat_atual],
-                key=f"ms_bloom_{chave_prefixo}_{cat_atual}"
-            )
-            st.session_state[f'bloom_memoria_{chave_prefixo}'][cat_atual] = selecao_atual
         
-        for cat in st.session_state[f'bloom_memoria_{chave_prefixo}']:
-            verbos_finais.extend(st.session_state[f'bloom_memoria_{chave_prefixo}'][cat])
-        
-        if verbos_finais:
-            st.info(f"**Verbos Selecionados:** {', '.join(verbos_finais)}")
-        else:
-            st.caption("Nenhum verbo selecionado ainda.")
-    
-    return verbos_finais if usar_bloom else None
+        response = requests.get(url, headers=ou._headers(), params=params, timeout=10)
+        if response.status_code == 200 and response.json():
+            aluno = response.json()[0]
+            ciclo_id = aluno.get('planejamento_ativo')
+            ciclos = aluno.get('paee_ciclos', []) if aluno.get('paee_ciclos') else []
+            
+            if ciclo_id and ciclos:
+                for ciclo in ciclos:
+                    if ciclo.get('ciclo_id') == ciclo_id:
+                        return ciclo
+        return None
+    except Exception as e:
+        st.error(f"Erro ao carregar ciclo: {str(e)}")
+        return None
 
 # ==============================================================================
-# FUNÇÕES DAS ABAS PRINCIPAIS
+# CARREGAMENTO DOS DADOS DOS ESTUDANTES
+# ==============================================================================
+if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
+    with st.spinner("🔄 Lendo dados da nuvem..."):
+        st.session_state.banco_estudantes = carregar_estudantes_supabase()
+
+if not st.session_state.banco_estudantes:
+    st.warning("⚠️ Nenhum estudante encontrado.")
+    if st.button("📘 Ir para o módulo PEI", type="primary"): 
+        st.switch_page("pages/1_PEI.py")
+    st.stop()
+
+# --- SELEÇÃO DE ALUNO ---
+lista_alunos = [a['nome'] for a in st.session_state.banco_estudantes]
+col_sel, col_info = st.columns([1, 2])
+with col_sel:
+    nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista_alunos)
+
+aluno = next((a for a in st.session_state.banco_estudantes if a.get('nome') == nome_aluno), None)
+
+if not aluno: 
+    st.error("Estudante não encontrado")
+    st.stop()
+
+# --- DETECTOR DE EDUCAÇÃO INFANTIL ---
+serie_aluno = aluno.get('serie', '').lower()
+is_ei = any(term in serie_aluno for term in ["infantil", "creche", "pré", "maternal", "berçario", "jardim"])
+
+# --- HEADER DO ESTUDANTE ---
+st.markdown(f"""
+    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px 30px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Nome</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('nome')}</div></div>
+        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Série</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('serie')}</div></div>
+        <div><div style="font-size: 0.8rem; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Diagnóstico</div><div style="font-size: 1.2rem; color: #1E293B; font-weight: 800;">{aluno.get('hiperfoco', '-')}</div></div>
+    </div>
+""", unsafe_allow_html=True)
+
+if is_ei:
+    st.info("🧸 **Modo Educação Infantil:** Foco em Campos de Experiência (BNCC).")
+
+with st.expander("📄 Ver Dados Completos do PEI", expanded=False):
+    st.write(aluno.get('ia_sugestao', 'Sem dados detalhados.'))
+
+# ==============================================================================
+# PARTE 3/4: FUNÇÕES DE IA E SISTEMA DE ESTADOS
 # ==============================================================================
 
-def render_aba_adaptar_prova(aluno, api_key):
-    """Renderiza a aba de adaptação de prova"""
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-file-edit-line"></i> Adaptação Curricular (DUA)</div>
-        Transforme provas padrão em avaliações acessíveis. O sistema simplifica enunciados, 
-        insere imagens de apoio e ajusta o layout para reduzir a carga cognitiva.
-    </div>
-    """, unsafe_allow_html=True)
+# ==============================================================================
+# FUNÇÕES DE IA ATUALIZADAS
+# ==============================================================================
+def gerar_diagnostico_barreiras(api_key, aluno, obs_prof, feedback=None):
+    client = OpenAI(api_key=api_key)
+    contexto = aluno.get('ia_sugestao', '')
     
-    # Dropdowns BNCC simplificados
-    ano_bncc, disciplina_bncc, unidade_bncc, objeto_bncc, _ = criar_dropdowns_bncc_completos_melhorado(key_suffix="adaptar_prova", mostrar_habilidades=False)
+    prompt = f"""
+    ATUAR COMO: Especialista em AEE.
+    ESTUDANTE: {aluno['nome']} | DIAGNÓSTICO: {aluno.get('hiperfoco')}
+    CONTEXTO DO PEI: {contexto[:2500]}
+    OBSERVAÇÃO ATUAL: {obs_prof}
+    """
     
-    st.markdown("---")
+    if feedback:
+        prompt += f"\nFEEDBACK PARA AJUSTE (revisão do professor): {feedback}\n"
     
-    # Layout simplificado (apenas Tipo e Upload)
-    c1, c2 = st.columns([1, 2])
-    tipo_d = c1.selectbox("Tipo de Documento", ["Prova", "Tarefa", "Avaliação"], key="dtp")
-    arquivo_d = c2.file_uploader("Upload do Arquivo DOCX", type=["docx"], key="fd")
+    prompt += """
+    CLASSIFIQUE AS BARREIRAS (LBI):
+    1. Barreiras Comunicacionais - dificuldades na comunicação e linguagem
+    2. Barreiras Metodológicas - métodos de ensino inadequados
+    3. Barreiras Atitudinais - atitudes e preconceitos
+    4. Barreiras Tecnológicas - falta de recursos tecnológicos adequados
+    5. Barreiras Arquitetônicas - espaço físico inadequado
     
-    # Definição automática baseada na BNCC
-    materia_d = disciplina_bncc if disciplina_bncc else "Geral"
-    tema_d = objeto_bncc if objeto_bncc else "Geral"
+    Para cada barreira identificada, forneça:
+    - Descrição específica da barreira
+    - Impacto na aprendizagem do estudante
+    - Sugestões de intervenção imediata práticas e aplicáveis
+    - Recursos necessários para implementação
     
-    if 'docx_imgs' not in st.session_state:
-        st.session_state.docx_imgs = []
-    if 'docx_txt' not in st.session_state:
-        st.session_state.docx_txt = None
+    FORMATO DE SAÍDA:
+    IMPORTANTE: NÃO use tabelas Markdown. Use apenas texto formatado com:
+    - Títulos claros para cada tipo de barreira (ex: "BARREIRAS METODOLÓGICAS")
+    - Parágrafos descritivos
+    - Listas com marcadores simples (-) para organizar informações
+    - Quebras de linha para separar seções
     
-    if arquivo_d and arquivo_d.file_id != st.session_state.get('last_d'):
-        st.session_state.last_d = arquivo_d.file_id
-        txt, imgs = extrair_dados_docx(arquivo_d)
-        st.session_state.docx_txt = txt
-        st.session_state.docx_imgs = imgs
-        st.success(f"{len(imgs)} imagens encontradas.")
+    Estrutura sugerida:
+    
+    [TÍTULO DA BARREIRA]
+    
+    Descrição: [texto descritivo]
+    
+    Impacto na Aprendizagem: [texto descritivo]
+    
+    Sugestões de Intervenção:
+    - [sugestão 1]
+    - [sugestão 2]
+    - [sugestão 3]
+    
+    Recursos Necessários:
+    - [recurso 1]
+    - [recurso 2]
+    
+    SAÍDA: Texto formatado de forma clara e legível, SEM tabelas Markdown.
+    """
+    
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[{"role": "user", "content": prompt}], 
+            temperature=0.5
+        )
+        return resp.choices[0].message.content
+    except Exception as e: 
+        return f"Erro: {str(e)}"
 
-    map_d = {}
-    qs_d = []
-    if st.session_state.docx_imgs:
-        st.write("### Mapeamento de Imagens")
-        cols = st.columns(3)
-        for i, img in enumerate(st.session_state.docx_imgs):
-            with cols[i % 3]:
-                st.image(img, width=80)
-                q = st.number_input(f"Pertence à Questão:", 0, 50, key=f"dq_{i}")
-                if q > 0:
-                    map_d[int(q)] = img
-                    qs_d.append(int(q))
+def gerar_projetos_ei_bncc(api_key, aluno, campo_exp, feedback=None):
+    client = OpenAI(api_key=api_key)
+    contexto = aluno.get('ia_sugestao', '')
+    
+    prompt = f"""
+    ATUAR COMO: Especialista em Ed. Infantil Inclusiva.
+    ESTUDANTE: {aluno['nome']} | CONTEXTO PEI: {contexto[:2000]}
+    CAMPO DE EXPERIÊNCIA: "{campo_exp}".
+    """
+    
+    if feedback:
+        prompt += f"\nFEEDBACK PARA AJUSTE (revisão do professor): {feedback}\n"
+    
+    prompt += """
+    Crie 3 EXPERIÊNCIAS LÚDICAS (Atividades) com estrutura completa:
+    
+    Para cada experiência, inclua:
+    1. **Título da Atividade**
+    2. **Objetivos de aprendizagem** (alinhados com BNCC)
+    3. **Materiais necessários** (acessíveis e de baixo custo)
+    4. **Passo a passo detalhado**
+    5. **Adaptações específicas** para o aluno
+    6. **Avaliação formativa** (como observar o progresso)
+    7. **Dicas para o professor**
+    
+    FOQUE em:
+    - Uso de interesses do aluno como motivação
+    - Eliminação de barreiras sensoriais e comunicacionais
+    - Atividades sensoriais e concretas
+    - Inclusão de todos os estudantes da turma
+    """
+    
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[{"role": "user", "content": prompt}], 
+            temperature=0.7
+        )
+        return resp.choices[0].message.content
+    except Exception as e: 
+        return str(e)
 
-    st.markdown("---")
+def gerar_plano_habilidades(api_key, aluno, foco_treino, feedback=None):
+    client = OpenAI(api_key=api_key)
+    contexto = aluno.get('ia_sugestao', '')
+    
+    prompt = f"""
+    CRIE PLANO DE INTERVENÇÃO AEE.
+    FOCO: {foco_treino}.
+    ESTUDANTE: {aluno['nome']} | CONTEXTO PEI: {contexto[:2000]}
+    """
+    
+    if feedback:
+        prompt += f"\nFEEDBACK PARA AJUSTE (revisão do professor): {feedback}\n"
+    
+    prompt += """
+    GERE 3 METAS SMART (Curto, Médio, Longo prazo) com estrutura completa:
+    
+    Para cada meta, inclua:
+    1. **Meta Específica** (o que será alcançado)
+    2. **Indicadores de Progresso** (como medir)
+    3. **Estratégias de Ensino** (como ensinar)
+    4. **Recursos e Materiais**
+    5. **Frequência de Intervenção**
+    6. **Responsáveis** (AEE, sala regular, família)
+    7. **Critérios de Sucesso**
+    
+    TEMPORALIDADE:
+    - CURTO PRAZO (1-2 meses): Habilidades básicas
+    - MÉDIO PRAZO (3-6 meses): Consolidação
+    - LONGO PRAZO (6-12 meses): Generalização
+    
+    Inclua também:
+    - Registro de observações
+    - Sistema de monitoramento
+    - Estratégias de generalização para outros contextos
+    """
+    
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[{"role": "user", "content": prompt}], 
+            temperature=0.7
+        )
+        return resp.choices[0].message.content
+    except Exception as e: 
+        return str(e)
 
-    if st.button("🚀 ADAPTAR PROVA", type="primary", key="btn_d", use_container_width=True):
-        if not st.session_state.docx_txt:
-            st.warning("Por favor, faça o upload de um arquivo DOCX.")
-            st.stop()
+def sugerir_tecnologia_assistiva(api_key, aluno, dificuldade, feedback=None):
+    client = OpenAI(api_key=api_key)
+    contexto = aluno.get('ia_sugestao', '')
+    
+    prompt = f"""
+    SUGESTÃO DE TECNOLOGIA ASSISTIVA.
+    Estudante: {aluno['nome']} | Dificuldade: {dificuldade}.
+    Contexto PEI: {contexto[:1500]}
+    """
+    
+    if feedback:
+        prompt += f"\nFEEDBACK PARA AJUSTE (revisão do professor): {feedback}\n"
+    
+    prompt += """
+    Sugira recursos em 3 níveis:
+    
+    1. **BAIXA TECNOLOGIA (DIY - Faça Você Mesmo)**
+       - Materiais simples e de baixo custo
+       - Instruções passo a passo
+       - Tempo de confecção
+       - Custo estimado
+    
+    2. **MÉDIA TECNOLOGIA**
+       - Recursos prontos disponíveis no mercado
+       - Aplicativos gratuitos ou de baixo custo
+       - Adaptações simples de materiais existentes
+       - Onde encontrar/comprar
+    
+    3. **ALTA TECNOLOGIA**
+       - Equipamentos especializados
+       - Softwares específicos
+       - Recursos de acessibilidade avançados
+       - Processo de solicitação/viabilidade
+    
+    Para cada sugestão, inclua:
+    - Nome do recurso
+    - Finalidade específica
+    - Como usar na prática
+    - Benefícios para o aluno
+    - Dificuldades possíveis e soluções
+    - Referências para aprofundamento
+    """
+    
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[{"role": "user", "content": prompt}], 
+            temperature=0.7
+        )
+        return resp.choices[0].message.content
+    except Exception as e: 
+        return str(e)
+
+def gerar_documento_articulacao(api_key, aluno, frequencia, acoes, feedback=None):
+    client = OpenAI(api_key=api_key)
+    
+    prompt = f"""
+    CARTA DE ARTICULAÇÃO (AEE -> SALA REGULAR).
+    Estudante: {aluno['nome']}. 
+    Frequência no AEE: {frequencia}.
+    Ações desenvolvidas no AEE: {acoes}.
+    """
+    
+    if feedback:
+        prompt += f"\nFEEDBACK PARA AJUSTE (revisão do professor): {feedback}\n"
+    
+    prompt += """
+    ESTRUTURA DO DOCUMENTO:
+    
+    1. **Cabeçalho Institucional**
+       - Nome da escola
+       - Data
+       - Destinatário (Professor Regente)
+    
+    2. **Resumo das Habilidades Desenvolvidas**
+       - Competências trabalhadas
+       - Progressos observados
+       - Dificuldades persistentes
+    
+    3. **Estratégias de Generalização** (para sala regular)
+       - Como transferir as habilidades
+       - Adaptações necessárias
+       - Sinais de alerta
+    
+    4. **Orientações Práticas** (3 dicas principais)
+       - Para atividades em grupo
+       - Para avaliações
+       - Para gestão comportamental
+    
+    5. **Plano de Ação Conjunto**
+       - Responsabilidades do AEE
+       - Responsabilidades da sala regular
+       - Envolvimento da família
+    
+    6. **Próximos Passos**
+       - Reuniões de alinhamento
+       - Avaliações periódicas
+       - Ajustes necessários
+    
+    7. **Contatos e Suporte**
+       - Horários de atendimento
+       - Canal de comunicação
+       - Emergências
+    
+    Formato: Documento formal mas acolhedor, com linguagem clara e objetiva.
+    """
+    
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[{"role": "user", "content": prompt}], 
+            temperature=0.7
+        )
+        return resp.choices[0].message.content
+    except Exception as e: 
+        return str(e)
+
+def gerar_cronograma_inteligente(api_key, aluno, semanas, foco, metas):
+    """Gera cronograma com IA baseado nas metas do PEI"""
+    try:
+        client = OpenAI(api_key=api_key)
         
-        # Validação se BNCC foi preenchida
-        if not disciplina_bncc or not objeto_bncc:
-             st.warning("⚠️ Por favor, selecione a Disciplina e o Objeto do Conhecimento nos campos da BNCC acima para guiar a adaptação.")
-             st.stop()
-
-        with st.spinner("A IA está analisando e adaptando o conteúdo..."):
-            rac, txt = adaptar_conteudo_docx(api_key, aluno, st.session_state.docx_txt, materia_d, tema_d, tipo_d, True, qs_d)
-            st.session_state['res_docx'] = {'rac': rac, 'txt': txt, 'map': map_d, 'valid': False}
-            st.rerun()
-
-    if 'res_docx' in st.session_state:
-        res = st.session_state['res_docx']
-        if res.get('valid'):
-            st.success("✅ **ATIVIDADE VALIDADA E PRONTA PARA USO**")
+        # Preparar prompt com metas
+        metas_texto = "\n".join([f"- {m['tipo']}: {m['descricao']}" for m in metas[:5]])
+        
+        prompt = f"""
+        Crie um cronograma de {semanas} semanas para AEE.
+        
+        ESTUDANTE: {aluno['nome']}
+        DIAGNÓSTICO: {aluno.get('hiperfoco', '')}
+        FOCO DO CICLO: {foco}
+        
+        METAS DO PEI:
+        {metas_texto}
+        
+        Estruture em fases lógicas. Para cada semana, defina:
+        1. Tema da semana
+        2. Objetivo específico
+        3. Atividades principais (2-3 atividades por semana)
+        4. Recursos necessários
+        5. Formas de avaliação
+        
+        Formato JSON:
+        {{
+            "fases": [
+                {{
+                    "nome": "Nome da fase",
+                    "descricao": "Descrição",
+                    "semanas": [1, 2, 3],
+                    "objetivo_geral": "Objetivo da fase"
+                }}
+            ],
+            "semanas": [
+                {{
+                    "numero": 1,
+                    "tema": "Tema da semana",
+                    "objetivo": "Objetivo específico",
+                    "atividades": ["Atividade 1", "Atividade 2"],
+                    "recursos": ["Recurso 1", "Recurso 2"],
+                    "avaliacao": "Como avaliar o progresso"
+                }}
+            ]
+        }}
+        """
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
+        )
+        
+        # Extrair e parsear JSON
+        texto = response.choices[0].message.content
+        
+        # Extrair JSON do texto
+        import re
+        json_match = re.search(r'```json\n(.*?)\n```', texto, re.DOTALL)
+        if json_match:
+            texto = json_match.group(1)
         else:
-            col_v, col_r = st.columns([1, 1])
-            if col_v.button("✅ Validar", key="val_d", use_container_width=True):
-                st.session_state['res_docx']['valid'] = True
-                st.rerun()
-            if col_r.button("🧠 Refazer (+Profundo)", key="redo_d", use_container_width=True):
-                with st.spinner("Refazendo com análise mais profunda..."):
-                    rac, txt = adaptar_conteudo_docx(api_key, aluno, st.session_state.docx_txt, materia_d, tema_d, tipo_d, True, qs_d, modo_profundo=True)
-                    st.session_state['res_docx'] = {'rac': rac, 'txt': txt, 'map': map_d, 'valid': False}
-                    st.rerun()
-
-        st.markdown(f"<div class='analise-box'><div class='analise-title'>🧠 Análise Pedagógica</div>{res['rac']}</div>", unsafe_allow_html=True)
-        with st.container(border=True):
-            partes = re.split(r'(\[\[IMG.*?\d+\]\])', res['txt'], flags=re.IGNORECASE)
-            for p in partes:
-                if "IMG" in p.upper() and re.search(r'\d+', p):
-                    num = int(re.search(r'\d+', p).group(0))
-                    im = res['map'].get(num)
-                    if im:
-                        st.image(im, width=300)
-                elif p.strip():
-                    st.markdown(p.strip())
+            # Tenta encontrar qualquer JSON
+            json_match = re.search(r'\{.*\}', texto, re.DOTALL)
+            if json_match:
+                texto = json_match.group(0)
         
-        c_down1, c_down2 = st.columns(2)
-        docx = construir_docx_final(res['txt'], aluno, materia_d, res['map'], tipo_d)
-        c_down1.download_button(
-            "📥 BAIXAR DOCX (Editável)", 
-            docx, 
-            "Prova_Adaptada.docx", 
-            "primary",
-            use_container_width=True
-        )
+        return json.loads(texto)
         
-        pdf_bytes = criar_pdf_generico(res['txt'])
-        c_down2.download_button(
-            "📕 BAIXAR PDF (Visualização)", 
-            pdf_bytes, 
-            "Prova_Adaptada.pdf", 
-            mime="application/pdf", 
-            type="secondary",
-            use_container_width=True
-        )
+    except Exception as e:
+        st.error(f"Erro na IA: {str(e)}")
+        return None
 
-def render_aba_adaptar_atividade(aluno, api_key):
-    """Renderiza a aba de adaptação de atividade"""
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-scissors-cut-line"></i> OCR & Adaptação Visual</div>
-        Tire foto de uma atividade do livro ou caderno. A IA extrai o texto, 
-        remove poluição visual e reestrutura o conteúdo para o nível do aluno.
-    </div>
-    """, unsafe_allow_html=True)
+# ==============================================================================
+# FUNÇÕES AUXILIARES PARA PAEE
+# ==============================================================================
+def extrair_metas_do_pei(pei_data):
+    """Extrai metas estruturadas do PEI"""
+    if not pei_data:
+        return []
     
-    # Dropdowns BNCC simplificados
-    ano_bncc, disciplina_bncc, unidade_bncc, objeto_bncc, _ = criar_dropdowns_bncc_completos_melhorado(key_suffix="adaptar_atividade", mostrar_habilidades=False)
+    metas = []
     
-    st.markdown("---")
-
-    # Layout simplificado
-    c1, c2 = st.columns([1, 2])
-    tipo_i = c1.selectbox("Tipo", ["Atividade", "Tarefa", "Exercício"], key="itp")
-    arquivo_i = c2.file_uploader("Upload da Imagem/Foto", type=["png","jpg","jpeg"], key="fi")
-    livro_prof = st.checkbox("📖 É foto do Livro do Professor? (A IA removerá as respostas)", value=False)
-    
-    # Definição automática baseada na BNCC
-    materia_i = disciplina_bncc if disciplina_bncc else "Geral"
-    tema_i = objeto_bncc if objeto_bncc else "Geral"
-    
-    if 'img_raw' not in st.session_state:
-        st.session_state.img_raw = None
-    
-    if arquivo_i and arquivo_i.file_id != st.session_state.get('last_i'):
-        st.session_state.last_i = arquivo_i.file_id
-        st.session_state.img_raw = sanitizar_imagem(arquivo_i.getvalue())
-
-    cropped_res = None
-    if st.session_state.img_raw:
-        st.markdown("### ✂️ Recorte (Selecione a área da questão)")
-        img_pil = Image.open(BytesIO(st.session_state.img_raw))
-        img_pil.thumbnail((800, 800))
-        cropped_res = st_cropper(img_pil, realtime_update=True, box_color='#FF0000', aspect_ratio=None, key="crop_i")
-        if cropped_res:
-            st.image(cropped_res, width=200, caption="Área selecionada")
-
-    st.markdown("---")
-
-    if st.button("🚀 ADAPTAR ATIVIDADE", type="primary", key="btn_i", use_container_width=True):
-        if not st.session_state.img_raw:
-            st.warning("Por favor, envie uma imagem.")
-            st.stop()
+    # Tenta diferentes formatos de PEI
+    if isinstance(pei_data, dict):
+        # Formato JSON estruturado
+        if 'metas' in pei_data and isinstance(pei_data['metas'], list):
+            return pei_data['metas']
         
-        # Validação BNCC
-        if not disciplina_bncc or not objeto_bncc:
-             st.warning("⚠️ Selecione a Disciplina e o Objeto do Conhecimento (BNCC) acima.")
-             st.stop()
-
-        with st.spinner("Lendo imagem e adaptando conteúdo..."):
-            buf_c = BytesIO()
-            cropped_res.convert('RGB').save(buf_c, format="JPEG", quality=90)
-            img_bytes = buf_c.getvalue()
-            rac, txt = adaptar_conteudo_imagem(api_key, aluno, img_bytes, materia_i, tema_i, tipo_i, livro_prof)
-            st.session_state['res_img'] = {'rac': rac, 'txt': txt, 'map': {1: img_bytes}, 'valid': False}
-            st.rerun()
-
-    if 'res_img' in st.session_state:
-        res = st.session_state['res_img']
-        if res.get('valid'):
-            st.success("✅ **ATIVIDADE VALIDADA E PRONTA PARA USO**")
+        # Formato texto da IA
+        if 'ia_sugestao' in pei_data:
+            texto = pei_data['ia_sugestao']
         else:
-            col_v, col_r = st.columns([1, 1])
-            if col_v.button("✅ Validar", key="val_i", use_container_width=True):
-                st.session_state['res_img']['valid'] = True
-                st.rerun()
-            if col_r.button("🧠 Refazer (+Profundo)", key="redo_i", use_container_width=True):
-                with st.spinner("Refazendo..."):
-                    img_bytes = res['map'][1]
-                    rac, txt = adaptar_conteudo_imagem(api_key, aluno, img_bytes, materia_i, tema_i, tipo_i, livro_prof, modo_profundo=True)
-                    st.session_state['res_img'] = {'rac': rac, 'txt': txt, 'map': {1: img_bytes}, 'valid': False}
+            texto = str(pei_data)
+    else:
+        texto = str(pei_data)
+    
+    # Parse de texto
+    linhas = texto.split('\n')
+    for linha in linhas:
+        linha = linha.strip()
+        # Procura por padrões de metas
+        if any(marker in linha.lower() for marker in ['meta:', 'objetivo:', 'habilidade:', '- ', '* ']):
+            # Remove marcadores
+            for marker in ['Meta:', 'meta:', 'Objetivo:', 'objetivo:', 'Habilidade:', 'habilidade:', '- ', '* ']:
+                if linha.startswith(marker):
+                    linha = linha[len(marker):].strip()
+                    break
+            
+            if linha and len(linha) > 5:  # Evita linhas muito curtas
+                # Tenta identificar tipo
+                tipo = "GERAL"
+                if 'social' in linha.lower():
+                    tipo = "HABILIDADES SOCIAIS"
+                elif 'comunicação' in linha.lower() or 'comunicacao' in linha.lower():
+                    tipo = "COMUNICAÇÃO"
+                elif 'leitura' in linha.lower() or 'escrita' in linha.lower() or 'matemática' in linha.lower():
+                    tipo = "ACADÊMICO"
+                elif 'motor' in linha.lower():
+                    tipo = "MOTOR"
+                elif 'autonomia' in linha.lower():
+                    tipo = "AUTONOMIA"
+                
+                metas.append({
+                    'id': f"meta_{len(metas)+1:03d}",
+                    'tipo': tipo,
+                    'descricao': linha[:200],
+                    'prioridade': 'media',
+                    'selecionada': True
+                })
+    
+    # Se não encontrou metas, cria uma genérica
+    if not metas:
+        metas.append({
+            'id': 'meta_001',
+            'tipo': 'DESENVOLVIMENTO',
+            'descricao': 'Desenvolver habilidades específicas conforme necessidades identificadas no PEI',
+            'prioridade': 'alta',
+            'selecionada': True
+        })
+    
+    return metas[:10]  # Limita a 10 metas
+
+def criar_cronograma_basico(semanas, metas):
+    """Cria um cronograma básico sem IA"""
+    cronograma = {
+        "fases": [
+            {
+                "nome": "Fase 1: Avaliação e Adaptação",
+                "descricao": "Período inicial de avaliação e adaptação das estratégias",
+                "semanas": list(range(1, min(4, semanas) + 1)),
+                "objetivo_geral": "Estabelecer rotina e avaliar necessidades imediatas"
+            }
+        ],
+        "semanas": []
+    }
+    
+    # Adiciona fases adicionais se houver mais semanas
+    if semanas > 4:
+        cronograma["fases"].append({
+            "nome": "Fase 2: Desenvolvimento",
+            "descricao": "Desenvolvimento intensivo das habilidades alvo",
+            "semanas": list(range(5, min(9, semanas) + 1)),
+            "objetivo_geral": "Desenvolver habilidades específicas"
+        })
+    
+    if semanas > 8:
+        cronograma["fases"].append({
+            "nome": "Fase 3: Consolidação",
+            "descricao": "Consolidação e generalização das habilidades",
+            "semanas": list(range(9, semanas + 1)),
+            "objetivo_geral": "Generalizar habilidades para outros contextos"
+        })
+    
+    # Cria semanas básicas
+    for semana in range(1, semanas + 1):
+        cronograma["semanas"].append({
+            "numero": semana,
+            "tema": f"Semana {semana}: Desenvolvimento de habilidades",
+            "objetivo": "Avançar nas metas estabelecidas",
+            "atividades": ["Atividades personalizadas conforme plano"],
+            "recursos": ["Materiais adaptados", "Recursos visuais"],
+            "avaliacao": "Observação direta e registros"
+        })
+    
+    return cronograma
+
+# ==============================================================================
+# SISTEMA DE GESTÃO DE RECURSOS (ESTADOS)
+# ==============================================================================
+def inicializar_estados():
+    """Inicializa os estados para todos os recursos"""
+    recursos = [
+        'diagnostico_barreiras',
+        'projetos_ei',
+        'plano_habilidades',
+        'tecnologia_assistiva',
+        'documento_articulacao'
+    ]
+    
+    for recurso in recursos:
+        if f'status_{recurso}' not in st.session_state:
+            st.session_state[f'status_{recurso}'] = 'rascunho'
+        if f'conteudo_{recurso}' not in st.session_state:
+            st.session_state[f'conteudo_{recurso}'] = ''
+        if f'feedback_{recurso}' not in st.session_state:
+            st.session_state[f'feedback_{recurso}'] = ''
+        if f'input_original_{recurso}' not in st.session_state:
+            st.session_state[f'input_original_{recurso}'] = {}
+
+inicializar_estados()
+
+# ==============================================================================
+# PARTE 4/4: INTERFACE PRINCIPAL E COMPONENTES
+# ==============================================================================
+
+# ==============================================================================
+# COMPONENTE DE VALIDAÇÃO/AJUSTE (HUB DE RECURSOS)
+# ==============================================================================
+def renderizar_hub_recurso(tipo_recurso, conteudo_gerado, aluno_nome, dados_entrada=None):
+    """Renderiza o hub de recursos com validação, ajuste e download"""
+    
+    # Estados do recurso
+    status = st.session_state.get(f'status_{tipo_recurso}', 'rascunho')
+    
+    # Container principal
+    with st.container():
+        st.markdown(f"<div class='resource-box'>", unsafe_allow_html=True)
+        
+        # TÍTULO DO RECURSO
+        titulos = {
+            'diagnostico_barreiras': '📋 Diagnóstico de Barreiras',
+            'projetos_ei': '🎨 Banco de Experiências (BNCC)',
+            'plano_habilidades': '📈 Plano de Habilidades',
+            'tecnologia_assistiva': '🛠️ Tecnologia Assistiva',
+            'documento_articulacao': '📄 Documento de Articulação'
+        }
+        
+        st.subheader(titulos.get(tipo_recurso, 'Recurso Gerado'))
+        
+        # 1. MODO REVISÃO (após geração inicial)
+        if status == 'revisao':
+            # Mostra o conteúdo gerado em container formatado
+            st.markdown("### 📝 Conteúdo Gerado")
+            with st.container(border=True):
+                # Usa st.markdown mas com escape para não renderizar tabelas
+                # Remove formatação de tabela Markdown se houver
+                conteudo_limpo = conteudo_gerado.replace('|', ' ').replace('---', '')
+                st.markdown(conteudo_limpo)
+            
+            st.markdown("---")
+            st.markdown("### 🔧 Ações Disponíveis")
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                if st.button("✅ **Validar e Finalizar**", key=f"validar_{tipo_recurso}", 
+                           use_container_width=True, type="primary"):
+                    st.session_state[f'status_{tipo_recurso}'] = 'aprovado'
+                    st.success("Recurso validado com sucesso!")
+                    time.sleep(1)
                     st.rerun()
-
-        st.markdown(f"<div class='analise-box'><div class='analise-title'>🧠 Análise Pedagógica</div>{res['rac']}</div>", unsafe_allow_html=True)
-        with st.container(border=True):
-            partes = re.split(r'(\[\[IMG.*?\]\])', res['txt'], flags=re.IGNORECASE)
-            for p in partes:
-                if "IMG" in p.upper():
-                    im = res['map'].get(1)
-                    if im:
-                        st.image(im, width=300)
-                elif p.strip():
-                    st.markdown(p.strip())
+            
+            with col2:
+                if st.button("🔄 **Solicitar Ajustes**", key=f"ajustar_{tipo_recurso}",
+                           use_container_width=True):
+                    st.session_state[f'status_{tipo_recurso}'] = 'ajustando'
+                    st.rerun()
+            
+            with col3:
+                if st.button("🗑️ **Descartar e Regenerar**", key=f"descartar_{tipo_recurso}",
+                           use_container_width=True):
+                    st.session_state[f'status_{tipo_recurso}'] = 'rascunho'
+                    st.session_state[f'conteudo_{tipo_recurso}'] = ''
+                    st.info("Recurso descartado. Você pode gerar novamente.")
+                    st.rerun()
         
-        c_down1, c_down2 = st.columns(2)
-        docx = construir_docx_final(res['txt'], aluno, materia_i, res['map'], tipo_i)
-        c_down1.download_button("📥 BAIXAR DOCX (Editável)", docx, "Atividade.docx", "primary", use_container_width=True)
-        
-        pdf_bytes = criar_pdf_generico(res['txt'])
-        c_down2.download_button(
-            "📕 BAIXAR PDF (Visualização)", 
-            pdf_bytes, 
-            "Atividade.pdf", 
-            mime="application/pdf", 
-            type="secondary",
-            use_container_width=True
-        )
-
-def render_aba_criar_do_zero(aluno, api_key, unsplash_key):
-    """Renderiza a aba de criação do zero"""
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-magic-line"></i> Criação com DUA</div>
-        Crie atividades do zero alinhadas ao PEI. A IA gera questões contextualizadas, 
-        usa o hiperfoco para engajamento e cria imagens ilustrativas automaticamente.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Dropdowns BNCC completos
-    ano_bncc, disciplina_bncc, unidade_bncc, objeto_bncc, habilidades_bncc = criar_dropdowns_bncc_completos_melhorado(key_suffix="criar_zero")
-    
-    # Mostrar resumo das seleções
-    if unidade_bncc and objeto_bncc:
-        with st.expander("📋 Resumo da seleção BNCC"):
-            st.write(f"**Ano:** {ano_bncc}")
-            st.write(f"**Disciplina:** {disciplina_bncc}")
-            st.write(f"**Unidade Temática:** {unidade_bncc}")
-            st.write(f"**Objeto do Conhecimento:** {objeto_bncc}")
-            if habilidades_bncc:
-                st.write(f"**Habilidades selecionadas:**")
-                for i, hab in enumerate(habilidades_bncc, 1):
-                    st.write(f"{i}. {hab}")
-    
-    # Usar os valores selecionados
-    mat_c = disciplina_bncc
-    obj_c = objeto_bncc
-    
-    # Configuração da atividade
-    st.markdown("---")
-    st.markdown("### ⚙️ Configuração da Atividade")
-    
-    cc3, cc4 = st.columns(2)
-    with cc3:
-        qtd_c = st.slider("Quantidade de Questões", 1, 10, 5, key="cq")
-    
-    with cc4:
-        tipo_quest = st.selectbox("Tipo de Questão", ["Objetiva", "Discursiva"], key="ctq")
-    
-    # Configuração de imagens
-    st.markdown("#### 🖼️ Imagens (Opcional)")
-    col_img_opt, col_img_pct = st.columns([1, 2])
-    
-    with col_img_opt:
-        usar_img = st.checkbox("Incluir Imagens?", value=True, key="usar_img")
-    
-    with col_img_pct:
-        qtd_img_sel = st.slider("Quantas questões terão imagens?", 0, qtd_c, 
-                               int(qtd_c/2) if qtd_c > 1 else 0, 
-                               disabled=not usar_img,
-                               key="qtd_img_slider")
-    
-    # Taxonomia de Bloom
-    st.markdown("---")
-    st.markdown("#### 🧠 Intencionalidade Pedagógica (Taxonomia de Bloom)")
-    
-    if 'bloom_memoria' not in st.session_state:
-        st.session_state.bloom_memoria = {cat: [] for cat in TAXONOMIA_BLOOM.keys()}
-    
-    verbos_finais_para_ia = []
-    
-    usar_bloom = st.checkbox("🎯 Usar Taxonomia de Bloom (Revisada)", key="usar_bloom")
-    
-    if usar_bloom:
-        col_b1, col_b2 = st.columns(2)
-        
-        with col_b1:
-            cat_atual = st.selectbox("Categoria Cognitiva:", list(TAXONOMIA_BLOOM.keys()),
-                                    key="cat_bloom")
-        
-        with col_b2:
-            selecao_atual = st.multiselect(
-                f"Verbos de '{cat_atual}':", 
-                TAXONOMIA_BLOOM[cat_atual],
-                default=st.session_state.bloom_memoria[cat_atual],
-                key=f"ms_bloom_{cat_atual}"
+        # 2. MODO AJUSTANDO (professor solicitou ajustes)
+        elif status == 'ajustando':
+            st.warning("✏️ **Modo de Ajuste Ativo**")
+            
+            # Campo para feedback detalhado
+            feedback = st.text_area(
+                "**Descreva os ajustes necessários:**",
+                placeholder="Exemplo: 'Preciso de mais exemplos práticos...'\n'Inclua atividades para trabalho em grupo...'\n'Foque mais na comunicação alternativa...'",
+                height=150,
+                key=f"feedback_input_{tipo_recurso}"
             )
             
-            st.session_state.bloom_memoria[cat_atual] = selecao_atual
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if st.button("🔄 **Regerar com Ajustes**", 
+                           key=f"regerar_{tipo_recurso}",
+                           use_container_width=True, type="primary"):
+                    if feedback:
+                        st.session_state[f'feedback_{tipo_recurso}'] = feedback
+                        st.info("Regerando com os ajustes solicitados...")
+                        st.session_state[f'status_{tipo_recurso}'] = 'regerando'
+                        st.rerun()
+                    else:
+                        st.error("Por favor, descreva os ajustes desejados.")
+            
+            with col2:
+                if st.button("↩️ **Cancelar Ajustes**", 
+                           key=f"cancelar_{tipo_recurso}",
+                           use_container_width=True):
+                    st.session_state[f'status_{tipo_recurso}'] = 'revisao'
+                    st.rerun()
         
-        for cat in st.session_state.bloom_memoria:
-            verbos_finais_para_ia.extend(st.session_state.bloom_memoria[cat])
+        # 3. MODO APROVADO (recurso validado)
+        elif status == 'aprovado':
+            st.success("✅ **Recurso Validado e Pronto para Uso**")
+            
+            # Mostra o conteúdo final em container formatado
+            st.markdown("### 📋 Conteúdo Final")
+            with st.container(border=True):
+                # Remove formatação de tabela Markdown se houver
+                conteudo_limpo = conteudo_gerado.replace('|', ' ').replace('---', '')
+                st.markdown(conteudo_limpo)
+            
+            st.markdown("---")
+            st.markdown("### 💾 Opções de Download")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Download TXT
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                nome_arquivo = f"{tipo_recurso}_{aluno_nome}_{timestamp}.txt"
+                st.download_button(
+                    label="📥 **Baixar TXT**",
+                    data=conteudo_gerado,
+                    file_name=nome_arquivo,
+                    mime="text/plain",
+                    use_container_width=True
+                )
+            
+            with col2:
+                if st.button("✏️ **Editar Novamente**", 
+                           key=f"reeditar_{tipo_recurso}",
+                           use_container_width=True):
+                    st.session_state[f'status_{tipo_recurso}'] = 'revisao'
+                    st.rerun()
         
-        if verbos_finais_para_ia:
-            st.info(f"**Verbos Selecionados:** {', '.join(verbos_finais_para_ia)}")
+        # 4. MODO REGERANDO (processando ajustes)
+        elif status == 'regerando':
+            st.info("🔄 **Processando ajustes solicitados...**")
+            # Este estado é transitório, será tratado na função principal
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# ==============================================================================
+# INICIALIZAR API KEY (ANTES DAS ABAS)
+# ==============================================================================
+# Obter a chave API do OpenAI dos secrets ou session_state
+if 'OPENAI_API_KEY' in st.secrets:
+    api_key = st.secrets['OPENAI_API_KEY']
+elif 'OPENAI_API_KEY' in st.session_state:
+    api_key = st.session_state['OPENAI_API_KEY']
+else:
+    api_key = None
+
+# ==============================================================================
+# CRIAR AS ABAS PRINCIPAIS
+# ==============================================================================
+
+# Criar abas diferentes para EI e não-EI
+if is_ei:
+    tab_barreiras, tab_projetos, tab_rotina, tab_ponte, tab_planejamento = st.tabs([
+        "BARREIRAS NO BRINCAR", "BANCO DE EXPERIÊNCIAS", "ROTINA & ADAPTAÇÃO", 
+        "ARTICULAÇÃO", "PLANEJAMENTO DO CICLO"
+    ])
+else:
+    tab_barreiras, tab_plano, tab_tec, tab_ponte, tab_planejamento = st.tabs([
+        "MAPEAR BARREIRAS", "PLANO DE HABILIDADES", "TEC. ASSISTIVA", 
+        "ARTICULAÇÃO", "PLANEJAMENTO DO CICLO"
+    ])
+
+# ==============================================================================
+# ABA 1: BARREIRAS NO BRINCAR (EI) / MAPEAR BARREIRAS (NÃO EI)
+# ==============================================================================
+if is_ei:
+    with tab_barreiras:
+        st.markdown("<div class='pedagogia-box'><strong>Diagnóstico do Brincar:</strong> Identifique barreiras na interação e no brincar.</div>", unsafe_allow_html=True)
+        
+        status_atual = st.session_state.get('status_diagnostico_barreiras', 'rascunho')
+        
+        if status_atual == 'rascunho':
+            # Modo inicial - coleta de dados
+            obs_aee = st.text_area(
+                "Observação do Brincar:", 
+                height=100,
+                placeholder="Exemplo: O estudante se recusa a escrever quando solicitado, demonstrando ansiedade e evitamento. Durante atividades de escrita, ele tenta sair da sala ou distrai os colegas. Quando consegue iniciar, abandona a tarefa após algumas linhas, dizendo que está cansado ou que não sabe fazer."
+            )
+            
+            if st.button("🔍 Mapear Barreiras", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI nas configurações.")
+                elif not obs_aee:
+                    st.warning("Por favor, descreva suas observações antes de mapear.")
+                else:
+                    with st.spinner("Analisando barreiras no brincar..."):
+                        resultado = gerar_diagnostico_barreiras(api_key, aluno, obs_aee)
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_diagnostico_barreiras = resultado
+                            st.session_state.status_diagnostico_barreiras = 'revisao'
+                            st.session_state.input_original_diagnostico_barreiras = {'obs': obs_aee}
+                            st.success("Diagnóstico gerado com sucesso!")
+                            st.rerun()
+        
         else:
-            st.caption("Nenhum verbo selecionado ainda.")
-    
-    # Botão para gerar
-    st.markdown("---")
-    col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 1])
-    
-    with col_btn2:
-        if st.button("✨ CRIAR ATIVIDADE", type="primary", key="btn_c", use_container_width=True):
-            if not api_key:
-                st.error("❌ Insira a chave da OpenAI nas configurações")
-            else:
-                with st.spinner("Elaborando atividade..."):
-                    qtd_final = qtd_img_sel if usar_img else 0
-                    
-                    rac, txt = criar_profissional(
-                        api_key, 
-                        aluno, 
-                        mat_c, 
-                        obj_c, 
-                        qtd_c, 
-                        tipo_quest, 
-                        qtd_final, 
-                        verbos_bloom=verbos_finais_para_ia if usar_bloom else None,
-                        habilidades_bncc=habilidades_bncc
+            # Modo hub de recursos - já tem conteúdo gerado
+            renderizar_hub_recurso(
+                tipo_recurso='diagnostico_barreiras',
+                conteudo_gerado=st.session_state.conteudo_diagnostico_barreiras,
+                aluno_nome=aluno['nome']
+            )
+            
+            # Tratamento especial para regeração com feedback
+            if st.session_state.status_diagnostico_barreiras == 'regerando':
+                feedback = st.session_state.get('feedback_diagnostico_barreiras', '')
+                input_original = st.session_state.get('input_original_diagnostico_barreiras', {})
+                obs_original = input_original.get('obs', '')
+                
+                with st.spinner("Aplicando ajustes solicitados..."):
+                    resultado = gerar_diagnostico_barreiras(
+                        api_key, aluno, obs_original, feedback
                     )
-                    
-                    # Processar imagens se houver
-                    novo_map = {}
-                    count = 0
-                    tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', txt)
-                    
-                    for p in tags:
-                        count += 1
-                        url = gerar_imagem_inteligente(api_key, p, unsplash_key, prioridade="BANCO")
-                        if url:
-                            io = baixar_imagem_url(url)
-                            if io: 
-                                novo_map[count] = io.getvalue()
-                    
-                    # Substituir tags GEN_IMG por IMG_G
-                    txt_fin = txt
-                    for i in range(1, count + 1): 
-                        txt_fin = re.sub(r'\[\[GEN_IMG: .*?\]\]', f"[[IMG_G{i}]]", txt_fin, count=1)
-                    
-                    # Salvar no session state
-                    st.session_state['res_create'] = {
-                        'rac': rac, 
-                        'txt': txt_fin, 
-                        'map': novo_map, 
-                        'valid': False,
-                        'mat_c': mat_c,
-                        'obj_c': obj_c
-                    }
+                    st.session_state.conteudo_diagnostico_barreiras = resultado
+                    st.session_state.status_diagnostico_barreiras = 'revisao'
                     st.rerun()
-    
-    # Exibição do resultado
-    if 'res_create' in st.session_state:
-        res = st.session_state['res_create']
+else:
+    with tab_barreiras:
+        st.markdown("<div class='pedagogia-box'><strong>Diagnóstico de Acessibilidade:</strong> O que impede a participação plena do aluno?</div>", unsafe_allow_html=True)
         
-        st.markdown("---")
-        st.markdown(f"### 📋 Atividade Criada: {res.get('mat_c', '')} - {res.get('obj_c', '')}")
+        status_atual = st.session_state.get('status_diagnostico_barreiras', 'rascunho')
         
-        # Barra de status
-        if res.get('valid'):
-            st.success("✅ **ATIVIDADE VALIDADA E PRONTA PARA USO**")
-        else:
-            col_val, col_ajust, col_desc = st.columns(3)
-            with col_val:
-                if st.button("✅ Validar Atividade", key="val_c", use_container_width=True):
-                    st.session_state['res_create']['valid'] = True
-                    st.rerun()
-            with col_ajust:
-                if st.button("🔄 Refazer com Ajustes", key="redo_c", use_container_width=True):
-                    st.session_state['res_create']['valid'] = False
-                    st.info("Para ajustes, modifique os parâmetros acima e clique em 'CRIAR ATIVIDADE' novamente.")
-            with col_desc:
-                if st.button("🗑️ Descartar", key="del_c", use_container_width=True):
-                    del st.session_state['res_create']
-                    st.rerun()
-        
-        # Análise Pedagógica
-        if res.get('rac'):
-            with st.expander("🧠 Análise Pedagógica (clique para expandir)"):
-                st.markdown(res['rac'])
-        
-        # Atividade Gerada
-        st.markdown("#### 📝 Atividade Gerada")
-        with st.container(border=True):
-            partes = re.split(r'(\[\[IMG_G\d+\]\])', res['txt'])
-            for p in partes:
-                tag = re.search(r'\[\[IMG_G(\d+)\]\]', p)
-                if tag:
-                    i = int(tag.group(1))
-                    im = res['map'].get(i)
-                    if im: 
-                        st.image(im, width=300)
-                elif p.strip(): 
-                    st.markdown(p.strip())
-        
-        # Botões de Download
-        st.markdown("---")
-        st.markdown("### 📥 Download")
-        col_down1, col_down2, col_down3 = st.columns(3)
-        
-        with col_down1:
-            docx = construir_docx_final(res['txt'], aluno, mat_c, {}, "Criada")
-            st.download_button(
-                label="📄 Baixar DOCX",
-                data=docx,
-                file_name=f"Atividade_{mat_c}_{date.today().strftime('%Y%m%d')}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True
+        if status_atual == 'rascunho':
+            obs_aee = st.text_area(
+                "Observações Iniciais do AEE:", 
+                height=100,
+                placeholder="Exemplo: O estudante se recusa a escrever quando solicitado, demonstrando ansiedade e evitamento. Durante atividades de escrita, ele tenta sair da sala ou distrai os colegas. Quando consegue iniciar, abandona a tarefa após algumas linhas, dizendo que está cansado ou que não sabe fazer."
             )
-        
-        with col_down2:
-            pdf_bytes = criar_pdf_generico(res['txt'])
-            st.download_button(
-                label="📕 Baixar PDF",
-                data=pdf_bytes,
-                file_name=f"Atividade_{mat_c}_{date.today().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-        
-        with col_down3:
-            st.download_button(
-                label="📝 Baixar Texto",
-                data=res['txt'],
-                file_name=f"Atividade_{mat_c}_{date.today().strftime('%Y%m%d')}.txt",
-                mime="text/plain",
-                use_container_width=True
-            )
-
-def render_aba_estudio_visual(aluno, api_key, unsplash_key):
-    """Renderiza a aba de estúdio visual"""
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-image-line"></i> Recursos Visuais</div>
-        Gere flashcards, rotinas visuais e símbolos de comunicação.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    col_scene, col_caa = st.columns(2)
-    
-    with col_scene:
-        st.markdown("#### 🖼️ Ilustração")
-        desc_m = st.text_area("Descreva a imagem:", height=100, key="vdm_padrao", placeholder="Ex: Sistema Solar simplificado com planetas coloridos...")
-        
-        if st.button("🎨 Gerar Imagem", key="btn_cena_padrao"):
-            with st.spinner("Desenhando..."):
-                prompt_completo = f"{desc_m}. Context: Education."
-                st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key, prioridade="IA")
-                st.session_state.valid_scene = False
-
-        if st.session_state.res_scene_url:
-            st.image(st.session_state.res_scene_url)
-            if st.session_state.valid_scene:
-                st.success("Imagem validada!")
-            else:
-                c_vs1, c_vs2 = st.columns([1, 2])
-                if c_vs1.button("✅ Validar", key="val_sc_pd"):
-                    st.session_state.valid_scene = True
-                    st.rerun()
-                with c_vs2.expander("🔄 Refazer Cena"):
-                    fb_scene = st.text_input("Ajuste:", key="fb_sc_pd")
-                    if st.button("Refazer", key="ref_sc_pd"):
-                        with st.spinner("Redesenhando..."):
-                            prompt_completo = f"{desc_m}. Context: Education."
-                            st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key, feedback_anterior=fb_scene, prioridade="IA")
+            
+            if st.button("🔍 Analisar Barreiras", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI nas configurações.")
+                elif not obs_aee:
+                    st.warning("Por favor, descreva suas observações antes de analisar.")
+                else:
+                    with st.spinner("Analisando barreiras de acessibilidade..."):
+                        resultado = gerar_diagnostico_barreiras(api_key, aluno, obs_aee)
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_diagnostico_barreiras = resultado
+                            st.session_state.status_diagnostico_barreiras = 'revisao'
+                            st.session_state.input_original_diagnostico_barreiras = {'obs': obs_aee}
+                            st.success("Análise de barreiras concluída!")
                             st.rerun()
+        
+        else:
+            renderizar_hub_recurso(
+                tipo_recurso='diagnostico_barreiras',
+                conteudo_gerado=st.session_state.conteudo_diagnostico_barreiras,
+                aluno_nome=aluno['nome']
+            )
+            
+            if st.session_state.status_diagnostico_barreiras == 'regerando':
+                feedback = st.session_state.get('feedback_diagnostico_barreiras', '')
+                input_original = st.session_state.get('input_original_diagnostico_barreiras', {})
+                obs_original = input_original.get('obs', '')
+                
+                with st.spinner("Aplicando ajustes..."):
+                    resultado = gerar_diagnostico_barreiras(
+                        api_key, aluno, obs_original, feedback
+                    )
+                    st.session_state.conteudo_diagnostico_barreiras = resultado
+                    st.session_state.status_diagnostico_barreiras = 'revisao'
+                    st.rerun()
 
-    with col_caa:
-        st.markdown("#### 🗣️ Símbolo CAA")
-        palavra_chave = st.text_input("Conceito:", placeholder="Ex: Silêncio", key="caa_input_padrao")
-        
-        if st.button("🧩 Gerar Pictograma", key="btn_caa_padrao"):
-            with st.spinner("Criando símbolo..."):
-                st.session_state.res_caa_url = gerar_pictograma_caa(api_key, palavra_chave)
-                st.session_state.valid_caa = False
-
-        if st.session_state.res_caa_url:
-            st.image(st.session_state.res_caa_url, width=300)
-            if st.session_state.valid_caa:
-                st.success("Pictograma validado!")
-            else:
-                c_vc1, c_vc2 = st.columns([1, 2])
-                if c_vc1.button("✅ Validar", key="val_caa_pd"):
-                    st.session_state.valid_caa = True
-                    st.rerun()
-                with c_vc2.expander("🔄 Refazer Picto"):
-                    fb_caa = st.text_input("Ajuste:", key="fb_caa_pd")
-                    if st.button("Refazer", key="ref_caa_pd"):
-                        with st.spinner("Recriando..."):
-                            st.session_state.res_caa_url = gerar_pictograma_caa(api_key, palavra_chave, feedback_anterior=fb_caa)
-                            st.rerun()
-
-def render_aba_roteiro_individual(aluno, api_key):
-    """Renderiza a aba de roteiro individual"""
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-user-follow-line"></i> Roteiro de Aula Individualizado</div>
-        Crie um passo a passo de aula <strong>específico para este estudante</strong> do PEI. 
-        A IA usará o hiperfoco como chave de acesso para o conteúdo selecionado na BNCC.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Dropdowns BNCC completos
-    ano_bncc, disciplina_bncc, unidade_bncc, objeto_bncc, habilidades_bncc = criar_dropdowns_bncc_completos_melhorado(key_suffix="roteiro")
-    
-    # Mostrar resumo das seleções
-    if unidade_bncc and objeto_bncc:
-        with st.expander("📋 Resumo da seleção BNCC"):
-            st.write(f"**Ano:** {ano_bncc}")
-            st.write(f"**Disciplina:** {disciplina_bncc}")
-            st.write(f"**Unidade Temática:** {unidade_bncc}")
-            st.write(f"**Objeto do Conhecimento:** {objeto_bncc}")
-            if habilidades_bncc:
-                st.write(f"**Habilidades selecionadas:**")
-                for i, hab in enumerate(habilidades_bncc, 1):
-                    st.write(f"{i}. {hab}")
-    
-    # Botão para gerar
-    st.markdown("---")
-    
-    if st.button("📝 GERAR ROTEIRO INDIVIDUAL", type="primary", use_container_width=True):
-        # Validação: Usa o objeto_bncc como assunto
-        if objeto_bncc and habilidades_bncc:
-            with st.spinner(f"Criando roteiro sobre '{objeto_bncc}'..."):
-                res = gerar_roteiro_aula_completo(
-                    api_key=api_key,
-                    aluno=aluno,
-                    materia=disciplina_bncc,
-                    assunto=objeto_bncc, # Passa o objeto BNCC como assunto
-                    habilidades_bncc=habilidades_bncc,
-                    verbos_bloom=None, # Bloom removido
-                    ano=ano_bncc,
-                    unidade_tematica=unidade_bncc,
-                    objeto_conhecimento=objeto_bncc
-                )
-                st.session_state['res_roteiro'] = res
-                st.session_state['res_roteiro_valid'] = False
-        else:
-            st.warning("⚠️ Para gerar o roteiro, selecione a 'Disciplina', 'Objeto do Conhecimento' e pelo menos uma 'Habilidade' nos campos da BNCC acima.")
-    
-    # Exibição do resultado
-    if 'res_roteiro' in st.session_state:
-        res = st.session_state['res_roteiro']
-        
-        st.markdown("---")
-        st.markdown("### 📋 Roteiro de Aula Individualizado")
-        
-        if st.session_state.get('res_roteiro_valid'):
-            st.success("✅ **ROTEIRO VALIDADO E PRONTO PARA USO**")
-        else:
-            col_val, col_ajust, col_desc = st.columns(3)
-            with col_val:
-                if st.button("✅ Validar Roteiro", key="val_roteiro", use_container_width=True):
-                    st.session_state['res_roteiro_valid'] = True
-                    st.rerun()
-            with col_ajust:
-                if st.button("🔄 Refazer com Ajustes", key="redo_roteiro", use_container_width=True):
-                    st.session_state['res_roteiro_valid'] = False
-                    st.info("Para ajustes, modifique as seleções da BNCC e clique em 'GERAR ROTEIRO' novamente.")
-            with col_desc:
-                if st.button("🗑️ Descartar", key="del_roteiro", use_container_width=True):
-                    del st.session_state['res_roteiro']
-                    del st.session_state['res_roteiro_valid']
-                    st.rerun()
-        
-        # Roteiro Gerado
-        st.markdown(res)
-        
-        # Botões de Download
-        st.markdown("---")
-        st.markdown("### 📥 Download")
-        col_down1, col_down2 = st.columns(2)
-        
-        with col_down1:
-            docx_roteiro = criar_docx_simples(res, "Roteiro Individual")
-            st.download_button(
-                label="📄 Baixar DOCX",
-                data=docx_roteiro,
-                file_name=f"Roteiro_{disciplina_bncc}_{date.today().strftime('%Y%m%d')}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True
-            )
-        
-        with col_down2:
-            pdf_bytes_roteiro = criar_pdf_generico(res)
-            st.download_button(
-                label="📕 Baixar PDF",
-                data=pdf_bytes_roteiro,
-                file_name=f"Roteiro_{disciplina_bncc}_{date.today().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-
-def render_aba_papo_mestre(aluno, api_key):
-    """Renderiza a aba de papo de mestre"""
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-chat-smile-2-line"></i> Engajamento & DUA (Papo de Mestre)</div>
-        O hiperfoco é um <strong>caminho neurológico</strong> já aberto. Use-o para conectar o estudante ao componente curricular.
-        Aqui você também pode adicionar um tema de interesse da turma toda (DUA) para criar conexões coletivas.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    c1, c2 = st.columns(2)
-    materia_papo = c1.selectbox("Componente Curricular", DISCIPLINAS_PADRAO, key="papo_mat")
-    assunto_papo = c2.text_input("Assunto da Aula:", key="papo_ass")
-    
-    c3, c4 = st.columns(2)
-    hiperfoco_papo = c3.text_input("Hiperfoco (Estudante):", value=aluno.get('hiperfoco', 'Geral'), key="papo_hip")
-    tema_turma = c4.text_input("Interesse da Turma (Opcional - DUA):", placeholder="Ex: Minecraft, Copa do Mundo...", key="papo_turma")
-    
-    if st.button("🗣️ CRIAR CONEXÕES", type="primary"): 
-        if assunto_papo:
-            res = gerar_quebra_gelo_profundo(api_key, aluno, materia_papo, assunto_papo, hiperfoco_papo, tema_turma)
-            st.session_state['res_papo'] = res
-            st.session_state['res_papo_valid'] = False
-        else:
-            st.warning("Preencha o Assunto.")
-    
-    if 'res_papo' in st.session_state:
-        res = st.session_state['res_papo']
-        
-        st.markdown("---")
-        st.markdown("### 🗣️ Conexões para Engajamento")
-        
-        if st.session_state.get('res_papo_valid'):
-            st.success("✅ **CONEXÕES VALIDADAS E PRONTAS PARA USO**")
-        else:
-            col_val, col_ajust, col_desc = st.columns(3)
-            with col_val:
-                if st.button("✅ Validar Conexões", key="val_papo", use_container_width=True):
-                    st.session_state['res_papo_valid'] = True
-                    st.rerun()
-            with col_ajust:
-                if st.button("🔄 Refazer com Ajustes", key="redo_papo", use_container_width=True):
-                    st.session_state['res_papo_valid'] = False
-                    st.info("Para ajustes, modifique os parâmetros acima e clique em 'CRIAR CONEXÕES' novamente.")
-            with col_desc:
-                if st.button("🗑️ Descartar", key="del_papo", use_container_width=True):
-                    del st.session_state['res_papo']
-                    del st.session_state['res_papo_valid']
-                    st.rerun()
-        
-        st.markdown(res)
-        
-        # Botões de Download
-        st.markdown("---")
-        st.markdown("### 📥 Download")
-        col_down1, col_down2 = st.columns(2)
-        
-        with col_down1:
-            docx_papo = criar_docx_simples(res, "Papo de Mestre")
-            st.download_button(
-                label="📄 Baixar DOCX",
-                data=docx_papo,
-                file_name=f"Papo_Mestre_{date.today().strftime('%Y%m%d')}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True
-            )
-        
-        with col_down2:
-            pdf_bytes_papo = criar_pdf_generico(res)
-            st.download_button(
-                label="📕 Baixar PDF",
-                data=pdf_bytes_papo,
-                file_name=f"Papo_Mestre_{date.today().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-
-def render_aba_dinamica_inclusiva(aluno, api_key):
-    """Renderiza a aba de dinâmica inclusiva"""
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-group-line"></i> Dinâmica Inclusiva</div>
-        Atividades em grupo onde todos participam, respeitando as singularidades.
-        Baseado no Objeto do Conhecimento selecionado.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Dropdowns BNCC completos
-    ano_bncc, disciplina_bncc, unidade_bncc, objeto_bncc, habilidades_bncc = criar_dropdowns_bncc_completos_melhorado(key_suffix="dinamica")
-    
-    # Mostrar resumo das seleções
-    if unidade_bncc and objeto_bncc:
-        with st.expander("📋 Resumo da seleção BNCC"):
-            st.write(f"**Ano:** {ano_bncc}")
-            st.write(f"**Disciplina:** {disciplina_bncc}")
-            st.write(f"**Unidade Temática:** {unidade_bncc}")
-            st.write(f"**Objeto do Conhecimento:** {objeto_bncc}")
-            if habilidades_bncc:
-                st.write(f"**Habilidades selecionadas:**")
-                for i, hab in enumerate(habilidades_bncc, 1):
-                    st.write(f"{i}. {hab}")
-    
-    # Configuração (Simplificada)
-    st.markdown("---")
-    st.markdown("### ⚙️ Configuração da Turma")
-    
-    c3, c4 = st.columns(2)
-    with c3:
-        qtd_alunos = st.number_input("Número de Estudantes:", min_value=5, max_value=50, value=25, key="din_qtd")
-    with c4:
-        carac_turma = st.text_input(
-            "Características da Turma (Opcional):", 
-            placeholder="Ex: Turma agitada, gostam de competição...", 
-            key="din_carac"
-        )
-    
-    # Botão para gerar
-    st.markdown("---")
-    
-    if st.button("🤝 CRIAR DINÂMICA", type="primary", use_container_width=True): 
-        if objeto_bncc and habilidades_bncc:
-            with st.spinner(f"Criando dinâmica sobre '{objeto_bncc}'..."):
-                res = gerar_dinamica_inclusiva_completa(
-                    api_key=api_key,
-                    aluno=aluno,
-                    materia=disciplina_bncc,
-                    assunto=objeto_bncc, # Passa o objeto BNCC como assunto
-                    qtd_alunos=qtd_alunos,
-                    caracteristicas_turma=carac_turma,
-                    habilidades_bncc=habilidades_bncc,
-                    verbos_bloom=None, # Bloom Removido
-                    ano=ano_bncc,
-                    unidade_tematica=unidade_bncc,
-                    objeto_conhecimento=objeto_bncc
-                )
-                st.session_state['res_dinamica'] = res
-                st.session_state['res_dinamica_valid'] = False
-        else:
-            st.warning("⚠️ Selecione a 'Disciplina', 'Objeto do Conhecimento' e pelo menos uma 'Habilidade' nos campos da BNCC acima.")
-    
-    # Exibição do resultado
-    if 'res_dinamica' in st.session_state:
-        res = st.session_state['res_dinamica']
-        
-        st.markdown("---")
-        st.markdown("### 📋 Dinâmica Inclusiva")
-        
-        if st.session_state.get('res_dinamica_valid'):
-            st.success("✅ **DINÂMICA VALIDADA E PRONTA PARA USO**")
-        else:
-            col_val, col_ajust, col_desc = st.columns(3)
-            with col_val:
-                if st.button("✅ Validar Dinâmica", key="val_dinamica", use_container_width=True):
-                    st.session_state['res_dinamica_valid'] = True
-                    st.rerun()
-            with col_ajust:
-                if st.button("🔄 Refazer com Ajustes", key="redo_dinamica", use_container_width=True):
-                    st.session_state['res_dinamica_valid'] = False
-                    st.info("Para ajustes, modifique os parâmetros e clique em 'CRIAR DINÂMICA' novamente.")
-            with col_desc:
-                if st.button("🗑️ Descartar", key="del_dinamica", use_container_width=True):
-                    del st.session_state['res_dinamica']
-                    del st.session_state['res_dinamica_valid']
-                    st.rerun()
-        
-        st.markdown(res)
-        
-        # Botões de Download
-        st.markdown("---")
-        st.markdown("### 📥 Download")
-        col_down1, col_down2 = st.columns(2)
-        
-        with col_down1:
-            docx_din = criar_docx_simples(res, "Dinâmica Inclusiva")
-            st.download_button(
-                label="📄 Baixar DOCX",
-                data=docx_din,
-                file_name=f"Dinamica_{disciplina_bncc}_{date.today().strftime('%Y%m%d')}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True
-            )
-        
-        with col_down2:
-            pdf_bytes_din = criar_pdf_generico(res)
-            st.download_button(
-                label="📕 Baixar PDF",
-                data=pdf_bytes_din,
-                file_name=f"Dinamica_{disciplina_bncc}_{date.today().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-
-def render_aba_plano_aula(aluno, api_key):
-    """Renderiza a aba de plano de aula"""
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-book-open-line"></i> Plano de Aula DUA</div>
-        Gere um planejamento completo alinhado à BNCC, selecionando metodologias ativas e recursos.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Dropdowns BNCC completos
-    ano_bncc, disciplina_bncc, unidade_bncc, objeto_bncc, habilidades_bncc = criar_dropdowns_bncc_completos_melhorado(key_suffix="plano")
-    
-    # Mostrar resumo das seleções
-    if unidade_bncc and objeto_bncc:
-        with st.expander("📋 Resumo da seleção BNCC"):
-            st.write(f"**Ano:** {ano_bncc}")
-            st.write(f"**Disciplina:** {disciplina_bncc}")
-            st.write(f"**Unidade Temática:** {unidade_bncc}")
-            st.write(f"**Objeto do Conhecimento:** {objeto_bncc}")
-            if habilidades_bncc:
-                st.write(f"**Habilidades selecionadas:**")
-                for i, hab in enumerate(habilidades_bncc, 1):
-                    st.write(f"{i}. {hab}")
-    
-    # Configuração (Simplificada)
-    st.markdown("---")
-    st.markdown("### ⚙️ Configuração Metodológica")
-    
-    c1, c2 = st.columns(2)
-    with c1:
-        metodologia = st.selectbox("Metodologia", METODOLOGIAS, key="plano_met")
-    
-    tecnica_ativa = ""
-    if metodologia == "Metodologia Ativa":
-        with c2:
-            tecnica_ativa = st.selectbox("Técnica Ativa", TECNICAS_ATIVAS, key="plano_tec")
-    else:
-        c2.info(f"Metodologia selecionada: {metodologia}")
-
-    c3, c4 = st.columns(2)
-    with c3:
-        qtd_alunos_plano = st.number_input("Qtd Estudantes:", min_value=1, value=30, key="plano_qtd")
-    with c4:
-        recursos_plano = st.multiselect("Recursos Disponíveis:", RECURSOS_DISPONIVEIS, key="plano_rec")
-    
-    # Botão para gerar
-    st.markdown("---")
-    
-    if st.button("📅 GERAR PLANO DE AULA", type="primary", use_container_width=True):
-        if objeto_bncc and habilidades_bncc:
-            with st.spinner(f"Consultando BNCC e planejando aula sobre '{objeto_bncc}'..."):
-                res = gerar_plano_aula_completo(
-                    api_key=api_key,
-                    materia=disciplina_bncc,
-                    assunto=objeto_bncc, # Passa o objeto BNCC como assunto
-                    metodologia=metodologia,
-                    tecnica=tecnica_ativa,
-                    qtd_alunos=qtd_alunos_plano,
-                    recursos=recursos_plano,
-                    habilidades_bncc=habilidades_bncc,
-                    verbos_bloom=None, # Bloom Removido
-                    ano=ano_bncc,
-                    unidade_tematica=unidade_bncc,
-                    objeto_conhecimento=objeto_bncc,
-                    aluno_info=aluno
-                )
-                st.session_state['res_plano'] = res
-                st.session_state['res_plano_valid'] = False
-        else:
-            st.warning("⚠️ Selecione a 'Disciplina', 'Objeto do Conhecimento' e pelo menos uma 'Habilidade' nos campos da BNCC acima.")
-    
-    # Exibição do resultado
-    if 'res_plano' in st.session_state:
-        res = st.session_state['res_plano']
-        
-        st.markdown("---")
-        st.markdown("### 📋 Plano de Aula DUA")
-        
-        if st.session_state.get('res_plano_valid'):
-            st.success("✅ **PLANO VALIDADO E PRONTO PARA USO**")
-        else:
-            col_val, col_ajust, col_desc = st.columns(3)
-            with col_val:
-                if st.button("✅ Validar Plano", key="val_plano", use_container_width=True):
-                    st.session_state['res_plano_valid'] = True
-                    st.rerun()
-            with col_ajust:
-                if st.button("🔄 Refazer com Ajustes", key="redo_plano", use_container_width=True):
-                    st.session_state['res_plano_valid'] = False
-                    st.info("Para ajustes, modifique os parâmetros e clique em 'GERAR PLANO' novamente.")
-            with col_desc:
-                if st.button("🗑️ Descartar", key="del_plano", use_container_width=True):
-                    del st.session_state['res_plano']
-                    del st.session_state['res_plano_valid']
-                    st.rerun()
-        
-        st.markdown(res)
-        
-        # Botões de Download
-        st.markdown("---")
-        st.markdown("### 📥 Download")
-        col_down1, col_down2 = st.columns(2)
-        
-        with col_down1:
-            docx_plano = criar_docx_simples(res, "Plano de Aula DUA")
-            st.download_button(
-                label="📄 Baixar DOCX",
-                data=docx_plano,
-                file_name=f"Plano_Aula_{disciplina_bncc}_{date.today().strftime('%Y%m%d')}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True
-            )
-        
-        with col_down2:
-            pdf_bytes_plano = criar_pdf_generico(res)
-            st.download_button(
-                label="📕 Baixar PDF",
-                data=pdf_bytes_plano,
-                file_name=f"Plano_Aula_{disciplina_bncc}_{date.today().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-    # ==============================================================================
-# FUNÇÕES DA EDUCAÇÃO INFANTIL
 # ==============================================================================
-
-def render_aba_ei_experiencia(aluno, api_key):
-    """Renderiza a aba de experiência da Educação Infantil"""
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-lightbulb-line"></i> Pedagogia do Brincar (BNCC)</div>
-        Na Educação Infantil, não fazemos "provas". Criamos <strong>experiências de aprendizagem</strong> intencionais. 
-        Esta ferramenta usa a BNCC para criar brincadeiras que ensinam, usando o hiperfoco da criança.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    col_ei1, col_ei2 = st.columns(2)
-    campo_exp = col_ei1.selectbox("Campo de Experiência (BNCC)", CAMPOS_EXPERIENCIA_EI, key="campo_exp_ei")
-    obj_aprendizagem = col_ei2.text_input("Objetivo de Aprendizagem:", placeholder="Ex: Compartilhar brinquedos, Identificar cores...", key="obj_aprendizagem_ei")
-    
-    if 'res_ei_exp' not in st.session_state:
-        st.session_state.res_ei_exp = None
-    if 'valid_ei_exp' not in st.session_state:
-        st.session_state.valid_ei_exp = False
-
-    if st.button("✨ GERAR EXPERIÊNCIA LÚDICA", type="primary", key="btn_exp_ei"):
-        with st.spinner("Criando vivência..."):
-            st.session_state.res_ei_exp = gerar_experiencia_ei_bncc(api_key, aluno, campo_exp=campo_exp, objetivo=obj_aprendizagem)
-            st.session_state.valid_ei_exp = False
-
-    if st.session_state.res_ei_exp:
-        if st.session_state.valid_ei_exp:
-            st.success("✅ EXPERIÊNCIA APROVADA!")
-            st.markdown(st.session_state.res_ei_exp)
-        else:
-            st.markdown(st.session_state.res_ei_exp)
-            st.write("---")
-            c_val, c_ref = st.columns([1, 3])
-            if c_val.button("✅ Validar Experiência", key="val_exp_ei"): 
-                st.session_state.valid_ei_exp = True
-                st.rerun()
-            with c_ref.expander("🔄 Não gostou? Ensinar a IA"):
-                feedback_ei = st.text_input("O que precisa melhorar?", placeholder="Ex: Ficou muito complexo, use materiais mais simples...", key="fb_exp_ei")
-                if st.button("Refazer com Ajustes", key="refazer_exp_ei"):
-                    with st.spinner("Reescrevendo..."):
-                        st.session_state.res_ei_exp = gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, obj_aprendizagem, feedback_anterior=feedback_ei)
-                        st.rerun()
-
-def render_aba_ei_estudio_visual(aluno, api_key, unsplash_key):
-    """Renderiza a aba de estúdio visual da Educação Infantil"""
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-eye-line"></i> Apoio Visual & Comunicação</div>
-        Crianças atípicas processam melhor imagens do que fala. 
-        Use <strong>Cenas</strong> para histórias sociais (comportamento) e <strong>Pictogramas (CAA)</strong> para comunicação.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    col_scene, col_caa = st.columns(2)
-    
-    # Cenas
-    with col_scene:
-        st.markdown("#### 🖼️ Ilustração de Cena")
-        desc_m = st.text_area("Descreva a cena ou rotina:", height=100, key="vdm_ei", placeholder="Ex: Crianças brincando de roda no parque...")
+# ABA 2: BANCO DE EXPERIÊNCIAS (EI) / PLANO DE HABILIDADES (NÃO EI)
+# ==============================================================================
+if is_ei:
+    with tab_projetos:
+        st.markdown("<div class='pedagogia-box'><strong>Banco de Experiências (BNCC):</strong> Atividades lúdicas alinhadas aos Campos de Experiência.</div>", unsafe_allow_html=True)
         
-        if st.button("🎨 Gerar Cena", key="btn_cena_ei"):
-            with st.spinner("Desenhando..."):
-                prompt_completo = f"{desc_m}. Context: Child education, friendly style."
-                st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key, prioridade="IA")
-                st.session_state.valid_scene = False
-
-        if st.session_state.res_scene_url:
-            st.image(st.session_state.res_scene_url)
-            if st.session_state.valid_scene:
-                st.success("Imagem validada!")
-            else:
-                c_vs1, c_vs2 = st.columns([1, 2])
-                if c_vs1.button("✅ Validar", key="val_sc_ei"):
-                    st.session_state.valid_scene = True
-                    st.rerun()
-                with c_vs2.expander("🔄 Refazer Cena"):
-                    fb_scene = st.text_input("Ajuste:", key="fb_sc_ei")
-                    if st.button("Refazer", key="ref_sc_ei"):
-                        with st.spinner("Redesenhando..."):
-                            prompt_completo = f"{desc_m}. Context: Child education."
-                            st.session_state.res_scene_url = gerar_imagem_inteligente(api_key, prompt_completo, unsplash_key, feedback_anterior=fb_scene, prioridade="IA")
-                            st.rerun()
-
-    # CAA
-    with col_caa:
-        st.markdown("#### 🗣️ Símbolo CAA (Comunicação)")
-        palavra_chave = st.text_input("Conceito/Palavra:", placeholder="Ex: Quero Água, Banheiro", key="caa_input_ei")
+        status_atual = st.session_state.get('status_projetos_ei', 'rascunho')
         
-        if st.button("🧩 Gerar Pictograma", key="btn_caa_ei"):
-            with st.spinner("Criando símbolo acessível..."):
-                st.session_state.res_caa_url = gerar_pictograma_caa(api_key, palavra_chave)
-                st.session_state.valid_caa = False
-
-        if st.session_state.res_caa_url:
-            st.image(st.session_state.res_caa_url, width=300)
-            if st.session_state.valid_caa:
-                st.success("Pictograma validado!")
-            else:
-                c_vc1, c_vc2 = st.columns([1, 2])
-                if c_vc1.button("✅ Validar", key="val_caa_ei"):
-                    st.session_state.valid_caa = True
-                    st.rerun()
-                with c_vc2.expander("🔄 Refazer Picto"):
-                    fb_caa = st.text_input("Ajuste:", key="fb_caa_ei")
-                    if st.button("Refazer", key="ref_caa_ei"):
-                        with st.spinner("Recriando..."):
-                            st.session_state.res_caa_url = gerar_pictograma_caa(api_key, palavra_chave, feedback_anterior=fb_caa)
-                            st.rerun()
-
-def render_aba_ei_rotina(aluno, api_key):
-    """Renderiza a aba de rotina da Educação Infantil"""
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-calendar-check-line"></i> Rotina & Previsibilidade</div>
-        A rotina organiza o pensamento da criança. Use esta ferramenta para identificar 
-        pontos de estresse e criar estratégias de antecipação.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    rotina_detalhada = st.text_area("Descreva a Rotina da Turma:", height=200, placeholder="Ex: \n8:00 - Chegada e Acolhida\n8:30 - Roda de Conversa\n9:00 - Lanche\n...", key="rotina_ei")
-    topico_foco = st.text_input("Ponto de Atenção (Opcional):", placeholder="Ex: Transição para o parque", key="topico_foco_ei")
-    
-    if 'res_ei_rotina' not in st.session_state:
-        st.session_state.res_ei_rotina = None
-    if 'valid_ei_rotina' not in st.session_state:
-        st.session_state.valid_ei_rotina = False
-
-    if st.button("📝 ANALISAR E ADAPTAR ROTINA", type="primary", key="btn_rotina_ei"):
-        with st.spinner("Analisando rotina..."):
-            prompt_rotina = f"Analise esta rotina de Educação Infantil e sugira adaptações sensoriais e visuais:\n\n{rotina_detalhada}\n\nFoco específico: {topico_foco}"
-            st.session_state.res_ei_rotina = gerar_roteiro_aula_completo(api_key, aluno, "Geral", "Rotina", feedback_anterior=prompt_rotina)
-            st.session_state.valid_ei_rotina = False
-
-    if st.session_state.res_ei_rotina:
-        if st.session_state.valid_ei_rotina:
-            st.success("✅ ROTINA VALIDADA!")
-            st.markdown(st.session_state.res_ei_rotina)
-        else:
-            st.markdown(st.session_state.res_ei_rotina)
-            st.write("---")
-            c_val, c_ref = st.columns([1, 3])
-            if c_val.button("✅ Validar Rotina", key="val_rotina_ei"):
-                st.session_state.valid_ei_rotina = True
-                st.rerun()
-            with c_ref.expander("🔄 Refazer adaptação"):
-                fb_rotina = st.text_input("O que ajustar na rotina?", key="fb_rotina_input_ei")
-                if st.button("Refazer Rotina", key="refazer_rotina_ei"):
-                    with st.spinner("Reajustando..."):
-                        prompt_rotina = f"Analise esta rotina de Educação Infantil e sugira adaptações:\n\n{rotina_detalhada}\n\nFoco: {topico_foco}"
-                        st.session_state.res_ei_rotina = gerar_roteiro_aula_completo(api_key, aluno, "Geral", "Rotina", feedback_anterior=prompt_rotina)
-                        st.rerun()
-
-def render_aba_ei_inclusao_brincar(aluno, api_key):
-    """Renderiza a aba de inclusão no brincar da Educação Infantil"""
-    st.markdown("""
-    <div class="pedagogia-box">
-        <div class="pedagogia-title"><i class="ri-group-line"></i> Mediação Social</div>
-        Se a criança brinca isolada, o objetivo não é forçar a interação, mas criar 
-        pontes através do interesse dela. A IA criará uma brincadeira onde ela é protagonista.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    tema_d = st.text_input("Tema/Momento:", key="dina_ei", placeholder="Ex: Brincadeira de massinha")
-    
-    if 'res_ei_dina' not in st.session_state:
-        st.session_state.res_ei_dina = None
-    if 'valid_ei_dina' not in st.session_state:
-        st.session_state.valid_ei_dina = False
-
-    if st.button("🤝 GERAR DINÂMICA", type="primary", key="btn_dina_ei"): 
-        with st.spinner("Criando ponte social..."):
-            st.session_state.res_ei_dina = gerar_dinamica_inclusiva_completa(
-                api_key, 
-                aluno, 
-                "Educação Infantil", 
-                tema_d, 
-                10,  # pequeno grupo
-                "Crianças pequenas"
+        if status_atual == 'rascunho':
+            campo_bncc = st.selectbox(
+                "Selecione o Campo de Experiência:",
+                ["O eu, o outro e o nós", "Corpo, gestos e movimentos", 
+                 "Traços, sons, cores e formas", "Escuta, fala, pensamento e imaginação", 
+                 "Espaços, tempos, quantidades, relações e transformações"],
+                key="campo_bncc_ei"
             )
-            st.session_state.valid_ei_dina = False
-
-    if st.session_state.res_ei_dina:
-        if st.session_state.valid_ei_dina:
-            st.success("✅ DINÂMICA VALIDADA!")
-            st.markdown(st.session_state.res_ei_dina)
+            
+            if st.button("✨ Gerar Atividades", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI nas configurações.")
+                else:
+                    with st.spinner("Criando banco de experiências..."):
+                        resultado = gerar_projetos_ei_bncc(api_key, aluno, campo_bncc)
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_projetos_ei = resultado
+                            st.session_state.status_projetos_ei = 'revisao'
+                            st.session_state.input_original_projetos_ei = {'campo': campo_bncc}
+                            st.success("Banco de experiências gerado!")
+                            st.rerun()
+        
         else:
-            st.markdown(st.session_state.res_ei_dina)
-            st.write("---")
-            c_val, c_ref = st.columns([1, 3])
-            if c_val.button("✅ Validar Dinâmica", key="val_dina_ei"):
-                st.session_state.valid_ei_dina = True
-                st.rerun()
-            with c_ref.expander("🔄 Refazer dinâmica"):
-                fb_dina = st.text_input("O que ajustar?", key="fb_dina_input_ei")
-                if st.button("Refazer Dinâmica", key="refazer_dina_ei"):
-                    with st.spinner("Reajustando..."):
-                        st.session_state.res_ei_dina = gerar_dinamica_inclusiva_completa(
-                            api_key, 
-                            aluno, 
-                            "Educação Infantil", 
-                            tema_d, 
-                            10, 
-                            "Crianças pequenas", 
-                            feedback_anterior=fb_dina
+            renderizar_hub_recurso(
+                tipo_recurso='projetos_ei',
+                conteudo_gerado=st.session_state.conteudo_projetos_ei,
+                aluno_nome=aluno['nome']
+            )
+            
+            if st.session_state.status_projetos_ei == 'regerando':
+                feedback = st.session_state.get('feedback_projetos_ei', '')
+                input_original = st.session_state.get('input_original_projetos_ei', {})
+                campo_original = input_original.get('campo', 'O eu, o outro e o nós')
+                
+                with st.spinner("Aplicando ajustes..."):
+                    resultado = gerar_projetos_ei_bncc(
+                        api_key, aluno, campo_original, feedback
+                    )
+                    st.session_state.conteudo_projetos_ei = resultado
+                    st.session_state.status_projetos_ei = 'revisao'
+                    st.rerun()
+else:
+    with tab_plano:
+        st.markdown("<div class='pedagogia-box'><strong>Treino de Habilidades:</strong> Desenvolvimento de competências específicas no AEE.</div>", unsafe_allow_html=True)
+        
+        status_atual = st.session_state.get('status_plano_habilidades', 'rascunho')
+        
+        if status_atual == 'rascunho':
+            foco = st.selectbox(
+                "Foco do Atendimento:",
+                ["Funções Executivas", "Autonomia", "Coordenação Motora", 
+                 "Comunicação", "Habilidades Sociais", "Leitura e Escrita",
+                 "Matemática", "Tecnologias Assistivas", "Organização e Planejamento"],
+                key="foco_plano_naoei"
+            )
+            
+            if st.button("📋 Gerar Plano", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI nas configurações.")
+                else:
+                    with st.spinner("Elaborando plano de intervenção..."):
+                        resultado = gerar_plano_habilidades(api_key, aluno, foco)
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_plano_habilidades = resultado
+                            st.session_state.status_plano_habilidades = 'revisao'
+                            st.session_state.input_original_plano_habilidades = {'foco': foco}
+                            st.success("Plano de habilidades gerado!")
+                            st.rerun()
+        
+        else:
+            renderizar_hub_recurso(
+                tipo_recurso='plano_habilidades',
+                conteudo_gerado=st.session_state.conteudo_plano_habilidades,
+                aluno_nome=aluno['nome']
+            )
+            
+            if st.session_state.status_plano_habilidades == 'regerando':
+                feedback = st.session_state.get('feedback_plano_habilidades', '')
+                input_original = st.session_state.get('input_original_plano_habilidades', {})
+                foco_original = input_original.get('foco', 'Funções Executivas')
+                
+                with st.spinner("Aplicando ajustes..."):
+                    resultado = gerar_plano_habilidades(
+                        api_key, aluno, foco_original, feedback
+                    )
+                    st.session_state.conteudo_plano_habilidades = resultado
+                    st.session_state.status_plano_habilidades = 'revisao'
+                    st.rerun()
+
+# ==============================================================================
+# ABA 3: ROTINA & ADAPTAÇÃO (EI) / TEC. ASSISTIVA (NÃO EI)
+# ==============================================================================
+if is_ei:
+    with tab_rotina:
+        st.markdown("<div class='pedagogia-box'><strong>Adaptação de Rotina:</strong> Recursos visuais e sensoriais para rotina da Educação Infantil.</div>", unsafe_allow_html=True)
+        
+        status_atual = st.session_state.get('status_tecnologia_assistiva', 'rascunho')
+        
+        if status_atual == 'rascunho':
+            dif_rotina = st.text_input(
+                "Dificuldade Específica na Rotina:",
+                placeholder="Ex: Transições entre atividades, organização do material, comunicação de necessidades...",
+                key="dif_rotina_ei"
+            )
+            
+            if st.button("🛠️ Sugerir Adaptação", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI nas configurações.")
+                elif not dif_rotina:
+                    st.warning("Por favor, descreva a dificuldade específica.")
+                else:
+                    with st.spinner("Buscando recursos de adaptação..."):
+                        resultado = sugerir_tecnologia_assistiva(
+                            api_key, aluno, f"Rotina EI: {dif_rotina}"
                         )
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_tecnologia_assistiva = resultado
+                            st.session_state.status_tecnologia_assistiva = 'revisao'
+                            st.session_state.input_original_tecnologia_assistiva = {'dificuldade': dif_rotina}
+                            st.success("Sugestões de adaptação geradas!")
+                            st.rerun()
+        
+        else:
+            renderizar_hub_recurso(
+                tipo_recurso='tecnologia_assistiva',
+                conteudo_gerado=st.session_state.conteudo_tecnologia_assistiva,
+                aluno_nome=aluno['nome']
+            )
+            
+            if st.session_state.status_tecnologia_assistiva == 'regerando':
+                feedback = st.session_state.get('feedback_tecnologia_assistiva', '')
+                input_original = st.session_state.get('input_original_tecnologia_assistiva', {})
+                dif_original = input_original.get('dificuldade', '')
+                
+                with st.spinner("Aplicando ajustes..."):
+                    resultado = sugerir_tecnologia_assistiva(
+                        api_key, aluno, f"Rotina EI: {dif_original}", feedback
+                    )
+                    st.session_state.conteudo_tecnologia_assistiva = resultado
+                    st.session_state.status_tecnologia_assistiva = 'revisao'
+                    st.rerun()
+else:
+    with tab_tec:
+        st.markdown("<div class='pedagogia-box'><strong>Tecnologia Assistiva:</strong> Recursos para promover autonomia e participação.</div>", unsafe_allow_html=True)
+        
+        status_atual = st.session_state.get('status_tecnologia_assistiva', 'rascunho')
+        
+        if status_atual == 'rascunho':
+            dif_especifica = st.text_input(
+                "Dificuldade Específica:",
+                placeholder="Ex: Dificuldade na escrita, comunicação, mobilidade, organização...",
+                key="dif_especifica_naoei"
+            )
+            
+            if st.button("🔧 Sugerir Recursos", type="primary", use_container_width=True):
+                if not api_key:
+                    st.error("Insira a chave OpenAI nas configurações.")
+                elif not dif_especifica:
+                    st.warning("Por favor, descreva a dificuldade específica.")
+                else:
+                    with st.spinner("Buscando tecnologias assistivas..."):
+                        resultado = sugerir_tecnologia_assistiva(api_key, aluno, dif_especifica)
+                        if "Erro:" in resultado:
+                            st.error(resultado)
+                        else:
+                            st.session_state.conteudo_tecnologia_assistiva = resultado
+                            st.session_state.status_tecnologia_assistiva = 'revisao'
+                            st.session_state.input_original_tecnologia_assistiva = {'dificuldade': dif_especifica}
+                            st.success("Sugestões de TA geradas!")
+                            st.rerun()
+        
+        else:
+            renderizar_hub_recurso(
+                tipo_recurso='tecnologia_assistiva',
+                conteudo_gerado=st.session_state.conteudo_tecnologia_assistiva,
+                aluno_nome=aluno['nome']
+            )
+            
+            if st.session_state.status_tecnologia_assistiva == 'regerando':
+                feedback = st.session_state.get('feedback_tecnologia_assistiva', '')
+                input_original = st.session_state.get('input_original_tecnologia_assistiva', {})
+                dif_original = input_original.get('dificuldade', '')
+                
+                with st.spinner("Aplicando ajustes..."):
+                    resultado = sugerir_tecnologia_assistiva(
+                        api_key, aluno, dif_original, feedback
+                    )
+                    st.session_state.conteudo_tecnologia_assistiva = resultado
+                    st.session_state.status_tecnologia_assistiva = 'revisao'
+                    st.rerun()
+
+# ==============================================================================
+# ABA 4: ARTICULAÇÃO (para EI e não EI)
+# ==============================================================================
+with tab_ponte:
+    st.markdown("<div class='pedagogia-box'><strong>Ponte com a Sala Regular:</strong> Documento colaborativo para articulação entre AEE e sala de aula.</div>", unsafe_allow_html=True)
+    
+    status_atual = st.session_state.get('status_documento_articulacao', 'rascunho')
+    
+    if status_atual == 'rascunho':
+        c1, c2 = st.columns(2)
+        with c1:
+            freq = st.selectbox(
+                "Frequência no AEE:",
+                ["1x/sem", "2x/sem", "3x/sem", "Diário"],
+                key='freq_articulacao'
+            )
+        with c2:
+            turno = st.selectbox(
+                "Turno:",
+                ["Manhã", "Tarde", "Integral"],
+                key='turno_articulacao'
+            )
+        
+        acoes_resumo = st.text_area(
+            "Trabalho Desenvolvido no AEE:",
+            height=100,
+            placeholder="Descreva as principais ações, estratégias e recursos utilizados no AEE...",
+            key='acoes_articulacao'
+        )
+        
+        if st.button("📄 Gerar Documento", type="primary", use_container_width=True):
+            if not api_key:
+                st.error("Insira a chave OpenAI na sidebar.")
+            elif not acoes_resumo:
+                st.warning("Por favor, descreva o trabalho desenvolvido no AEE.")
+            else:
+                with st.spinner("Gerando documento de articulação..."):
+                    resultado = gerar_documento_articulacao(
+                        api_key, aluno, f"{freq} ({turno})", acoes_resumo
+                    )
+                    if "Erro:" in resultado:
+                        st.error(resultado)
+                    else:
+                        st.session_state.conteudo_documento_articulacao = resultado
+                        st.session_state.status_documento_articulacao = 'revisao'
+                        st.session_state.input_original_documento_articulacao = {
+                            'freq': freq,
+                            'turno': turno,
+                            'acoes': acoes_resumo
+                        }
+                        st.success("Documento de articulação gerado!")
+                        st.rerun()
+    
+    else:
+        renderizar_hub_recurso(
+            tipo_recurso='documento_articulacao',
+            conteudo_gerado=st.session_state.conteudo_documento_articulacao,
+            aluno_nome=aluno['nome']
+        )
+        
+        if st.session_state.status_documento_articulacao == 'regerando':
+            feedback = st.session_state.get('feedback_documento_articulacao', '')
+            input_original = st.session_state.get('input_original_documento_articulacao', {})
+            freq_original = input_original.get('freq', '1x/sem')
+            turno_original = input_original.get('turno', 'Manhã')
+            acoes_original = input_original.get('acoes', '')
+            
+            with st.spinner("Aplicando ajustes..."):
+                resultado = gerar_documento_articulacao(
+                    api_key, aluno, 
+                    f"{freq_original} ({turno_original})", 
+                    acoes_original, 
+                    feedback
+                )
+                st.session_state.conteudo_documento_articulacao = resultado
+                st.session_state.status_documento_articulacao = 'revisao'
+                st.rerun()
+
+with tab_planejamento:
+    # ============================
+    # HEADER TOP (mais clean)
+    # ============================
+    st.markdown(f"""
+    <div class="timeline-header">
+      <div>
+        <div style="font-size:.78rem;color:#64748B;font-weight:800;letter-spacing:.08em;text-transform:uppercase;">
+          Planejamento do Ciclo AEE
+        </div>
+        <div style="font-size:1.35rem;color:#0F172A;font-weight:900;margin-top:3px;">
+          Culminação do PEI → Execução prática
+        </div>
+        <div style="font-size:.9rem;color:#64748B;margin-top:6px;">
+          Gere, revise, salve e visualize ciclos diretamente do histórico do estudante.
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:.72rem;color:#94A3B8;font-weight:800;text-transform:uppercase;">Aluno</div>
+        <div style="font-size:1.05rem;color:#0F172A;font-weight:900;">{aluno.get('nome','')}</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ============================
+    # LAYOUT: 2 COLUNAS (painel + preview)
+    # ============================
+    col_left, col_right = st.columns([1.05, 1.35], gap="large")
+
+    # ----------------------------
+    # COLUNA ESQUERDA: HISTÓRICO + CONFIG
+    # ----------------------------
+    with col_left:
+        st.markdown("### 🗂️ Histórico de ciclos (nuvem)")
+
+        ciclos, ciclo_ativo_id = listar_ciclos_aluno(aluno["id"])
+        ciclo_ativo = None
+        if ciclo_ativo_id:
+            ciclo_ativo = next((c for c in ciclos if c.get("ciclo_id") == ciclo_ativo_id), None)
+
+        # Se existe ciclo ativo, mostra card
+        if ciclo_ativo:
+            ic, cor = _badge_status(ciclo_ativo.get("status"))
+            cfg = ciclo_ativo.get("config_ciclo", {}) or {}
+            st.markdown(f"""
+            <div style="border:1px solid #E2E8F0;border-radius:14px;padding:14px 14px;margin-bottom:12px;background:#FFFFFF;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <div style="font-weight:900;color:#0F172A;">{ic} Ciclo ativo</div>
+                <div style="font-size:.75rem;font-weight:900;color:{cor};text-transform:uppercase;letter-spacing:.06em;">
+                  {str(ciclo_ativo.get("status","rascunho")).upper()}
+                </div>
+              </div>
+              <div style="margin-top:10px;color:#334155;font-size:.9rem;">
+                <div><b>Foco:</b> {cfg.get("foco_principal","-")}</div>
+                <div><b>Período:</b> {_fmt_data_iso(cfg.get("data_inicio"))} → {_fmt_data_iso(cfg.get("data_fim"))}</div>
+                <div><b>Duração:</b> {cfg.get("duracao_semanas","-")} semanas</div>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Selecionar um ciclo para visualizar
+        if ciclos:
+            labels = []
+            for c in ciclos:
+                cfg = c.get("config_ciclo", {}) or {}
+                ic, _ = _badge_status(c.get("status"))
+                labels.append(
+                    f"{ic} {cfg.get('foco_principal','Ciclo')} • {_fmt_data_iso(cfg.get('data_inicio'))} • v{c.get('versao',1)}"
+                )
+            idx_default = 0
+            if ciclo_ativo_id:
+                for i, c in enumerate(ciclos):
+                    if c.get("ciclo_id") == ciclo_ativo_id:
+                        idx_default = i
+                        break
+
+            escolha = st.selectbox(
+                "Selecione um ciclo para visualizar:",
+                options=list(range(len(ciclos))),
+                format_func=lambda i: labels[i],
+                index=idx_default,
+                key="paee_ciclo_picker"
+            )
+            st.session_state["paee_ciclo_selecionado"] = ciclos[escolha]
+        else:
+            st.info("Ainda não há ciclos salvos para este estudante.")
+
+        # Botão: marcar ciclo como ativo
+        ciclo_sel = st.session_state.get("paee_ciclo_selecionado")
+        if ciclo_sel and ciclo_sel.get("ciclo_id"):
+            c_id = ciclo_sel["ciclo_id"]
+            colA, colB = st.columns([1,1])
+            with colA:
+                if st.button("🟢 Definir como ciclo ativo", use_container_width=True, type="secondary"):
+                    ok = definir_ciclo_ativo(aluno["id"], c_id, status="ativo")
+                    if ok:
+                        st.success("Ciclo definido como ativo.")
+                        time.sleep(0.8)
+                        st.rerun()
+                    else:
+                        st.error("Não consegui definir como ativo.")
+            with colB:
+                if st.button("🧹 Limpar seleção", use_container_width=True):
+                    st.session_state.pop("paee_ciclo_selecionado", None)
+                    st.rerun()
+
+        st.markdown("---")
+
+        # ============================
+        # CONFIGURAÇÃO E GERAÇÃO (gera preview e só salva quando clicar)
+        # ============================
+        st.markdown("### ⚙️ Gerar novo ciclo (preview antes de salvar)")
+
+        pei_data = carregar_pei_aluno(aluno["id"])
+        metas_pei = extrair_metas_do_pei(pei_data)
+
+        if not metas_pei:
+            st.warning("Não encontrei metas no PEI. Gere/complete o PEI primeiro.")
+        else:
+            with st.expander("🎯 Selecionar metas do PEI", expanded=True):
+                metas_selecionadas = []
+                cols_m = st.columns(2)
+                for i, meta in enumerate(metas_pei):
+                    with cols_m[i % 2]:
+                        sel = st.checkbox(
+                            f"**{meta['tipo']}**",
+                            value=meta.get("selecionada", True),
+                            key=f"paee_meta_{meta['id']}"
+                        )
+                        st.caption(meta["descricao"])
+                        if sel:
+                            metas_selecionadas.append({
+                                "id": meta["id"],
+                                "tipo": meta["tipo"],
+                                "descricao": meta["descricao"],
+                                "prioridade": meta.get("prioridade", "media")
+                            })
+
+            recursos_disponiveis = {
+                "diagnostico_barreiras": st.session_state.get("conteudo_diagnostico_barreiras", ""),
+                "plano_habilidades": st.session_state.get("conteudo_plano_habilidades", ""),
+                "tecnologia_assistiva": st.session_state.get("conteudo_tecnologia_assistiva", ""),
+                "documento_articulacao": st.session_state.get("conteudo_documento_articulacao", ""),
+            }
+            recursos_nomes = {
+                "diagnostico_barreiras": "🔍 Diagnóstico de Barreiras",
+                "plano_habilidades": "📈 Plano de Habilidades",
+                "tecnologia_assistiva": "💻 Tecnologia Assistiva",
+                "documento_articulacao": "🤝 Documento de Articulação",
+            }
+            recursos_com_conteudo = {k: v for k, v in recursos_disponiveis.items() if v and len(str(v)) > 120}
+
+            with st.expander("🧩 Incorporar recursos (opcional)", expanded=False):
+                recursos_selecionados = {}
+                if recursos_com_conteudo:
+                    for k, conteudo in recursos_com_conteudo.items():
+                        marcado = st.checkbox(recursos_nomes.get(k, k), value=True, key=f"paee_rec_{k}")
+                        if marcado:
+                            resumo = str(conteudo)[:300] + ("..." if len(str(conteudo)) > 300 else "")
+                            recursos_selecionados[k] = {
+                                "resumo": resumo,
+                                "completo": conteudo,
+                                "data_incorporacao": datetime.now().isoformat()
+                            }
+                else:
+                    st.caption("Nenhum recurso gerado nas abas anteriores ainda.")
+
+            with st.form("config_ciclo_form_v2"):
+                duracao = st.slider("Duração (semanas)", 4, 24, 12)
+                freq = st.selectbox("Frequência do AEE", ["1x_semana","2x_semana","3x_semana","diario"], index=1)
+                data_inicio = st.date_input("Data de início", value=date.today(), min_value=date.today())
+                data_fim = st.date_input("Previsão de término", value=data_inicio + timedelta(weeks=duracao), min_value=data_inicio)
+                foco_principal = st.text_input("Foco principal", value=aluno.get("hiperfoco") or "Desenvolvimento de habilidades específicas")
+                descricao_ciclo = st.text_area("Descrição do ciclo", height=90)
+                usar_ia = st.checkbox("🤖 Usar IA para cronograma", value=True)
+
+                gerar = st.form_submit_button("✨ Gerar preview do planejamento", type="primary", use_container_width=True)
+
+                if gerar:
+                    if not metas_selecionadas:
+                        st.error("Selecione pelo menos 1 meta.")
+                    else:
+                        ciclo_data = {
+                            "ciclo_id": None,
+                            "status": "rascunho",
+                            "config_ciclo": {
+                                "duracao_semanas": duracao,
+                                "frequencia": freq,
+                                "foco_principal": foco_principal,
+                                "descricao": descricao_ciclo,
+                                "data_inicio": data_inicio.isoformat(),
+                                "data_fim": data_fim.isoformat(),
+                                "metas_selecionadas": metas_selecionadas
+                            },
+                            "recursos_incorporados": recursos_selecionados if "recursos_selecionados" in locals() else {},
+                            "criado_por": st.session_state.get("user_id", ""),
+                            "versao": 1
+                        }
+
+                        if usar_ia and (api_key if "api_key" in globals() else None):
+                            with st.spinner("🤖 IA planejando cronograma..."):
+                                cronograma_ia = gerar_cronograma_inteligente(api_key, aluno, duracao, foco_principal, metas_selecionadas)
+                                ciclo_data["cronograma"] = cronograma_ia or criar_cronograma_basico(duracao, metas_selecionadas)
+                        else:
+                            ciclo_data["cronograma"] = criar_cronograma_basico(duracao, metas_selecionadas)
+
+                        st.session_state["ciclo_preview"] = ciclo_data
+                        st.success("Preview gerado. Veja à direita e salve quando estiver pronto.")
                         st.rerun()
 
-# ==============================================================================
-# EXECUÇÃO PRINCIPAL
-# ==============================================================================
+    # ----------------------------
+    # COLUNA DIREITA: VISUALIZAÇÃO (ciclo selecionado OU preview)
+    # ----------------------------
+    with col_right:
+        st.markdown("### 👁️ Visualização do ciclo")
 
-# CSS específico do Hub (chamado após a definição da função)
-aplicar_estilos()
+        ciclo_preview = st.session_state.get("ciclo_preview")
+        ciclo_sel = st.session_state.get("paee_ciclo_selecionado")
 
-# ==============================================================================
-# FUNÇÃO PRINCIPAL
-# ==============================================================================
-def main():
-    """Função principal da aplicação - executa a lógica do Hub"""
-    
-    # Inicializar api_key antes de usar
-    if 'OPENAI_API_KEY' in st.secrets:
-        api_key = st.secrets['OPENAI_API_KEY']
-    elif 'OPENAI_API_KEY' in st.session_state:
-        api_key = st.session_state['OPENAI_API_KEY']
-    else:
-        api_key = None
-    
-    # Configurações de API (movidas da sidebar para expander no conteúdo principal)
-    with st.expander("⚙️ Configurações de API", expanded=False):
-        col_api1, col_api2 = st.columns(2)
-        with col_api1:
-            if 'OPENAI_API_KEY' in st.secrets:
-                st.success("✅ OpenAI OK")
-            else:
-                api_key_input = st.text_input("Chave OpenAI:", type="password", key="openai_key")
-                if api_key_input:
-                    api_key = api_key_input
-                    st.session_state['OPENAI_API_KEY'] = api_key
-        
-        with col_api2:
-            if 'UNSPLASH_ACCESS_KEY' in st.secrets:
-                unsplash_key = st.secrets['UNSPLASH_ACCESS_KEY']
-                st.success("✅ Unsplash OK")
-            else:
-                unsplash_key = st.text_input("Chave Unsplash (Opcional):", type="password", key="unsplash_key")
-                if unsplash_key:
-                    st.session_state['UNSPLASH_ACCESS_KEY'] = unsplash_key
-        
-        if st.button("🧹 Limpar Tudo e Reiniciar", type="secondary"):
-            for key in list(st.session_state.keys()):
-                if key not in ['banco_estudantes', 'OPENAI_API_KEY', 'UNSPLASH_ACCESS_KEY', 'autenticado']:
-                    del st.session_state[key]
-            st.rerun()
-    
-    # Carregar dados dos estudantes
-    if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
-        with st.spinner("🔄 Lendo dados da nuvem..."):
-            st.session_state.banco_estudantes = carregar_estudantes_supabase()
-    
-    if not st.session_state.banco_estudantes:
-        st.warning("⚠️ Nenhum estudante encontrado.")
-        if st.button("📘 Ir para o módulo PEI", type="primary"): 
-            st.switch_page("pages/1_PEI.py")
-        st.stop()
-    
-    # Seleção de aluno
-    lista_alunos = [a['nome'] for a in st.session_state.banco_estudantes]
-    col_sel, col_info = st.columns([1, 2])
-    with col_sel:
-        nome_aluno = st.selectbox("📂 Selecione o Estudante:", lista_alunos)
-    
-    aluno = next((a for a in st.session_state.banco_estudantes if a.get('nome') == nome_aluno), None)
-    
-    if not aluno: 
-        st.error("Estudante não encontrado")
-        st.stop()
-    
-    # --- ÁREA DO ALUNO (Visual + Expander) ---
-    
-    # 1. Cabeçalho Visual (Nome e Série - Mantém visível para contexto rápido)
-    render_cabecalho_aluno(aluno)
-    
-    # 2. PEI RETRÁTIL (Aqui está a mudança solicitada)
-    # Mostra os detalhes pesados apenas se o usuário clicar
-    with st.expander(f"📄 Ver Detalhes do PEI e Diagnóstico de {aluno['nome'].split()[0]}", expanded=False):
-        
-        c_diag, c_hip = st.columns(2)
-        with c_diag:
-            st.markdown(f"**🏥 Diagnóstico/CID:**")
-            st.info(aluno.get('diagnosis', 'Não informado'))
-            
-        with c_hip:
-            st.markdown(f"**🎯 Hiperfoco/Interesses:**")
-            st.success(aluno.get('hiperfoco', 'Geral'))
-            
-        st.markdown("---")
-        st.markdown("**🧠 Resumo das Estratégias (IA):**")
-        # Mostra o texto da IA (ia_sugestao) formatado
-        st.write(aluno.get('ia_sugestao', 'Sem resumo disponível.'))
+        # prioridade: preview (novo) -> selecionado (histórico) -> ativo
+        ciclo_para_ver = ciclo_preview or ciclo_sel or ciclo_ativo
 
-    # --- FIM DA ÁREA DO ALUNO ---
+        if not ciclo_para_ver:
+            st.info("Selecione um ciclo no histórico ou gere um preview.")
+        else:
+            cfg = (ciclo_para_ver.get("config_ciclo") or {})
+            ic, cor = _badge_status(ciclo_para_ver.get("status"))
 
-    # Detector de Educação Infantil
-    serie_aluno = aluno.get('serie', '').lower()
-    is_ei = any(termo in serie_aluno for termo in ["infantil", "creche", "pré", "pre", "maternal", "berçário"])
-    
-    # Inicializar estado para imagens
-    if 'res_scene_url' not in st.session_state:
-        st.session_state.res_scene_url = None
-    if 'valid_scene' not in st.session_state:
-        st.session_state.valid_scene = False
-    if 'res_caa_url' not in st.session_state:
-        st.session_state.res_caa_url = None
-    if 'valid_caa' not in st.session_state:
-        st.session_state.valid_caa = False
-    
-    if is_ei:
-        # Modo Educação Infantil
-        st.info("🧸 **Modo Educação Infantil Ativado:** Foco em Experiências, BNCC e Brincar.")
-        
-        tabs = st.tabs(["🧸 Criar Experiência (BNCC)", "🎨 Estúdio Visual & CAA", "📝 Rotina & AVD", "🤝 Inclusão no Brincar"])
-        
-        with tabs[0]:
-            render_aba_ei_experiencia(aluno, api_key)
-        
-        with tabs[1]:
-            render_aba_ei_estudio_visual(aluno, api_key, unsplash_key)
-        
-        with tabs[2]:
-            render_aba_ei_rotina(aluno, api_key)
-        
-        with tabs[3]:
-            render_aba_ei_inclusao_brincar(aluno, api_key)
-    
-    else:
-        # Modo Padrão (Fundamental / Médio)
-        tabs = st.tabs([
-            "📄 Adaptar Prova", 
-            "✂️ Adaptar Atividade", 
-            "✨ Criar do Zero", 
-            "🎨 Estúdio Visual & CAA", 
-            "📝 Roteiro Individual", 
-            "🗣️ Papo de Mestre", 
-            "🤝 Dinâmica Inclusiva", 
-            "📅 Plano de Aula DUA"
-        ])
-        
-        with tabs[0]:
-            render_aba_adaptar_prova(aluno, api_key)
-        
-        with tabs[1]:
-            render_aba_adaptar_atividade(aluno, api_key)
-        
-        with tabs[2]:
-            render_aba_criar_do_zero(aluno, api_key, unsplash_key)
+            st.markdown(f"""
+            <div style="border:1px solid #E2E8F0;border-radius:16px;padding:16px;background:#FFFFFF;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-weight:900;color:#0F172A;font-size:1.05rem;">{ic} {cfg.get("foco_principal","Ciclo AEE")}</div>
+                <div style="font-size:.75rem;font-weight:900;color:{cor};text-transform:uppercase;letter-spacing:.06em;">
+                  {str(ciclo_para_ver.get("status","rascunho")).upper()}
+                </div>
+              </div>
+              <div style="margin-top:8px;color:#334155;">
+                <span style="font-weight:800;">Período:</span> {_fmt_data_iso(cfg.get("data_inicio"))} → {_fmt_data_iso(cfg.get("data_fim"))}
+                &nbsp;•&nbsp;
+                <span style="font-weight:800;">Duração:</span> {cfg.get("duracao_semanas","-")} sem
+                &nbsp;•&nbsp;
+                <span style="font-weight:800;">Freq:</span> {str(cfg.get("frequencia","-")).replace("_"," ").title()}
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
 
-        with tabs[3]:
-            render_aba_estudio_visual(aluno, api_key, unsplash_key)
+            # Metas
+            with st.expander("🎯 Metas selecionadas", expanded=True):
+                metas = cfg.get("metas_selecionadas") or []
+                if metas:
+                    for m in metas:
+                        st.markdown(f"- **{m.get('tipo','')}**: {m.get('descricao','')}")
+                else:
+                    st.caption("Sem metas registradas.")
 
-        with tabs[4]:
-            render_aba_roteiro_individual(aluno, api_key)
+            # Recursos
+            with st.expander("🧩 Recursos incorporados", expanded=False):
+                recs = ciclo_para_ver.get("recursos_incorporados") or {}
+                if recs:
+                    for rid, d in recs.items():
+                        nome = (rid or "").replace("_"," ").title()
+                        st.markdown(f"**{nome}**")
+                        st.caption(d.get("resumo",""))
+                else:
+                    st.caption("Nenhum recurso incorporado.")
 
-        with tabs[5]:
-            render_aba_papo_mestre(aluno, api_key)
+            # Cronograma (fases + semanas)
+            cron = ciclo_para_ver.get("cronograma") or {}
+            with st.expander("🗓️ Cronograma", expanded=True):
+                fases = cron.get("fases") or []
+                semanas = cron.get("semanas") or []
 
-        with tabs[6]:
-            render_aba_dinamica_inclusiva(aluno, api_key)
+                if fases:
+                    st.markdown("**Fases**")
+                    for f in fases:
+                        st.markdown(f"- **{f.get('nome','Fase')}**: {f.get('objetivo_geral','')}")
+                        st.caption(f.get("descricao",""))
 
-        with tabs[7]:
-            render_aba_plano_aula(aluno, api_key)
+                if semanas:
+                    st.markdown("**Semanas (preview)**")
+                    # mostra só as 6 primeiras para não ficar gigante
+                    for w in semanas[:6]:
+                        st.markdown(f"**Semana {w.get('numero')} — {w.get('tema','')}**")
+                        st.caption(w.get("objetivo",""))
+                        atv = w.get("atividades") or []
+                        if atv:
+                            st.markdown("• " + "\n• ".join(atv[:3]))
+                        st.markdown("---")
+                    if len(semanas) > 6:
+                        st.info(f"Mostrando 6 de {len(semanas)} semanas.")
 
-# Executa a função principal
-main()
+            # Botões (se for preview, salva na nuvem)
+            if ciclo_preview:
+                st.markdown("### 💾 Salvar este ciclo")
+                c1, c2 = st.columns([1,1])
+                with c1:
+                    if st.button("💾 Salvar na nuvem (Supabase)", type="primary", use_container_width=True):
+                        resultado = salvar_paee_ciclo(aluno["id"], ciclo_preview)
+                        if resultado.get("sucesso"):
+                            st.success(f"✅ Salvo! ID: {str(resultado.get('ciclo_id',''))[:8]}")
+                            st.session_state.pop("ciclo_preview", None)
+                            time.sleep(0.8)
+                            st.rerun()
+                        else:
+                            st.error(f"❌ Erro ao salvar: {resultado.get('erro','')}")
+                with c2:
+                    if st.button("🧹 Descartar preview", use_container_width=True):
+                        st.session_state.pop("ciclo_preview", None)
+                        st.rerun()
 
 # ==============================================================================
 # RODAPÉ COM ASSINATURA
 # ==============================================================================
 ou.render_footer_assinatura()
-
-
-
-
-
-
-
-    
