@@ -80,9 +80,9 @@ def forcar_layout_hub():
                 padding-top: 0px !important;
             }
             
-            /* 5. Hero card colado no menu - margin negativo MUITO agressivo */
+            /* 5. Hero card colado no menu - margin negativo (ajustado para não ficar muito colado) */
             .mod-card-wrapper {
-                margin-top: -128px !important; /* Puxa o hero para cima, quase colando no menu */
+                margin-top: -96px !important; /* Puxa o hero para cima, mas não tanto quanto antes */
                 position: relative;
                 z-index: 1;
             }
@@ -139,8 +139,8 @@ st.markdown("""
     .mod-card-wrapper { 
         display: flex; 
         flex-direction: column; 
-        margin-bottom: 20px; 
-        margin-top: -128px !important; /* Puxa o hero para cima, quase colando no menu */
+        margin-bottom: 4px; 
+        /* margin-top já aplicado no forcar_layout_hub() - não duplicar aqui */
         border-radius: 16px; 
         overflow: hidden; 
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); 
@@ -261,7 +261,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Espaçamento após hero card
-st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
 # ==============================================================================
 # VERIFICAÇÃO DE ACESSO
