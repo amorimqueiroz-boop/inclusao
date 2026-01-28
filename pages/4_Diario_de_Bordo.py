@@ -20,7 +20,7 @@ import omni_utils as ou  # módulo atualizado
 # ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
 st.set_page_config(
     page_title="Omnisfera | Diário de Bordo",
-    page_icon="📘",
+    page_icon="omni_icone.png" if os.path.exists("omni_icone.png") else "📘",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -55,20 +55,39 @@ def forcar_layout_hub():
                 height: 0px !important;
             }
 
-            /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) */
+            /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) - ESPECIFICIDADE MÁXIMA */
+            body .main .block-container,
+            body .block-container,
             .main .block-container,
             .block-container {
-                padding-top: 0rem !important; /* Espaço mínimo entre topbar e hero */
+                padding-top: 0px !important; /* SEM espaço entre navbar e hero */
                 padding-bottom: 1rem !important;
                 margin-top: 0px !important;
             }
-
-            /* 3. Remove padding extra se houver container de navegação */
-            div[data-testid="stVerticalBlock"] > div:first-child {
+            
+            /* 3. Remove qualquer espaçamento do Streamlit */
+            [data-testid="stVerticalBlock"],
+            div[data-testid="stVerticalBlock"] > div:first-child,
+            .main .block-container > div:first-child,
+            .main .block-container > *:first-child {
+                padding-top: 0px !important;
+                margin-top: 0px !important;
+            }
+            
+            /* 4. Remove espaçamento do stMarkdown que renderiza o hero */
+            .main .block-container > div:first-child .stMarkdown {
+                margin-top: 0px !important;
                 padding-top: 0px !important;
             }
             
-            /* 4. Esconde o menu hambúrguer e rodapé */
+            /* 5. Hero card colado no menu - margin negativo MUITO agressivo */
+            .mod-card-wrapper {
+                margin-top: -128px !important; /* Puxa o hero para cima, quase colando no menu */
+                position: relative;
+                z-index: 1;
+            }
+            
+            /* 6. Esconde o menu hambúrguer e rodapé */
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
         </style>
@@ -121,10 +140,12 @@ st.markdown("""
         display: flex; 
         flex-direction: column; 
         margin-bottom: 20px; 
-        margin-top: 0 !important;
+        margin-top: -128px !important; /* Puxa o hero para cima, quase colando no menu */
         border-radius: 16px; 
         overflow: hidden; 
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); 
+        position: relative;
+        z-index: 1;
     }
     .mod-card-rect { 
         background: white; 
@@ -367,7 +388,7 @@ def excluir_registro_diario(registro_id):
         return False
 
 # ==============================================================================
-# FILTROS E ESTATÍSTICAS (MOVIDOS DA SIDEBAR PARA CONTEÚDO PRINCIPAL)
+# CARREGAMENTO DE DADOS
 # ==============================================================================
 
 # Carregar alunos
@@ -381,65 +402,97 @@ if not alunos:
     st.warning("Nenhum aluno encontrado.")
     st.stop()
 
-# Filtros em colunas no conteúdo principal
-st.markdown("### 🔍 Filtros")
-col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
-
-with col_filtro1:
-    nomes_alunos = [f"{a['name']} ({a.get('grade', 'N/I')})" for a in alunos]
-    aluno_filtro = st.selectbox("Aluno:", ["Todos"] + nomes_alunos, key="filtro_aluno")
-
-with col_filtro2:
-    periodo = st.selectbox("Período:", 
-                          ["Últimos 7 dias", "Últimos 30 dias", "Este mês", "Mês passado", "Personalizado", "Todos"],
-                          key="filtro_periodo")
-
-with col_filtro3:
-    modalidade = st.multiselect(
-        "Modalidade:",
-        ["individual", "grupo", "observacao_sala", "consultoria"],
-        default=["individual", "grupo"],
-        key="filtro_modalidade"
-    )
-
-# Período personalizado
-if periodo == "Personalizado":
-    col_data1, col_data2 = st.columns(2)
-    with col_data1:
-        data_inicio = st.date_input("De:", value=date.today() - timedelta(days=30), key="data_inicio")
-    with col_data2:
-        data_fim = st.date_input("Até:", value=date.today(), key="data_fim")
-
-# Estatísticas rápidas
-st.markdown("### 📊 Estatísticas")
-registros = carregar_todos_registros(limite=500)
-
-if registros:
-    total_registros = len(registros)
-    registros_ultimos_30 = len([r for r in registros 
-                              if datetime.fromisoformat(r['created_at'].replace('Z', '+00:00')).date() > date.today() - timedelta(days=30)])
-    
-    col_stat1, col_stat2 = st.columns(2)
-    with col_stat1:
-        st.metric("Total", total_registros)
-    with col_stat2:
-        st.metric("Últimos 30d", registros_ultimos_30)
-else:
-    st.info("Nenhum registro encontrado.")
-
-st.markdown("---")
-
 # ==============================================================================
-# ABA PRINCIPAL - DIÁRIO DE BORDO
+# ABAS PRINCIPAIS - DIÁRIO DE BORDO
 # ==============================================================================
 
-# Criar abas
-tab_novo, tab_lista, tab_relatorios, tab_config = st.tabs([
-    "📝 Novo Registro", "📋 Lista de Registros", "📊 Relatórios", "⚙️ Configurações"
+# Criar abas (filtros e estatísticas agora em uma aba separada)
+tab_filtros, tab_novo, tab_lista, tab_relatorios, tab_config = st.tabs([
+    "🔍 Filtros & Estatísticas", "📝 Novo Registro", "📋 Lista de Registros", "📊 Relatórios", "⚙️ Configurações"
 ])
 
 # ==============================================================================
-# ABA 1: NOVO REGISTRO
+# ABA 0: FILTROS & ESTATÍSTICAS
+# ==============================================================================
+with tab_filtros:
+    st.markdown("### 🔍 Filtros")
+    col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
+
+    with col_filtro1:
+        nomes_alunos = [f"{a['name']} ({a.get('grade', 'N/I')})" for a in alunos]
+        aluno_filtro = st.selectbox("Aluno:", ["Todos"] + nomes_alunos, key="filtro_aluno")
+        st.session_state['filtro_aluno'] = aluno_filtro
+
+    with col_filtro2:
+        periodo = st.selectbox("Período:", 
+                              ["Últimos 7 dias", "Últimos 30 dias", "Este mês", "Mês passado", "Personalizado", "Todos"],
+                              key="filtro_periodo")
+        st.session_state['filtro_periodo'] = periodo
+
+    with col_filtro3:
+        modalidade = st.multiselect(
+            "Modalidade:",
+            ["individual", "grupo", "observacao_sala", "consultoria"],
+            default=["individual", "grupo"],
+            key="filtro_modalidade"
+        )
+        st.session_state['filtro_modalidade'] = modalidade
+
+    # Período personalizado
+    if periodo == "Personalizado":
+        col_data1, col_data2 = st.columns(2)
+        with col_data1:
+            data_inicio = st.date_input("De:", value=date.today() - timedelta(days=30), key="data_inicio")
+            st.session_state['filtro_data_inicio'] = data_inicio
+        with col_data2:
+            data_fim = st.date_input("Até:", value=date.today(), key="data_fim")
+            st.session_state['filtro_data_fim'] = data_fim
+
+    st.markdown("---")
+    
+    # Estatísticas rápidas
+    st.markdown("### 📊 Estatísticas")
+    registros = carregar_todos_registros(limite=500)
+
+    if registros:
+        total_registros = len(registros)
+        registros_ultimos_30 = len([r for r in registros 
+                                  if datetime.fromisoformat(r['created_at'].replace('Z', '+00:00')).date() > date.today() - timedelta(days=30)])
+        
+        col_stat1, col_stat2, col_stat3 = st.columns(3)
+        with col_stat1:
+            st.metric("Total de Registros", total_registros)
+        with col_stat2:
+            st.metric("Últimos 30 dias", registros_ultimos_30)
+        with col_stat3:
+            alunos_com_registros = len(set([r.get('aluno_id') for r in registros if r.get('aluno_id')]))
+            st.metric("Alunos Atendidos", alunos_com_registros)
+        
+        # Estatísticas por modalidade
+        st.markdown("#### 📈 Por Modalidade")
+        modalidades_count = {}
+        for r in registros:
+            mod = r.get('modalidade_atendimento', 'N/A')
+            modalidades_count[mod] = modalidades_count.get(mod, 0) + 1
+        
+        if modalidades_count:
+            col_mod1, col_mod2, col_mod3, col_mod4 = st.columns(4)
+            mods_display = {
+                'individual': 'Individual',
+                'grupo': 'Grupo',
+                'observacao_sala': 'Observação',
+                'consultoria': 'Consultoria'
+            }
+            cols = [col_mod1, col_mod2, col_mod3, col_mod4]
+            for idx, (mod, count) in enumerate(list(modalidades_count.items())[:4]):
+                with cols[idx]:
+                    st.metric(mods_display.get(mod, mod), count)
+    else:
+        st.info("Nenhum registro encontrado.")
+
+# ==============================================================================
+# ==============================================================================
+# ABA 2: NOVO REGISTRO
 # ==============================================================================
 with tab_novo:
     st.markdown("### 📝 Nova Sessão de AEE")
@@ -678,7 +731,7 @@ with tab_novo:
                         st.error(f"❌ Erro ao salvar: {resultado.get('erro', 'Erro desconhecido')}")
 
 # ==============================================================================
-# ABA 2: LISTA DE REGISTROS
+# ABA 3: LISTA DE REGISTROS
 # ==============================================================================
 with tab_lista:
     st.markdown("### 📋 Registros de Atendimento")
@@ -692,14 +745,16 @@ with tab_lista:
         # Aplicar filtros
         registros_filtrados = todos_registros.copy()
         
-        # Filtro por aluno
-        if aluno_filtro != "Todos":
+        # Filtro por aluno (usa session_state para acessar da aba de filtros)
+        aluno_filtro = st.session_state.get('filtro_aluno', 'Todos')
+        if aluno_filtro and aluno_filtro != "Todos":
             aluno_nome = aluno_filtro.split("(")[0].strip()
             registros_filtrados = [r for r in registros_filtrados 
                                  if r.get('students', {}).get('name') == aluno_nome]
         
         # Filtro por período
-        if periodo != "Todos":
+        periodo = st.session_state.get('filtro_periodo', 'Todos')
+        if periodo and periodo != "Todos":
             hoje = date.today()
             if periodo == "Últimos 7 dias":
                 data_corte = hoje - timedelta(days=7)
@@ -717,10 +772,13 @@ with tab_lista:
                 registros_filtrados = [r for r in registros_filtrados 
                                      if datetime.fromisoformat(r['data_sessao']).date().month == mes_passado]
             elif periodo == "Personalizado":
+                data_inicio = st.session_state.get('filtro_data_inicio', date.today() - timedelta(days=30))
+                data_fim = st.session_state.get('filtro_data_fim', date.today())
                 registros_filtrados = [r for r in registros_filtrados 
                                      if data_inicio <= datetime.fromisoformat(r['data_sessao']).date() <= data_fim]
         
         # Filtro por modalidade
+        modalidade = st.session_state.get('filtro_modalidade', [])
         if modalidade:
             registros_filtrados = [r for r in registros_filtrados 
                                  if r.get('modalidade_atendimento') in modalidade]
@@ -798,7 +856,7 @@ with tab_lista:
             st.markdown(f"**Mostrando {min(10, len(registros_filtrados))} de {len(registros_filtrados)} registros**")
 
 # ==============================================================================
-# ABA 3: RELATÓRIOS
+# ABA 4: RELATÓRIOS
 # ==============================================================================
 with tab_relatorios:
     st.markdown("### 📊 Relatórios e Análises")
@@ -964,7 +1022,7 @@ with tab_relatorios:
                     st.json(relatorio)
 
 # ==============================================================================
-# ABA 4: CONFIGURAÇÕES
+# ABA 5: CONFIGURAÇÕES
 # ==============================================================================
 with tab_config:
     st.markdown("### ⚙️ Configurações do Diário")
@@ -1076,13 +1134,6 @@ with tab_config:
             """)
 
 # ==============================================================================
-# RODAPÉ
+# RODAPÉ COM ASSINATURA
 # ==============================================================================
-st.markdown("---")
-st.markdown("""
-<div style="text-align: center; color: #64748B; font-size: 0.9rem; padding: 20px;">
-    <p>📘 <strong>Diário de Bordo PAEE - Sistema Profissional de Registro</strong> | Omnisfera Educação Inclusiva</p>
-    <p>💡 <strong>Dica:</strong> Registre imediatamente após cada sessão para maior precisão. Use as tags para organizar por competências.</p>
-    <p>🔒 <strong>Segurança:</strong> Todos os dados são criptografados e armazenados em conformidade com a LGPD.</p>
-</div>
-""", unsafe_allow_html=True)
+ou.render_footer_assinatura()
