@@ -18,7 +18,7 @@ import omni_utils as ou  # módulo atualizado
 # 1. CONFIGURAÇÃO INICIAL (topo absoluto)
 st.set_page_config(
     page_title="Omnisfera | PAE",
-    page_icon="🔧",
+    page_icon="omni_icone.png" if os.path.exists("omni_icone.png") else "🔧",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -61,20 +61,39 @@ def forcar_layout_hub():
                 height: 0px !important;
             }
 
-            /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) */
+            /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) - ESPECIFICIDADE MÁXIMA */
+            body .main .block-container,
+            body .block-container,
             .main .block-container,
             .block-container {
-                padding-top: 0.1rem !important; /* Espaço mínimo entre navbar e hero */
+                padding-top: 0px !important; /* SEM espaço entre navbar e hero */
                 padding-bottom: 1rem !important;
                 margin-top: 0px !important;
             }
-
-            /* 3. Remove padding extra se houver container de navegação */
-            div[data-testid="stVerticalBlock"] > div:first-child {
+            
+            /* 3. Remove qualquer espaçamento do Streamlit */
+            [data-testid="stVerticalBlock"],
+            div[data-testid="stVerticalBlock"] > div:first-child,
+            .main .block-container > div:first-child,
+            .main .block-container > *:first-child {
+                padding-top: 0px !important;
+                margin-top: 0px !important;
+            }
+            
+            /* 4. Remove espaçamento do stMarkdown que renderiza o hero */
+            .main .block-container > div:first-child .stMarkdown {
+                margin-top: 0px !important;
                 padding-top: 0px !important;
             }
             
-            /* 4. Esconde o menu hambúrguer e rodapé */
+            /* 5. Hero card colado no menu - margin negativo MUITO agressivo */
+            .mod-card-wrapper {
+                margin-top: -128px !important; /* Puxa o hero para cima, quase colando no menu */
+                position: relative;
+                z-index: 1;
+            }
+            
+            /* 6. Esconde o menu hambúrguer e rodapé */
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
         </style>
@@ -1985,13 +2004,6 @@ with tab_planejamento:
                         st.rerun()
 
 # ==============================================================================
-# RODAPÉ E INFORMAÇÕES
+# RODAPÉ COM ASSINATURA
 # ==============================================================================
-st.markdown("---")
-st.markdown("""
-<div style="text-align: center; color: #64748B; font-size: 0.9rem; padding: 20px;">
-    <p>📋 <strong>Planejamento do Ciclo AEE</strong> | Sistema Integrado Omnisfera</p>
-    <p>🔗 <strong>Fluxo completo:</strong> PEI → Diagnóstico → Recursos → Planejamento do Ciclo → Execução → Avaliação</p>
-    <p>💡 <strong>Integração:</strong> Todos os recursos são vinculados ao PEI e salvos no histórico do aluno.</p>
-</div>
-""", unsafe_allow_html=True)
+ou.render_footer_assinatura()
