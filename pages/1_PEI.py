@@ -1,6 +1,7 @@
 # pages/1_PEI.py
 import streamlit as st
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from io import BytesIO
 from docx import Document
 from openai import OpenAI
@@ -105,7 +106,7 @@ ou.inject_unified_ui_css()
 # ==============================================================================
 # HERO - PEI (ÚNICO)
 # ==============================================================================
-hora = datetime.now().hour
+hora = datetime.now(ZoneInfo("America/Sao_Paulo")).hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
 USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
 WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
