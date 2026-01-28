@@ -625,12 +625,16 @@ def carregar_estudantes_supabase():
         # IMPORTANTE: NÃO usar diagnóstico como fallback para hiperfoco
         hiperfoco_real = ""
         if isinstance(pei_completo, dict):
-            hiperfoco_real = (
+            # Buscar hiperfoco - garantir que NÃO seja o diagnóstico
+            hiperfoco_temp = (
                 pei_completo.get("hiperfoco") or 
                 pei_completo.get("interesses") or 
                 pei_completo.get("habilidades_interesses") or 
                 ""
             )
+            # Se o hiperfoco encontrado for igual ao diagnóstico, descartar
+            if hiperfoco_temp and hiperfoco_temp != diagnostico_real:
+                hiperfoco_real = hiperfoco_temp
         
         # Se não achou no JSON, coloca um padrão (NUNCA usa o diagnóstico)
         if not hiperfoco_real:
@@ -1737,11 +1741,19 @@ def aplicar_estilos():
 
 def render_cabecalho_aluno(aluno):
     """Renderiza o cabeçalho com informações do aluno"""
+    # Garantir que o hiperfoco não seja igual ao diagnóstico
+    hiperfoco_display = aluno.get('hiperfoco', '-') or '-'
+    diagnostico_aluno = aluno.get('diagnosis', '') or ''
+    
+    # Se o hiperfoco for igual ao diagnóstico, mostrar padrão
+    if hiperfoco_display == diagnostico_aluno and hiperfoco_display != '-':
+        hiperfoco_display = "Interesses gerais (A descobrir)"
+    
     st.markdown(f"""
         <div class="student-header">
             <div class="student-info-item"><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div>
             <div class="student-info-item"><div class="student-label">Série</div><div class="student-value">{aluno.get('serie', '-')}</div></div>
-            <div class="student-info-item"><div class="student-label">Hiperfoco</div><div class="student-value">{aluno.get('hiperfoco', '-')}</div></div>
+            <div class="student-info-item"><div class="student-label">Hiperfoco</div><div class="student-value">{hiperfoco_display}</div></div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -3372,15 +3384,18 @@ def main():
         if not hiperfoco_aluno or hiperfoco_aluno == "Interesses gerais (A descobrir)":
             pei_data_local = aluno.get('pei_data', {}) or {}
             if isinstance(pei_data_local, dict):
-                hiperfoco_aluno = (
+                hiperfoco_temp = (
                     pei_data_local.get('hiperfoco') or 
                     pei_data_local.get('interesses') or 
                     pei_data_local.get('habilidades_interesses') or 
                     ""
                 )
+                # Garantir que o hiperfoco não seja igual ao diagnóstico
+                if hiperfoco_temp and hiperfoco_temp != diagnostico_pei:
+                    hiperfoco_aluno = hiperfoco_temp
         
         # Se ainda não encontrou hiperfoco, mostra padrão
-        if not hiperfoco_aluno:
+        if not hiperfoco_aluno or hiperfoco_aluno == diagnostico_pei:
             hiperfoco_aluno = "Interesses gerais (A descobrir)"
         
         c_diag, c_hip = st.columns(2)
