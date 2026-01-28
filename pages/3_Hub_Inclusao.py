@@ -272,7 +272,7 @@ TAXONOMIA_BLOOM = {
     "6. Criar": ["Compor", "Construir", "Criar", "Desenhar", "Desenvolver", "Formular", "Investigar", "Planejar", "Produzir", "Propor"]
 }
 
-# Lista de disciplinas padrão
+# Lista de componentes curriculares padrão
 DISCIPLINAS_PADRAO = ["Matemática", "Português", "Ciências", "História", "Geografia", "Artes", "Educação Física", "Inglês", "Filosofia", "Sociologia"]
 
 # Campos de Experiência (Educação Infantil)
@@ -477,7 +477,7 @@ def list_students_rest():
         r = requests.get(base, headers=ou._headers(), timeout=20)
         return r.json() if r.status_code == 200 else []
     except Exception as e:
-        print(f"Erro ao carregar alunos: {str(e)}")
+        print(f"Erro ao carregar estudantes: {str(e)}")
         return []
 
 def carregar_estudantes_supabase():
@@ -516,7 +516,7 @@ def carregar_estudantes_supabase():
         # Montagem do resumo de fallback se não houver contexto da IA
         if not contexto_ia:
             serie = item.get("grade", "")
-            contexto_ia = f"Aluno: {item.get('name')}. Série: {serie}. Diagnóstico: {diagnostico_real}."
+            contexto_ia = f"Estudante: {item.get('name')}. Série: {serie}. Diagnóstico: {diagnostico_real}."
 
         estudante = {
             "nome": item.get("name", ""),
@@ -598,7 +598,7 @@ def gerar_pictograma_caa(api_key, conceito, feedback_anterior=""):
         return None
 
 def adaptar_conteudo_docx(api_key, aluno, texto, materia, tema, tipo_atv, remover_resp, questoes_mapeadas, modo_profundo=False):
-    """Adapta conteúdo de um DOCX para o aluno"""
+    """Adapta conteúdo de um DOCX para o estudante"""
     client = OpenAI(api_key=api_key)
     lista_q = ", ".join([str(n) for n in questoes_mapeadas])
     style = "Seja didático e use uma Cadeia de Pensamento para adaptar." if modo_profundo else "Seja objetivo."
@@ -636,7 +636,7 @@ def adaptar_conteudo_docx(api_key, aluno, texto, materia, tema, tipo_atv, remove
         return str(e), ""
 
 def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_atv, livro_professor, modo_profundo=False):
-    """Adapta conteúdo de uma imagem para o aluno"""
+    """Adapta conteúdo de uma imagem para o estudante"""
     client = OpenAI(api_key=api_key)
     if not imagem_bytes:
         return "Erro: Imagem vazia", ""
@@ -648,7 +648,7 @@ def adaptar_conteudo_imagem(api_key, aluno, imagem_bytes, materia, tema, tipo_at
     prompt = f"""
     ATUAR COMO: Especialista em Acessibilidade e OCR. {style}
     1. Transcreva o texto da imagem. {instrucao_livro}
-    2. Adapte para o aluno (PEI: {aluno.get('ia_sugestao', '')[:800]}).
+    2. Adapte para o estudante (PEI: {aluno.get('ia_sugestao', '')[:800]}).
     3. Hiperfoco ({aluno.get('hiperfoco')}): Conecte levemente.
     4. REGRA DE OURO: Insira a tag [[IMG_1]] UMA ÚNICA VEZ, logo após o enunciado principal.
     
@@ -780,7 +780,7 @@ def gerar_experiencia_ei_bncc(api_key, aluno, campo_exp, objetivo, feedback_ante
 
     prompt = f"""
     ATUAR COMO: Especialista em Educação Infantil (BNCC) e Inclusão.
-    ALUNO: {aluno['nome']} (Educação Infantil).
+    ESTUDANTE: {aluno['nome']} (Educação Infantil).
     HIPERFOCO: {hiperfoco}.
     RESUMO DAS NECESSIDADES (PEI): {aluno.get('ia_sugestao', '')[:600]}
     
@@ -842,12 +842,12 @@ def gerar_roteiro_aula_completo(api_key, aluno, materia, assunto, habilidades_bn
     prompt = f"""
     Crie um ROTEIRO DE AULA INDIVIDUALIZADO para {aluno['nome']}.
     
-    INFORMAÇÕES DO ALUNO:
+    INFORMAÇÕES DO ESTUDANTE:
     - Perfil: {aluno.get('ia_sugestao', '')[:500]}
     - Hiperfoco: {aluno.get('hiperfoco', 'Geral')}
     
     INFORMAÇÕES DA AULA:
-    - Componente: {materia}
+    - Componente Curricular: {materia}
     - Assunto: {assunto}
     {info_bncc}
     {info_bloom}
@@ -917,15 +917,15 @@ def gerar_dinamica_inclusiva_completa(api_key, aluno, materia, assunto, qtd_alun
     ajuste = f"\nAJUSTES SOLICITADOS: {feedback_anterior}" if feedback_anterior else ""
     
     prompt = f"""
-    Crie uma DINÂMICA INCLUSIVA para {qtd_alunos} alunos.
+    Crie uma DINÂMICA INCLUSIVA para {qtd_alunos} estudantes.
     
-    INFORMAÇÕES DO ALUNO FOCAL:
+    INFORMAÇÕES DO ESTUDANTE FOCAL:
     - Nome: {aluno['nome']}
     - Perfil: {aluno.get('ia_sugestao', '')[:400]}
     - Hiperfoco: {aluno.get('hiperfoco', 'Geral')}
     
     INFORMAÇÕES DA DINÂMICA:
-    - Componente: {materia}
+    - Componente Curricular: {materia}
     - Tema: {assunto}
     - Características da turma: {caracteristicas_turma}
     {info_bncc}
@@ -945,7 +945,7 @@ def gerar_dinamica_inclusiva_completa(api_key, aluno, materia, assunto, qtd_alun
     
     4. **PASSO A PASSO** (detalhado)
        - Instruções claras para o professor
-       - Inclua adaptações para o aluno focal
+       - Inclua adaptações para o estudante focal
     
     5. **DURAÇÃO ESTIMADA**
     
@@ -995,7 +995,7 @@ def gerar_plano_aula_completo(api_key, materia, assunto, metodologia, tecnica, q
     info_aluno = ""
     if aluno_info:
         info_aluno = f"""
-    INFORMAÇÕES DO ALUNO (DUA):
+    INFORMAÇÕES DO ESTUDANTE (DUA):
     - Nome: {aluno_info.get('nome', '')}
     - Hiperfoco: {aluno_info.get('hiperfoco', '')}
     - Perfil: {aluno_info.get('ia_sugestao', '')[:300]}
@@ -1007,11 +1007,11 @@ def gerar_plano_aula_completo(api_key, materia, assunto, metodologia, tecnica, q
     Crie um PLANO DE AULA COMPLETO com as seguintes informações:
     
     INFORMAÇÕES BÁSICAS:
-    - Componente: {materia}
+    - Componente Curricular: {materia}
     - Tema/Assunto: {assunto}
     - Metodologia: {metodologia}
     - Técnica: {tecnica if tecnica else 'Não especificada'}
-    - Quantidade de Alunos: {qtd_alunos}
+    - Quantidade de Estudantes: {qtd_alunos}
     - Recursos Disponíveis: {', '.join(recursos)}
     
     {info_bncc}
@@ -1049,7 +1049,7 @@ def gerar_plano_aula_completo(api_key, materia, assunto, metodologia, tecnica, q
     #### 3. ATIVIDADE PRÁTICA (__ minutos)
     - Descrição detalhada da atividade
     - Papel do professor
-    - Papel dos alunos
+    - Papel dos estudantes
     
     #### 4. SOCIALIZAÇÃO (__ minutos)
     - Compartilhamento dos resultados
@@ -1070,7 +1070,7 @@ def gerar_plano_aula_completo(api_key, materia, assunto, metodologia, tecnica, q
     - Avaliação somativa
     
     ### 🔄 RECUPERAÇÃO
-    - Estratégias para alunos com dificuldades
+    - Estratégias para estudantes com dificuldades
     
     ### 📚 REFERÊNCIAS
     - Referências bibliográficas
@@ -1093,8 +1093,8 @@ def gerar_quebra_gelo_profundo(api_key, aluno, materia, assunto, hiperfoco, tema
     
     prompt = f"""
     Crie 3 sugestões de 'Papo de Mestre' (Quebra-gelo/Introdução) para conectar o estudante {aluno['nome']} à aula.
-    Matéria: {materia}. Assunto: {assunto}.
-    Hiperfoco do aluno: {hiperfoco}.
+    Componente Curricular: {materia}. Assunto: {assunto}.
+    Hiperfoco do estudante: {hiperfoco}.
     Tema de interesse da turma (DUA): {tema_turma_extra if tema_turma_extra else 'Não informado'}.
     
     O objetivo é usar o hiperfoco ou o interesse da turma como UMA PONTE (estratégia DUA de engajamento) para explicar o conceito de {assunto}.
@@ -1212,7 +1212,7 @@ def criar_dropdowns_bncc_completos_melhorado(key_suffix="", mostrar_habilidades=
             ano = st.selectbox("Ano", ordenar_anos(["1", "2", "3", "4", "5", "6", "7", "8", "9", "1EM", "2EM", "3EM"]), 
                               key=f"ano_basico_{key_suffix}")
         with col2:
-            disciplina = st.selectbox("Disciplina", DISCIPLINAS_PADRAO, key=f"disc_basico_{key_suffix}")
+            disciplina = st.selectbox("Componente Curricular", DISCIPLINAS_PADRAO, key=f"disc_basico_{key_suffix}")
         with col3:
             objeto = st.text_input("Objeto do Conhecimento", placeholder="Ex: Frações", 
                                   key=f"obj_basico_{key_suffix}")
@@ -1244,7 +1244,7 @@ def criar_dropdowns_bncc_completos_melhorado(key_suffix="", mostrar_habilidades=
     
     # TEMOS DADOS - criar dropdowns conectados
     
-    # Linha 1: Ano, Disciplina, Unidade Temática
+    # Linha 1: Ano, Componente Curricular, Unidade Temática
     col1, col2, col3 = st.columns(3)
     
     with col1:
@@ -1256,7 +1256,7 @@ def criar_dropdowns_bncc_completos_melhorado(key_suffix="", mostrar_habilidades=
         if ano_selecionado:
             disc_filtradas = dados[dados['Ano'].astype(str) == str(ano_selecionado)]
             disciplinas = sorted(disc_filtradas['Disciplina'].dropna().unique())
-            disciplina_selecionada = st.selectbox("Disciplina", disciplinas, key=f"disc_bncc_{key_suffix}")
+            disciplina_selecionada = st.selectbox("Componente Curricular", disciplinas, key=f"disc_bncc_{key_suffix}")
         else:
             disciplina_selecionada = None
     
@@ -1353,7 +1353,7 @@ def criar_dropdowns_bncc_completos_melhorado(key_suffix="", mostrar_habilidades=
                     else:
                         habilidades_selecionadas = habilidades_padrao
             else:
-                st.info("ℹ️ Selecione Ano, Disciplina, Unidade e Objeto para ver as habilidades.")
+                st.info("ℹ️ Selecione Ano, Componente Curricular, Unidade e Objeto para ver as habilidades.")
                 habilidades_selecionadas = []
     
     return (ano_selecionado, disciplina_selecionada, unidade_selecionada, 
@@ -1424,7 +1424,7 @@ def aplicar_estilos():
             transition: width 1s; 
         }
         
-        /* HEADER DO ALUNO */
+        /* HEADER DO ESTUDANTE */
         .student-header {
             background-color: #F8FAFC;
             border: 1px solid #E2E8F0;
@@ -2116,17 +2116,17 @@ def render_aba_papo_mestre(aluno, api_key):
     st.markdown("""
     <div class="pedagogia-box">
         <div class="pedagogia-title"><i class="ri-chat-smile-2-line"></i> Engajamento & DUA (Papo de Mestre)</div>
-        O hiperfoco é um <strong>caminho neurológico</strong> já aberto. Use-o para conectar o aluno à matéria.
+        O hiperfoco é um <strong>caminho neurológico</strong> já aberto. Use-o para conectar o estudante ao componente curricular.
         Aqui você também pode adicionar um tema de interesse da turma toda (DUA) para criar conexões coletivas.
     </div>
     """, unsafe_allow_html=True)
     
     c1, c2 = st.columns(2)
-    materia_papo = c1.selectbox("Componente", DISCIPLINAS_PADRAO, key="papo_mat")
+    materia_papo = c1.selectbox("Componente Curricular", DISCIPLINAS_PADRAO, key="papo_mat")
     assunto_papo = c2.text_input("Assunto da Aula:", key="papo_ass")
     
     c3, c4 = st.columns(2)
-    hiperfoco_papo = c3.text_input("Hiperfoco (Aluno):", value=aluno.get('hiperfoco', 'Geral'), key="papo_hip")
+    hiperfoco_papo = c3.text_input("Hiperfoco (Estudante):", value=aluno.get('hiperfoco', 'Geral'), key="papo_hip")
     tema_turma = c4.text_input("Interesse da Turma (Opcional - DUA):", placeholder="Ex: Minecraft, Copa do Mundo...", key="papo_turma")
     
     if st.button("🗣️ CRIAR CONEXÕES", type="primary"): 
@@ -2219,7 +2219,7 @@ def render_aba_dinamica_inclusiva(aluno, api_key):
     
     c3, c4 = st.columns(2)
     with c3:
-        qtd_alunos = st.number_input("Número de Alunos:", min_value=5, max_value=50, value=25, key="din_qtd")
+        qtd_alunos = st.number_input("Número de Estudantes:", min_value=5, max_value=50, value=25, key="din_qtd")
     with c4:
         carac_turma = st.text_input(
             "Características da Turma (Opcional):", 
@@ -2344,7 +2344,7 @@ def render_aba_plano_aula(aluno, api_key):
 
     c3, c4 = st.columns(2)
     with c3:
-        qtd_alunos_plano = st.number_input("Qtd Alunos:", min_value=1, value=30, key="plano_qtd")
+        qtd_alunos_plano = st.number_input("Qtd Estudantes:", min_value=1, value=30, key="plano_qtd")
     with c4:
         recursos_plano = st.multiselect("Recursos Disponíveis:", RECURSOS_DISPONIVEIS, key="plano_rec")
     
@@ -2683,13 +2683,13 @@ def main():
                     del st.session_state[key]
             st.rerun()
     
-    # Carregar dados dos alunos
+    # Carregar dados dos estudantes
     if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estudantes:
         with st.spinner("🔄 Lendo dados da nuvem..."):
             st.session_state.banco_estudantes = carregar_estudantes_supabase()
     
     if not st.session_state.banco_estudantes:
-        st.warning("⚠️ Nenhum aluno encontrado.")
+        st.warning("⚠️ Nenhum estudante encontrado.")
         if st.button("📘 Ir para o módulo PEI", type="primary"): 
             st.switch_page("pages/1_PEI.py")
         st.stop()
@@ -2703,7 +2703,7 @@ def main():
     aluno = next((a for a in st.session_state.banco_estudantes if a.get('nome') == nome_aluno), None)
     
     if not aluno: 
-        st.error("Aluno não encontrado")
+        st.error("Estudante não encontrado")
         st.stop()
     
     # --- ÁREA DO ALUNO (Visual + Expander) ---
