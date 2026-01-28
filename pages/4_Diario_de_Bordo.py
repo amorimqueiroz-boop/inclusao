@@ -571,7 +571,7 @@ with tab_filtros:
     if registros:
         total_registros = len(registros)
         registros_ultimos_30 = len([r for r in registros 
-                                  if datetime.fromisoformat(r['created_at'].replace('Z', '+00:00')).date() > date.today() - timedelta(days=30)])
+                                  if r.get('data_sessao') and datetime.fromisoformat(r['data_sessao']).date() > date.today() - timedelta(days=30)])
         
         col_stat1, col_stat2, col_stat3 = st.columns(3)
         with col_stat1:
