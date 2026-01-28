@@ -1164,7 +1164,7 @@ def render_central_conhecimento():
         st.markdown(f"### {icon_title('Glossário Técnico Conceitual', 'glossario', 24, '#2563EB')}", unsafe_allow_html=True)
         st.markdown("Definições oficiais para embasar relatórios e PEIs.")
         
-        termo_busca = st.text_input(f"{get_icon('buscar', 18, '#64748B')} Filtrar conceitos:", placeholder="Digite para buscar...")
+        termo_busca = st.text_input("🔍 Filtrar conceitos:", placeholder="Digite para buscar...")
 
         glossario_db = [
             {"t": "AEE (Atendimento Educacional Especializado)", "d": "Serviços educacionais suplementares que potencializam habilidades para que o aluno adquira autonomia. É transversal a todos os níveis, mas não substitui a escolarização regular."},
