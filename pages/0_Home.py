@@ -1186,21 +1186,7 @@ st.markdown("## 📘 Guia Prático de Inclusão")
 st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 render_info_cards()
 
-# Rodapé
-st.markdown(
-    f"""
-    <div style='
-        text-align: center;
-        color: #64748B;
-        font-size: 0.75rem;
-        padding: 20px;
-        border-top: 1px solid #E2E8F0;
-        margin-top: 40px;
-    '>
-        <strong>Omnisfera {APP_VERSION}</strong> • Plataforma de Inclusão Educacional • 
-        Desenvolvido por RODRIGO A. QUEIROZ • 
-        {datetime.now().strftime("%d/%m/%Y %H:%M")}
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+# ==============================================================================
+# RODAPÉ COM ASSINATURA
+# ==============================================================================
+ou.render_footer_assinatura()
