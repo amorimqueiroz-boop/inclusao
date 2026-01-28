@@ -867,32 +867,46 @@ with tab_lista:
         if aluno_filtro and aluno_filtro != "Todos":
             aluno_nome = aluno_filtro.split("(")[0].strip()
             registros_filtrados = [r for r in registros_filtrados 
-                                 if r.get('students', {}).get('name') == aluno_nome]
+                                 if r.get('students', {}).get('name', '') == aluno_nome]
         
         # Filtro por período
         periodo = st.session_state.get('filtro_periodo', 'Todos')
         if periodo and periodo != "Todos":
             hoje = date.today()
-            if periodo == "Últimos 7 dias":
-                data_corte = hoje - timedelta(days=7)
-                registros_filtrados = [r for r in registros_filtrados 
-                                     if datetime.fromisoformat(r['data_sessao']).date() >= data_corte]
-            elif periodo == "Últimos 30 dias":
-                data_corte = hoje - timedelta(days=30)
-                registros_filtrados = [r for r in registros_filtrados 
-                                     if datetime.fromisoformat(r['data_sessao']).date() >= data_corte]
-            elif periodo == "Este mês":
-                registros_filtrados = [r for r in registros_filtrados 
-                                     if datetime.fromisoformat(r['data_sessao']).date().month == hoje.month]
-            elif periodo == "Mês passado":
-                mes_passado = hoje.month - 1 if hoje.month > 1 else 12
-                registros_filtrados = [r for r in registros_filtrados 
-                                     if datetime.fromisoformat(r['data_sessao']).date().month == mes_passado]
-            elif periodo == "Personalizado":
-                data_inicio = st.session_state.get('filtro_data_inicio', date.today() - timedelta(days=30))
-                data_fim = st.session_state.get('filtro_data_fim', date.today())
-                registros_filtrados = [r for r in registros_filtrados 
-                                     if data_inicio <= datetime.fromisoformat(r['data_sessao']).date() <= data_fim]
+            registros_filtrados_temp = []
+            for r in registros_filtrados:
+                if not r.get('data_sessao'):
+                    continue
+                try:
+                    data_sessao = r['data_sessao']
+                    if isinstance(data_sessao, str):
+                        data_sessao = datetime.fromisoformat(data_sessao).date()
+                    elif hasattr(data_sessao, 'date'):
+                        data_sessao = data_sessao.date()
+                    else:
+                        continue
+                    
+                    if periodo == "Últimos 7 dias":
+                        if data_sessao >= (hoje - timedelta(days=7)):
+                            registros_filtrados_temp.append(r)
+                    elif periodo == "Últimos 30 dias":
+                        if data_sessao >= (hoje - timedelta(days=30)):
+                            registros_filtrados_temp.append(r)
+                    elif periodo == "Este mês":
+                        if data_sessao.month == hoje.month:
+                            registros_filtrados_temp.append(r)
+                    elif periodo == "Mês passado":
+                        mes_passado = hoje.month - 1 if hoje.month > 1 else 12
+                        if data_sessao.month == mes_passado:
+                            registros_filtrados_temp.append(r)
+                    elif periodo == "Personalizado":
+                        data_inicio = st.session_state.get('filtro_data_inicio', date.today() - timedelta(days=30))
+                        data_fim = st.session_state.get('filtro_data_fim', date.today())
+                        if data_inicio <= data_sessao <= data_fim:
+                            registros_filtrados_temp.append(r)
+                except (ValueError, AttributeError):
+                    continue
+            registros_filtrados = registros_filtrados_temp
         
         # Filtro por modalidade
         modalidade = st.session_state.get('filtro_modalidade', [])
@@ -912,15 +926,34 @@ with tab_lista:
             st.metric("Engajamento Médio", f"{media_engajamento:.1f}/5")
         with col_stats4:
             if registros_filtrados:
-                ultimo_registro = max(registros_filtrados, key=lambda x: x['data_sessao'])
-                st.metric("Última Sessão", datetime.fromisoformat(ultimo_registro['data_sessao']).strftime('%d/%m'))
+                try:
+                    ultimo_registro = max(registros_filtrados, key=lambda x: x.get('data_sessao', ''))
+                    data_ultima = ultimo_registro.get('data_sessao')
+                    if isinstance(data_ultima, str):
+                        data_formatada = datetime.fromisoformat(data_ultima).strftime('%d/%m')
+                    elif hasattr(data_ultima, 'strftime'):
+                        data_formatada = data_ultima.strftime('%d/%m')
+                    else:
+                        data_formatada = "N/A"
+                    st.metric("Última Sessão", data_formatada)
+                except (ValueError, AttributeError, KeyError):
+                    st.metric("Última Sessão", "N/A")
         
         st.divider()
         
         # Exibir registros
         for registro in registros_filtrados:
             aluno_nome = registro.get('students', {}).get('name', 'Estudante não encontrado')
-            data_formatada = datetime.fromisoformat(registro['data_sessao']).strftime('%d/%m/%Y')
+            try:
+                data_sessao = registro.get('data_sessao')
+                if isinstance(data_sessao, str):
+                    data_formatada = datetime.fromisoformat(data_sessao).strftime('%d/%m/%Y')
+                elif hasattr(data_sessao, 'strftime'):
+                    data_formatada = data_sessao.strftime('%d/%m/%Y')
+                else:
+                    data_formatada = str(data_sessao)
+            except (ValueError, AttributeError):
+                data_formatada = "Data inválida"
             
             # Determinar classe CSS baseada na modalidade
             modalidade_classe = {
@@ -993,8 +1026,9 @@ with tab_relatorios:
         # Converter para DataFrame
         df = pd.DataFrame(registros)
         
-        # Converter datas
-        df['data_sessao'] = pd.to_datetime(df['data_sessao'])
+        # Converter datas (tratando valores None ou inválidos)
+        df['data_sessao'] = pd.to_datetime(df['data_sessao'], errors='coerce')
+        df = df.dropna(subset=['data_sessao'])  # Remove registros com data inválida
         df['mes'] = df['data_sessao'].dt.to_period('M')
         
         col_rel1, col_rel2 = st.columns(2)
@@ -1002,58 +1036,76 @@ with tab_relatorios:
         with col_rel1:
             # Gráfico de atendimentos por mês
             st.markdown("#### 📅 Atendimentos por Mês")
-            atendimentos_mes = df.groupby('mes').size().reset_index(name='count')
-            atendimentos_mes['mes'] = atendimentos_mes['mes'].astype(str)
-            
-            fig1 = px.bar(
-                atendimentos_mes,
-                x='mes',
-                y='count',
-                title="Quantidade de Atendimentos por Mês",
-                color='count',
-                color_continuous_scale='teal'
-            )
-            fig1.update_layout(showlegend=False, height=300)
-            st.plotly_chart(fig1, use_container_width=True)
+            if 'mes' in df.columns and len(df) > 0:
+                atendimentos_mes = df.groupby('mes').size().reset_index(name='count')
+                atendimentos_mes['mes'] = atendimentos_mes['mes'].astype(str)
+                
+                fig1 = px.bar(
+                    atendimentos_mes,
+                    x='mes',
+                    y='count',
+                    title="Quantidade de Atendimentos por Mês",
+                    color='count',
+                    color_continuous_scale='teal'
+                )
+                fig1.update_layout(showlegend=False, height=300)
+                st.plotly_chart(fig1, use_container_width=True)
+            else:
+                st.info("Dados insuficientes para gerar gráfico de atendimentos por mês.")
         
         with col_rel2:
             # Distribuição por modalidade
             st.markdown("#### 📊 Distribuição por Modalidade")
-            modalidade_counts = df['modalidade_atendimento'].value_counts().reset_index()
-            modalidade_counts.columns = ['modalidade', 'count']
+            if 'modalidade_atendimento' in df.columns:
+                modalidade_counts = df['modalidade_atendimento'].value_counts().reset_index()
+                modalidade_counts.columns = ['modalidade', 'count']
+            else:
+                modalidade_counts = pd.DataFrame(columns=['modalidade', 'count'])
             
-            fig2 = px.pie(
-                modalidade_counts,
-                values='count',
-                names='modalidade',
-                title="Distribuição por Modalidade de Atendimento",
-                color_discrete_sequence=px.colors.sequential.Teal
-            )
-            fig2.update_layout(showlegend=True, height=300)
-            st.plotly_chart(fig2, use_container_width=True)
+            if len(modalidade_counts) > 0:
+                fig2 = px.pie(
+                    modalidade_counts,
+                    values='count',
+                    names='modalidade',
+                    title="Distribuição por Modalidade de Atendimento",
+                    color_discrete_sequence=px.colors.sequential.Teal
+                )
+                fig2.update_layout(showlegend=True, height=300)
+                st.plotly_chart(fig2, use_container_width=True)
+            else:
+                st.info("Dados insuficientes para gerar gráfico de distribuição por modalidade.")
         
         # Gráfico de engajamento ao longo do tempo
         st.markdown("#### 📈 Evolução do Engajamento")
         
         if 'student_id' in df.columns:
+            # Criar dicionário de estudantes
+            alunos_dict = {}
+            for registro in registros:
+                student_id = registro.get('student_id')
+                if student_id and student_id not in alunos_dict:
+                    nome = registro.get('students', {}).get('name', f'Estudante {str(student_id)[:8]}')
+                    alunos_dict[student_id] = nome
+            
             # Selecionar estudante específico para análise
             alunos_unicos = df['student_id'].unique()
             if len(alunos_unicos) > 0:
                 aluno_selecionado_id = st.selectbox(
                     "Selecione o estudante para análise:",
                     options=alunos_unicos,
-                    format_func=lambda x: alunos_dict.get(x, f"Estudante {x[:8]}") if 'alunos_dict' in locals() else f"Estudante {x[:8]}"
+                    format_func=lambda x: alunos_dict.get(x, f"Estudante {str(x)[:8]}")
                 )
                 
                 # Filtrar dados do estudante
                 df_aluno = df[df['student_id'] == aluno_selecionado_id].sort_values('data_sessao')
                 
                 if len(df_aluno) > 1:
+                    nome_estudante = alunos_dict.get(aluno_selecionado_id, 'Estudante')
                     fig3 = px.line(
                         df_aluno,
                         x='data_sessao',
                         y='engajamento_aluno',
-                        title=f"Evolução do Engajamento - {alunos_dict.get(aluno_selecionado_id, 'Estudante')}",
+                        title=f"Evolução do Engajamento - {nome_estudante}",
                         markers=True,
                         line_shape='spline'
                     )
@@ -1079,7 +1131,17 @@ with tab_relatorios:
         todas_competencias = []
         for competencias in df['competencias_trabalhadas']:
             if competencias:
-                todas_competencias.extend(competencias)
+                if isinstance(competencias, list):
+                    todas_competencias.extend(competencias)
+                elif isinstance(competencias, str):
+                    # Se for string, tentar converter (pode ser JSON string)
+                    try:
+                        import json
+                        comp_list = json.loads(competencias)
+                        if isinstance(comp_list, list):
+                            todas_competencias.extend(comp_list)
+                    except:
+                        todas_competencias.append(competencias)
         
         if todas_competencias:
             competencias_df = pd.DataFrame({'competencia': todas_competencias})
@@ -1134,12 +1196,12 @@ with tab_relatorios:
                     relatorio = {
                         "data_geracao": datetime.now().isoformat(),
                         "total_registros": len(df),
-                        "periodo_analisado": f"{df['data_sessao'].min().date()} a {df['data_sessao'].max().date()}",
-                        "total_alunos": df['student_id'].nunique(),
-                        "total_horas": int(df['duracao_minutos'].sum() / 60),
-                        "engajamento_medio": float(df['engajamento_aluno'].mean()),
-                        "modalidades": df['modalidade_atendimento'].value_counts().to_dict(),
-                        "top_competencias": competencias_counts.head(5).to_dict('records') if 'competencias_counts' in locals() else []
+                        "periodo_analisado": f"{df['data_sessao'].min().date()} a {df['data_sessao'].max().date()}" if len(df) > 0 else "N/A",
+                        "total_alunos": df['student_id'].nunique() if 'student_id' in df.columns else 0,
+                        "total_horas": int(df['duracao_minutos'].sum() / 60) if 'duracao_minutos' in df.columns else 0,
+                        "engajamento_medio": float(df['engajamento_aluno'].mean()) if 'engajamento_aluno' in df.columns else 0.0,
+                        "modalidades": df['modalidade_atendimento'].value_counts().to_dict() if 'modalidade_atendimento' in df.columns else {},
+                        "top_competencias": competencias_counts.head(5).to_dict('records') if 'competencias_counts' in locals() and len(competencias_counts) > 0 else []
                     }
                     
                     st.json(relatorio)
@@ -1172,12 +1234,18 @@ with tab_config:
             step=15
         )
         
+        modalidade_padrao_opcoes = ['individual', 'grupo', 'observacao_sala', 'consultoria']
+        try:
+            index_modalidade = modalidade_padrao_opcoes.index(
+                st.session_state.config_diario.get('modalidade_padrao', 'individual')
+            )
+        except ValueError:
+            index_modalidade = 0
+        
         modalidade_padrao = st.selectbox(
             "Modalidade Padrão",
-            options=['individual', 'grupo', 'observacao_sala', 'consultoria'],
-            index=['individual', 'grupo', 'observacao_sala', 'consultoria'].index(
-                st.session_state.config_diario['modalidade_padrao']
-            )
+            options=modalidade_padrao_opcoes,
+            index=index_modalidade
         )
         
         competencias_padrao = st.multiselect(
