@@ -12,6 +12,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 try:
     import omni_utils as ou
+    from omni_utils import get_icon, icon_title
 except ImportError:
     st.error("Erro crítico: O arquivo 'omni_utils.py' não foi encontrado na pasta raiz.")
     st.stop()
