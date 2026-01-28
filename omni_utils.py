@@ -427,7 +427,7 @@ def render_omnisfera_header(active_tab: str = "Início"):
     """
     ensure_state()
 
-    TOPBAR_H = 72  # Aumentado para acomodar botões
+    TOPBAR_H = 64  # Altura ajustada para botões compactos
     NAVBAR_H = 0   # Navbar removido, integrado na topbar
 
     inject_layout_css(topbar_h=TOPBAR_H, navbar_h=NAVBAR_H, content_gap=0)
@@ -484,15 +484,18 @@ def render_omnisfera_header(active_tab: str = "Início"):
         <style>
           /* Topbar com navegação integrada */
           .omni-topbar {{
-            height: 72px !important;
+            height: 64px !important;
             flex-direction: column !important;
-            padding: 8px 24px !important;
+            padding: 4px 24px 2px 24px !important;
+            overflow: visible !important;
           }}
           .omni-topbar-main {{
             display: flex !important;
             align-items: center !important;
             justify-content: space-between !important;
             width: 100% !important;
+            height: 32px !important;
+            flex-shrink: 0 !important;
           }}
           .omni-nav-buttons {{
             display: flex !important;
@@ -500,11 +503,14 @@ def render_omnisfera_header(active_tab: str = "Início"):
             gap: 6px !important;
             flex-wrap: wrap !important;
             justify-content: center !important;
-            margin-top: 4px !important;
+            margin-top: -2px !important;
             width: 100% !important;
             overflow-x: auto !important;
+            overflow-y: visible !important;
             scrollbar-width: none !important;
-            padding: 2px 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            min-height: 28px !important;
           }}
           .omni-nav-buttons::-webkit-scrollbar {{
             display: none !important;
@@ -512,22 +518,34 @@ def render_omnisfera_header(active_tab: str = "Início"):
           .omni-nav-btn {{
             display: inline-flex !important;
             align-items: center !important;
-            gap: 6px !important;
-            padding: 6px 10px !important;
+            justify-content: center !important;
+            gap: 5px !important;
+            padding: 4px 9px !important;
             border: 1px solid #E2E8F0 !important;
             background: rgba(255,255,255,0.9) !important;
             border-radius: 999px !important;
-            font-size: 11px !important;
+            font-size: 10px !important;
             font-weight: 700 !important;
             color: #64748B !important;
             cursor: pointer !important;
             transition: all 0.15s ease !important;
             white-space: nowrap !important;
             box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+            line-height: 1 !important;
+            height: 24px !important;
+            overflow: visible !important;
           }}
           .omni-nav-btn i {{
-            font-size: 14px !important;
+            font-size: 13px !important;
             line-height: 1 !important;
+            display: inline-block !important;
+            vertical-align: middle !important;
+            overflow: visible !important;
+          }}
+          .omni-nav-btn span {{
+            line-height: 1 !important;
+            display: inline-block !important;
+            vertical-align: middle !important;
           }}
           .omni-nav-btn:hover {{
             background: #ffffff !important;
