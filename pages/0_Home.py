@@ -1004,6 +1004,41 @@ def render_central_conhecimento():
             display: none !important;
             border-bottom: none !important;
         }
+        
+        /* Correção para abas Legislação e Biblioteca */
+        .stTabs [data-baseweb="tab-panel"] {
+            overflow: visible !important;
+        }
+        
+        /* Corrigir colunas quebradas */
+        .stTabs [data-baseweb="tab-panel"] .row-widget {
+            width: 100% !important;
+        }
+        
+        /* Corrigir expanders */
+        .stTabs [data-baseweb="tab-panel"] .streamlit-expander {
+            width: 100% !important;
+            margin-bottom: 12px !important;
+        }
+        
+        .stTabs [data-baseweb="tab-panel"] .streamlit-expanderHeader {
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            white-space: normal !important;
+        }
+        
+        /* Corrigir ai-box */
+        .ai-box {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* Garantir que colunas não quebrem */
+        .stTabs [data-baseweb="tab-panel"] [data-testid="column"] {
+            width: 100% !important;
+            min-width: 0 !important;
+        }
     </style>
     """, unsafe_allow_html=True)
     
