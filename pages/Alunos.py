@@ -22,7 +22,7 @@ except ImportError:
 # ==============================================================================
 st.set_page_config(
     page_title="Omnisfera • Estudantes",
-    page_icon="omni_icone.png" if os.path.exists("omni_icone.png") else "👥",
+    page_icon="omni_icone.png",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
