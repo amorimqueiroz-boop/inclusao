@@ -1044,7 +1044,7 @@ def render_central_conhecimento():
     
     # Título elegante com ícone
     st.markdown(f"""
-    <div style="margin-bottom: 8px; margin-top: -48px;">
+    <div style="margin-bottom: 8px; margin-top: -56px;">
         <h2 style="font-size: 2rem; font-weight: 800; color: #1E293B; margin-bottom: 8px; letter-spacing: -0.5px; display: flex; align-items: center; gap: 12px;">
             {get_icon("hub", 32, "#2563EB")}
             <span>Central de Inteligência Inclusiva</span>
