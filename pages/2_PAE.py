@@ -497,17 +497,15 @@ def _badge_status(status):
 # CARREGAR ESTUDANTES DO SUPABASE
 # ==============================================================================
 @st.cache_data(ttl=10, show_spinner=False)
-def list_students_rest():
-    """Busca estudantes do Supabase incluindo o campo PEI_DATA"""
-    WORKSPACE_ID = st.session_state.get("workspace_id")
-    if not WORKSPACE_ID: 
+def list_students_rest(workspace_id: str = ""):
+    """Busca estudantes do Supabase incluindo o campo PEI_DATA. workspace_id no argumento para cache correto por escola."""
+    if not (workspace_id and str(workspace_id).strip()):
         return []
-    
     try:
         base = (
             f"{ou._sb_url()}/rest/v1/students"
             f"?select=id,name,grade,class_group,diagnosis,created_at,pei_data"
-            f"&workspace_id=eq.{WORKSPACE_ID}"
+            f"&workspace_id=eq.{workspace_id}"
             f"&order=created_at.desc"
         )
         r = requests.get(base, headers=ou._headers(), timeout=20)
@@ -518,7 +516,8 @@ def list_students_rest():
 
 def carregar_estudantes_supabase():
     """Carrega e processa, extraindo dados ricos do PEI"""
-    dados = list_students_rest()
+    _workspace_id = st.session_state.get("workspace_id") or ""
+    dados = list_students_rest(_workspace_id)
     estudantes = []
     
     for item in dados:
@@ -654,9 +653,14 @@ if 'banco_estudantes' not in st.session_state or not st.session_state.banco_estu
         st.session_state.banco_estudantes = carregar_estudantes_supabase()
 
 if not st.session_state.banco_estudantes:
-    st.warning("⚠️ Nenhum estudante encontrado.")
-    if st.button("📘 Ir para o módulo PEI", type="primary"): 
-        st.switch_page("pages/1_PEI.py")
+    st.info("📋 **Plano de Ação (AEE)** — Nenhum estudante cadastrado neste workspace. Cadastre estudantes e preencha o PEI para usar este módulo.")
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("📘 Ir para Estratégias & PEI", type="primary", key="btn_pae_pei"):
+            st.switch_page("pages/1_PEI.py")
+    with c2:
+        if st.button("👥 Ir para Estudantes", key="btn_pae_alunos"):
+            st.switch_page("pages/Alunos.py")
     st.stop()
 
 # --- SELEÇÃO DE ALUNO ---
