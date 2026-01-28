@@ -2558,7 +2558,7 @@ with tab4:
 # ==============================================================================
 with tab5:
     render_progresso()
-    st.markdown("### <i class='ri-tools-line'></i> Plano de Ação", unsafe_allow_html=True)
+    st.markdown("### <i class='ri-puzzle-line'></i> Plano de Ação", unsafe_allow_html=True)
 
     c1, c2, c3 = st.columns(3)
 
