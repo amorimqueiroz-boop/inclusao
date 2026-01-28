@@ -1770,116 +1770,138 @@ def render_aba_adaptar_prova(aluno, api_key):
                 return False
         return None  # Não encontrou, deixa o usuário decidir
     
-    # Checklist de perguntas específicas
-    st.markdown("#### 🎯 Checklist de Adaptação (baseado no PEI)")
-    st.caption("Responda as perguntas abaixo. As respostas serão usadas pela IA para adaptar cada questão de forma personalizada.")
-    
-    # Pergunta 1: Questões mais desafiadoras
-    termos_desafio = {
-        'sim': ['desafio', 'desafiador', 'adequação de desafio', 'motivação'],
-        'nao': ['reduzir dificuldade', 'simplificar']
-    }
-    default_desafio = inferir_resposta(termos_desafio, ia_sugestao, estrategias_ensino)
-    precisa_desafio = st.radio(
-        "O estudante necessita de questões mais desafiadoras?",
-        ["Sim", "Não"],
-        index=0 if default_desafio else (1 if default_desafio is False else 0),
-        horizontal=True,
-        key="check_desafio"
-    )
-    
-    # Pergunta 2: Instruções complexas
-    termos_complexas = {
-        'sim': ['instrução complexa', 'compreende instruções', 'instrução detalhada'],
-        'nao': ['simplificar instruções', 'instrução passo a passo', 'fragmentar']
-    }
-    default_complexas = inferir_resposta(termos_complexas, ia_sugestao, estrategias_ensino)
-    compreende_complexas = st.radio(
-        "O estudante compreende instruções complexas?",
-        ["Sim", "Não"],
-        index=0 if default_complexas else (1 if default_complexas is False else 0),
-        horizontal=True,
-        key="check_complexas"
-    )
-    
-    # Pergunta 3: Instruções passo a passo
-    termos_passo = {
-        'sim': ['instrução passo a passo', 'passo a passo', 'fragmentação', 'dividir em etapas'],
-        'nao': ['instrução direta', 'compreende instruções complexas']
-    }
-    default_passo = inferir_resposta(termos_passo, ia_sugestao, estrategias_ensino)
-    precisa_passo = st.radio(
-        "O estudante necessita de instruções passo a passo?",
-        ["Sim", "Não"],
-        index=0 if default_passo else (1 if default_passo is False else 0),
-        horizontal=True,
-        key="check_passo"
-    )
-    
-    # Pergunta 4: Dividir em etapas
-    precisa_etapas = st.radio(
-        "Dividir a questão em etapas menores melhora o desempenho?",
-        ["Sim", "Não"],
-        index=0 if default_passo else (1 if default_passo is False else 0),
-        horizontal=True,
-        key="check_etapas"
-    )
-    
-    # Pergunta 5: Parágrafos curtos
-    termos_paragrafo = {
-        'sim': ['parágrafo curto', 'texto curto', 'fragmentação', 'simplificar texto'],
-        'nao': ['texto longo', 'compreende textos complexos']
-    }
-    default_paragrafo = inferir_resposta(termos_paragrafo, ia_sugestao, estrategias_ensino)
-    precisa_paragrafos_curtos = st.radio(
-        "Textos com parágrafos curtos melhoram a compreensão?",
-        ["Sim", "Não"],
-        index=0 if default_paragrafo else (1 if default_paragrafo is False else 0),
-        horizontal=True,
-        key="check_paragrafos"
-    )
-    
-    # Pergunta 6: Dicas de apoio
-    termos_dicas = {
-        'sim': ['dica', 'apoio', 'scaffolding', 'suporte', 'pista'],
-        'nao': ['autonomia', 'independente']
-    }
-    default_dicas = inferir_resposta(termos_dicas, ia_sugestao, estrategias_ensino)
-    precisa_dicas = st.radio(
-        "O estudante precisa de dicas de apoio para resolver questões?",
-        ["Sim", "Não"],
-        index=0 if default_dicas else (1 if default_dicas is False else 0),
-        horizontal=True,
-        key="check_dicas"
-    )
-    
-    # Pergunta 7: Figuras de linguagem
-    termos_figuras = {
-        'sim': ['reduzir inferências', 'reduzir figuras de linguagem', 'simplificar linguagem'],
-        'nao': ['compreende figuras de linguagem', 'faz inferências']
-    }
-    default_figuras = inferir_resposta(termos_figuras, ia_sugestao, estrategias_ensino)
-    compreende_figuras = st.radio(
-        "O estudante compreende figuras de linguagem e faz inferências?",
-        ["Sim", "Não"],
-        index=0 if default_figuras else (1 if default_figuras is False else 0),
-        horizontal=True,
-        key="check_figuras"
-    )
-    
-    # Pergunta 8: Descrição de imagens
-    termos_descricao = {
-        'sim': ['descrição de imagem', 'alt text', 'descrever imagem', 'descrição visual'],
-        'nao': []
-    }
-    default_descricao = inferir_resposta(termos_descricao, ia_sugestao, estrategias_acesso)
-    precisa_descricao_img = st.radio(
-        "O estudante necessita de descrição de imagens?",
-        ["Sim", "Não"],
-        index=0 if default_descricao else (1 if default_descricao is False else 0),
-        horizontal=True,
-        key="check_descricao"
-    )
+    # Checklist de perguntas específicas - em expander retrátil
+    with st.expander("🎯 Checklist de Adaptação (baseado no PEI)", expanded=False):
+        st.info("""
+        ⚠️ **IMPORTANTE:** É necessário revisar cada pergunta abaixo e responder com base no perfil do estudante. 
+        As respostas serão usadas pela IA para adaptar cada questão de forma personalizada, mas a IA escolherá 
+        **pontualmente** apenas 1-2 necessidades por questão, evitando sobrecarga. Revise e ajuste as respostas 
+        conforme necessário.
+        """)
+        
+        # Organizar em 2 colunas
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Pergunta 1: Questões mais desafiadoras
+            termos_desafio = {
+                'sim': ['desafio', 'desafiador', 'adequação de desafio', 'motivação'],
+                'nao': ['reduzir dificuldade', 'simplificar']
+            }
+            default_desafio = inferir_resposta(termos_desafio, ia_sugestao, estrategias_ensino)
+            precisa_desafio = st.radio(
+                "O estudante necessita de questões mais desafiadoras?",
+                ["Sim", "Não"],
+                index=0 if default_desafio else (1 if default_desafio is False else 0),
+                horizontal=True,
+                key="check_desafio"
+            )
+            
+            st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+            
+            # Pergunta 2: Instruções complexas
+            termos_complexas = {
+                'sim': ['instrução complexa', 'compreende instruções', 'instrução detalhada'],
+                'nao': ['simplificar instruções', 'instrução passo a passo', 'fragmentar']
+            }
+            default_complexas = inferir_resposta(termos_complexas, ia_sugestao, estrategias_ensino)
+            compreende_complexas = st.radio(
+                "O estudante compreende instruções complexas?",
+                ["Sim", "Não"],
+                index=0 if default_complexas else (1 if default_complexas is False else 0),
+                horizontal=True,
+                key="check_complexas"
+            )
+            
+            st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+            
+            # Pergunta 3: Instruções passo a passo
+            termos_passo = {
+                'sim': ['instrução passo a passo', 'passo a passo', 'fragmentação', 'dividir em etapas'],
+                'nao': ['instrução direta', 'compreende instruções complexas']
+            }
+            default_passo = inferir_resposta(termos_passo, ia_sugestao, estrategias_ensino)
+            precisa_passo = st.radio(
+                "O estudante necessita de instruções passo a passo?",
+                ["Sim", "Não"],
+                index=0 if default_passo else (1 if default_passo is False else 0),
+                horizontal=True,
+                key="check_passo"
+            )
+            
+            st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+            
+            # Pergunta 4: Dividir em etapas
+            precisa_etapas = st.radio(
+                "Dividir a questão em etapas menores melhora o desempenho?",
+                ["Sim", "Não"],
+                index=0 if default_passo else (1 if default_passo is False else 0),
+                horizontal=True,
+                key="check_etapas"
+            )
+        
+        with col2:
+            # Pergunta 5: Parágrafos curtos
+            termos_paragrafo = {
+                'sim': ['parágrafo curto', 'texto curto', 'fragmentação', 'simplificar texto'],
+                'nao': ['texto longo', 'compreende textos complexos']
+            }
+            default_paragrafo = inferir_resposta(termos_paragrafo, ia_sugestao, estrategias_ensino)
+            precisa_paragrafos_curtos = st.radio(
+                "Textos com parágrafos curtos melhoram a compreensão?",
+                ["Sim", "Não"],
+                index=0 if default_paragrafo else (1 if default_paragrafo is False else 0),
+                horizontal=True,
+                key="check_paragrafos"
+            )
+            
+            st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+            
+            # Pergunta 6: Dicas de apoio
+            termos_dicas = {
+                'sim': ['dica', 'apoio', 'scaffolding', 'suporte', 'pista'],
+                'nao': ['autonomia', 'independente']
+            }
+            default_dicas = inferir_resposta(termos_dicas, ia_sugestao, estrategias_ensino)
+            precisa_dicas = st.radio(
+                "O estudante precisa de dicas de apoio para resolver questões?",
+                ["Sim", "Não"],
+                index=0 if default_dicas else (1 if default_dicas is False else 0),
+                horizontal=True,
+                key="check_dicas"
+            )
+            
+            st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+            
+            # Pergunta 7: Figuras de linguagem
+            termos_figuras = {
+                'sim': ['reduzir inferências', 'reduzir figuras de linguagem', 'simplificar linguagem'],
+                'nao': ['compreende figuras de linguagem', 'faz inferências']
+            }
+            default_figuras = inferir_resposta(termos_figuras, ia_sugestao, estrategias_ensino)
+            compreende_figuras = st.radio(
+                "O estudante compreende figuras de linguagem e faz inferências?",
+                ["Sim", "Não"],
+                index=0 if default_figuras else (1 if default_figuras is False else 0),
+                horizontal=True,
+                key="check_figuras"
+            )
+            
+            st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+            
+            # Pergunta 8: Descrição de imagens
+            termos_descricao = {
+                'sim': ['descrição de imagem', 'alt text', 'descrever imagem', 'descrição visual'],
+                'nao': []
+            }
+            default_descricao = inferir_resposta(termos_descricao, ia_sugestao, estrategias_acesso)
+            precisa_descricao_img = st.radio(
+                "O estudante necessita de descrição de imagens?",
+                ["Sim", "Não"],
+                index=0 if default_descricao else (1 if default_descricao is False else 0),
+                horizontal=True,
+                key="check_descricao"
+            )
     
     # Compilar respostas em um dicionário
     checklist_respostas = {
