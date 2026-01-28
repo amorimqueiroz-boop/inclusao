@@ -2403,141 +2403,147 @@ def render_aba_criar_do_zero(aluno, api_key, unsplash_key):
     <div class="pedagogia-box">
         <div class="pedagogia-title"><i class="ri-magic-line"></i> Criação com DUA</div>
         Crie atividades do zero alinhadas ao PEI. A IA gera questões contextualizadas, 
-        usa o hiperfoco para engajamento e cria imagens ilustrativas automaticamente.
+        usa o hiperfoco para engajamento. Imagens: prioridade no banco (Unsplash), IA só em último caso.
     </div>
     """, unsafe_allow_html=True)
     
-    # Dropdowns BNCC completos
-    ano_bncc, disciplina_bncc, unidade_bncc, objeto_bncc, habilidades_bncc = criar_dropdowns_bncc_completos_melhorado(key_suffix="criar_zero")
-    
-    # Mostrar resumo das seleções
-    if unidade_bncc and objeto_bncc:
-        with st.expander("📋 Resumo da seleção BNCC"):
-            st.write(f"**Ano:** {ano_bncc}")
-            st.write(f"**Disciplina:** {disciplina_bncc}")
-            st.write(f"**Unidade Temática:** {unidade_bncc}")
-            st.write(f"**Objeto do Conhecimento:** {objeto_bncc}")
-            if habilidades_bncc:
-                st.write(f"**Habilidades selecionadas:**")
-                for i, hab in enumerate(habilidades_bncc, 1):
-                    st.write(f"{i}. {hab}")
-    
-    # Usar os valores selecionados
-    mat_c = disciplina_bncc
-    obj_c = objeto_bncc
-    
-    # Configuração da atividade
-    st.markdown("---")
-    st.markdown("### ⚙️ Configuração da Atividade")
-    
-    cc3, cc4 = st.columns(2)
-    with cc3:
-        qtd_c = st.slider("Quantidade de Questões", 1, 10, 5, key="cq")
-    
-    with cc4:
-        tipo_quest = st.selectbox("Tipo de Questão", ["Objetiva", "Discursiva"], key="ctq")
-    
-    # Configuração de imagens
-    st.markdown("#### 🖼️ Imagens (Opcional)")
-    col_img_opt, col_img_pct = st.columns([1, 2])
-    
-    with col_img_opt:
-        usar_img = st.checkbox("Incluir Imagens?", value=True, key="usar_img")
-    
-    with col_img_pct:
-        qtd_img_sel = st.slider("Quantas questões terão imagens?", 0, qtd_c, 
-                               int(qtd_c/2) if qtd_c > 1 else 0, 
-                               disabled=not usar_img,
-                               key="qtd_img_slider")
-    
-    # Taxonomia de Bloom
-    st.markdown("---")
-    st.markdown("#### 🧠 Intencionalidade Pedagógica (Taxonomia de Bloom)")
-    
-    if 'bloom_memoria' not in st.session_state:
-        st.session_state.bloom_memoria = {cat: [] for cat in TAXONOMIA_BLOOM.keys()}
-    
-    verbos_finais_para_ia = []
-    
-    usar_bloom = st.checkbox("🎯 Usar Taxonomia de Bloom (Revisada)", key="usar_bloom")
-    
-    if usar_bloom:
-        col_b1, col_b2 = st.columns(2)
+    # BNCC + Assunto em expander compacto
+    with st.expander("📚 BNCC e Assunto", expanded=True):
+        if 'bncc_df_completo' not in st.session_state:
+            st.session_state.bncc_df_completo = carregar_bncc_completa()
+        dados = st.session_state.bncc_df_completo
         
-        with col_b1:
-            cat_atual = st.selectbox("Categoria Cognitiva:", list(TAXONOMIA_BLOOM.keys()),
-                                    key="cat_bloom")
-        
-        with col_b2:
-            selecao_atual = st.multiselect(
-                f"Verbos de '{cat_atual}':", 
-                TAXONOMIA_BLOOM[cat_atual],
-                default=st.session_state.bloom_memoria[cat_atual],
-                key=f"ms_bloom_{cat_atual}"
-            )
-            
-            st.session_state.bloom_memoria[cat_atual] = selecao_atual
-        
-        for cat in st.session_state.bloom_memoria:
-            verbos_finais_para_ia.extend(st.session_state.bloom_memoria[cat])
-        
-        if verbos_finais_para_ia:
-            st.info(f"**Verbos Selecionados:** {', '.join(verbos_finais_para_ia)}")
-        else:
-            st.caption("Nenhum verbo selecionado ainda.")
-    
-    # Botão para gerar
-    st.markdown("---")
-    col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 1])
-    
-    with col_btn2:
-        if st.button("✨ CRIAR ATIVIDADE", type="primary", key="btn_c", use_container_width=True):
-            if not api_key:
-                st.error("❌ Insira a chave da OpenAI nas configurações")
+        # Linha 1: Componente, Ano, Unidade
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            if dados is not None and not dados.empty:
+                disciplinas = sorted(dados['Disciplina'].dropna().unique())
+                disciplina_bncc = st.selectbox("Componente Curricular", disciplinas, key="disc_criar_zero")
             else:
-                with st.spinner("Elaborando atividade..."):
-                    qtd_final = qtd_img_sel if usar_img else 0
-                    
-                    rac, txt = criar_profissional(
-                        api_key, 
-                        aluno, 
-                        mat_c, 
-                        obj_c, 
-                        qtd_c, 
-                        tipo_quest, 
-                        qtd_final, 
-                        verbos_bloom=verbos_finais_para_ia if usar_bloom else None,
-                        habilidades_bncc=habilidades_bncc
-                    )
-                    
-                    # Processar imagens se houver
-                    novo_map = {}
-                    count = 0
-                    tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', txt)
-                    
-                    for p in tags:
-                        count += 1
-                        url = gerar_imagem_inteligente(api_key, p, unsplash_key, prioridade="BANCO")
-                        if url:
-                            io = baixar_imagem_url(url)
-                            if io: 
-                                novo_map[count] = io.getvalue()
-                    
-                    # Substituir tags GEN_IMG por IMG_G
-                    txt_fin = txt
-                    for i in range(1, count + 1): 
-                        txt_fin = re.sub(r'\[\[GEN_IMG: .*?\]\]', f"[[IMG_G{i}]]", txt_fin, count=1)
-                    
-                    # Salvar no session state
-                    st.session_state['res_create'] = {
-                        'rac': rac, 
-                        'txt': txt_fin, 
-                        'map': novo_map, 
-                        'valid': False,
-                        'mat_c': mat_c,
-                        'obj_c': obj_c
-                    }
-                    st.rerun()
+                disciplina_bncc = st.selectbox("Componente Curricular", 
+                    ["Língua Portuguesa", "Matemática", "Ciências", "História", "Geografia", "Arte", "Educação Física", "Inglês"], key="disc_criar_zero")
+        with c2:
+            if dados is not None and not dados.empty and disciplina_bncc:
+                disc_f = dados[dados['Disciplina'] == disciplina_bncc]
+                anos_ord = ordenar_anos(disc_f['Ano'].dropna().unique().tolist())
+                ano_bncc = st.selectbox("Ano", anos_ord, key="ano_criar_zero")
+            else:
+                ano_bncc = st.selectbox("Ano", ordenar_anos(["1", "2", "3", "4", "5", "6", "7", "8", "9", "1EM", "2EM", "3EM"]), key="ano_criar_zero")
+        with c3:
+            if dados is not None and not dados.empty and ano_bncc and disciplina_bncc:
+                unid_f = dados[(dados['Ano'].astype(str) == str(ano_bncc)) & (dados['Disciplina'] == disciplina_bncc)]
+                unidades = sorted(unid_f['Unidade Temática'].dropna().unique())
+                unidade_bncc = st.selectbox("Unidade Temática", unidades, key="unid_criar_zero") if unidades else st.text_input("Unidade Temática", placeholder="Ex: Números", key="unid_criar_zero")
+            else:
+                unidade_bncc = st.text_input("Unidade Temática", placeholder="Ex: Números", key="unid_criar_zero")
+        
+        # Linha 2: Objeto do Conhecimento, Assunto (opcional)
+        c4, c5 = st.columns(2)
+        with c4:
+            if dados is not None and not dados.empty and ano_bncc and disciplina_bncc and unidade_bncc:
+                obj_f = dados[(dados['Ano'].astype(str) == str(ano_bncc)) & (dados['Disciplina'] == disciplina_bncc) & (dados['Unidade Temática'] == unidade_bncc)]
+                objetos = sorted(obj_f['Objeto do Conhecimento'].dropna().unique())
+                objeto_bncc = st.selectbox("Objeto do Conhecimento", objetos, key="obj_criar_zero") if objetos else st.text_input("Objeto do Conhecimento", placeholder="Ex: Frações", key="obj_criar_zero")
+            else:
+                objeto_bncc = st.text_input("Objeto do Conhecimento", placeholder="Ex: Frações", key="obj_criar_zero")
+        with c5:
+            assunto_criar = st.text_input("📝 Assunto (opcional)", value="", placeholder="Ex: Frações, Sistema Solar...", key="assunto_criar_zero", help="Direciona melhor o tema da atividade.")
+        
+        # Habilidades (compacto)
+        habilidades_bncc = []
+        if dados is not None and not dados.empty and ano_bncc and disciplina_bncc and unidade_bncc and objeto_bncc:
+            hab_f = dados[(dados['Ano'].astype(str) == str(ano_bncc)) & (dados['Disciplina'] == disciplina_bncc) & (dados['Unidade Temática'] == unidade_bncc) & (dados['Objeto do Conhecimento'] == objeto_bncc)]
+            todas_hab = sorted(hab_f['Habilidade'].dropna().unique())
+            if todas_hab:
+                habilidades_bncc = st.multiselect("Habilidades BNCC", todas_hab, default=todas_hab[:min(3, len(todas_hab))], key="hab_criar_zero")
+    
+    mat_c = disciplina_bncc
+    obj_c = assunto_criar.strip() if assunto_criar and assunto_criar.strip() else objeto_bncc
+    
+    # Checklist de adaptação (expander)
+    with st.expander("🎯 Checklist de Adaptação (opcional)", expanded=False):
+        st.info("Marque as adaptações que devem ser consideradas na criação da atividade.")
+        col_c1, col_c2, col_c3, col_c4 = st.columns(4)
+        with col_c1:
+            check_desafio = st.checkbox("Questões mais desafiadoras", value=False, key="c0_desafio")
+            check_passo = st.checkbox("Instruções passo a passo", value=False, key="c0_passo")
+        with col_c2:
+            check_complexas = st.checkbox("Compreende instruções complexas", value=False, key="c0_complexas")
+            check_etapas = st.checkbox("Dividir em etapas menores", value=False, key="c0_etapas")
+        with col_c3:
+            check_paragrafos = st.checkbox("Parágrafos curtos", value=False, key="c0_paragrafos")
+            check_dicas = st.checkbox("Dicas de apoio", value=False, key="c0_dicas")
+        with col_c4:
+            check_figuras = st.checkbox("Compreende figuras de linguagem", value=False, key="c0_figuras")
+            check_descricao = st.checkbox("Descrição de imagens", value=False, key="c0_descricao")
+        checklist_criar = {
+            "questoes_desafiadoras": check_desafio, "compreende_instrucoes_complexas": check_complexas,
+            "instrucoes_passo_a_passo": check_passo, "dividir_em_etapas": check_etapas,
+            "paragrafos_curtos": check_paragrafos, "dicas_apoio": check_dicas,
+            "compreende_figuras_linguagem": check_figuras, "descricao_imagens": check_descricao
+        }
+    
+    # Configuração da atividade (uma linha)
+    st.markdown("---")
+    r1, r2, r3, r4 = st.columns(4)
+    with r1:
+        qtd_c = st.slider("Quantidade de Questões", 1, 10, 5, key="cq")
+    with r2:
+        tipo_quest = st.selectbox("Tipo de Questão", ["Objetiva", "Discursiva"], key="ctq")
+    with r3:
+        usar_img = st.checkbox("Incluir Imagens?", value=True, key="usar_img")
+    with r4:
+        qtd_img_sel = st.slider("Qtd. imagens", 0, qtd_c, int(qtd_c/2) if qtd_c > 1 else 0, disabled=not usar_img, key="qtd_img_slider")
+    
+    # Taxonomia de Bloom (expander)
+    with st.expander("🧠 Taxonomia de Bloom (opcional)", expanded=False):
+        if 'bloom_memoria' not in st.session_state:
+            st.session_state.bloom_memoria = {cat: [] for cat in TAXONOMIA_BLOOM.keys()}
+        verbos_finais_para_ia = []
+        usar_bloom = st.checkbox("🎯 Usar Taxonomia de Bloom (Revisada)", key="usar_bloom")
+        if usar_bloom:
+            col_b1, col_b2 = st.columns(2)
+            with col_b1:
+                cat_atual = st.selectbox("Categoria Cognitiva:", list(TAXONOMIA_BLOOM.keys()), key="cat_bloom")
+            with col_b2:
+                selecao_atual = st.multiselect(f"Verbos de '{cat_atual}':", TAXONOMIA_BLOOM[cat_atual], default=st.session_state.bloom_memoria[cat_atual], key=f"ms_bloom_{cat_atual}")
+                st.session_state.bloom_memoria[cat_atual] = selecao_atual
+            for cat in st.session_state.bloom_memoria:
+                verbos_finais_para_ia.extend(st.session_state.bloom_memoria[cat])
+            if verbos_finais_para_ia:
+                st.info(f"**Verbos:** {', '.join(verbos_finais_para_ia)}")
+    
+    st.markdown("---")
+    if st.button("✨ CRIAR ATIVIDADE", type="primary", key="btn_c", use_container_width=True):
+        if not api_key:
+            st.error("❌ Insira a chave da OpenAI nas configurações")
+        else:
+            with st.spinner("Elaborando atividade..."):
+                qtd_final = qtd_img_sel if usar_img else 0
+                rac, txt = criar_profissional(
+                    api_key, aluno, mat_c, obj_c, qtd_c, tipo_quest, qtd_final,
+                    verbos_bloom=verbos_finais_para_ia if usar_bloom else None,
+                    habilidades_bncc=habilidades_bncc,
+                    checklist_adaptacao=checklist_criar
+                )
+                novo_map = {}
+                count = 0
+                tags = re.findall(r'\[\[GEN_IMG: (.*?)\]\]', txt)
+                for p in tags:
+                    count += 1
+                    # Prioridade: BANCO (Unsplash) primeiro; IA só em último caso
+                    url = gerar_imagem_inteligente(api_key, p, unsplash_key, prioridade="BANCO")
+                    if not url and unsplash_key:
+                        url = gerar_imagem_inteligente(api_key, p, unsplash_key, prioridade="IA")
+                    if url:
+                        io = baixar_imagem_url(url)
+                        if io:
+                            novo_map[count] = io.getvalue()
+                txt_fin = txt
+                for i in range(1, count + 1):
+                    txt_fin = re.sub(r'\[\[GEN_IMG: .*?\]\]', f"[[IMG_G{i}]]", txt_fin, count=1)
+                st.session_state['res_create'] = {'rac': rac, 'txt': txt_fin, 'map': novo_map, 'valid': False, 'mat_c': mat_c, 'obj_c': obj_c}
+                st.rerun()
     
     # Exibição do resultado
     if 'res_create' in st.session_state:
