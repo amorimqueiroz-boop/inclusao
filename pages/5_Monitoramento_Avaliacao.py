@@ -4,6 +4,7 @@ import pandas as pd
 import requests
 import json
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import os
 import sys
 
@@ -219,7 +220,7 @@ st.markdown("""
 # ==============================================================================
 # HERO - MONITORAMENTO
 # ==============================================================================
-hora = datetime.now().hour
+hora = datetime.now(ZoneInfo("America/Sao_Paulo")).hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
 USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
 WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
