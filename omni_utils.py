@@ -107,6 +107,23 @@ def icon_title(text: str, icon_key: str, size: int = 24, color: str = None) -> s
 # =============================================================================
 APP_VERSION = "omni_utils v2.5 (Layout colado: menu + hero bem perto)"
 
+def get_setting(name: str, default: str = "") -> str:
+    """
+    Getter multi-plataforma:
+    - Render/containers: usa os.environ
+    - Streamlit Cloud: usa st.secrets
+    Importante: em ambientes sem secrets.toml (ex.: Render), acessar st.secrets pode levantar
+    StreamlitSecretNotFoundError, então fazemos try/except.
+    """
+    v = os.environ.get(name)
+    if v is not None and str(v).strip() != "":
+        return str(v).strip()
+    try:
+        v2 = st.secrets.get(name, default)
+        return str(v2).strip() if v2 is not None else default
+    except Exception:
+        return default
+
 def ensure_state():
     if "autenticado" not in st.session_state:
         st.session_state.autenticado = False
@@ -565,15 +582,15 @@ def render_navbar(active_tab: str = "Início"):
 # 3) SUPABASE & UTILS (LÓGICA PRESERVADA)
 # =============================================================================
 def _sb_url() -> str:
-    url = str(os.environ.get("SUPABASE_URL") or st.secrets.get("SUPABASE_URL", "")).strip()
+    url = str(get_setting("SUPABASE_URL", "")).strip()
     if not url:
         raise RuntimeError("SUPABASE_URL não encontrado nos secrets.")
     return url.rstrip("/")
 
 def _sb_key() -> str:
-    key = str(os.environ.get("SUPABASE_SERVICE_KEY") or st.secrets.get("SUPABASE_SERVICE_KEY", "")).strip()
+    key = str(get_setting("SUPABASE_SERVICE_KEY", "")).strip()
     if not key:
-        key = str(os.environ.get("SUPABASE_ANON_KEY") or st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
+        key = str(get_setting("SUPABASE_ANON_KEY", "")).strip()
     if not key:
         raise RuntimeError("Key não encontrada.")
     return key
