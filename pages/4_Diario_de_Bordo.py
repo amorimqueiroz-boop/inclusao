@@ -306,7 +306,7 @@ def carregar_alunos_workspace():
 def salvar_registro_diario(registro):
     """Salva um registro no diário de bordo"""
     try:
-        url = f"{ou._sb_url()}/rest/v1/diario_bordo"
+        url = f"{ou._sb_url()}/rest/v1/pei_diario_bordo"
         
         # Garantir que o workspace_id está no registro
         registro['workspace_id'] = st.session_state.get("workspace_id")
@@ -324,7 +324,7 @@ def salvar_registro_diario(registro):
 def atualizar_registro_diario(registro_id, dados):
     """Atualiza um registro existente"""
     try:
-        url = f"{ou._sb_url()}/rest/v1/diario_bordo"
+        url = f"{ou._sb_url()}/rest/v1/pei_diario_bordo"
         params = {"id": f"eq.{registro_id}"}
         
         response = requests.patch(url, headers=ou._headers(), params=params, json=dados, timeout=20)
@@ -336,7 +336,7 @@ def atualizar_registro_diario(registro_id, dados):
 def carregar_registros_aluno(aluno_id, limite=50):
     """Carrega registros de um estudante específico"""
     try:
-        url = f"{ou._sb_url()}/rest/v1/diario_bordo"
+        url = f"{ou._sb_url()}/rest/v1/pei_diario_bordo"
         params = {
             "select": "*",
             "aluno_id": f"eq.{aluno_id}",
@@ -359,7 +359,7 @@ def carregar_todos_registros(limite=100):
         return []
     
     try:
-        url = f"{ou._sb_url()}/rest/v1/diario_bordo"
+        url = f"{ou._sb_url()}/rest/v1/pei_diario_bordo"
         params = {
             "select": "*,students(name,grade,class_group)",
             "workspace_id": f"eq.{WORKSPACE_ID}",
@@ -378,7 +378,7 @@ def carregar_todos_registros(limite=100):
 def excluir_registro_diario(registro_id):
     """Exclui um registro do diário"""
     try:
-        url = f"{ou._sb_url()}/rest/v1/diario_bordo"
+        url = f"{ou._sb_url()}/rest/v1/pei_diario_bordo"
         params = {"id": f"eq.{registro_id}"}
         
         response = requests.delete(url, headers=ou._headers(), params=params, timeout=20)
