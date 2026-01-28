@@ -48,7 +48,7 @@ def gap_hub():
 ou.ensure_state()
 
 # 1. Renderiza o Cabeçalho (Logo + Usuário)
-ou.render_omnisfera_header()
+ou.render_omnisfera_header(active_tab="Estudantes")
 
 # ==============================================================================
 # AJUSTE FINO DE LAYOUT (Igual ao PEI - PADRONIZADO)
