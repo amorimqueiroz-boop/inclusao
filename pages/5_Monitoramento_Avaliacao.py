@@ -2,299 +2,354 @@ import streamlit as st
 import graphviz
 
 # ==============================================================================
-# 1. SETUP & CSS (VISUAL "CLEAN PRO")
+# 1. SETUP & DESIGN SYSTEM (VISUAL "PREMIUM GLASS")
 # ==============================================================================
 st.set_page_config(page_title="Central de Conhecimento", page_icon="🧠", layout="wide")
 
 st.markdown("""
 <style>
-    /* Importação de Fontes */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+    /* Fontes e Base */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
     
     html, body, [class*="css"] { font-family: 'Inter', sans-serif; color: #1e293b; }
     .stApp { background-color: #f8fafc; }
 
-    /* Cards Executivos */
-    .exec-card {
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border-left: 5px solid #0F52BA;
-        height: 100%;
-        transition: transform 0.2s;
+    /* Hero Section Gradient */
+    .hero-container {
+        background: linear-gradient(135deg, #0F52BA 0%, #3b82f6 100%);
+        padding: 3rem 2rem;
+        border-radius: 0 0 20px 20px;
+        color: white;
+        margin-top: -60px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 25px -5px rgba(15, 82, 186, 0.25);
     }
-    .exec-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-    .card-title { font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .card-body { font-size: 0.95rem; color: #475569; line-height: 1.6; }
+    .hero-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; }
+    .hero-subtitle { font-size: 1.1rem; opacity: 0.9; font-weight: 300; }
 
-    /* Bibliografia Estilo "Fichamento" */
-    .biblio-item {
-        background: white; border: 1px solid #e2e8f0; border-radius: 8px;
-        padding: 20px; margin-bottom: 15px; border-left: 4px solid #64748b;
+    /* Cards de Conteúdo (Glass Effect) */
+    .content-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+    }
+    .content-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.1);
+        border-color: #0F52BA;
     }
     
-    /* Manual - Steps */
-    .step-box {
-        background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 10px;
-        border-left: 4px solid #0F52BA;
+    /* Títulos e Destaques */
+    .card-header {
+        display: flex; align-items: center; gap: 10px; margin-bottom: 15px;
+        border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;
     }
-
-    /* Glossário */
-    .term-bad { color: #dc2626; font-weight: bold; text-decoration: line-through; }
-    .term-good { color: #16a34a; font-weight: bold; }
-
-    /* Abas */
-    .stTabs [data-baseweb="tab-list"] { gap: 20px; border-bottom: 2px solid #e2e8f0; }
-    .stTabs [aria-selected="true"] { color: #0F52BA !important; border-bottom-color: #0F52BA !important; }
+    .card-icon { font-size: 1.5rem; background: #eff6ff; padding: 8px; border-radius: 8px; }
+    .card-title { font-weight: 700; color: #0f172a; font-size: 1.1rem; }
+    
+    /* Tags e Pílulas */
+    .tag {
+        display: inline-block; padding: 4px 10px; border-radius: 20px;
+        font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+        margin-right: 5px;
+    }
+    .tag-blue { background: #dbeafe; color: #1e40af; }
+    .tag-green { background: #dcfce7; color: #166534; }
+    .tag-red { background: #fee2e2; color: #991b1b; }
+    
+    /* Abas Customizadas */
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; padding: 10px 0; }
+    .stTabs [data-baseweb="tab"] {
+        background-color: white; border-radius: 8px; border: 1px solid #e2e8f0;
+        padding: 8px 20px; font-weight: 600; color: #64748b;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #0F52BA !important; color: white !important; border-color: #0F52BA !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. HEADER
+# 2. HERO HEADER
 # ==============================================================================
-st.title("🧠 Central de Inteligência Inclusiva")
 st.markdown("""
-**Base de Conhecimento Omnisfera:** Fundamentos teóricos, diretrizes legais e manual operacional.
-<br>
+<div class="hero-container">
+    <div class="hero-title">🧠 Central de Inteligência Inclusiva</div>
+    <div class="hero-subtitle">Base de conhecimento atualizada: Decretos 2025, Fundamentos Pedagógicos e Manual Operacional.</div>
+</div>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. NAVEGAÇÃO
+# 3. NAVEGAÇÃO ESTRUTURADA
 # ==============================================================================
-tab_panorama, tab_legal, tab_biblio, tab_glossario, tab_manual = st.tabs([
-    "📊 Panorama & Fundamentos", 
-    "⚖️ Ecossistema Legal", 
-    "📚 Biblioteca de Referência",
-    "📖 Glossário Técnico",
-    "⚙️ Manual da Omnisfera"
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "📊 Fundamentos & Processos", 
+    "⚖️ Legislação 2025", 
+    "📚 Biblioteca Essencial",
+    "📖 Dicionário Técnico",
+    "⚙️ Manual do Sistema"
 ])
 
 # ==============================================================================
-# ABA 1: PANORAMA (RESUMO EXECUTIVO)
+# ABA 1: PANORAMA & FLUXOS (Conceitos Chave)
 # ==============================================================================
-with tab_panorama:
-    st.markdown("### Os 3 Pilares da Educação Inclusiva")
-    st.markdown("Síntese dos fundamentos baseados na metodologia Ritmos/COC e Legislação 2025.")
+with tab1:
+    c_intro, c_flow = st.columns([1, 1.5])
     
-    c1, c2, c3 = st.columns(3)
+    with c_intro:
+        st.markdown("### 🏛️ Os Pilares da Prática")
+        st.markdown("Conceitos extraídos dos Módulos Ritmos e Diretrizes Nacionais.")
+        
+        st.markdown("""
+        <div class="content-card">
+            <div class="card-header">
+                <span class="card-icon">🤝</span>
+                <span class="card-title">1. Filosofia: "Outrar-se"</span>
+            </div>
+            <p style="font-size:0.95rem; color:#475569;">
+                Conceito central de <em>Fernando Pessoa/Bernardo Soares</em>. É a capacidade de sentir o mundo do outro mantendo o 
+                distanciamento profissional. É ter empatia sem confundir papéis. <br>
+                <strong>Meta:</strong> Superar o capacitismo (visão da falta).
+            </p>
+        </div>
+        <br>
+        <div class="content-card">
+            <div class="card-header">
+                <span class="card-icon">⚖️</span>
+                <span class="card-title">2. Justiça Curricular</span>
+            </div>
+            <p style="font-size:0.95rem; color:#475569;">
+                O currículo não pode ser uma barreira. Justiça curricular é adaptar o ensino para que todos tenham 
+                <strong>acesso ao conhecimento</strong>, não apenas presença física. <br>
+                <strong>Ferramenta:</strong> O PEI é a materialização dessa justiça.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with c_flow:
+        st.markdown("### 🔄 O Novo Fluxo de Entrada (2025)")
+        st.caption("Mudança Crítica: O Laudo Médico não é mais a única porta de entrada. O foco é pedagógico.")
+        
+        # Diagrama Graphviz Otimizado e Bonito
+        try:
+            fluxo = graphviz.Digraph()
+            fluxo.attr(rankdir='LR', bgcolor='transparent', margin='0')
+            fluxo.attr('node', shape='box', style='rounded,filled', fontname='Inter', fontsize='11', height='0.6')
+            
+            # Nós
+            fluxo.node('A', '1. Acolhimento\n(Matrícula Garantida)', fillcolor='#dbeafe', color='#3b82f6')
+            fluxo.node('B', '2. ESTUDO DE CASO\n(Avaliação Pedagógica)', fillcolor='#0F52BA', fontcolor='white', color='#0F52BA')
+            fluxo.node('C', '3. Identificação\n(Público-Alvo)', fillcolor='#dcfce7', color='#22c55e')
+            fluxo.node('D', '4. Planejamento\n(PEI + PAEE)', fillcolor='#f3e8ff', color='#a855f7')
+            fluxo.node('E', '5. AEE\n(Duplo Fundo)', fillcolor='#ffedd5', color='#f97316')
+            
+            # Arestas
+            fluxo.edge('A', 'B', label=' Equipe Escolar')
+            fluxo.edge('B', 'C', label=' Substitui Laudo')
+            fluxo.edge('C', 'D')
+            fluxo.edge('D', 'E', label=' Financiamento')
+            
+            st.graphviz_chart(fluxo, use_container_width=True)
+            
+            st.info("""
+            **💡 Nota Técnica:** O **Estudo de Caso** é agora a ferramenta oficial para identificar necessidades. 
+            A escola não pode esperar o laudo médico para começar a agir (Decreto 12.773).
+            """)
+        except Exception:
+            st.error("Visualizador de gráficos indisponível.")
+
+# ==============================================================================
+# ABA 2: LEGISLAÇÃO (Atualizada 2025)
+# ==============================================================================
+with tab2:
+    st.markdown("### 📜 O Novo Marco Regulatório (2025)")
+    st.markdown("Os Decretos 12.686 e 12.773 trouxeram mudanças estruturais no financiamento e na matrícula.")
+
+    c1, c2 = st.columns(2)
     
     with c1:
         st.markdown("""
-        <div class="exec-card" style="border-left-color: #0F52BA;">
-            <div class="card-title">1. Filosofia ("Outrar-se")</div>
-            <div class="card-body">
-                A inclusão começa na postura ética.
-                <br><br>
-                <ul>
-                    <li><strong>Conceito:</strong> Capacidade de sentir o mundo do outro sem perder o distanciamento profissional.</li>
-                    <li><strong>Meta:</strong> Superar o "capacitismo" (preconceito) e a visão médica da deficiência.</li>
-                    <li><strong>Lema:</strong> "Temos direito à diferença quando a igualdade nos descaracteriza."</li>
-                </ul>
+        <div class="content-card" style="border-left: 5px solid #22c55e;">
+            <div class="card-header">
+                <span class="card-icon">💰</span>
+                <span class="card-title">Decreto 12.686/2025: Financiamento</span>
             </div>
+            <p><strong>O que mudou:</strong> Estrutura o "Duplo Fundo" para o FUNDEB.</p>
+            <ul>
+                <li>O aluno da Educação Especial conta <strong>duas vezes</strong> no repasse de verbas: uma pela matrícula comum e outra pelo AEE.</li>
+                <li>Garante recursos para Salas Multifuncionais e contratação de profissionais de apoio.</li>
+            </ul>
+            <span class="tag tag-green">Vitória Histórica</span>
         </div>
         """, unsafe_allow_html=True)
 
     with c2:
         st.markdown("""
-        <div class="exec-card" style="border-left-color: #e11d48;">
-            <div class="card-title">2. Gestão & Justiça</div>
-            <div class="card-body">
-                A inclusão se sustenta na estratégia.
-                <br><br>
-                <ul>
-                    <li><strong>Justiça Curricular:</strong> Adaptar o currículo para que todos aprendam, não apenas "passem".</li>
-                    <li><strong>PEI vs. PAEE:</strong> Clareza entre o papel da sala de aula (PEI) e da sala de recursos (PAEE).</li>
-                    <li><strong>Liderança:</strong> O gestor garante os recursos e a cultura escolar.</li>
-                </ul>
+        <div class="content-card" style="border-left: 5px solid #ef4444;">
+            <div class="card-header">
+                <span class="card-icon">🚫</span>
+                <span class="card-title">Decreto 12.773/2025: Matrícula</span>
             </div>
+            <p><strong>O que mudou:</strong> Criminaliza barreiras na matrícula.</p>
+            <ul>
+                <li>Proíbe explicitamente a cobrança de <strong>taxas extras</strong> em escolas privadas (para mediadores ou materiais).</li>
+                <li>A recusa de matrícula ou a imposição de condições (ex: "só se tiver laudo") é infração grave.</li>
+            </ul>
+            <span class="tag tag-red">Proteção Legal</span>
         </div>
         """, unsafe_allow_html=True)
 
-    with c3:
-        st.markdown("""
-        <div class="exec-card" style="border-left-color: #059669;">
-            <div class="card-title">3. Prática Pedagógica</div>
-            <div class="card-body">
-                A inclusão acontece na sala de aula.
-                <br><br>
-                <ul>
-                    <li><strong>Desenho Universal:</strong> Planejar para todos, reduzindo a necessidade de adaptações.</li>
-                    <li><strong>Flexibilização:</strong> Ajustar tempo, material e avaliação (não o conteúdo essencial).</li>
-                    <li><strong>Equipe:</strong> O Professor Regente lidera; AT e AP dão suporte.</li>
-                </ul>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.divider()
-    
-    st.markdown("### 🔄 O Fluxo da Inclusão (Omnisfera)")
-    st.caption("Como transformamos dados em permanência e sucesso escolar.")
-    
-    # Diagrama de Processo (Visualização Limpa com Try-Except para evitar erros de ambiente)
-    try:
-        fluxo = graphviz.Digraph()
-        fluxo.attr(rankdir='LR', bgcolor='transparent', margin='0.1')
-        fluxo.attr('node', shape='box', style='rounded,filled', fontname='Inter', fontsize='10')
-        
-        fluxo.node('A', '1. Acolhimento\n(Matrícula Sem Barreira)', fillcolor='#cbd5e1')
-        fluxo.node('B', '2. Estudo de Caso\n(Olhar Pedagógico)', fillcolor='#bfdbfe')
-        fluxo.node('C', '3. PEI / PAEE\n(Planejamento)', fillcolor='#0F52BA', fontcolor='white')
-        fluxo.node('D', '4. Prática\n(Sala de Aula + AEE)', fillcolor='#86efac')
-        fluxo.node('E', '5. Reavaliação\n(Processo Vivo)', fillcolor='#fcd34d')
-        
-        fluxo.edge('A', 'B')
-        fluxo.edge('B', 'C')
-        fluxo.edge('C', 'D')
-        fluxo.edge('D', 'E')
-        fluxo.edge('E', 'C', label=' Ajustes')
-        
-        st.graphviz_chart(fluxo, use_container_width=True)
-    except Exception as e:
-        st.error(f"Erro ao renderizar gráfico: {e}")
+    st.markdown("---")
+    st.markdown("#### ⏳ Linha do Tempo Resumida")
+    st.markdown("""
+    * **1988 (Constituição):** Educação como direito de TODOS.
+    * **2008 (PNEEPEI):** Fim da segregação. Foco na Escola Comum.
+    * **2015 (LBI - Lei 13.146):** Deficiência = Impedimento + Barreira. Estatuto da PcD.
+    * **2025 (Novos Decretos):** Garantia de verba e tolerância zero com a exclusão.
+    """)
 
 # ==============================================================================
-# ABA 2: LEGAL (ECOSSISTEMA)
+# ABA 3: BIBLIOTECA (Fichamentos)
 # ==============================================================================
-with tab_legal:
-    st.header("⚖️ Ecossistema Legal")
-    
-    c_law1, c_law2 = st.columns([1, 2])
-    
-    with c_law1:
-        st.info("""
-        **Decreto 12.686 (2025)**
-        
-        Reestrutura o financiamento do AEE (Duplo Fundo). Garante que a escola receba verba extra para cada aluno público-alvo da educação especial matriculado.
-        """)
-        
-        st.warning("""
-        **Decreto 12.773 (2025)**
-        
-        Endurece regras contra a recusa de matrícula. Torna explícito que escolas privadas não podem cobrar taxas extras por acessibilidade ou mediador.
-        """)
+with tab3:
+    st.markdown("### 📚 Acervo Bibliográfico Omnisfera")
+    st.caption("Resumos executivos das obras fundamentais carregadas no sistema.")
 
-    with c_law2:
-        st.markdown("#### Timeline dos Avanços")
-        # Timeline simplificada em Markdown para carregar rápido e sem erros
-        st.markdown("""
-        * **1988 - Constituição:** Educação é direito de todos (Art. 205).
-        * **2008 - PNEEPEI:** Política Nacional que foca na escola comum.
-        * **2015 - LBI (Lei 13.146):** Estatuto da Pessoa com Deficiência. Crime de discriminação.
-        * **2024 - PNEE:** Política Nacional de Equidade (foco em interseccionalidade).
-        * **2025 - Novos Decretos:** Foco em financiamento e garantia de matrícula.
-        """)
-
-# ==============================================================================
-# ABA 3: BIBLIOTECA (REFERÊNCIA)
-# ==============================================================================
-with tab_biblio:
-    st.header("📚 Referências Essenciais")
-    st.markdown("Resumos executivos das obras que fundamentam a prática da Omnisfera.")
-
-    obras = [
+    refs = [
         {
             "titulo": "Inclusão Escolar: O que é? Por quê? Como fazer?",
             "autor": "Maria Teresa Eglér Mantoan",
-            "tipo": "Filosofia",
-            "resumo": "Obra seminal que diferencia 'integração' (aluno se adapta) de 'inclusão' (escola muda). Defende que não existe aluno ineducável e que a diferenciação enriquece a todos."
+            "tag": "Filosofia",
+            "texto": "Obra seminal. Mantoan defende que não existe 'aluno ineducável'. A escola que se adapta ao aluno (Inclusão) é diferente da escola que pede para o aluno se adaptar (Integração). A diferenciação enriquece a todos."
         },
         {
             "titulo": "Declaração de Salamanca (1994)",
             "autor": "UNESCO",
-            "tipo": "Marco Legal",
-            "resumo": "Estabelece que as escolas regulares com orientação inclusiva são os meios mais eficazes de combater atitudes discriminatórias e construir uma sociedade inclusiva."
-        },
-        {
-            "titulo": "Lei Brasileira de Inclusão (2015)",
-            "autor": "Legislação Federal",
-            "tipo": "Direito",
-            "resumo": "Define deficiência não como doença, mas como interação com barreiras. Criminaliza a discriminação e obriga a eliminação de barreiras (urbanísticas, comunicacionais, atitudinais)."
+            "tag": "Marco Mundial",
+            "texto": "Estabeleceu que escolas regulares com orientação inclusiva são os 'meios mais eficazes' de combater atitudes discriminatórias. Onde tudo começou globalmente."
         },
         {
             "titulo": "Os Benefícios da Educação Inclusiva",
             "autor": "Instituto Alana / Harvard",
-            "tipo": "Evidência",
-            "resumo": "Estudos comprovam que alunos sem deficiência em salas inclusivas desenvolvem melhores habilidades socioemocionais e não têm prejuízo acadêmico."
+            "tag": "Evidências",
+            "texto": "Estudos comprovam: Alunos típicos (sem deficiência) em salas inclusivas desenvolvem mais empatia, liderança e resolução de problemas. A inclusão não 'atrasa' a turma, ela a qualifica."
+        },
+        {
+            "titulo": "Cadernos de Educação Especial",
+            "autor": "MEC / SEESP",
+            "tag": "Prática",
+            "texto": "Define as atribuições do AEE: Prover recursos de acessibilidade (Libras, Braille, Tecnologia Assistiva) para eliminar barreiras, não para substituir o ensino da sala comum."
         }
     ]
 
-    for obra in obras:
-        cor_tag = "#0F52BA" if obra['tipo'] == "Filosofia" else ("#e11d48" if obra['tipo'] == "Direito" else "#059669")
-        st.markdown(f"""
-        <div class="biblio-item">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:800; font-size:1.1rem; color:#1e293b;">{obra['titulo']}</span>
-                <span style="background:{cor_tag}; color:white; padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:bold;">{obra['tipo']}</span>
+    col_a, col_b = st.columns(2)
+    
+    for i, ref in enumerate(refs):
+        # Alterna colunas
+        with (col_a if i % 2 == 0 else col_b):
+            cor = "#0F52BA" if ref['tag'] == "Filosofia" else "#64748b"
+            st.markdown(f"""
+            <div class="content-card" style="border-top: 4px solid {cor}; margin-bottom: 20px;">
+                <div style="font-weight: 700; color: #1e293b; font-size: 1.05rem;">{ref['titulo']}</div>
+                <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 10px;">{ref['autor']} • <span style="color:{cor};">{ref['tag']}</span></div>
+                <p style="font-size: 0.95rem; color: #334155; line-height: 1.5;">{ref['texto']}</p>
             </div>
-            <div style="color:#64748b; font-style:italic; font-size:0.9rem; margin-bottom:10px;">{obra['autor']}</div>
-            <div style="color:#334155; line-height:1.5;">{obra['resumo']}</div>
+            """, unsafe_allow_html=True)
+
+# ==============================================================================
+# ABA 4: DICIONÁRIO TÉCNICO (Visual)
+# ==============================================================================
+with tab4:
+    st.markdown("### 📖 Dicionário Anticapacitista")
+    st.markdown("Alinhamento conceitual para a equipe escolar. **A linguagem cria cultura.**")
+
+    c1, c2 = st.columns(2)
+    
+    with c1:
+        st.markdown("#### ✅ Termos Corretos")
+        termos_bons = [
+            ("Pessoa com Deficiência (PcD)", "Termo legal (LBI). Marca que a deficiência é um atributo, não a pessoa inteira."),
+            ("Barreira", "Qualquer entrave (físico ou atitudinal) que limite a participação. A deficiência é a interação com a barreira."),
+            ("Estudo de Caso", "Metodologia pedagógica de avaliação que substitui a exigência de laudo médico inicial."),
+            ("Neurodivergente", "Pessoas com funcionamento cerebral atípico (TEA, TDAH, Dislexia), sem conotação de doença.")
+        ]
+        for t, d in termos_bons:
+            st.markdown(f"""
+            <div style="background:#f0fdf4; border-left:4px solid #16a34a; padding:12px; margin-bottom:10px; border-radius:4px;">
+                <strong style="color:#166534;">{t}</strong><br>
+                <small style="color:#334155;">{d}</small>
+            </div>
+            """, unsafe_allow_html=True)
+
+    with c2:
+        st.markdown("#### 🚫 Termos a Abolir")
+        termos_ruins = [
+            ("Portador de Deficiência", "Ninguém 'porta' deficiência como se fosse um objeto. Ela é intrínseca."),
+            ("Aluno de Inclusão", "Estigmatizante. Todos os alunos são de inclusão. Use 'Público-alvo da Ed. Especial'."),
+            ("Criança Especial", "Eufemismo que infantiliza. Use o nome da criança ou 'estudante com deficiência'."),
+            ("Surdo-Mudo", "Incorreto. A surdez não implica mudez. Surdos têm voz."),
+            ("Doença Mental", "Deficiência não é doença. Doença tem cura/tratamento; deficiência é condição.")
+        ]
+        for t, d in termos_ruins:
+            st.markdown(f"""
+            <div style="background:#fef2f2; border-left:4px solid #dc2626; padding:12px; margin-bottom:10px; border-radius:4px;">
+                <strong style="color:#991b1b; text-decoration: line-through;">{t}</strong><br>
+                <small style="color:#334155;">{d}</small>
+            </div>
+            """, unsafe_allow_html=True)
+
+# ==============================================================================
+# ABA 5: MANUAL DA OMNISFERA (NOVO)
+# ==============================================================================
+with tab5:
+    st.markdown("### ⚙️ Manual de Navegação")
+    st.info("Guia rápido para o Professor Regente e a Equipe Técnica utilizarem a plataforma.")
+
+    step1, step2, step3 = st.columns(3)
+    
+    with step1:
+        st.markdown("""
+        <div class="content-card" style="background:#f8fafc;">
+            <h4>1️⃣ Módulo PEI 360º</h4>
+            <p><strong>Para quem:</strong> Professor Regente.</p>
+            <ol style="font-size:0.9rem; padding-left:15px;">
+                <li>Cadastre os dados básicos na aba <strong>Estudante</strong>.</li>
+                <li>Preencha o <strong>Hiperfoco</strong> (Vital para a IA!).</li>
+                <li>Use os sliders nas abas Acadêmico/Social para mapear o nível.</li>
+                <li>Vá em <strong>Consultoria IA</strong> e gere o PEI Técnico.</li>
+            </ol>
         </div>
         """, unsafe_allow_html=True)
 
-# ==============================================================================
-# ABA 4: GLOSSÁRIO (VISUAL)
-# ==============================================================================
-with tab_glossario:
-    st.header("📖 Dicionário Anticapacitista")
-    st.markdown("A linguagem cria cultura. Use este guia para alinhar a comunicação da escola.")
+    with step2:
+        st.markdown("""
+        <div class="content-card" style="background:#f8fafc;">
+            <h4>2️⃣ Módulo PAEE</h4>
+            <p><strong>Para quem:</strong> Sala de Recursos (AEE).</p>
+            <ol style="font-size:0.9rem; padding-left:15px;">
+                <li>Foque na aba <strong>Diagnóstico de Barreiras</strong>.</li>
+                <li>Defina metas de <strong>Habilidades</strong> (não conteúdo).</li>
+                <li>Gere a <strong>Carta de Articulação</strong> para alinhar com o professor da sala.</li>
+            </ol>
+        </div>
+        """, unsafe_allow_html=True)
 
-    col_g1, col_g2 = st.columns(2)
+    with step3:
+        st.markdown("""
+        <div class="content-card" style="background:#f8fafc;">
+            <h4>3️⃣ Monitoramento</h4>
+            <p><strong>Para quem:</strong> Coordenação.</p>
+            <ol style="font-size:0.9rem; padding-left:15px;">
+                <li>Acesse bimestralmente.</li>
+                <li>Compare as metas do PEI com o Diário de Bordo.</li>
+                <li>Gere o gráfico de evolução para mostrar à família.</li>
+            </ol>
+        </div>
+        """, unsafe_allow_html=True)
     
-    with col_g1:
-        st.subheader("🚫 Abolir (Termos Ofensivos)")
-        st.markdown("""
-        * <span class="term-bad">Portador de Deficiência</span> → Deficiência não se porta, se tem.
-        * <span class="term-bad">Criança Especial</span> → Todos são especiais. Use o nome ou PcD.
-        * <span class="term-bad">Aluno de Inclusão</span> → Estigmatiza. Use "Estudante com deficiência".
-        * <span class="term-bad">Surdo-mudo</span> → Incorreto. Surdos têm voz, só não ouvem.
-        * <span class="term-bad">Atrasado / Lento</span> → Desrespeitoso. Use "Ritmo próprio".
-        """, unsafe_allow_html=True)
-
-    with col_g2:
-        st.subheader("✅ Adotar (Termos Técnicos)")
-        st.markdown("""
-        * <span class="term-good">Pessoa com Deficiência (PcD)</span> → Termo legal correto (LBI).
-        * <span class="term-good">Barreira</span> → O que impede a participação (Física ou Atitudinal).
-        * <span class="term-good">Estudo de Caso</span> → Avaliação pedagógica que precede o PEI.
-        * <span class="term-good">Neurodivergente</span> → Cérebro que funciona de forma atípica (TEA, TDAH).
-        * <span class="term-good">Público-Alvo da Ed. Especial (PAEE)</span> → Termo técnico oficial.
-        """, unsafe_allow_html=True)
-
-# ==============================================================================
-# ABA 5: MANUAL DA OMNISFERA
-# ==============================================================================
-with tab_manual:
-    st.header("⚙️ Manual de Uso do Sistema")
-    st.markdown("Guia rápido para o educador navegar nos módulos da plataforma.")
-
-    # Accordions passo a passo
-    with st.expander("1️⃣ Módulo PEI 360º (O Coração do Sistema)", expanded=True):
-        st.markdown("""
-        Este é o módulo principal para o Professor Regente.
-        1.  **Aba Estudante:** Preencha os dados básicos e o Hiperfoco (essencial para a IA).
-        2.  **Abas Acadêmico/Social/Motor:** Use as rubricas (sliders) para mapear o nível atual.
-        3.  **Aba Consultoria IA:** Clique em "Gerar Análise". A IA lerá os dados e criará o PEI Técnico.
-        4.  **Aba Jornada:** Cria uma missão gamificada para o aluno baseada no PEI.
-        """)
-
-    with st.expander("2️⃣ Módulo PAEE & Recursos"):
-        st.markdown("""
-        Focado na Sala de Recursos e Especialistas.
-        1.  **Diagnóstico de Barreiras:** Identifique o que impede o acesso (físico ou comunicação).
-        2.  **Plano de Habilidades:** Defina metas específicas para o AEE (ex: uso de tesoura, Libras).
-        3.  **Carta de Articulação:** Gere um documento automático para alinhar com o professor da sala.
-        """)
-
-    with st.expander("3️⃣ Módulo Monitoramento"):
-        st.markdown("""
-        Para acompanhamento bimestral ou semestral.
-        1.  Selecione o aluno.
-        2.  Compare as metas do PEI com o Diário de Bordo.
-        3.  Gere o relatório de evolução para a família.
-        """)
-
-# Rodapé
-st.markdown("---")
-st.caption("Central de Conhecimento Omnisfera • Atualizado 2026")
+    st.divider()
+    st.caption("Dúvidas? Consulte a Coordenação Pedagógica ou a Base Legal na Aba 2.")
