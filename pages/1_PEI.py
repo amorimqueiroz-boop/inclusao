@@ -674,7 +674,12 @@ def limpar_texto_pdf(texto: str):
     t = texto.replace("**", "").replace("__", "").replace("#", "").replace("•", "-")
     t = t.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
     t = t.replace("–", "-").replace("—", "-")
-    return t.encode("latin-1", "replace").decode("latin-1")
+    # Usar encode/decode com replace para tratar todos os caracteres não-latin-1
+    try:
+        return t.encode("latin-1", "replace").decode("latin-1")
+    except Exception:
+        # Fallback: remover todos os caracteres não-ASCII manualmente
+        return ''.join(c if ord(c) < 256 else '?' for c in t)
 
 def finding_logo():
     """Retorna o caminho do arquivo de logo se existir, caso contrário None"""
@@ -752,7 +757,7 @@ def gerar_pdf_final(dados: dict):
     pdf.set_font("Arial", "B", 10)
     pdf.cell(40, 6, "Estudante:", 0, 0)
     pdf.set_font("Arial", "", 10)
-    pdf.cell(0, 6, dados.get("nome", ""), 0, 1)
+    pdf.cell(0, 6, limpar_texto_pdf(dados.get("nome", "")), 0, 1)
 
     pdf.set_font("Arial", "B", 10)
     pdf.cell(40, 6, "Data de Nascimento:", 0, 0)
@@ -760,28 +765,28 @@ def gerar_pdf_final(dados: dict):
     nasc = dados.get("nasc")
     if nasc:
         if isinstance(nasc, str):
-            pdf.cell(0, 6, nasc, 0, 1)
+            pdf.cell(0, 6, limpar_texto_pdf(nasc), 0, 1)
         elif hasattr(nasc, 'strftime'):
             pdf.cell(0, 6, nasc.strftime("%d/%m/%Y"), 0, 1)
         else:
-            pdf.cell(0, 6, str(nasc), 0, 1)
+            pdf.cell(0, 6, limpar_texto_pdf(str(nasc)), 0, 1)
     else:
         pdf.cell(0, 6, "-", 0, 1)
 
     pdf.set_font("Arial", "B", 10)
     pdf.cell(40, 6, "Série/Ano:", 0, 0)
     pdf.set_font("Arial", "", 10)
-    pdf.cell(0, 6, dados.get("serie", ""), 0, 1)
+    pdf.cell(0, 6, limpar_texto_pdf(dados.get("serie", "")), 0, 1)
 
     pdf.set_font("Arial", "B", 10)
     pdf.cell(40, 6, "Turma:", 0, 0)
     pdf.set_font("Arial", "", 10)
-    pdf.cell(0, 6, dados.get("turma", ""), 0, 1)
+    pdf.cell(0, 6, limpar_texto_pdf(dados.get("turma", "")), 0, 1)
 
     pdf.set_font("Arial", "B", 10)
     pdf.cell(40, 6, "Matrícula/RA:", 0, 0)
     pdf.set_font("Arial", "", 10)
-    pdf.cell(0, 6, dados.get("matricula", dados.get("ra", "")), 0, 1)
+    pdf.cell(0, 6, limpar_texto_pdf(dados.get("matricula", dados.get("ra", ""))), 0, 1)
     pdf.ln(3)
 
     # Histórico Escolar
@@ -806,7 +811,7 @@ def gerar_pdf_final(dados: dict):
         pdf.set_font("Arial", "B", 10)
         pdf.cell(0, 6, "Composição Familiar:", 0, 1)
         pdf.set_font("Arial", "", 10)
-        pdf.cell(0, 6, ", ".join(comp_fam), 0, 1)
+        pdf.cell(0, 6, limpar_texto_pdf(", ".join(comp_fam)), 0, 1)
         pdf.ln(2)
 
     # ======================================================================
@@ -818,7 +823,8 @@ def gerar_pdf_final(dados: dict):
     pdf.set_font("Arial", "B", 10)
     pdf.cell(0, 6, "Diagnóstico:", 0, 1)
     pdf.set_font("Arial", "", 10)
-    pdf.multi_cell(0, 6, limpar_texto_pdf(dados.get("diagnostico", "")))
+    diagnostico_limpo = limpar_texto_pdf(dados.get("diagnostico", ""))
+    pdf.multi_cell(0, 6, diagnostico_limpo)
     pdf.ln(3)
 
     # Medicações
@@ -832,7 +838,8 @@ def gerar_pdf_final(dados: dict):
             posologia = med.get("posologia", "")
             escola = med.get("escola", False)
             escola_txt = " (Administração na escola)" if escola else ""
-            pdf.multi_cell(0, 6, f"• {nome} - {posologia}{escola_txt}")
+            texto_med = limpar_texto_pdf(f"- {nome} - {posologia}{escola_txt}")
+            pdf.multi_cell(0, 6, texto_med)
         pdf.ln(2)
 
     # ======================================================================
@@ -848,7 +855,8 @@ def gerar_pdf_final(dados: dict):
             pdf.set_font("Arial", "B", 10)
             pdf.cell(0, 6, "Hiperfoco/Interesse Principal:", 0, 1)
             pdf.set_font("Arial", "", 10)
-            pdf.multi_cell(0, 6, limpar_texto_pdf(hiperfoco))
+            hiperfoco_limpo = limpar_texto_pdf(hiperfoco)
+            pdf.multi_cell(0, 6, hiperfoco_limpo)
             pdf.ln(2)
         
         if potencias:
@@ -882,16 +890,19 @@ def gerar_pdf_final(dados: dict):
             pdf.set_font("Arial", "B", 10)
             pdf.cell(0, 6, "Orientações Gerais dos Especialistas:", 0, 1)
             pdf.set_font("Arial", "", 10)
-            pdf.multi_cell(0, 6, limpar_texto_pdf(orientacoes))
+            orientacoes_limpo = limpar_texto_pdf(orientacoes)
+            pdf.multi_cell(0, 6, orientacoes_limpo)
             pdf.ln(2)
         
         if orientacoes_por_prof and isinstance(orientacoes_por_prof, dict):
             for prof, orient in orientacoes_por_prof.items():
                 if orient:
                     pdf.set_font("Arial", "B", 10)
-                    pdf.cell(0, 6, f"Orientações - {prof}:", 0, 1)
+                    titulo_orient = limpar_texto_pdf(f"Orientações - {prof}:")
+                    pdf.cell(0, 6, titulo_orient, 0, 1)
                     pdf.set_font("Arial", "", 10)
-                    pdf.multi_cell(0, 6, limpar_texto_pdf(orient))
+                    orient_limpo = limpar_texto_pdf(orient)
+                    pdf.multi_cell(0, 6, orient_limpo)
                     pdf.ln(2)
 
     # ======================================================================
@@ -906,12 +917,14 @@ def gerar_pdf_final(dados: dict):
             if itens:
                 pdf.set_font("Arial", "B", 11)
                 pdf.set_text_color(0, 51, 102)
-                pdf.cell(0, 8, limpar_texto_pdf(area), 0, 1)
+                area_limpo = limpar_texto_pdf(area)
+                pdf.cell(0, 8, area_limpo, 0, 1)
                 pdf.set_text_color(0, 0, 0)
                 pdf.set_font("Arial", "", 10)
                 for item in itens:
                     nivel = (dados.get("niveis_suporte") or {}).get(f"{area}_{item}", "Monitorado")
-                    pdf.add_flat_icon_item(limpar_texto_pdf(f"{item} (Nível de Suporte: {nivel})"), "check")
+                    item_texto = limpar_texto_pdf(f"{item} (Nível de Suporte: {nivel})")
+                    pdf.add_flat_icon_item(item_texto, "check")
                 pdf.ln(2)
 
     # ======================================================================
@@ -978,13 +991,15 @@ def gerar_pdf_final(dados: dict):
                 pdf.ln(5)
                 pdf.set_font("Arial", "B", 12)
                 pdf.set_text_color(0, 51, 102)
-                pdf.cell(0, 8, l.replace("#", "").strip(), 0, 1, "L")
+                titulo_limpo = limpar_texto_pdf(l.replace("#", "").strip())
+                pdf.cell(0, 8, titulo_limpo, 0, 1, "L")
                 pdf.set_font("Arial", "", 10)
                 pdf.set_text_color(0, 0, 0)
             elif l.startswith("-") or l.startswith("*"):
-                pdf.add_flat_icon_item(l.replace("-", "").replace("*", "").strip(), "dot")
+                texto_limpo = limpar_texto_pdf(l.replace("-", "").replace("*", "").strip())
+                pdf.add_flat_icon_item(texto_limpo, "dot")
             else:
-                pdf.multi_cell(0, 6, l)
+                pdf.multi_cell(0, 6, limpar_texto_pdf(l))
 
     # ======================================================================
     # 8. MONITORAMENTO E ACOMPANHAMENTO
@@ -1014,14 +1029,15 @@ def gerar_pdf_final(dados: dict):
             pdf.set_font("Arial", "B", 10)
             pdf.cell(50, 6, "Status da Meta:", 0, 0)
             pdf.set_font("Arial", "", 10)
-            pdf.cell(0, 6, status_meta, 0, 1)
+            pdf.cell(0, 6, limpar_texto_pdf(status_meta), 0, 1)
             pdf.ln(2)
         
         if parecer_geral:
             pdf.set_font("Arial", "B", 10)
             pdf.cell(0, 6, "Parecer Geral:", 0, 1)
             pdf.set_font("Arial", "", 10)
-            pdf.multi_cell(0, 6, limpar_texto_pdf(parecer_geral))
+            parecer_limpo = limpar_texto_pdf(parecer_geral)
+            pdf.multi_cell(0, 6, parecer_limpo)
             pdf.ln(2)
         
         if proximos_passos:
@@ -1095,9 +1111,10 @@ def gerar_docx_final(dados: dict):
     if meds:
         p = doc.add_paragraph()
         p.add_run("Medicações em Uso:").bold = True
-        for med in meds:
-            escola_txt = " (Administração na escola)" if med.get("escola") else ""
-            doc.add_paragraph(f"• {med.get('nome', '')} - {med.get('posologia', '')}{escola_txt}", style='List Bullet')
+            for med in meds:
+                escola_txt = " (Administração na escola)" if med.get("escola") else ""
+                texto_med = limpar_texto_pdf(f"{med.get('nome', '')} - {med.get('posologia', '')}{escola_txt}")
+                doc.add_paragraph(texto_med, style='List Bullet')
     
     # 3. POTENCIALIDADES
     if dados.get("hiperfoco") or dados.get("potencias"):
