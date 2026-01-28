@@ -1,1438 +1,1258 @@
-# ==============================================================================
-# DIÁRIO DE BORDO AEE - SUPABASE INTEGRATION
-# ==============================================================================
-
-import streamlit as st
+# omni_utils.py
 import os
-import json
-import pandas as pd
-from datetime import datetime, date, timedelta
-import requests
-import time
-import uuid
-import plotly.express as px
 import base64
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import requests
+import streamlit as st
+from streamlit_option_menu import option_menu
 
+# =============================================================================
+# 0) BIBLIOTECA DE ÍCONES FLAT (REMIXICON) - SISTEMA CENTRALIZADO
+# =============================================================================
+ICON_LIBRARY = {
+    # Módulos Principais
+    "estudantes": {"icon": "ri-user-star-line", "color": "#2563EB"},
+    "pei": {"icon": "ri-book-open-line", "color": "#0EA5E9"},
+    "pae": {"icon": "ri-tools-line", "color": "#A855F7"},
+    "hub": {"icon": "ri-lightbulb-flash-line", "color": "#06B6D4"},
+    "diario": {"icon": "ri-edit-box-line", "color": "#F43F5E"},
+    "monitoramento": {"icon": "ri-line-chart-line", "color": "#0C4A6E"},
+    
+    # Central de Conhecimento - Abas
+    "panorama": {"icon": "ri-bar-chart-box-line", "color": "#2563EB"},
+    "legislacao": {"icon": "ri-scales-3-line", "color": "#2563EB"},
+    "glossario": {"icon": "ri-book-2-line", "color": "#2563EB"},
+    "linguagem": {"icon": "ri-chat-3-line", "color": "#2563EB"},
+    "biblioteca": {"icon": "ri-library-line", "color": "#2563EB"},
+    "manual": {"icon": "ri-book-mark-line", "color": "#2563EB"},
+    
+    # Ações e Estados
+    "fluxo": {"icon": "ri-flow-chart", "color": "#2563EB"},
+    "filosofia": {"icon": "ri-heart-line", "color": "#2563EB"},
+    "justica": {"icon": "ri-scales-line", "color": "#2563EB"},
+    "buscar": {"icon": "ri-search-line", "color": "#64748B"},
+    "preferir": {"icon": "ri-checkbox-circle-line", "color": "#16A34A"},
+    "evitar": {"icon": "ri-close-circle-line", "color": "#DC2626"},
+    "legislacao_doc": {"icon": "ri-government-line", "color": "#2563EB"},
+    "pedagogia": {"icon": "ri-brain-line", "color": "#2563EB"},
+    "livro": {"icon": "ri-book-line", "color": "#2563EB"},
+    
+    # Hub de Inclusão
+    "adaptar_prova": {"icon": "ri-file-edit-line", "color": "#06B6D4"},
+    "adaptar_atividade": {"icon": "ri-scissors-cut-line", "color": "#06B6D4"},
+    "criar_zero": {"icon": "ri-magic-line", "color": "#06B6D4"},
+    "estudio_visual": {"icon": "ri-image-edit-line", "color": "#06B6D4"},
+    "roteiro": {"icon": "ri-file-list-3-line", "color": "#06B6D4"},
+    "papo_mestre": {"icon": "ri-chat-smile-2-line", "color": "#06B6D4"},
+    "dinamica": {"icon": "ri-group-line", "color": "#06B6D4"},
+    "plano_aula": {"icon": "ri-calendar-todo-line", "color": "#06B6D4"},
+    
+    # Educação Infantil
+    "experiencia": {"icon": "ri-lightbulb-line", "color": "#06B6D4"},
+    "rotina": {"icon": "ri-time-line", "color": "#06B6D4"},
+    "brincar": {"icon": "ri-gamepad-line", "color": "#06B6D4"},
+    
+    # Ações Comuns
+    "salvar": {"icon": "ri-save-line", "color": "#2563EB"},
+    "editar": {"icon": "ri-edit-line", "color": "#2563EB"},
+    "deletar": {"icon": "ri-delete-bin-line", "color": "#DC2626"},
+    "adicionar": {"icon": "ri-add-circle-line", "color": "#16A34A"},
+    "validar": {"icon": "ri-checkbox-circle-line", "color": "#16A34A"},
+    "cancelar": {"icon": "ri-close-circle-line", "color": "#DC2626"},
+    "download": {"icon": "ri-download-line", "color": "#2563EB"},
+    "upload": {"icon": "ri-upload-line", "color": "#2563EB"},
+    "visualizar": {"icon": "ri-eye-line", "color": "#2563EB"},
+    "configurar": {"icon": "ri-settings-3-line", "color": "#64748B"},
+    "info": {"icon": "ri-information-line", "color": "#2563EB"},
+    "aviso": {"icon": "ri-alert-line", "color": "#F59E0B"},
+    "erro": {"icon": "ri-error-warning-line", "color": "#DC2626"},
+    "sucesso": {"icon": "ri-check-line", "color": "#16A34A"},
+}
 
-import omni_utils as ou  # módulo atualizado
-from omni_utils import get_icon, icon_title
+def get_icon(key: str, size: int = 20, color: str = None) -> str:
+    """
+    Retorna HTML do ícone RemixIcon com cor personalizada.
+    
+    Args:
+        key: Chave do ícone na biblioteca
+        size: Tamanho em pixels (padrão 20)
+        color: Cor personalizada (sobrescreve a cor padrão)
+    
+    Returns:
+        String HTML com o ícone
+    """
+    icon_data = ICON_LIBRARY.get(key.lower(), {"icon": "ri-question-line", "color": "#64748B"})
+    icon_class = icon_data["icon"]
+    icon_color = color or icon_data["color"]
+    
+    return f'<i class="{icon_class}" style="font-size: {size}px; color: {icon_color}; vertical-align: middle;"></i>'
 
-# ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
-st.set_page_config(
-    page_title="Omnisfera | Diário de Bordo",
-    page_icon="omni_icone.png" if os.path.exists("omni_icone.png") else "📘",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
+def icon_title(text: str, icon_key: str, size: int = 24, color: str = None) -> str:
+    """
+    Cria um título com ícone integrado.
+    
+    Args:
+        text: Texto do título
+        icon_key: Chave do ícone na biblioteca
+        size: Tamanho do ícone
+        color: Cor personalizada
+    
+    Returns:
+        String HTML formatada
+    """
+    icon_html = get_icon(icon_key, size, color)
+    return f'{icon_html} <span style="vertical-align: middle;">{text}</span>'
 
-APP_VERSION = "v150.0 (SaaS Design)"
+# =============================================================================
+# 1) ESTADO E CONFIGURAÇÃO INICIAL
+# =============================================================================
+APP_VERSION = "omni_utils v2.5 (Layout colado: menu + hero bem perto)"
 
-# ✅ UI lockdown (não quebra se faltar)
-try:
-    from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
-    hide_streamlit_chrome_if_needed()
-    hide_default_sidebar_nav()
-except Exception:
-    pass
+def ensure_state():
+    if "autenticado" not in st.session_state:
+        st.session_state.autenticado = False
+    if "user" not in st.session_state:
+        st.session_state.user = None
+    if "workspace_id" not in st.session_state:
+        st.session_state.workspace_id = None
+    if "workspace_name" not in st.session_state:
+        st.session_state.workspace_name = "Workspace"
+    if "usuario_nome" not in st.session_state:
+        st.session_state.usuario_nome = "Visitante"
+    if "usuario_cargo" not in st.session_state:
+        st.session_state.usuario_cargo = ""
+    if "view" not in st.session_state:
+        st.session_state.view = "login"
 
-# ✅ Header + Navbar (depois do page_config)
-ou.render_omnisfera_header()
-ou.render_navbar(active_tab="Diário de Bordo")
-ou.inject_compact_app_css()
+# =============================================================================
+# 2) UI COMPONENTS (HEADER & NAVBAR) — PADRÃO ESTÁVEL
+# =============================================================================
+def get_base64_image(path: str) -> str | None:
+    if not os.path.exists(path):
+        return None
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
 
-# Adiciona classe no body para cores específicas das abas
-st.markdown("<script>document.body.classList.add('page-rose');</script>", unsafe_allow_html=True)
+def _get_initials(nome: str) -> str:
+    if not nome:
+        return "U"
+    parts = nome.strip().split()
+    return f"{parts[0][0]}{parts[-1][0]}".upper() if len(parts) >= 2 else parts[0][:2].upper()
 
-# ==============================================================================
-# AJUSTE FINO DE LAYOUT (ANTES DO HERO - PADRONIZADO)
-# ==============================================================================
-def forcar_layout_hub():
-    st.markdown("""
+def _get_ws_short(max_len: int = 22) -> str:
+    ws = st.session_state.get("workspace_name", "") or "Workspace"
+    ws = str(ws).strip()
+    return (ws[:max_len] + "...") if len(ws) > max_len else ws
+
+def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int = 0):
+    """
+    CSS base do layout:
+    - Topbar fixa
+    - Navbar fixa
+    - Espaço exato para navbar + conteúdo
+    - NÃO mexe em inputs globalmente
+
+    >>> content_gap controla o "respiro" entre a navbar e o primeiro conteúdo (HERO).
+    >>> Deixei BEM PERTO: content_gap=2 (pode pôr 0 se quiser colar total).
+    """
+    st.markdown(
+        f"""
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+  :root {{
+    --topbar-h: {topbar_h}px;
+    --navbar-h: {navbar_h}px;
+    --content-gap: {content_gap}px;
+  }}
+
+  /* Oculta chrome Streamlit (sem depender de classes internas) */
+  #MainMenu {{ visibility: hidden; }}
+  footer {{ visibility: hidden; }}
+  header[data-testid="stHeader"] {{ display:none !important; }}
+  [data-testid="stToolbar"] {{ display:none !important; }}
+  section[data-testid="stSidebar"] {{ display:none !important; }}
+  [data-testid="stSidebarNav"] {{ display:none !important; }}
+  button[data-testid="collapsedControl"] {{ display:none !important; }}
+  [data-testid="stSidebar"] {{ display: none !important; }}
+  [data-testid="stSidebar"] * {{ display: none !important; }}
+
+  /* 🔥 CONTEÚDO: começa logo abaixo de topbar+navbar, com gap mínimo */
+  /* Nota: padding-top será sobrescrito por forcar_layout_hub() nas páginas */
+  .main .block-container {{
+    padding-top: calc(var(--topbar-h) + var(--navbar-h) + var(--content-gap)) !important;
+    padding-bottom: 2rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 100% !important;
+    font-family: 'Inter', sans-serif !important;
+  }}
+
+  /* (opcional) reduz margens padrão do primeiro elemento dentro do main */
+  .main .block-container > div:first-child {{
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }}
+
+  /* TOPBAR */
+  .omni-topbar {{
+    position: fixed !important;
+    top: 0 !important; left: 0 !important; right: 0 !important;
+    height: var(--topbar-h) !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+    z-index: 999999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 24px !important;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
+  }}
+  .omni-brand {{
+    display:flex !important;
+    align-items:center !important;
+    gap:12px !important;
+    min-width: 0 !important;
+  }}
+  .omni-logo {{
+    height: 32px !important;
+    width: 32px !important;
+    object-fit: contain !important;
+  }}
+  .omni-user-info {{
+    display:flex !important;
+    align-items:center !important;
+    gap:12px !important;
+  }}
+  .omni-workspace {{
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    padding: 5px 12px !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #64748B !important;
+    max-width: 220px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }}
+  .omni-avatar {{
+    width: 32px !important; height: 32px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #3B82F6, #6366F1) !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 800 !important;
+    font-size: 12px !important;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.25) !important;
+  }}
+
+  /* NAVBAR WRAPPER */
+  .omni-navbar {{
+    position: relative !important;
+    height: var(--navbar-h) !important;
+    background: transparent !important;
+    z-index: 999998 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    pointer-events: none;
+    padding: 0px 0 !important; /* SEM espaço entre topbar e navbar */
+    margin-bottom: 0px !important;
+    margin-top: 0px !important;
+  }}
+  
+  /* Remove espaçamento após navbar */
+  .omni-navbar + *,
+  .omni-navbar ~ * {{
+    margin-top: 0px !important;
+  }}
+  .omni-navbar-inner {{
+    width: min(1200px, calc(100% - 48px));
+    pointer-events: auto;
+  }}
+
+  /* remove espaçamento fantasma do Streamlit no option_menu */
+  .omni-navbar-inner .element-container {{
+    margin: 0 !important;
+    padding: 0 !important;
+  }}
+  
+  /* Remove espaçamento após navbar no Streamlit */
+  .omni-navbar .stMarkdownContainer,
+  .omni-navbar + .element-container,
+  .omni-navbar ~ .element-container {{
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+  }}
+
+  /* Responsivo */
+  @media (max-width: 900px) {{
+    .main .block-container {{
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
+    }}
+    .omni-workspace {{ display:none !important; }}
+  }}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def inject_compact_app_css(accent: str = "#0D9488"):
+    """
+    CSS do app (páginas internas) para:
+    - botões menores e consistentes
+    - tabs compactas e bonitas
+    IMPORTANTE: não altera inputs globalmente.
+    """
+    st.markdown(
+        f"""
+<style>
+  /* =========================
+     BOTÕES (compactos)
+     ========================= */
+  .stButton > button,
+  .stDownloadButton > button {{
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    padding: 0.38rem 0.85rem !important;
+    min-height: 36px !important;
+    line-height: 1 !important;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease !important;
+  }}
+
+  /* Primary */
+  .stButton > button[kind="primary"],
+  .stDownloadButton > button[kind="primary"] {{
+    background: linear-gradient(135deg, {accent}, #14B8A6) !important;
+    border: none !important;
+  }}
+  .stButton > button[kind="primary"]:hover,
+  .stDownloadButton > button[kind="primary"]:hover {{
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(13,148,136,.18) !important;
+  }}
+
+  /* Secondary */
+  .stButton > button[kind="secondary"],
+  .stDownloadButton > button[kind="secondary"] {{
+    background: #ffffff !important;
+    color: {accent} !important;
+    border: 1px solid {accent} !important;
+  }}
+  .stButton > button[kind="secondary"]:hover,
+  .stDownloadButton > button[kind="secondary"]:hover {{
+    background: rgba(13,148,136,.06) !important;
+  }}
+
+  .stButton, .stDownloadButton {{
+    margin: 0.15rem 0 !important;
+  }}
+
+  /* =========================
+     TABS (compactas)
+     ========================= */
+  .stTabs [data-baseweb="tab-list"] {{
+    gap: 6px !important;
+    background: transparent !important;
+    padding: 3px 3px !important;
+    border-bottom: none !important; /* Remove linha embaixo */
+    flex-wrap: wrap !important;
+    margin-top: 8px !important;
+    justify-content: center !important; /* Centraliza as abas */
+  }}
+  .stTabs [data-baseweb="tab"] {{
+    height: 38px !important;
+    padding: 0 18px !important;
+    border-radius: 20px !important; /* Pílulas arredondadas */
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    color: #64748B !important;
+    border: 1px solid #E2E8F0 !important;
+    background: #FFFFFF !important;
+    position: relative !important;
+    text-transform: uppercase !important;
+  }}
+  .stTabs [aria-selected="true"] {{
+    color: {accent} !important;
+    background-color: rgba(13,148,136,0.1) !important;
+    border: 1px solid {accent} !important;
+  }}
+  /* Traço embaixo removido - não fica bonito */
+  .stTabs [aria-selected="true"]::after {{
+    display: none !important;
+  }}
+  .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{
+    background: #F8FAFC !important;
+    color: #475569 !important;
+  }}
+
+  .stDivider {{ margin: 0.75rem 0 !important; }}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_omnisfera_header():
+    """
+    Topbar fixa (apenas render).
+    O espaço do conteúdo é controlado por inject_layout_css().
+    """
+    ensure_state()
+
+    TOPBAR_H = 56
+    NAVBAR_H = 44  # Reduzido de 52 para 44 para diminuir espaço total
+
+    # 🔥 MUITO PERTO: content_gap=0 (espaço mínimo entre navbar e hero)
+    inject_layout_css(topbar_h=TOPBAR_H, navbar_h=NAVBAR_H, content_gap=0)
+
+    icone = get_base64_image("omni_icone.png")
+    texto = get_base64_image("omni_texto.png")
+
+    ws_name = _get_ws_short()
+    user_name = st.session_state.get("usuario_nome", "Visitante") or "Visitante"
+
+    img_logo = (
+        f'<img src="data:image/png;base64,{icone}" class="omni-logo">'
+        if icone else
+        '<div class="omni-logo">🌐</div>'
+    )
+
+    img_text = (
+        f'<img src="data:image/png;base64,{texto}" style="height:18px;">'
+        if texto else
+        '<span style="font-weight:900;color:#0F172A;font-size:15px;letter-spacing:0.05em;">OMNISFERA</span>'
+    )
+
+    st.markdown(
+        f"""
+<div class="omni-topbar">
+  <div class="omni-brand">
+    {img_logo}
+    {img_text}
+  </div>
+  <div class="omni-user-info">
+    <div class="omni-workspace" title="{ws_name}">{ws_name}</div>
+    <div class="omni-avatar" title="{user_name}">{_get_initials(user_name)}</div>
+  </div>
+</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_navbar(active_tab: str = "Início"):
+    """
+    Navbar horizontal FIXA (abaixo da topbar), sem margin negativa.
+    """
+    ensure_state()
+
+    opcoes = [
+        "Início",
+        "Estudantes",
+        "Estratégias & PEI",
+        "Plano de Ação (AEE)",
+        "Hub de Recursos",
+        "Diário de Bordo",
+        "Evolução & Dados",
+    ]
+    icones = ["house", "people", "book", "puzzle", "rocket", "journal", "bar-chart"]
+
+    try:
+        default_idx = opcoes.index(active_tab)
+    except ValueError:
+        default_idx = 0
+
+    st.markdown('<div class="omni-navbar"><div class="omni-navbar-inner">', unsafe_allow_html=True)
+
+    selected = option_menu(
+        menu_title=None,
+        options=opcoes,
+        icons=icones,
+        default_index=default_idx,
+        orientation="horizontal",
+        styles={
+            "container": {
+                "padding": "2px 4px",
+                "margin": "0px",
+                "background-color": "#ffffff",
+                "border": "1px solid #E2E8F0",
+                "border-radius": "14px",
+                "box-shadow": "0 1px 2px rgba(0,0,0,0.03)",
+            },
+            "icon": {"color": "#64748B", "font-size": "15px"},
+            "nav-link": {
+                "font-size": "12px",
+                "text-align": "center",
+                "margin": "0px",
+                "padding": "6px 8px",
+                "--hover-color": "#F8FAFC",
+                "color": "#64748B",
+                "white-space": "nowrap",
+                "border-radius": "10px",
+                "min-height": "32px",
+                "display": "flex",
+                "align-items": "center",
+                "justify-content": "center",
+                "border": "1px solid transparent",
+                "gap": "6px",
+            },
+            "nav-link-selected": {
+                "background-color": "#F1F5F9",
+                "color": "#0F172A",
+                "font-weight": "700",
+                "border": "1px solid #E2E8F0",
+            },
+        },
+    )
+
+    st.markdown("</div></div>", unsafe_allow_html=True)
+    
+    # Adiciona CSS para cor específica da página no navbar selecionado
+    page_colors = {
+        "Início": {"bg": "#F1F5F9", "color": "#0F172A"},
+        "Estudantes": {"bg": "#DBEAFE", "color": "#1E40AF"},
+        "Estratégias & PEI": {"bg": "#E0F2FE", "color": "#0284C7"},
+        "Plano de Ação (AEE)": {"bg": "#F3E8FF", "color": "#9333EA"},
+        "Hub de Recursos": {"bg": "#CFFAFE", "color": "#0891B2"},
+        "Diário de Bordo": {"bg": "#FFE4E6", "color": "#E11D48"},
+        "Evolução & Dados": {"bg": "#BAE6FD", "color": "#075985"},
+    }
+    
+    if active_tab in page_colors:
+        color_info = page_colors[active_tab]
+        st.markdown(f"""
         <style>
-            /* 1. Remove o cabeçalho padrão do Streamlit e a linha colorida */
-            header[data-testid="stHeader"] {
-                visibility: hidden !important;
-                height: 0px !important;
-            }
-
-            /* 2. Puxa todo o conteúdo para cima (O SEGREDO ESTÁ AQUI) - ESPECIFICIDADE MÁXIMA */
-            body .main .block-container,
-            body .block-container,
-            .main .block-container,
-            .block-container {
-                padding-top: 0px !important; /* SEM espaço entre navbar e hero */
-                padding-bottom: 1rem !important;
-                margin-top: 0px !important;
-            }
-            
-            /* 3. Remove qualquer espaçamento do Streamlit */
-            [data-testid="stVerticalBlock"],
-            div[data-testid="stVerticalBlock"] > div:first-child,
-            .main .block-container > div:first-child,
-            .main .block-container > *:first-child {
-                padding-top: 0px !important;
-                margin-top: 0px !important;
-            }
-            
-            /* 4. Remove espaçamento do stMarkdown que renderiza o hero */
-            .main .block-container > div:first-child .stMarkdown {
-                margin-top: 0px !important;
-                padding-top: 0px !important;
-            }
-            
-            /* 5. Hero card colado no menu - margin negativo (ajustado para não ficar muito colado) */
-            .mod-card-wrapper {
-                margin-top: -96px !important; /* Puxa o hero para cima, mas não tanto quanto antes */
-                position: relative;
-                z-index: 1;
-            }
-            
-            /* 6. Esconde o menu hambúrguer e rodapé */
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
+        /* Aplica cor específica da página no navbar selecionado */
+        .omni-navbar .stMarkdownContainer div[role="button"][aria-selected="true"],
+        .omni-navbar button[aria-selected="true"],
+        .omni-navbar a[aria-selected="true"],
+        .omni-navbar [class*="nav-link-selected"] {{
+            background-color: {color_info['bg']} !important;
+            color: {color_info['color']} !important;
+            border: 1px solid {color_info['color']} !important;
+        }}
         </style>
+        """, unsafe_allow_html=True)
+
+    if selected != active_tab:
+        routes = {
+            "Início": "pages/0_Home.py" if os.path.exists("pages/0_Home.py") else "Home.py",
+            "Estudantes": "pages/Alunos.py",
+            "Estratégias & PEI": "pages/1_PEI.py",
+            "Plano de Ação (AEE)": "pages/2_PAE.py",
+            "Hub de Recursos": "pages/3_Hub_Inclusao.py",
+            "Diário de Bordo": "pages/4_Diario_de_Bordo.py",
+            "Evolução & Dados": "pages/5_Monitoramento_Avaliacao.py",
+        }
+        target = routes.get(selected)
+        if target:
+            if selected == "Início" and not os.path.exists(target):
+                target = "Home.py"
+            st.switch_page(target)
+
+# =============================================================================
+# 3) SUPABASE & UTILS (LÓGICA PRESERVADA)
+# =============================================================================
+def _sb_url() -> str:
+    url = str(st.secrets.get("SUPABASE_URL", "")).strip()
+    if not url:
+        raise RuntimeError("SUPABASE_URL não encontrado nos secrets.")
+    return url.rstrip("/")
+
+def _sb_key() -> str:
+    key = str(st.secrets.get("SUPABASE_SERVICE_KEY", "")).strip()
+    if not key:
+        key = str(st.secrets.get("SUPABASE_ANON_KEY", "")).strip()
+    if not key:
+        raise RuntimeError("Key não encontrada.")
+    return key
+
+def _headers() -> dict:
+    key = _sb_key()
+    return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+
+def supabase_rpc(fn_name: str, payload: dict):
+    url = f"{_sb_url()}/rest/v1/rpc/{fn_name}"
+    r = requests.post(url, headers=_headers(), json=payload, timeout=20)
+    if r.status_code >= 400:
+        raise RuntimeError(f"RPC {fn_name} erro: {r.status_code} {r.text}")
+    return r.json()
+
+def supabase_insert(table: str, row: dict):
+    url = f"{_sb_url()}/rest/v1/{table}"
+    h = _headers()
+    h["Prefer"] = "return=representation"
+    r = requests.post(url, headers=h, json=row, timeout=20)
+    if r.status_code >= 400:
+        raise RuntimeError(f"Insert {table} erro: {r.status_code} {r.text}")
+    return r.json()
+
+def supabase_upsert(table: str, row: dict, on_conflict: str):
+    url = f"{_sb_url()}/rest/v1/{table}?on_conflict={on_conflict}"
+    h = _headers()
+    h["Prefer"] = "resolution=merge-duplicates,return=representation"
+    r = requests.post(url, headers=h, json=row, timeout=20)
+    if r.status_code >= 400:
+        raise RuntimeError(f"Upsert {table} erro: {r.status_code} {r.text}")
+    data = r.json()
+    return data[0] if isinstance(data, list) and data else (data if isinstance(data, dict) else None)
+
+def supabase_workspace_from_pin(pin: str) -> str | None:
+    pin = (pin or "").strip()
+    if not pin:
+        return None
+
+    for p in ({"pin": pin}, {"p_pin": pin}, {"pincode": pin}):
+        try:
+            data = supabase_rpc("workspace_from_pin", p)
+            if isinstance(data, dict) and data.get("workspace_id"):
+                return data["workspace_id"]
+            if isinstance(data, list) and data and isinstance(data[0], dict) and data[0].get("workspace_id"):
+                return data[0]["workspace_id"]
+        except Exception:
+            continue
+    return None
+
+def supabase_log_access(workspace_id: str, nome: str, cargo: str, event: str, app_version: str = ""):
+    try:
+        ua = st.context.headers.get("User-Agent", "")[:500]
+    except Exception:
+        ua = ""
+    row = {
+        "workspace_id": workspace_id,
+        "nome": (nome or "").strip(),
+        "cargo": (cargo or "").strip(),
+        "event": (event or "").strip(),
+        "user_agent": ua,
+        "app_version": (app_version or "").strip(),
+    }
+    return supabase_insert("access_logs", row)
+
+def supa_save_pei(student_id: str, dados: dict, pdf_text: str = ""):
+    if not student_id or not st.session_state.get("workspace_id"):
+        raise RuntimeError("Dados incompletos.")
+    row = {
+        "student_id": student_id,
+        "workspace_id": st.session_state.workspace_id,
+        "pei_json": dados if isinstance(dados, dict) else {},
+        "pdf_text": pdf_text or "",
+    }
+    return supabase_upsert("peis", row, on_conflict="student_id")
+
+# =============================================================================
+# 4) CSS PADRONIZADO DO HERO CARD (TODAS AS PÁGINAS)
+# =============================================================================
+def inject_hero_card_css():
+    """
+    CSS padronizado para o card hero em todas as páginas.
+    Garante distância consistente do menu e altura fixa do hero.
+    """
+    st.markdown(
+        """
+<style>
+/* ===============================
+   PADRONIZAÇÃO: DISTÂNCIA MENU → HERO
+================================ */
+.block-container {
+    padding-top: 0.1rem !important;
+}
+
+/* ===============================
+   PADRONIZAÇÃO: HERO CARD
+================================ */
+.mod-card-wrapper {
+    margin-top: 0 !important;
+    margin-bottom: 20px !important;
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+.mod-card-rect {
+    background: white;
+    border-radius: 16px 16px 0 0;
+    padding: 0;
+    border: 1px solid #E2E8F0;
+    border-bottom: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 130px !important;  /* 🔒 ALTURA FIXA PADRONIZADA */
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mod-card-rect:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    border-color: #CBD5E1;
+}
+
+.mod-bar {
+    width: 6px;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+.mod-icon-area {
+    width: 90px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+    background: transparent !important;
+    border-right: 1px solid #F1F5F9;
+    transition: all 0.3s ease;
+}
+
+.mod-card-rect:hover .mod-icon-area {
+    transform: scale(1.05);
+}
+
+.mod-content {
+    flex-grow: 1;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.mod-title {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #1E293B;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+    transition: color 0.2s;
+}
+
+.mod-card-rect:hover .mod-title {
+    color: #4F46E5;
+}
+
+.mod-desc {
+    font-size: 0.8rem;
+    color: #64748B;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .mod-card-rect {
+        height: auto !important;
+        flex-direction: column;
+        padding: 16px;
+    }
+    .mod-bar {
+        width: 100%;
+        height: 4px;
+    }
+    .mod-icon-area {
+        width: 100%;
+        height: 50px;
+        border-right: none;
+        border-bottom: 1px solid #F1F5F9;
+    }
+}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def inject_hero_card_colors():
+    """
+    Injeta as classes de cores dos hero cards (paleta vibrante que dialoga com vermelho do Streamlit).
+    Cada página deve usar sua cor específica no hero card.
+    Nova paleta: azuis mais vivos que complementam o vermelho dos seletores do Streamlit.
+    """
+    st.markdown(
+        """
+<style>
+/* ===============================
+   CORES DOS CARDS DE MÓDULO (PALETA VIBRANTE - AZUIS QUE DIALOGAM COM VERMELHO)
+================================ */
+/* Estudantes - Azul Índigo Vibrante */
+.c-indigo { background: #2563EB !important; }
+.bg-indigo-soft { 
+    background: #DBEAFE !important; 
+    color: #1E40AF !important;
+}
+
+/* PEI - Azul Céu Vibrante */
+.c-blue { background: #0EA5E9 !important; }
+.bg-blue-soft { 
+    background: #E0F2FE !important;
+    color: #0284C7 !important;
+}
+
+/* PAEE - Roxo Vibrante */
+.c-purple { background: #A855F7 !important; }
+.bg-purple-soft { 
+    background: #F3E8FF !important;
+    color: #9333EA !important;
+}
+
+/* Hub - Verde Água Vibrante */
+.c-teal { background: #06B6D4 !important; }
+.bg-teal-soft { 
+    background: #CFFAFE !important;
+    color: #0891B2 !important;
+}
+
+/* Diário - Rosa Vibrante */
+.c-rose { background: #F43F5E !important; }
+.bg-rose-soft { 
+    background: #FFE4E6 !important;
+    color: #E11D48 !important;
+}
+
+/* Monitoramento - Azul Oceano Vibrante */
+.c-sky { background: #0C4A6E !important; }
+.bg-sky-soft { 
+    background: #BAE6FD !important;
+    color: #075985 !important;
+}
+
+/* ===============================
+   MOVIMENTO DO HERO CARD (IGUAL À HOME)
+================================ */
+.mod-card-rect {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.mod-card-rect:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+    border-color: #CBD5E1 !important;
+}
+
+.mod-icon-area {
+    background: #FAFAFA !important;
+    transition: all 0.3s ease !important;
+}
+
+.mod-card-rect:hover .mod-icon-area {
+    background: white !important;
+    transform: scale(1.05) !important;
+}
+
+.mod-card-rect:hover .mod-title {
+    color: #4F46E5 !important;
+}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def inject_unified_ui_css():
+    """
+    CSS padronizado para toda a UI: abas (pílulas), botões, selects, checkboxes, radio, tags, multiselect, slider.
+    Usa azul vibrante (#2563EB) que dialoga com o vermelho dos seletores do Streamlit.
+    """
+    st.markdown(
+        """
+<style>
+:root {
+    --ui-primary: #1E3A8A;        /* blue-900 - azul marinho que dialoga com vermelho */
+    --ui-primary-dark: #1E40AF;   /* blue-800 - mais escuro */
+    --ui-primary-light: #2563EB;  /* blue-600 - mais claro */
+    --ui-primary-soft: #DBEAFE;   /* blue-100 - fundo suave */
+    --ui-primary-border: #93C5FD; /* blue-300 - bordas */
+    
+    /* Mantém variáveis neutras para compatibilidade */
+    --ui-neutral: #1E3A8A;        /* usa azul marinho */
+    --ui-neutral-dark: #1E40AF;   
+    --ui-neutral-light: #2563EB;  
+    --ui-neutral-soft: #DBEAFE;   
+    --ui-neutral-border: #93C5FD; 
+}
+
+/* ===============================
+   TABS - PÍLULAS PADRONIZADAS
+================================ */
+div[data-baseweb="tab-border"],
+div[data-baseweb="tab-highlight"] { 
+    display: none !important; 
+}
+
+.stTabs [data-baseweb="tab-list"] {
+    display: flex;
+    justify-content: flex-start !important;  /* pílulas alinhadas à esquerda */
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 6px;
+    padding: 3px 3px;
+    width: 100%;
+    margin-top: 0px !important;
+    margin-bottom: 0.15rem !important;
+    border-bottom: none !important;
+}
+
+.stTabs [data-baseweb="tab"] {
+    height: 38px !important;
+    border-radius: 20px !important;  /* PÍLULAS - estilo PEI */
+    background-color: #FFFFFF !important;
+    border: 1px solid var(--ui-primary-border) !important;
+    color: var(--ui-primary) !important;
+    font-weight: 700 !important;
+    font-size: 0.75rem !important;
+    padding: 0 18px !important;
+    box-shadow: 0 1px 2px rgba(30,58,138,0.1) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    transition: all 0.2s ease !important;
+}
+
+.stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) { 
+    border-color: var(--ui-primary-light) !important; 
+    color: var(--ui-primary-dark) !important; 
+    background-color: var(--ui-primary-soft) !important; 
+}
+
+.stTabs [aria-selected="true"] {
+    background-color: var(--ui-primary-soft) !important; 
+    color: var(--ui-primary-dark) !important;
+    border: 1px solid var(--ui-primary) !important; 
+    font-weight: 800 !important;
+    box-shadow: 0 2px 4px rgba(30,58,138,0.2) !important;
+}
+
+/* ===============================
+   TABS - CORES ESPECÍFICAS POR PÁGINA (via classe no body)
+================================ */
+/* Estudantes - Índigo */
+.page-indigo .stTabs [aria-selected="true"] {
+    background-color: #DBEAFE !important;
+    color: #1E40AF !important;
+    border: 1px solid #2563EB !important;
+    box-shadow: 0 2px 4px rgba(30,58,138,0.2) !important;
+}
+
+/* PEI - Azul Céu */
+.page-blue .stTabs [aria-selected="true"] {
+    background-color: #E0F2FE !important;
+    color: #0284C7 !important;
+    border: 1px solid #0EA5E9 !important;
+    box-shadow: 0 2px 4px rgba(14,165,233,0.2) !important;
+}
+
+/* PAEE - Roxo */
+.page-purple .stTabs [aria-selected="true"] {
+    background-color: #F3E8FF !important;
+    color: #9333EA !important;
+    border: 1px solid #A855F7 !important;
+    box-shadow: 0 2px 4px rgba(168,85,247,0.2) !important;
+}
+
+/* Hub - Verde Água */
+.page-teal .stTabs [aria-selected="true"] {
+    background-color: #CFFAFE !important;
+    color: #0891B2 !important;
+    border: 1px solid #06B6D4 !important;
+    box-shadow: 0 2px 4px rgba(6,182,212,0.2) !important;
+}
+
+/* Diário - Rosa */
+.page-rose .stTabs [aria-selected="true"] {
+    background-color: #FFE4E6 !important;
+    color: #E11D48 !important;
+    border: 1px solid #F43F5E !important;
+    box-shadow: 0 2px 4px rgba(244,63,94,0.2) !important;
+}
+
+/* Monitoramento - Azul Oceano */
+.page-sky .stTabs [aria-selected="true"] {
+    background-color: #BAE6FD !important;
+    color: #075985 !important;
+    border: 1px solid #0C4A6E !important;
+    box-shadow: 0 2px 4px rgba(12,74,110,0.2) !important;
+}
+
+/* ===============================
+   BOTÕES - COR NEUTRA
+================================ */
+.stButton > button {
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    transition: all 0.18s ease !important;
+}
+
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, var(--ui-primary), var(--ui-primary-dark)) !important;
+    border: none !important;
+    color: #ffffff !important;
+}
+
+.stButton > button[kind="primary"]:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(30,58,138,0.3) !important;
+    background: linear-gradient(135deg, var(--ui-primary-dark), var(--ui-primary)) !important;
+}
+
+.stButton > button[kind="secondary"] {
+    background: #ffffff !important;
+    color: var(--ui-primary-dark) !important;
+    border: 1px solid var(--ui-primary-border) !important;
+}
+
+.stButton > button[kind="secondary"]:hover {
+    background: var(--ui-primary-soft) !important;
+    border-color: var(--ui-primary) !important;
+    color: var(--ui-primary-dark) !important;
+}
+
+/* ===============================
+   SELECTS / DROPDOWNS
+================================ */
+div[data-baseweb="select"] > div {
+    border-radius: 8px !important;
+    border-color: var(--ui-primary-border) !important;
+}
+
+div[data-baseweb="select"] > div:focus-within {
+    border-color: var(--ui-primary) !important;
+    box-shadow: 0 0 0 3px rgba(30,58,138,0.18) !important;
+}
+
+/* ===============================
+   MULTISELECT
+================================ */
+div[data-baseweb="select"][aria-multiselectable="true"] > div {
+    border-radius: 8px !important;
+    border-color: var(--ui-primary-border) !important;
+}
+
+div[data-baseweb="select"][aria-multiselectable="true"] > div:focus-within {
+    border-color: var(--ui-primary) !important;
+    box-shadow: 0 0 0 3px rgba(30,58,138,0.18) !important;
+}
+
+/* ===============================
+   SLIDER
+================================ */
+.stSlider {
+    border-radius: 8px !important;
+}
+
+/* Track do slider */
+.stSlider > div > div[data-baseweb="slider"] > div[data-baseweb="slider-track"] {
+    background-color: var(--ui-primary-border) !important;
+}
+
+/* Fill do slider (parte preenchida) */
+.stSlider > div > div[data-baseweb="slider"] > div[data-baseweb="slider-track"] > div[data-baseweb="slider-fill"] {
+    background: linear-gradient(135deg, var(--ui-primary), var(--ui-primary-dark)) !important;
+}
+
+/* Thumb do slider (bolinha) */
+.stSlider > div > div[data-baseweb="slider"] > div[data-baseweb="slider-thumb"] {
+    background-color: var(--ui-primary) !important;
+    border-color: var(--ui-primary) !important;
+}
+
+.stSlider > div > div[data-baseweb="slider"] > div[data-baseweb="slider-thumb"]:hover {
+    background-color: var(--ui-primary-dark) !important;
+    border-color: var(--ui-primary-dark) !important;
+}
+
+/* Fallback para estrutura alternativa do slider */
+.stSlider div[data-baseweb="slider-thumb"] {
+    background-color: var(--ui-primary) !important;
+    border-color: var(--ui-primary) !important;
+}
+
+.stSlider div[data-baseweb="slider-fill"] {
+    background: linear-gradient(135deg, var(--ui-primary), var(--ui-primary-dark)) !important;
+}
+
+/* ===============================
+   CHECKBOX
+================================ */
+div[role="checkbox"] {
+    border-radius: 4px !important;
+    border-color: var(--ui-primary-border) !important;
+}
+
+div[role="checkbox"][aria-checked="true"] {
+    background-color: var(--ui-primary) !important;
+    border-color: var(--ui-primary) !important;
+}
+
+div[role="checkbox"]:hover {
+    border-color: var(--ui-primary) !important;
+}
+
+div[role="checkbox"][aria-checked="true"]:hover {
+    background-color: var(--ui-primary-dark) !important;
+    border-color: var(--ui-primary-dark) !important;
+}
+
+/* ===============================
+   RADIO
+================================ */
+div[role="radio"] {
+    border-color: var(--ui-primary-border) !important;
+}
+
+div[role="radio"][aria-checked="true"] {
+    background-color: var(--ui-primary) !important;
+    border-color: var(--ui-primary) !important;
+}
+
+div[role="radio"]:hover {
+    border-color: var(--ui-primary) !important;
+}
+
+div[role="radio"][aria-checked="true"]:hover {
+    background-color: var(--ui-primary-dark) !important;
+    border-color: var(--ui-primary-dark) !important;
+}
+
+/* ===============================
+   INPUTS / TEXTAREAS
+================================ */
+.stTextInput input,
+.stTextArea textarea {
+    border-radius: 8px !important;
+    border-color: var(--ui-primary-border) !important;
+}
+
+.stTextInput input:focus,
+.stTextArea textarea:focus {
+    border-color: var(--ui-primary) !important;
+    box-shadow: 0 0 0 3px rgba(30,58,138,0.18) !important;
+}
+
+/* ===============================
+   MULTISELECT TAGS / CHIPS
+================================ */
+div[data-baseweb="tag"] {
+    background: var(--ui-primary-soft) !important;
+    border: 1px solid var(--ui-primary-border) !important;
+    border-radius: 6px !important;
+}
+
+div[data-baseweb="tag"] span {
+    color: var(--ui-primary-dark) !important;
+    font-weight: 700 !important;
+}
+
+/* ===============================
+   FOCUS RING (remove vermelho)
+================================ */
+*:focus,
+*:focus-visible {
+    outline: none !important;
+}
+
+/* ===============================
+   DIVIDERS
+================================ */
+hr {
+    border-color: var(--ui-primary-border) !important;
+}
+
+/* ===============================
+   RESPONSIVIDADE
+================================ */
+@media (max-width: 768px) {
+    .stTabs [data-baseweb="tab"] {
+        font-size: 0.7rem !important;
+        padding: 0 14px !important;
+        height: 36px !important;
+    }
+    
+/* ===============================
+   SOBRESCREVER VERMELHO DO STREAMLIT
+================================ */
+/* Tenta sobrescrever cores vermelhas padrão do Streamlit */
+div[data-baseweb="select"] svg[fill="#FF0000"],
+div[data-baseweb="select"] svg[fill="red"],
+div[data-baseweb="select"] svg[fill="rgb(255, 0, 0)"] {
+    fill: var(--ui-primary) !important;
+}
+
+/* Inputs com foco vermelho */
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--ui-primary) !important;
+    outline-color: var(--ui-primary) !important;
+}
+}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# =============================================================================
+# 4.5) RODAPÉ COM ASSINATURA
+# =============================================================================
+def render_footer_assinatura():
+    """Renderiza rodapé com assinatura em todas as páginas"""
+    st.markdown("""
+    <div style="
+        text-align: center;
+        padding: 24px 0;
+        margin-top: 40px;
+        border-top: 1px solid #E2E8F0;
+        color: #94A3B8;
+        font-size: 0.75rem;
+        font-weight: 500;
+    ">
+        Criado e desenvolvido por <strong style="color: #64748B;">Rodrigo A. Queiroz</strong>
+    </div>
     """, unsafe_allow_html=True)
 
-# CHAME ESTA FUNÇÃO ANTES DO HERO CARD (igual ao PEI)
-forcar_layout_hub()
-
-# Cores dos hero cards (paleta vibrante)
-ou.inject_hero_card_colors()
-# CSS padronizado: abas (pílulas), botões, selects, etc.
-ou.inject_unified_ui_css()
-
-# ==============================================================================
-# HERO - DIÁRIO DE BORDO
-# ==============================================================================
-hora = datetime.now().hour
-saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
-USUARIO_NOME = (st.session_state.get("usuario_nome", "Visitante") or "Visitante").split()[0]
-WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace") or "Workspace"
-
-st.markdown(
-    f"""
-    <div class="mod-card-wrapper">
-        <div class="mod-card-rect">
-            <div class="mod-bar c-rose"></div>
-            <div class="mod-icon-area bg-rose-soft">
-                <i class="ri-edit-box-fill"></i>
-            </div>
-            <div class="mod-content">
-                <div class="mod-title">Diário de Bordo AEE</div>
-                <div class="mod-desc">
-                    {saudacao}, <strong>{USUARIO_NOME}</strong>! Registre sessões, acompanhe progresso e documente intervenções
-                    no workspace <strong>{WORKSPACE_NAME}</strong>. Sistema integrado para registro profissional do Atendimento Educacional Especializado.
-                </div>
-            </div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-# ==============================================================================
-# CSS ESPECÍFICO DO DIÁRIO DE BORDO (após hero card)
-# ==============================================================================
-st.markdown("""
+# =============================================================================
+# 5) CSS DO LOGIN (ESCOPADO) — NÃO AFETA O APP TODO
+# =============================================================================
+def inject_base_css():
+    """
+    CSS do login / telas iniciais.
+    IMPORTANTE: fica escopado em .omni-login para não “gordar” inputs no app inteiro.
+    """
+    st.markdown(
+        """
 <style>
-    /* CARD HERO - PADRÃO */
-    .mod-card-wrapper { 
-        display: flex; 
-        flex-direction: column; 
-        margin-bottom: 4px; 
-        /* margin-top já aplicado no forcar_layout_hub() - não duplicar aqui */
-        border-radius: 16px; 
-        overflow: hidden; 
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); 
-        position: relative;
-        z-index: 1;
-    }
-    .mod-card-rect { 
-        background: white; 
-        border-radius: 16px 16px 0 0; 
-        padding: 0; 
-        border: 1px solid #E2E8F0; 
-        border-bottom: none; 
-        display: flex; 
-        flex-direction: row; 
-        align-items: center; 
-        height: 130px !important; 
-        width: 100%; 
-        position: relative; 
-        overflow: hidden; 
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
-    }
-    .mod-card-rect:hover { 
-        transform: translateY(-4px); 
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08); 
-        border-color: #CBD5E1; 
-    }
-    .mod-bar { 
-        width: 6px; 
-        height: 100%; 
-        flex-shrink: 0; 
-    }
-    .mod-icon-area { 
-        width: 90px; 
-        height: 100%; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        font-size: 1.8rem; 
-        flex-shrink: 0; 
-        background: #FAFAFA !important; 
-        border-right: 1px solid #F1F5F9; 
-        transition: all 0.3s ease; 
-    }
-    .mod-card-rect:hover .mod-icon-area { 
-        background: white !important;
-        transform: scale(1.05) !important;
-    }
-    .mod-content { 
-        flex-grow: 1; 
-        padding: 0 24px; 
-        display: flex; 
-        flex-direction: column; 
-        justify-content: center; 
-        min-width: 0;
-        align-items: flex-start;
-    }
-    .mod-title { 
-        font-weight: 800; 
-        font-size: 1.1rem; 
-        color: #1E293B; 
-        margin-bottom: 6px; 
-        letter-spacing: -0.3px; 
-        transition: color 0.2s; 
-    }
-    .mod-desc { 
-        font-size: 0.8rem; 
-        color: #64748B; 
-        line-height: 1.4; 
-        display: -webkit-box; 
-        -webkit-line-clamp: 2; 
-        -webkit-box-orient: vertical; 
-        overflow: hidden; 
-    }
-    
-    /* CORES ESPECÍFICAS ROSE - Garantir que o ícone tenha cor correta */
-    .c-rose { background: #E11D48 !important; }
-    .bg-rose-soft {
-        background: #FDF2F8 !important;
-        color: #E11D48 !important;
-    }
-    .mod-icon-area i { color: inherit !important; }
-    .bg-rose-soft i,
-    .mod-icon-area.bg-rose-soft i,
-    .mod-icon-area.bg-rose-soft i.ri-edit-box-fill {
-        color: #E11D48 !important;
-        font-size: 1.8rem !important;
-    }
-    .mod-card-rect:hover .mod-title {
-        color: #E11D48; /* Specific hover color */
-    }
-    
-    /* Estilos específicos do Diário de Bordo */
-    .diario-card { 
-        background: white; 
-        border: 1px solid #E2E8F0; 
-        border-radius: 12px; 
-        padding: 20px; 
-        margin-bottom: 15px; 
-        transition: all 0.2s ease; 
-    }
-    .diario-card:hover { 
-        border-color: #E11D48; 
-        box-shadow: 0 4px 12px rgba(225, 29, 72, 0.1); 
-    }
-    .badge-individual { background: #DBEAFE; color: #1E40AF; }
-    .badge-grupo { background: #D1FAE5; color: #065F46; }
-    .badge-observacao { background: #FEF3C7; color: #92400E; }
-    .prog-bar-bg { width: 100%; height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden; margin-top: 8px; }
-    .prog-bar-fill { height: 100%; background: linear-gradient(90deg, #F43F5E, #E11D48); transition: width 1s; }
-    .stat-card { background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; text-align: center; }
-    .stat-value { font-size: 2rem; font-weight: 800; color: #E11D48; margin-bottom: 5px; }
-    .stat-label { font-size: 0.85rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; }
-    .form-section { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 25px; margin-bottom: 20px; }
-    .timeline-item { position: relative; padding-left: 30px; margin-bottom: 20px; }
-    .timeline-dot { position: absolute; left: 0; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: #E11D48; }
-    .timeline-content { background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; }
+  .omni-login .login-box {
+    background: white;
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    text-align: center;
+    border: 1px solid #E2E8F0;
+    max-width: 650px;
+    margin: 30px auto;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* INPUTS SOMENTE NO LOGIN */
+  .omni-login .stTextInput input,
+  .omni-login .stTextArea textarea,
+  .omni-login div[data-baseweb="select"] {
+    border-radius: 12px !important;
+  }
+  .omni-login .stTextInput input { height: 44px !important; }
 </style>
-""", unsafe_allow_html=True)
-
-# Espaçamento após hero card
-st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-
-# ==============================================================================
-# VERIFICAÇÃO DE ACESSO
-# ==============================================================================
-def verificar_acesso():
-    """Verifica se o usuário está autenticado."""
-    if not st.session_state.get("autenticado"):
-        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
-        st.stop()
-
-verificar_acesso()
-
-# ==============================================================================
-# FUNÇÕES SUPABASE (REST)
-# ==============================================================================
-# Funções _sb_url(), _sb_key(), _headers() removidas - usar ou._sb_url(), ou._sb_key(), ou._headers() do omni_utils
-# ==============================================================================
-# FUNÇÕES DO DIÁRIO DE BORDO
-# ==============================================================================
-def carregar_alunos_workspace():
-    """Carrega estudantes do workspace atual"""
-    WORKSPACE_ID = st.session_state.get("workspace_id")
-    if not WORKSPACE_ID: 
-        return []
-    
-    try:
-        url = f"{ou._sb_url()}/rest/v1/students"
-        params = {
-            "select": "id,name,grade,class_group,diagnosis,created_at,pei_data",
-            "workspace_id": f"eq.{WORKSPACE_ID}",
-            "order": "name.asc"
-        }
-        
-        response = requests.get(url, headers=ou._headers(), params=params, timeout=20)
-        if response.status_code == 200:
-            dados = response.json()
-            if isinstance(dados, list):
-                return dados
-            elif isinstance(dados, dict):
-                return [dados] if dados else []
-            return []
-        return []
-    except Exception as e:
-        st.error(f"Erro ao carregar estudantes: {str(e)}")
-        return []
-
-def salvar_registro_diario(registro):
-    """
-    Salva um registro do diário de bordo no campo students.daily_logs (lista de registros).
-    Segue a mesma lógica do PEI (pei_data) e PAE (paee_ciclos).
-    """
-    try:
-        student_id = registro.get('student_id')
-        if not student_id:
-            return {"sucesso": False, "erro": "ID do estudante não fornecido"}
-        
-        # 1) Buscar estudante atual
-        url = f"{ou._sb_url()}/rest/v1/students"
-        params_get = {"select": "id,daily_logs", "id": f"eq.{student_id}"}
-        r = requests.get(url, headers=ou._headers(), params=params_get, timeout=15)
-
-        if not (r.status_code == 200 and r.json()):
-            return {"sucesso": False, "erro": "Estudante não encontrado"}
-
-        student_row = r.json()[0]
-        registros_existentes = student_row.get("daily_logs") or []
-        
-        # 2) Preparar novo registro
-        registro_id = registro.get('registro_id')
-        if not registro_id:
-            registro_id = str(uuid.uuid4())
-            registro['registro_id'] = registro_id
-            registro['criado_em'] = datetime.now().isoformat()
-            registro['criado_por'] = st.session_state.get("user_id", "")
-            registros_existentes.append(registro)
-        else:
-            # Atualiza registro existente
-            updated = False
-            for i, r in enumerate(registros_existentes):
-                if r.get("registro_id") == registro_id:
-                    registro['atualizado_em'] = datetime.now().isoformat()
-                    registros_existentes[i] = registro
-                    updated = True
-                    break
-            if not updated:
-                # Se veio com id mas não achou, adiciona como novo
-                registro['criado_em'] = datetime.now().isoformat()
-                registro['criado_por'] = st.session_state.get("user_id", "")
-                registros_existentes.append(registro)
-
-        # 3) Preparar update
-        update_data = {
-            "daily_logs": registros_existentes
-        }
-
-        # 4) PATCH
-        params_patch = {"id": f"eq.{student_id}"}
-        rp = requests.patch(url, headers=ou._headers(), params=params_patch, json=update_data, timeout=25)
-
-        if rp.status_code in [200, 204]:
-            return {"sucesso": True, "registro_id": registro_id}
-        return {"sucesso": False, "erro": f"HTTP {rp.status_code}: {rp.text}"}
-
-    except Exception as e:
-        return {"sucesso": False, "erro": str(e)}
-
-def atualizar_registro_diario(student_id, registro_id, dados):
-    """Atualiza um registro existente dentro do array daily_logs"""
-    try:
-        # 1) Buscar estudante
-        url = f"{ou._sb_url()}/rest/v1/students"
-        params_get = {"select": "id,daily_logs", "id": f"eq.{student_id}"}
-        r = requests.get(url, headers=ou._headers(), params=params_get, timeout=15)
-
-        if not (r.status_code == 200 and r.json()):
-            return False
-
-        student_row = r.json()[0]
-        registros_existentes = student_row.get("daily_logs") or []
-        
-        # 2) Atualizar registro no array
-        updated = False
-        for i, registro in enumerate(registros_existentes):
-            if registro.get("registro_id") == registro_id:
-                dados['atualizado_em'] = datetime.now().isoformat()
-                registros_existentes[i] = dados
-                updated = True
-                break
-        
-        if not updated:
-            return False
-
-        # 3) Salvar array atualizado
-        update_data = {"daily_logs": registros_existentes}
-        params_patch = {"id": f"eq.{student_id}"}
-        rp = requests.patch(url, headers=ou._headers(), params=params_patch, json=update_data, timeout=25)
-        
-        return rp.status_code in [200, 204]
-    except Exception as e:
-        st.error(f"Erro ao atualizar registro: {str(e)}")
-        return False
-
-def carregar_registros_aluno(aluno_id, limite=50):
-    """Carrega registros de um estudante específico da coluna daily_logs"""
-    try:
-        url = f"{ou._sb_url()}/rest/v1/students"
-        params = {
-            "select": "id,daily_logs",
-            "id": f"eq.{aluno_id}"
-        }
-        
-        response = requests.get(url, headers=ou._headers(), params=params, timeout=20)
-        if response.status_code == 200 and response.json():
-            student = response.json()[0]
-            registros = student.get("daily_logs") or []
-            # Ordenar por data_sessao (mais recente primeiro) e limitar
-            registros_ordenados = sorted(
-                registros, 
-                key=lambda x: x.get('data_sessao', ''), 
-                reverse=True
-            )[:limite]
-            # Adicionar student_id a cada registro para compatibilidade
-            for r in registros_ordenados:
-                r['student_id'] = aluno_id
-            return registros_ordenados
-        return []
-    except Exception as e:
-        st.error(f"Erro ao carregar registros: {str(e)}")
-        return []
-
-def carregar_todos_registros(limite=100):
-    """Carrega todos os registros do workspace da coluna daily_logs de cada estudante"""
-    WORKSPACE_ID = st.session_state.get("workspace_id")
-    if not WORKSPACE_ID: 
-        return []
-    
-    try:
-        url = f"{ou._sb_url()}/rest/v1/students"
-        params = {
-            "select": "id,name,grade,class_group,daily_logs",
-            "workspace_id": f"eq.{WORKSPACE_ID}"
-        }
-        
-        response = requests.get(url, headers=ou._headers(), params=params, timeout=20)
-        if response.status_code == 200:
-            try:
-                estudantes = response.json()
-            except (ValueError, json.JSONDecodeError) as e:
-                # Erro silencioso - retornar lista vazia
-                return []
-            except Exception as e:
-                # Qualquer outro erro também retorna lista vazia
-                return []
-            
-            if not isinstance(estudantes, list):
-                return []
-            
-            # Se a lista estiver vazia, retornar vazio
-            if len(estudantes) == 0:
-                return []
-            
-            todos_registros = []
-            
-            for estudante in estudantes:
-                if not isinstance(estudante, dict):
-                    continue
-                try:
-                    registros = estudante.get("daily_logs")
-                    # daily_logs pode ser None, lista vazia, ou uma lista
-                    if registros is None:
-                        continue
-                    if not isinstance(registros, list):
-                        # Se não for lista, tentar converter ou pular
-                        continue
-                    for registro in registros:
-                        if not isinstance(registro, dict):
-                            continue
-                        # Criar cópia do registro para não modificar o original
-                        registro_copy = registro.copy()
-                        # Adicionar informações do estudante ao registro
-                        registro_copy['student_id'] = estudante.get('id')
-                        registro_copy['students'] = {
-                            'name': estudante.get('name'),
-                            'grade': estudante.get('grade'),
-                            'class_group': estudante.get('class_group')
-                        }
-                        todos_registros.append(registro_copy)
-                except Exception as e:
-                    # Se houver erro ao processar um estudante, continuar com os próximos
-                    continue
-            
-            # Ordenar por data_sessao (mais recente primeiro) e limitar
-            try:
-                todos_registros_ordenados = sorted(
-                    todos_registros,
-                    key=lambda x: x.get('data_sessao', '') or '',
-                    reverse=True
-                )[:limite]
-            except Exception as e:
-                # Se houver erro na ordenação, retornar sem ordenar
-                todos_registros_ordenados = todos_registros[:limite]
-            
-            return todos_registros_ordenados
-        elif response.status_code == 404:
-            # Tabela ou coluna não encontrada - retornar vazio
-            return []
-        else:
-            # Outro erro HTTP - retornar vazio silenciosamente
-            return []
-    except requests.exceptions.RequestException as e:
-        # Erro de conexão/timeout - retornar vazio
-        return []
-    except Exception as e:
-        # Qualquer outro erro - retornar vazio silenciosamente
-        return []
-
-def excluir_registro_diario(student_id, registro_id):
-    """Exclui um registro do array daily_logs"""
-    try:
-        # 1) Buscar estudante
-        url = f"{ou._sb_url()}/rest/v1/students"
-        params_get = {"select": "id,daily_logs", "id": f"eq.{student_id}"}
-        r = requests.get(url, headers=ou._headers(), params=params_get, timeout=15)
-
-        if not (r.status_code == 200 and r.json()):
-            return False
-
-        student_row = r.json()[0]
-        registros_existentes = student_row.get("daily_logs") or []
-        
-        # 2) Remover registro do array
-        registros_filtrados = [r for r in registros_existentes if r.get("registro_id") != registro_id]
-        
-        if len(registros_filtrados) == len(registros_existentes):
-            return False  # Registro não encontrado
-
-        # 3) Salvar array atualizado
-        update_data = {"daily_logs": registros_filtrados}
-        params_patch = {"id": f"eq.{student_id}"}
-        rp = requests.patch(url, headers=ou._headers(), params=params_patch, json=update_data, timeout=25)
-        
-        return rp.status_code in [200, 204]
-    except Exception as e:
-        st.error(f"Erro ao excluir registro: {str(e)}")
-        return False
-
-# ==============================================================================
-# CARREGAMENTO DE DADOS
-# ==============================================================================
-
-# Carregar estudantes
-try:
-    if 'alunos_cache' not in st.session_state:
-        with st.spinner("Carregando estudantes..."):
-            st.session_state.alunos_cache = carregar_alunos_workspace()
-
-    alunos = st.session_state.alunos_cache or []
-
-    if not alunos:
-        st.warning("Nenhum estudante encontrado.")
-        st.stop()
-except Exception as e:
-    st.error(f"Erro ao carregar estudantes: {str(e)}")
-    st.stop()
-
-# ==============================================================================
-# ABAS PRINCIPAIS - DIÁRIO DE BORDO
-# ==============================================================================
-
-# Criar abas (filtros e estatísticas agora em uma aba separada)
-tab_filtros, tab_novo, tab_lista, tab_relatorios, tab_config = st.tabs([
-    f"{get_icon('buscar', 18, '#F43F5E')} Filtros & Estatísticas", 
-    f"{get_icon('adicionar', 18, '#F43F5E')} Novo Registro", 
-    f"{get_icon('diario', 18, '#F43F5E')} Lista de Registros", 
-    f"{get_icon('monitoramento', 18, '#F43F5E')} Relatórios", 
-    f"{get_icon('configurar', 18, '#F43F5E')} Configurações"
-])
-
-# ==============================================================================
-# ABA 0: FILTROS & ESTATÍSTICAS
-# ==============================================================================
-with tab_filtros:
-    st.markdown(f"### {icon_title('Filtros', 'buscar', 24, '#F43F5E')}", unsafe_allow_html=True)
-    col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
-
-    with col_filtro1:
-        try:
-            nomes_alunos = [f"{a.get('name', 'Sem nome')} ({a.get('grade', 'N/I')})" for a in alunos if a]
-            aluno_filtro = st.selectbox("Estudante:", ["Todos"] + nomes_alunos, key="filtro_aluno")
-        except Exception as e:
-            st.error(f"Erro ao carregar lista de estudantes: {str(e)}")
-            aluno_filtro = "Todos"
-        # O valor já é salvo automaticamente no session_state pelo key="filtro_aluno"
-
-    with col_filtro2:
-        periodo = st.selectbox("Período:", 
-                              ["Últimos 7 dias", "Últimos 30 dias", "Este mês", "Mês passado", "Personalizado", "Todos"],
-                              key="filtro_periodo")
-        # O valor já é salvo automaticamente no session_state pelo key="filtro_periodo"
-
-    with col_filtro3:
-        modalidade = st.multiselect(
-            "Modalidade:",
-            ["individual", "grupo", "observacao_sala", "consultoria"],
-            default=["individual", "grupo"],
-            key="filtro_modalidade"
-        )
-        # O valor já é salvo automaticamente no session_state pelo key="filtro_modalidade"
-
-    # Período personalizado
-    if periodo == "Personalizado":
-        col_data1, col_data2 = st.columns(2)
-        with col_data1:
-            data_inicio = st.date_input("De:", value=date.today() - timedelta(days=30), key="filtro_data_inicio")
-            # O valor já é salvo automaticamente no session_state pelo key="filtro_data_inicio"
-        with col_data2:
-            data_fim = st.date_input("Até:", value=date.today(), key="filtro_data_fim")
-            # O valor já é salvo automaticamente no session_state pelo key="filtro_data_fim"
-
-    st.markdown("---")
-    
-    # Estatísticas rápidas (carregamento sob demanda)
-    st.markdown(f"### {icon_title('Estatísticas', 'monitoramento', 24, '#F43F5E')}", unsafe_allow_html=True)
-    
-    # Botão para carregar estatísticas
-        if st.button("📊 Carregar Estatísticas", type="primary", use_container_width=True):
-        registros = []
-        try:
-            with st.spinner("Carregando registros..."):
-                registros = carregar_todos_registros(limite=500)
-                if not isinstance(registros, list):
-                    registros = []
-        except Exception as e:
-            st.warning(f"Não foi possível carregar os registros. Tente novamente mais tarde.")
-            registros = []
-        
-        # Salvar no session_state para não precisar recarregar
-        st.session_state['registros_estatisticas'] = registros
-    else:
-        # Usar cache se disponível
-        registros = st.session_state.get('registros_estatisticas', [])
-
-    if registros:
-        total_registros = len(registros)
-        registros_ultimos_30 = 0
-        try:
-            registros_ultimos_30 = len([r for r in registros 
-                                      if r.get('data_sessao') and 
-                                      isinstance(r.get('data_sessao'), str) and
-                                      datetime.fromisoformat(r['data_sessao']).date() > date.today() - timedelta(days=30)])
-        except (ValueError, AttributeError, TypeError):
-            pass
-        
-        col_stat1, col_stat2, col_stat3 = st.columns(3)
-        with col_stat1:
-            st.metric("Total de Registros", total_registros)
-        with col_stat2:
-            st.metric("Últimos 30 dias", registros_ultimos_30)
-        with col_stat3:
-            alunos_com_registros = len(set([r.get('student_id') for r in registros if r.get('student_id')]))
-            st.metric("Estudantes Atendidos", alunos_com_registros)
-        
-        # Estatísticas por modalidade
-        st.markdown(f"#### {icon_title('Por Modalidade', 'monitoramento', 20, '#F43F5E')}", unsafe_allow_html=True)
-        modalidades_count = {}
-        for r in registros:
-            mod = r.get('modalidade_atendimento', 'N/A')
-            modalidades_count[mod] = modalidades_count.get(mod, 0) + 1
-        
-        if modalidades_count:
-            col_mod1, col_mod2, col_mod3, col_mod4 = st.columns(4)
-            mods_display = {
-                'individual': 'Individual',
-                'grupo': 'Grupo',
-                'observacao_sala': 'Observação',
-                'consultoria': 'Consultoria'
-            }
-            cols = [col_mod1, col_mod2, col_mod3, col_mod4]
-            for idx, (mod, count) in enumerate(list(modalidades_count.items())[:4]):
-                with cols[idx]:
-                    st.metric(mods_display.get(mod, mod), count)
-    else:
-        if 'registros_estatisticas' not in st.session_state:
-            st.info("Clique no botão acima para carregar as estatísticas.")
-        else:
-            st.info("Nenhum registro encontrado.")
-
-# ==============================================================================
-# ==============================================================================
-# ABA 2: NOVO REGISTRO
-# ==============================================================================
-with tab_novo:
-    st.markdown(f"### {icon_title('Nova Sessão de AEE', 'adicionar', 24, '#F43F5E')}", unsafe_allow_html=True)
-    
-    with st.form("form_nova_sessao", clear_on_submit=True):
-        st.markdown("<div class='form-section'>", unsafe_allow_html=True)
-        
-        # Seção 1: Informações básicas
-        st.markdown("#### 1. Informações da Sessão")
-        
-        col_info1, col_info2, col_info3 = st.columns(3)
-        
-        with col_info1:
-            # Seleção do estudante
-            try:
-                aluno_options = {f"{a.get('name', 'Sem nome')} ({a.get('grade', 'N/I')})": a for a in alunos if a}
-                if not aluno_options:
-                    st.error("Nenhum estudante disponível.")
-                    aluno_id = None
-                else:
-                    aluno_selecionado_label = st.selectbox(
-                        "Estudante *",
-                        options=list(aluno_options.keys()),
-                        help="Selecione o estudante atendido"
-                    )
-                    
-                    aluno_selecionado = aluno_options.get(aluno_selecionado_label)
-                    aluno_id = aluno_selecionado.get('id') if aluno_selecionado else None
-            except Exception as e:
-                st.error(f"Erro ao carregar estudantes: {str(e)}")
-                aluno_id = None
-        
-        with col_info2:
-            data_sessao = st.date_input(
-                "Data da Sessão *",
-                value=date.today(),
-                help="Data em que a sessão foi realizada"
-            )
-            
-            duracao = st.number_input(
-                "Duração (minutos) *",
-                min_value=15,
-                max_value=240,
-                value=45,
-                step=15,
-                help="Duração da sessão em minutos"
-            )
-        
-        with col_info3:
-            modalidade_opcoes = {
-                "Individual": "individual",
-                "Grupo": "grupo",
-                "Observação em Sala": "observacao_sala",
-                "Consultoria": "consultoria"
-            }
-            modalidade_label = st.selectbox(
-                "Modalidade *",
-                options=list(modalidade_opcoes.keys()),
-                help="Modalidade de atendimento"
-            )
-            modalidade = modalidade_opcoes[modalidade_label]
-            
-            engajamento = st.slider(
-                "Engajamento do Estudante",
-                min_value=1,
-                max_value=5,
-                value=3,
-                help="1 = Baixo engajamento, 5 = Alto engajamento"
-            )
-        
-        st.divider()
-        
-        # Seção 2: Conteúdo da sessão
-        st.markdown("#### 2. Conteúdo da Sessão")
-        
-        atividade = st.text_area(
-            "Atividade Principal *",
-            height=100,
-            placeholder="Descreva a atividade principal realizada...",
-            help="Ex: Jogo de memória com figuras geométricas, leitura compartilhada, exercício de coordenação motora..."
-        )
-        
-        col_conteudo1, col_conteudo2 = st.columns(2)
-        
-        with col_conteudo1:
-            objetivos = st.text_area(
-                "Objetivos Trabalhados *",
-                height=120,
-                placeholder="Quais objetivos foram trabalhados nesta sessão?",
-                help="Ex: Desenvolver atenção sustentada, melhorar coordenação visomotora, ampliar vocabulário..."
-            )
-        
-        with col_conteudo2:
-            estrategias = st.text_area(
-                "Estratégias Utilizadas *",
-                height=120,
-                placeholder="Quais estratégias pedagógicas foram utilizadas?",
-                help="Ex: Modelagem, dicas visuais, fragmentação da tarefa, reforço positivo..."
-            )
-        
-        recursos = st.text_input(
-            "Recursos e Materiais",
-            placeholder="Recursos utilizados (separados por vírgula)",
-            help="Ex: Tablets, jogos pedagógicos, materiais concretos, recursos visuais..."
-        )
-        
-        st.divider()
-        
-        # Seção 3: Avaliação e observações
-        st.markdown("#### 3. Avaliação e Observações")
-        
-        col_avaliacao1, col_avaliacao2 = st.columns(2)
-        
-        with col_avaliacao1:
-            nivel_opcoes = {
-                "Muito Fácil": "muito_facil",
-                "Fácil": "facil",
-                "Adequado": "adequado",
-                "Desafiador": "desafiador",
-                "Muito Difícil": "muito_dificil"
-            }
-            nivel_label = st.selectbox(
-                "Nível de Dificuldade",
-                options=list(nivel_opcoes.keys()),
-                index=2
-            )
-            nivel_dificuldade = nivel_opcoes[nivel_label]
-        
-        with col_avaliacao2:
-            competencias = st.multiselect(
-                "Competências Trabalhadas",
-                options=[
-                    "atenção", "memória", "raciocínio", "linguagem",
-                    "socialização", "autonomia", "motricidade", "percepção",
-                    "organização", "regulação emocional"
-                ],
-                default=["atenção", "memória"]
-            )
-        
-        col_obs1, col_obs2 = st.columns(2)
-        
-        with col_obs1:
-            pontos_positivos = st.text_area(
-                "Pontos Positivos",
-                height=100,
-                placeholder="O que funcionou bem?",
-                help="Registre os aspectos positivos da sessão"
-            )
-        
-        with col_obs2:
-            dificuldades = st.text_area(
-                "Dificuldades Identificadas",
-                height=100,
-                placeholder="Quais dificuldades foram observadas?",
-                help="Registre desafios encontrados durante a sessão"
-            )
-        
-        observacoes = st.text_area(
-            "Observações Gerais",
-            height=120,
-            placeholder="Outras observações relevantes...",
-            help="Registre qualquer informação adicional importante"
-        )
-        
-        st.divider()
-        
-        # Seção 4: Próximos passos
-        st.markdown("#### 4. Próximos Passos")
-        
-        proximos_passos = st.text_area(
-            "Plano para Próxima Sessão",
-            height=100,
-            placeholder="O que planejar para a próxima sessão?",
-            help="Sugestões e planejamento para continuidade do trabalho"
-        )
-        
-        encaminhamentos = st.text_input(
-            "Encaminhamentos Necessários",
-            placeholder="Encaminhamentos para outros profissionais",
-            help="Ex: Encaminhar para fonoaudiólogo, solicitar avaliação psicológica..."
-        )
-        
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-        # Botões de ação
-        col_botoes1, col_botoes2, col_botoes3 = st.columns([1, 1, 1])
-        
-        with col_botoes2:
-            salvar = st.form_submit_button(
-                f"{get_icon('salvar', 18, 'white')} Salvar Registro",
-                type="primary",
-                use_container_width=True
-            )
-        
-        if salvar:
-            # Validações
-            if not aluno_id:
-                st.error("Por favor, selecione um estudante.")
-            elif not atividade or not objetivos or not estrategias:
-                st.error("Por favor, preencha os campos obrigatórios (*)")
-            else:
-                # Preparar registro
-                registro = {
-                    "student_id": aluno_id,  # Necessário para salvar na coluna daily_logs do estudante
-                    "data_sessao": data_sessao.isoformat() if hasattr(data_sessao, 'isoformat') else str(data_sessao),
-                    "duracao_minutos": duracao,
-                    "modalidade_atendimento": modalidade,
-                    "atividade_principal": atividade,
-                    "objetivos_trabalhados": objetivos,
-                    "estrategias_utilizadas": estrategias,
-                    "recursos_materiais": recursos,
-                    "engajamento_aluno": engajamento,
-                    "nivel_dificuldade": nivel_dificuldade,
-                    "competencias_trabalhadas": competencias,
-                    "pontos_positivos": pontos_positivos,
-                    "dificuldades_identificadas": dificuldades,
-                    "observacoes": observacoes,
-                    "proximos_passos": proximos_passos,
-                    "encaminhamentos": encaminhamentos,
-                    "status": "finalizado",
-                    "tags": competencias  # Usar competências como tags
-                }
-                
-                # Salvar no Supabase
-                with st.spinner("Salvando registro..."):
-                    resultado = salvar_registro_diario(registro)
-                    
-                    if resultado["sucesso"]:
-                        st.success(f"{get_icon('sucesso', 18, '#16A34A')} Registro salvo com sucesso!")
-                        
-                        # Mostrar resumo
-                        with st.expander("📋 Ver Resumo do Registro", expanded=True):
-                            col_resumo1, col_resumo2 = st.columns(2)
-                            with col_resumo1:
-                                aluno_label_display = aluno_selecionado_label if 'aluno_selecionado_label' in locals() else "Estudante selecionado"
-                                st.markdown(f"**Estudante:** {aluno_label_display}")
-                                st.markdown(f"**Data:** {data_sessao.strftime('%d/%m/%Y')}")
-                                st.markdown(f"**Duração:** {duracao} minutos")
-                                modalidade_display = modalidade_label
-                                st.markdown(f"**Modalidade:** {modalidade_display}")
-                            
-                            with col_resumo2:
-                                st.markdown(f"**Engajamento:** {'⭐' * engajamento}")
-                                st.markdown(f"**Competências:** {', '.join(competencias)}")
-                                st.markdown(f"**ID do Registro:** {resultado.get('registro_id', 'N/A')}")
-                        
-                        time.sleep(2)
-                        st.rerun()
-                    else:
-                        st.error(f"❌ Erro ao salvar: {resultado.get('erro', 'Erro desconhecido')}")
-
-# ==============================================================================
-# ABA 3: LISTA DE REGISTROS
-# ==============================================================================
-with tab_lista:
-    st.markdown(f"### {icon_title('Registros de Atendimento', 'diario', 24, '#F43F5E')}", unsafe_allow_html=True)
-    
-    # Carregar registros com filtros
-    try:
-        todos_registros = carregar_todos_registros(limite=200)
-        if not isinstance(todos_registros, list):
-            todos_registros = []
-    except Exception:
-        todos_registros = []
-    
-    if not todos_registros:
-        st.info("Nenhum registro encontrado. Crie seu primeiro registro na aba 'Novo Registro'.")
-    else:
-        # Aplicar filtros
-        registros_filtrados = todos_registros.copy()
-        
-        # Filtro por estudante (usa session_state para acessar da aba de filtros)
-        aluno_filtro = st.session_state.get('filtro_aluno', 'Todos')
-        if aluno_filtro and aluno_filtro != "Todos":
-            aluno_nome = aluno_filtro.split("(")[0].strip()
-            registros_filtrados = [r for r in registros_filtrados 
-                                 if r.get('students', {}).get('name', '') == aluno_nome]
-        
-        # Filtro por período
-        periodo = st.session_state.get('filtro_periodo', 'Todos')
-        if periodo and periodo != "Todos":
-            hoje = date.today()
-            registros_filtrados_temp = []
-            for r in registros_filtrados:
-                if not r.get('data_sessao'):
-                    continue
-                try:
-                    data_sessao = r['data_sessao']
-                    if isinstance(data_sessao, str):
-                        data_sessao = datetime.fromisoformat(data_sessao).date()
-                    elif hasattr(data_sessao, 'date'):
-                        data_sessao = data_sessao.date()
-                    else:
-                        continue
-                    
-                    if periodo == "Últimos 7 dias":
-                        if data_sessao >= (hoje - timedelta(days=7)):
-                            registros_filtrados_temp.append(r)
-                    elif periodo == "Últimos 30 dias":
-                        if data_sessao >= (hoje - timedelta(days=30)):
-                            registros_filtrados_temp.append(r)
-                    elif periodo == "Este mês":
-                        if data_sessao.month == hoje.month:
-                            registros_filtrados_temp.append(r)
-                    elif periodo == "Mês passado":
-                        mes_passado = hoje.month - 1 if hoje.month > 1 else 12
-                        if data_sessao.month == mes_passado:
-                            registros_filtrados_temp.append(r)
-                    elif periodo == "Personalizado":
-                        data_inicio = st.session_state.get('filtro_data_inicio', date.today() - timedelta(days=30))
-                        data_fim = st.session_state.get('filtro_data_fim', date.today())
-                        if data_inicio <= data_sessao <= data_fim:
-                            registros_filtrados_temp.append(r)
-                except (ValueError, AttributeError):
-                    continue
-            registros_filtrados = registros_filtrados_temp
-        
-        # Filtro por modalidade
-        modalidade = st.session_state.get('filtro_modalidade', [])
-        if modalidade:
-            registros_filtrados = [r for r in registros_filtrados 
-                                 if r.get('modalidade_atendimento') in modalidade]
-        
-        # Estatísticas dos filtrados
-        col_stats1, col_stats2, col_stats3, col_stats4 = st.columns(4)
-        with col_stats1:
-            st.metric("Total Filtrado", len(registros_filtrados))
-        with col_stats2:
-            total_minutos = sum(r.get('duracao_minutos', 0) for r in registros_filtrados)
-            st.metric("Horas de Atendimento", f"{total_minutos // 60}h")
-        with col_stats3:
-            media_engajamento = sum(r.get('engajamento_aluno', 0) for r in registros_filtrados) / len(registros_filtrados) if registros_filtrados else 0
-            st.metric("Engajamento Médio", f"{media_engajamento:.1f}/5")
-        with col_stats4:
-            if registros_filtrados:
-                try:
-                    ultimo_registro = max(registros_filtrados, key=lambda x: x.get('data_sessao', ''))
-                    data_ultima = ultimo_registro.get('data_sessao')
-                    if isinstance(data_ultima, str):
-                        data_formatada = datetime.fromisoformat(data_ultima).strftime('%d/%m')
-                    elif hasattr(data_ultima, 'strftime'):
-                        data_formatada = data_ultima.strftime('%d/%m')
-                    else:
-                        data_formatada = "N/A"
-                    st.metric("Última Sessão", data_formatada)
-                except (ValueError, AttributeError, KeyError):
-                    st.metric("Última Sessão", "N/A")
-        
-        st.divider()
-        
-        # Exibir registros
-        for registro in registros_filtrados:
-            aluno_nome = registro.get('students', {}).get('name', 'Estudante não encontrado')
-            try:
-                data_sessao = registro.get('data_sessao')
-                if isinstance(data_sessao, str):
-                    data_formatada = datetime.fromisoformat(data_sessao).strftime('%d/%m/%Y')
-                elif hasattr(data_sessao, 'strftime'):
-                    data_formatada = data_sessao.strftime('%d/%m/%Y')
-                else:
-                    data_formatada = str(data_sessao)
-            except (ValueError, AttributeError):
-                data_formatada = "Data inválida"
-            
-            # Determinar classe CSS baseada na modalidade
-            modalidade_classe = {
-                'individual': 'badge-individual',
-                'grupo': 'badge-grupo',
-                'observacao_sala': 'badge-observacao'
-            }.get(registro.get('modalidade_atendimento'), '')
-            
-            with st.expander(f"📅 {data_formatada} | {aluno_nome} | {registro.get('atividade_principal', '')[:50]}...", expanded=False):
-                col_reg1, col_reg2 = st.columns([3, 1])
-                
-                with col_reg1:
-                    st.markdown(f"**Atividade:** {registro.get('atividade_principal', '')}")
-                    st.markdown(f"**Objetivos:** {registro.get('objetivos_trabalhados', '')}")
-                    st.markdown(f"**Estratégias:** {registro.get('estrategias_utilizadas', '')}")
-                    
-                    if registro.get('observacoes'):
-                        st.markdown(f"**Observações:** {registro.get('observacoes')}")
-                    
-                    if registro.get('proximos_passos'):
-                        st.markdown(f"**Próximos Passos:** {registro.get('proximos_passos')}")
-                
-                with col_reg2:
-                    st.markdown(f"<span class='{modalidade_classe}' style='padding: 4px 8px; border-radius: 12px; font-size: 0.8rem;'>{registro.get('modalidade_atendimento', '').replace('_', ' ').title()}</span>", unsafe_allow_html=True)
-                    st.markdown(f"**Duração:** {registro.get('duracao_minutos', 0)} min")
-                    st.markdown(f"**Engajamento:** {'⭐' * registro.get('engajamento_aluno', 0)}")
-                    
-                    if registro.get('competencias_trabalhadas'):
-                        competencias = ', '.join(registro.get('competencias_trabalhadas', []))
-                        st.markdown(f"**Competências:** {competencias}")
-                    
-                    # Botões de ação
-                    col_btn1, col_btn2 = st.columns(2)
-                    with col_btn1:
-                        registro_id = registro.get('registro_id') or registro.get('id')
-                        if st.button("✏️ Editar", key=f"edit_{registro_id}", use_container_width=True):
-                            st.session_state.editar_registro_id = registro_id
-                            st.switch_page("#")  # Poderia abrir modal de edição
-                    
-                    with col_btn2:
-                        registro_id = registro.get('registro_id') or registro.get('id')
-                        student_id = registro.get('student_id')
-                        if st.button("🗑️ Excluir", key=f"del_{registro_id}", type="secondary", use_container_width=True):
-                            if student_id and registro_id:
-                                if excluir_registro_diario(student_id, registro_id):
-                                    st.success("Registro excluído!")
-                                    time.sleep(1)
-                                    st.rerun()
-                                else:
-                                    st.error("Erro ao excluir registro")
-                            else:
-                                st.error("Dados do registro incompletos")
-        
-        # Paginação (simplificada)
-        if len(registros_filtrados) > 10:
-            st.markdown(f"**Mostrando {min(10, len(registros_filtrados))} de {len(registros_filtrados)} registros**")
-
-# ==============================================================================
-# ABA 4: RELATÓRIOS
-# ==============================================================================
-with tab_relatorios:
-    st.markdown(f"### {icon_title('Relatórios e Análises', 'monitoramento', 24, '#F43F5E')}", unsafe_allow_html=True)
-    
-    # Carregar dados
-    try:
-        registros = carregar_todos_registros(limite=500)
-        if not isinstance(registros, list):
-            registros = []
-    except Exception:
-        registros = []
-    
-    if not registros:
-        st.info("Nenhum dado disponível para gerar relatórios.")
-    else:
-        # Converter para DataFrame
-        df = pd.DataFrame(registros)
-        
-        # Converter datas (tratando valores None ou inválidos)
-        df['data_sessao'] = pd.to_datetime(df['data_sessao'], errors='coerce')
-        df = df.dropna(subset=['data_sessao'])  # Remove registros com data inválida
-        df['mes'] = df['data_sessao'].dt.to_period('M')
-        
-        col_rel1, col_rel2 = st.columns(2)
-        
-        with col_rel1:
-            # Gráfico de atendimentos por mês
-            st.markdown(f"#### {icon_title('Atendimentos por Mês', 'monitoramento', 20, '#F43F5E')}", unsafe_allow_html=True)
-            if 'mes' in df.columns and len(df) > 0:
-                atendimentos_mes = df.groupby('mes').size().reset_index(name='count')
-                atendimentos_mes['mes'] = atendimentos_mes['mes'].astype(str)
-                
-                fig1 = px.bar(
-                    atendimentos_mes,
-                    x='mes',
-                    y='count',
-                    title="Quantidade de Atendimentos por Mês",
-                    color='count',
-                    color_continuous_scale='teal'
-                )
-                fig1.update_layout(showlegend=False, height=300)
-                st.plotly_chart(fig1, use_container_width=True)
-            else:
-                st.info("Dados insuficientes para gerar gráfico de atendimentos por mês.")
-        
-        with col_rel2:
-            # Distribuição por modalidade
-            st.markdown("#### 📊 Distribuição por Modalidade")
-            if 'modalidade_atendimento' in df.columns:
-                modalidade_counts = df['modalidade_atendimento'].value_counts().reset_index()
-                modalidade_counts.columns = ['modalidade', 'count']
-            else:
-                modalidade_counts = pd.DataFrame(columns=['modalidade', 'count'])
-            
-            if len(modalidade_counts) > 0:
-                fig2 = px.pie(
-                    modalidade_counts,
-                    values='count',
-                    names='modalidade',
-                    title="Distribuição por Modalidade de Atendimento",
-                    color_discrete_sequence=px.colors.sequential.Teal
-                )
-                fig2.update_layout(showlegend=True, height=300)
-                st.plotly_chart(fig2, use_container_width=True)
-            else:
-                st.info("Dados insuficientes para gerar gráfico de distribuição por modalidade.")
-        
-        # Gráfico de engajamento ao longo do tempo
-        st.markdown(f"#### {icon_title('Evolução do Engajamento', 'monitoramento', 20, '#F43F5E')}", unsafe_allow_html=True)
-        
-        if 'student_id' in df.columns:
-            # Criar dicionário de estudantes
-            alunos_dict = {}
-            for registro in registros:
-                student_id = registro.get('student_id')
-                if student_id and student_id not in alunos_dict:
-                    nome = registro.get('students', {}).get('name', f'Estudante {str(student_id)[:8]}')
-                    alunos_dict[student_id] = nome
-            
-            # Selecionar estudante específico para análise
-            alunos_unicos = df['student_id'].unique()
-            if len(alunos_unicos) > 0:
-                aluno_selecionado_id = st.selectbox(
-                    "Selecione o estudante para análise:",
-                    options=alunos_unicos,
-                    format_func=lambda x: alunos_dict.get(x, f"Estudante {str(x)[:8]}")
-                )
-                
-                # Filtrar dados do estudante
-                df_aluno = df[df['student_id'] == aluno_selecionado_id].sort_values('data_sessao')
-                
-                if len(df_aluno) > 1:
-                    nome_estudante = alunos_dict.get(aluno_selecionado_id, 'Estudante')
-                    fig3 = px.line(
-                        df_aluno,
-                        x='data_sessao',
-                        y='engajamento_aluno',
-                        title=f"Evolução do Engajamento - {nome_estudante}",
-                        markers=True,
-                        line_shape='spline'
-                    )
-                    fig3.update_layout(height=400)
-                    st.plotly_chart(fig3, use_container_width=True)
-                    
-                    # Estatísticas do estudante
-                    col_aluno1, col_aluno2, col_aluno3, col_aluno4 = st.columns(4)
-                    with col_aluno1:
-                        st.metric("Total Sessões", len(df_aluno))
-                    with col_aluno2:
-                        st.metric("Engajamento Médio", f"{df_aluno['engajamento_aluno'].mean():.1f}/5")
-                    with col_aluno3:
-                        st.metric("Duração Média", f"{df_aluno['duracao_minutos'].mean():.0f} min")
-                    with col_aluno4:
-                        ultima_sessao = df_aluno.iloc[0]['data_sessao']
-                        st.metric("Última Sessão", ultima_sessao.strftime('%d/%m'))
-        
-        # Competências mais trabalhadas
-        st.markdown(f"#### {icon_title('Competências Trabalhadas', 'configurar', 20, '#F43F5E')}", unsafe_allow_html=True)
-        
-        # Extrair todas as competências
-        todas_competencias = []
-        for competencias in df['competencias_trabalhadas']:
-            if competencias:
-                if isinstance(competencias, list):
-                    todas_competencias.extend(competencias)
-                elif isinstance(competencias, str):
-                    # Se for string, tentar converter (pode ser JSON string)
-                    try:
-                        import json
-                        comp_list = json.loads(competencias)
-                        if isinstance(comp_list, list):
-                            todas_competencias.extend(comp_list)
-                    except:
-                        todas_competencias.append(competencias)
-        
-        if todas_competencias:
-            competencias_df = pd.DataFrame({'competencia': todas_competencias})
-            competencias_counts = competencias_df['competencia'].value_counts().reset_index()
-            competencias_counts.columns = ['competencia', 'count']
-            
-            fig4 = px.bar(
-                competencias_counts.head(10),
-                x='count',
-                y='competencia',
-                orientation='h',
-                title="Top 10 Competências Trabalhadas",
-                color='count',
-                color_continuous_scale='teal'
-            )
-            fig4.update_layout(height=400)
-            st.plotly_chart(fig4, use_container_width=True)
-        
-        # Exportar dados
-        st.divider()
-        st.markdown(f"#### {icon_title('Exportar Dados', 'download', 20, '#F43F5E')}", unsafe_allow_html=True)
-        
-        col_exp1, col_exp2, col_exp3 = st.columns(3)
-        
-        with col_exp1:
-            # Exportar como CSV
-            csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label=f"{get_icon('download', 18, 'white')} Exportar CSV",
-                data=csv,
-                file_name=f"diario_bordo_{date.today()}.csv",
-                mime="text/csv",
-                use_container_width=True
-            )
-        
-        with col_exp2:
-            # Exportar como JSON
-            json_data = df.to_json(orient='records', indent=2, force_ascii=False)
-            st.download_button(
-                label=f"{get_icon('download', 18, 'white')} Exportar JSON",
-                data=json_data,
-                file_name=f"diario_bordo_{date.today()}.json",
-                mime="application/json",
-                use_container_width=True
-            )
-        
-        with col_exp3:
-            # Gerar relatório resumido
-            if st.button("📊 Gerar Relatório Resumido", use_container_width=True):
-                with st.spinner("Gerando relatório..."):
-                    # Criar relatório resumido
-                    relatorio = {
-                        "data_geracao": datetime.now().isoformat(),
-                        "total_registros": len(df),
-                        "periodo_analisado": f"{df['data_sessao'].min().date()} a {df['data_sessao'].max().date()}" if len(df) > 0 else "N/A",
-                        "total_alunos": df['student_id'].nunique() if 'student_id' in df.columns else 0,
-                        "total_horas": int(df['duracao_minutos'].sum() / 60) if 'duracao_minutos' in df.columns else 0,
-                        "engajamento_medio": float(df['engajamento_aluno'].mean()) if 'engajamento_aluno' in df.columns else 0.0,
-                        "modalidades": df['modalidade_atendimento'].value_counts().to_dict() if 'modalidade_atendimento' in df.columns else {},
-                        "top_competencias": competencias_counts.head(5).to_dict('records') if 'competencias_counts' in locals() and len(competencias_counts) > 0 else []
-                    }
-                    
-                    st.json(relatorio)
-
-# ==============================================================================
-# ABA 5: CONFIGURAÇÕES
-# ==============================================================================
-with tab_config:
-    st.markdown(f"### {icon_title('Configurações do Diário', 'configurar', 24, '#F43F5E')}", unsafe_allow_html=True)
-    
-    col_config1, col_config2 = st.columns(2)
-    
-    with col_config1:
-        st.markdown(f"#### {icon_title('Configurações de Registro', 'configurar', 20, '#F43F5E')}", unsafe_allow_html=True)
-        
-        # Configurações padrão
-        if 'config_diario' not in st.session_state:
-            st.session_state.config_diario = {
-                'duracao_padrao': 45,
-                'modalidade_padrao': 'individual',
-                'competencias_padrao': ['atenção', 'memória'],
-                'notificacoes': True
-            }
-        
-        duracao_padrao = st.number_input(
-            "Duração Padrão (minutos)",
-            min_value=15,
-            max_value=120,
-            value=st.session_state.config_diario['duracao_padrao'],
-            step=15
-        )
-        
-        modalidade_padrao_opcoes = ['individual', 'grupo', 'observacao_sala', 'consultoria']
-        try:
-            index_modalidade = modalidade_padrao_opcoes.index(
-                st.session_state.config_diario.get('modalidade_padrao', 'individual')
-            )
-        except ValueError:
-            index_modalidade = 0
-        
-        modalidade_padrao = st.selectbox(
-            "Modalidade Padrão",
-            options=modalidade_padrao_opcoes,
-            index=index_modalidade
-        )
-        
-        competencias_padrao = st.multiselect(
-            "Competências Padrão",
-            options=['atenção', 'memória', 'raciocínio', 'linguagem', 'socialização', 
-                    'autonomia', 'motricidade', 'percepção', 'organização', 'regulação emocional'],
-            default=st.session_state.config_diario['competencias_padrao']
-        )
-        
-        notificacoes = st.toggle(
-            "Receber lembretes de registro",
-            value=st.session_state.config_diario['notificacoes']
-        )
-    
-    with col_config2:
-        st.markdown("#### 🔧 Configurações de Exportação")
-        
-        formato_export = st.selectbox(
-            "Formato Padrão de Exportação",
-            options=['CSV', 'JSON', 'PDF', 'Excel']
-        )
-        
-        incluir_dados = st.multiselect(
-            "Campos para Exportação",
-            options=['dados_aluno', 'conteudo_sessao', 'avaliacoes', 'observacoes', 'proximos_passos'],
-            default=['dados_aluno', 'conteudo_sessao', 'avaliacoes']
-        )
-        
-        auto_backup = st.toggle("Backup Automático", value=True)
-        
-        if auto_backup:
-            freq_backup = st.selectbox(
-                "Frequência do Backup",
-                options=['Diário', 'Semanal', 'Mensal']
-            )
-    
-    st.divider()
-    
-    # Botões de ação
-    col_save, col_reset, col_help = st.columns(3)
-    
-    with col_save:
-        if st.button("💾 Salvar Configurações", type="primary", use_container_width=True):
-            st.session_state.config_diario = {
-                'duracao_padrao': duracao_padrao,
-                'modalidade_padrao': modalidade_padrao,
-                'competencias_padrao': competencias_padrao,
-                'notificacoes': notificacoes
-            }
-            st.success("Configurações salvas com sucesso!")
-    
-    with col_reset:
-        if st.button("🔄 Restaurar Padrões", type="secondary", use_container_width=True):
-            st.session_state.config_diario = {
-                'duracao_padrao': 45,
-                'modalidade_padrao': 'individual',
-                'competencias_padrao': ['atenção', 'memória'],
-                'notificacoes': True
-            }
-            st.success("Configurações restauradas para os padrões!")
-            st.rerun()
-    
-    with col_help:
-        if st.button("❓ Ajuda", use_container_width=True):
-            st.info("""
-            **Guia de Uso do Diário de Bordo:**
-            
-            1. **Novo Registro:** Preencha todos os campos obrigatórios (*) para criar um registro
-            2. **Lista de Registros:** Visualize, filtre e gerencie todos os registros
-            3. **Relatórios:** Acompanhe métricas e gere análises
-            4. **Configurações:** Personalize o comportamento do sistema
-            
-            **Dicas:**
-            - Use tags e competências para facilitar buscas
-            - Exporte regularmente seus dados
-            - Mantenha observações detalhadas para acompanhamento longitudinal
-            """)
-
-# ==============================================================================
-# RODAPÉ COM ASSINATURA
-# ==============================================================================
-ou.render_footer_assinatura()
+        """,
+        unsafe_allow_html=True,
+    )
