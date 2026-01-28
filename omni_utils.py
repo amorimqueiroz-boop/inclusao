@@ -484,13 +484,13 @@ def render_navbar(active_tab: str = "Início"):
     ]
     # Navbar nativo (sem streamlit_option_menu) para funcionar na Render e Streamlit Cloud
     labels = {
-        "Início": "Início",
-        "Estudantes": "Estudantes",
-        "Estratégias & PEI": "Estratégias & PEI",
-        "Plano de Ação (AEE)": "Plano de Ação (AEE)",
-        "Hub de Recursos": "Hub de Recursos",
-        "Diário de Bordo": "Diário de Bordo",
-        "Evolução & Dados": "Evolução & Dados",
+        "Início": "🏠 Início",
+        "Estudantes": "👥 Estudantes",
+        "Estratégias & PEI": "📘 PEI",
+        "Plano de Ação (AEE)": "🧩 Plano de Ação",
+        "Hub de Recursos": "🚀 Hub",
+        "Diário de Bordo": "📝 Diário",
+        "Evolução & Dados": "📊 Dados",
     }
 
     try:
@@ -514,12 +514,18 @@ def render_navbar(active_tab: str = "Início"):
           }
           .omni-navbar .stRadio div[role="radio"]{
             border: 1px solid #E2E8F0;
-            background: #ffffff;
+            background: rgba(255,255,255,0.92);
             border-radius: 999px;
-            padding: 6px 10px;
+            padding: 7px 12px;
             font-size: 12px;
             color: #64748B;
             line-height: 1;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            backdrop-filter: blur(6px);
+          }
+          .omni-navbar .stRadio div[role="radio"]:hover{
+            border-color:#CBD5E1;
+            background:#ffffff;
           }
           .omni-navbar .stRadio div[role="radio"][aria-checked="true"]{
             background: #F1F5F9;
