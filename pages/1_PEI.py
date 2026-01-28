@@ -676,6 +676,13 @@ def limpar_texto_pdf(texto: str):
     t = t.replace("–", "-").replace("—", "-")
     return t.encode("latin-1", "replace").decode("latin-1")
 
+def finding_logo():
+    """Retorna o caminho do arquivo de logo se existir, caso contrário None"""
+    for logo_file in ["omni_icone.png", "logo.png", "iconeaba.png"]:
+        if os.path.exists(logo_file):
+            return logo_file
+    return None
+
 class PDF_Classic(FPDF):
     def header(self):
         self.set_fill_color(248, 248, 248)
