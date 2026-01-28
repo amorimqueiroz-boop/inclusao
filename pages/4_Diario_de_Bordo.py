@@ -575,11 +575,11 @@ except Exception as e:
 
 # Criar abas (filtros e estatísticas agora em uma aba separada)
 tab_filtros, tab_novo, tab_lista, tab_relatorios, tab_config = st.tabs([
-    f"{get_icon('buscar', 18, '#F43F5E')} Filtros & Estatísticas", 
-    f"{get_icon('adicionar', 18, '#F43F5E')} Novo Registro", 
-    f"{get_icon('diario', 18, '#F43F5E')} Lista de Registros", 
-    f"{get_icon('monitoramento', 18, '#F43F5E')} Relatórios", 
-    f"{get_icon('configurar', 18, '#F43F5E')} Configurações"
+    "🔍 Filtros & Estatísticas",
+    "➕ Novo Registro",
+    "📋 Lista de Registros",
+    "📊 Relatórios",
+    "⚙️ Configurações"
 ])
 
 # ==============================================================================
