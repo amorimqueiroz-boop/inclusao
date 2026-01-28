@@ -35,11 +35,16 @@ st.set_page_config(
 # ==============================================================================
 # 2. CSS & DESIGN SYSTEM (COM SIDEBAR OCULTADA)
 # ==============================================================================
+# Garantir que RemixIcon está carregado antes de qualquer CSS
+st.markdown("""
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+""", unsafe_allow_html=True)
+
 st.markdown(
     """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-@import url("https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css");
+@import url("https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css");
 
 html, body, [class*="css"] {
     font-family: 'Plus Jakarta Sans', sans-serif !important;
@@ -248,6 +253,10 @@ footer {
     display: inline-block !important;
     font-size: 2rem !important;
     line-height: 1 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    font-style: normal !important;
+    font-weight: normal !important;
 }
 
 .mod-card-rect:hover .mod-icon-area {
@@ -315,6 +324,15 @@ footer {
 }
 .bg-purple-soft i {
     color: #9333EA !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: inline-block !important;
+}
+.mod-icon-area.bg-purple-soft i {
+    color: #9333EA !important;
+    font-size: 2rem !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* Hub - Verde Água Vibrante */
@@ -848,13 +866,16 @@ def render_topbar():
 
 def create_module_card(title, desc, icon, color_cls, bg_cls, page, key):
     """Cria um card de módulo com botão de acesso"""
+    # Determinar cor do ícone baseado na classe bg
+    icon_color = "#9333EA" if "purple" in bg_cls else "#2563EB" if "indigo" in bg_cls else "#0EA5E9" if "blue" in bg_cls else "#06B6D4" if "teal" in bg_cls else "#F43F5E" if "rose" in bg_cls else "#0C4A6E"
+    
     st.markdown(
         f"""
         <div class="mod-card-wrapper">
             <div class="mod-card-rect">
                 <div class="mod-bar {color_cls}"></div>
-                <div class="mod-icon-area {bg_cls}">
-                    <i class="{icon}"></i>
+                <div class="mod-icon-area {bg_cls}" style="display: flex; align-items: center; justify-content: center;">
+                    <i class="{icon}" style="font-size: 2rem; color: {icon_color}; display: inline-block; visibility: visible; opacity: 1; font-style: normal;"></i>
                 </div>
                 <div class="mod-content">
                     <div class="mod-title">{title}</div>
