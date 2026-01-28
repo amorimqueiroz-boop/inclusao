@@ -27,17 +27,28 @@ def hide_streamlit():
         """
         <style>
             /* Esconde todos os menus e controles do Streamlit */
-            #MainMenu { visibility: hidden !important; }
-            footer { visibility: hidden !important; }
-            header[data-testid="stHeader"] { display: none !important; }
-            [data-testid="stToolbar"] { visibility: hidden !important; }
-            [data-testid="stDecoration"] { display: none !important; }
-            [data-testid="stStatusWidget"] { display: none !important; }
-            [data-testid="stDeployButton"] { display: none !important; }
-            [data-testid="stSidebar"] { display: none !important; }
-            section[data-testid="stSidebar"] { display: none !important; }
-            [data-testid="stSidebarNav"] { display: none !important; }
-            button[data-testid="collapsedControl"] { display: none !important; }
+            #MainMenu { visibility: hidden !important; display: none !important; }
+            footer { visibility: hidden !important; display: none !important; }
+            header[data-testid="stHeader"] { display: none !important; visibility: hidden !important; }
+            [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
+            [data-testid="stDecoration"] { display: none !important; visibility: hidden !important; }
+            [data-testid="stStatusWidget"] { display: none !important; visibility: hidden !important; }
+            [data-testid="stDeployButton"] { display: none !important; visibility: hidden !important; }
+            [data-testid="stSidebar"] { display: none !important; visibility: hidden !important; }
+            section[data-testid="stSidebar"] { display: none !important; visibility: hidden !important; }
+            [data-testid="stSidebarNav"] { display: none !important; visibility: hidden !important; }
+            button[data-testid="collapsedControl"] { display: none !important; visibility: hidden !important; }
+            button[title="View app source"] { display: none !important; visibility: hidden !important; }
+            button[title="Get help"] { display: none !important; visibility: hidden !important; }
+            button[title="Report a bug"] { display: none !important; visibility: hidden !important; }
+            button[title="Settings"] { display: none !important; visibility: hidden !important; }
+            .stDeployButton { display: none !important; visibility: hidden !important; }
+            #stDecoration { display: none !important; visibility: hidden !important; }
+            .stAppToolbar { display: none !important; visibility: hidden !important; }
+            [data-testid="stAppViewContainer"] > header { display: none !important; visibility: hidden !important; }
+            [data-testid="stHeader"] { display: none !important; visibility: hidden !important; }
+            [data-testid="stToolbarActions"] { display: none !important; visibility: hidden !important; }
+            [data-testid="stToolbar"] > div { display: none !important; visibility: hidden !important; }
         </style>
         """,
         unsafe_allow_html=True
