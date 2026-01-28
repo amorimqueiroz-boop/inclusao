@@ -21,7 +21,7 @@ from omni_utils import get_icon, icon_title
 # ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
 st.set_page_config(
     page_title="Omnisfera | PEI",
-    page_icon="omni_icone.png" if os.path.exists("omni_icone.png") else "📘",
+    page_icon="omni_icone.png",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
