@@ -1141,7 +1141,6 @@ with tab8:
 
 
 with tab_mapa:
-with tab_9:
     # ==========================================================================
     # 1. LÓGICA INTERNA (Definida aqui para facilitar o Copiar/Colar)
     # ==========================================================================
@@ -1306,5 +1305,8 @@ Conquistando as missões, você ganha acesso especial aos materiais de {f}!
         else:
             # ESTADO VAZIO
             st.info("👈 Clique em 'GERAR ARTEFATO' ao lado para ver o resultado aqui.")
+
+
+            
 
 st.markdown("<div class='footer-signature'>PEI 360º v123.0 Gold Edition (Hybrid: Cloud + Local) - Desenvolvido por Rodrigo A. Queiroz</div>", unsafe_allow_html=True)
