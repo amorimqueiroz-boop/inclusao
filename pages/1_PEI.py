@@ -1141,111 +1141,167 @@ with tab8:
 
 
 with tab_mapa:
-    # 1. GARANTIA DE ESTADO (Para não perder dados ao recarregar)
-    if "dados" not in st.session_state:
-        st.session_state.dados = {}
+with tab_9:
+    # ==========================================================================
+    # 1. LÓGICA INTERNA (Definida aqui para facilitar o Copiar/Colar)
+    # ==========================================================================
     
-    # Inicializa variáveis padrão se não existirem
-    st.session_state.dados.setdefault("status_validacao_game", "rascunho")
-    st.session_state.dados.setdefault("ia_mapa_texto", "") 
+    # Função para deduzir o estilo visual sem perguntar ao professor
+    def inferir_estilo_interno(foco, serie_aluno):
+        serie_lower = str(serie_aluno).lower()
+        if any(x in serie_lower for x in ['infantil', 'pré', 'creche', '1º', '2º', 'ano']):
+            tom_voz = "Lúdico e Mágico (Foco em imagens e aventura simples)"
+        elif any(x in serie_lower for x in ['médio', '9º', '8º']):
+            tom_voz = "Mentor e Desafiador (Foco em autonomia e 'hacker')"
+        else:
+            tom_voz = "Aventura e Exploração (Equilíbrio)"
+        
+        tema_visual = f"Baseado estritamente no universo de: {foco}"
+        return tema_visual, tom_voz
 
-    # Dados do Aluno (com falback para não quebrar)
-    nome_aluno = st.session_state.dados.get("nome", "Aventureiro")
-    serie = st.session_state.dados.get("serie", "Nível Base")
-    hiperfoco = st.session_state.dados.get("hiperfoco", "Exploração")
+    # Função de Callback do Botão (Executa ANTES de recarregar)
+    def callback_gerar_automatico():
+        # Recupera dados do estado
+        n = st.session_state.dados.get("nome", "Viajante")
+        f = st.session_state.dados.get("hiperfoco", "Descobertas")
+        s = st.session_state.dados.get("serie", "")
+        
+        # Lógica de Inferência
+        tema_auto, tom_auto = inferir_estilo_interno(f, s)
+        
+        # Simulação do Texto da IA (Aqui entraria sua chamada OpenAI)
+        texto = f"""
+# 🌟 MISSÃO: {f.upper()}
+**Agente:** {n} | **Nível:** {s}
+**Estilo:** {tema_auto}
+
+---
+### 📜 SEU OBJETIVO
+Olá, {n}! O universo de **{f}** precisa da sua ajuda.
+Para desbloquear o próximo nível do conhecimento, complete os desafios abaixo!
+
+### ⚔️ DESAFIOS DA SEMANA
+1. **[ ] Foco de Raio Laser:** Terminar a atividade de hoje sem interrupções. (+10 XP)
+2. **[ ] Poder da Parceria:** Ajudar um colega ou professor. (Insígnia de Honra)
+
+### 🎁 RECOMPENSA
+Conquistando as missões, você ganha acesso especial aos materiais de {f}!
+
+*Documento gerado automaticamente pelo Sistema Omnisfera.*
+        """
+        # Atualiza o Estado
+        st.session_state.dados["ia_mapa_texto"] = texto
+        st.session_state.dados["status_validacao_game"] = "pronto"
+
+    # Função de Reset
+    def callback_resetar():
+        st.session_state.dados["status_validacao_game"] = "vazio"
+
+    # ==========================================================================
+    # 2. INICIALIZAÇÃO E HEADER
+    # ==========================================================================
+    
+    # Garante que o dicionário existe
+    if "dados" not in st.session_state: st.session_state.dados = {}
+    st.session_state.dados.setdefault("status_validacao_game", "vazio")
+    
+    # Lê os dados
+    nome_aluno = st.session_state.dados.get("nome", "Aluno")
+    hiperfoco = st.session_state.dados.get("hiperfoco", "Geral")
     pei_ok = bool(st.session_state.dados.get("ia_sugestao"))
 
-    # Configuração Visual
-    seg_cor = "#CBD5E0" # Cor padrão cinza
-
-    # --- HEADER VISUAL ---
+    # Header Visual
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #1A202C 0%, {seg_cor} 100%); padding: 30px; border-radius: 20px; color: white; margin-bottom: 25px;">
-        <h1 style="margin:0; font-size:2rem; color:white;">Missão: {nome_aluno}</h1>
-        <p style="margin:0; opacity:0.9;">🧪 Hiperfoco: <strong>{hiperfoco}</strong> | Status PEI: <strong>{'🔓 OK' if pei_ok else '🔒 Pendente'}</strong></p>
+    <div style="
+        background: linear-gradient(90deg, #0F52BA 0%, #00B8D9 100%); 
+        padding: 25px; border-radius: 15px; color: white; margin-bottom: 20px; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    ">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h2 style="margin:0; font-size:1.6rem; color:white;">🎮 Gamificação Automática</h2>
+                <p style="margin:0; opacity:0.9;">Transforma o PEI do <strong>{nome_aluno}</strong> em missão visual.</p>
+            </div>
+            <div style="text-align:right; font-size:0.9rem; opacity:0.8;">
+                HIPERFOCO ATIVO<br>
+                <strong style="font-size:1.2rem; color:#FFD700;">★ {hiperfoco.upper()}</strong>
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
+    # Bloqueio se não tiver PEI
     if not pei_ok:
-        st.warning("⚠️ Gere o PEI na aba 'Consultoria IA' primeiro.")
+        st.warning("⚠️ O PEI ainda não foi gerado. Vá para 'Consultoria IA' primeiro.")
         st.stop()
 
-    # --- ÁREA DE TRABALHO ---
-    c1, c2 = st.columns([1, 1.5])
-    
-    # --- COLUNA ESQUERDA: CONFIGURAÇÃO ---
-    with c1:
-        st.markdown("### 🛠️ Configurar")
-        tema = st.selectbox("Tema", ["Exploração Espacial", "Medieval", "Super-Heróis", "Natureza"], key="tema_sel")
-        tom = st.select_slider("Tom", options=["Lúdico", "Aventura", "Sério"], value="Aventura", key="tom_sel")
+    # ==========================================================================
+    # 3. INTERFACE (ONE-CLICK)
+    # ==========================================================================
 
-        st.write("")
-        st.write("")
-        
-        # BOTÃO COM CHAVE ÚNICA E DEBUG
-        if st.button("✨ GERAR ARTEFATO AGORA", type="primary", use_container_width=True, key="btn_gerar_game"):
-            try:
-                with st.spinner("Criando missão..."):
-                    # --- SIMULAÇÃO DA IA (Aqui garantimos que funciona sem API Key para teste) ---
-                    texto_gerado = f"""
-# 🚀 MISSÃO: OPERAÇÃO {hiperfoco.upper()}
-**Agente:** {nome_aluno} | **Tema:** {tema}
-
----
-### 🎯 OBJETIVO
-Usar sua habilidade em **{hiperfoco}** para completar os desafios da semana!
-
-### ⚔️ DESAFIOS
-1. **[ ] O Desafio do Foco:** Completar a atividade sem pausas por 15 min.
-2. **[ ] Ajudante da Base:** Organizar os materiais da mesa.
-
-### 🏆 RECOMPENSA
-Desbloqueio de tempo livre no tablet!
-                    """
-                    # -----------------------------------------------------------
-
-                    # Salvar no estado
-                    st.session_state.dados["ia_mapa_texto"] = texto_gerado
-                    st.session_state.dados["status_validacao_game"] = "revisao"
-                    
-                    st.success("Missão gerada! Atualizando...")
-                    st.rerun() # Força atualização da tela
+    # CASO 1: AINDA NÃO GEROU (BOTÃO DE AÇÃO)
+    if st.session_state.dados.get("status_validacao_game") != "pronto":
+        col_vazio, col_btn, col_vazio2 = st.columns([1, 2, 1])
+        with col_btn:
+            st.info(f"O sistema detectou que **{nome_aluno}** gosta de **{hiperfoco}**. Vamos criar uma missão baseada nisso.")
             
-            except Exception as e:
-                st.error(f"❌ Erro ao gerar: {str(e)}")
-                # Se der erro de 'rerun', apenas pare
-                pass
+            # O BOTÃO MÁGICO
+            st.button(
+                "⚡ GERAR ARTEFATO AGORA", 
+                type="primary", 
+                use_container_width=True, 
+                on_click=callback_gerar_automatico
+            )
+            st.caption("A IA definirá o tema visual e a linguagem automaticamente.")
 
-    # --- COLUNA DIREITA: PREVIEW ---
-    with c2:
-        st.markdown("### 👁️ Preview")
+    # CASO 2: JÁ GEROU (PREVIEW + DOWNLOAD)
+    else:
+        col_preview, col_actions = st.columns([2, 1])
         
-        # Verifica se tem texto para mostrar
-        texto_atual = st.session_state.dados.get("ia_mapa_texto", "")
-        
-        if texto_atual:
-            # RENDERIZA O PAPEL
+        with col_preview:
+            texto_final = st.session_state.dados.get("ia_mapa_texto", "")
+            
+            # Renderização Visual (Papel Gamificado)
             st.markdown(f"""
-            <div style="background-color: white; color: #333; padding: 40px; border: 1px solid #DDD; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); font-family: 'Courier New', monospace; margin-bottom: 20px;">
-                <div style="text-align:right; color:#FF4B4B; font-weight:bold;">CONFIDENCIAL</div>
-                {texto_atual.replace('# ', '<h2>').replace('\n', '<br>')}
+            <div style="
+                background-color: white; color: #333; padding: 40px; 
+                border: 1px solid #DDD; border-radius: 4px;
+                box-shadow: 5px 5px 20px rgba(0,0,0,0.1); 
+                font-family: 'Verdana', sans-serif;
+                background-image: radial-gradient(#F0F0F0 1px, transparent 1px);
+                background-size: 20px 20px;
+            ">
+                <div style="border-bottom: 2px solid #0F52BA; padding-bottom:10px; margin-bottom:20px; display:flex; justify-content:space-between;">
+                    <span style="font-weight:bold; color:#0F52BA;">OMNISFERA QUEST</span>
+                    <span style="color:#666;">DOC. #{hash(nome_aluno) % 1000}</span>
+                </div>
+                {texto_final.replace('# ', '<h2 style="color:#2D3748;">').replace('## ', '<h3 style="color:#0F52BA;">').replace('\n', '<br>')}
+                
+                <div style="margin-top:40px; display:flex; gap:20px;">
+                    <div style="border:1px dashed #999; height:60px; width:100px; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#999;">ASSINATURA AGENTE</div>
+                    <div style="border:1px dashed #999; height:60px; width:100px; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#999;">ASSINATURA MENTOR</div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
+
+        with col_actions:
+            st.success("✅ Artefato Criado!")
+            st.markdown("### Ações")
             
-            # BOTÃO DE DOWNLOAD (Funcionando)
+            # Botão Download
             st.download_button(
-                label="📥 BAIXAR ARQUIVO (TXT)",
-                data=texto_atual,
+                label="📥 Baixar PDF (TXT)",
+                data=texto_final,
                 file_name=f"Missao_{nome_aluno}.txt",
                 mime="text/plain",
-                type="primary",
-                use_container_width=True
+                use_container_width=True,
+                type="primary"
             )
             
-            if st.button("🔄 Limpar / Refazer", use_container_width=True):
-                st.session_state.dados["ia_mapa_texto"] = ""
-                st.session_state.dados["status_validacao_game"] = "rascunho"
-                st.rerun()
+            st.divider()
+            
+            # Botão Refazer
+            st.button("🔄 Não gostei, refazer", use_container_width=True, on_click=callback_resetar)
         
         else:
             # ESTADO VAZIO
