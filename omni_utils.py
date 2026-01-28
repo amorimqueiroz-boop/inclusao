@@ -422,178 +422,151 @@ def inject_compact_app_css(accent: str = "#0D9488"):
 
 def render_omnisfera_header(active_tab: str = "Início"):
     """
-    Topbar fixa com navegação integrada (botões no mesmo padrão dos cards).
-    O espaço do conteúdo é controlado por inject_layout_css().
+    Versão Render 2026: Header fixo e compacto com botões de navegação inteligentes.
+    Usa st.button + st.switch_page (100% Render-safe, sem HTML/JS injection).
     """
     ensure_state()
+    
+    HEADER_HEIGHT = 65
+    
+    # Injeta CSS de Layout
+    st.markdown(f"""
+        <style>
+            /* Remove header padrão do Streamlit */
+            [data-testid="stHeader"] {{ display:none !important; }}
+            
+            /* Ajusta padding-top do conteúdo */
+            .main .block-container {{
+                padding-top: {HEADER_HEIGHT + 10}px !important;
+                max-width: 95% !important;
+            }}
+            
+            /* Header Container Fixo */
+            .omni-nav-bar {{
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                height: {HEADER_HEIGHT}px !important;
+                background: #FFFFFF !important;
+                border-bottom: 1px solid #E2E8F0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                padding: 0 30px !important;
+                z-index: 1000 !important;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.03) !important;
+            }}
 
-    TOPBAR_H = 64  # Altura ajustada para botões compactos
-    NAVBAR_H = 0   # Navbar removido, integrado na topbar
+            .nav-group {{
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px !important;
+            }}
+            
+            /* Estilização dos botões Streamlit como Pills */
+            .omni-nav-bar button[data-testid="baseButton-secondary"],
+            .omni-nav-bar button[data-testid="baseButton-primary"] {{
+                padding: 6px 14px !important;
+                border-radius: 20px !important;
+                font-size: 12px !important;
+                font-weight: 600 !important;
+                border: 1px solid #E2E8F0 !important;
+                transition: all 0.2s ease !important;
+                height: auto !important;
+                min-height: 32px !important;
+            }}
+            
+            .omni-nav-bar button[data-testid="baseButton-secondary"] {{
+                background: rgba(255,255,255,0.9) !important;
+                color: #64748B !important;
+            }}
+            
+            .omni-nav-bar button[data-testid="baseButton-secondary"]:hover {{
+                background: #F1F5F9 !important;
+                color: #1E293B !important;
+                border-color: #CBD5E1 !important;
+                transform: translateY(-1px) !important;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+            }}
 
-    inject_layout_css(topbar_h=TOPBAR_H, navbar_h=NAVBAR_H, content_gap=0)
+            .omni-nav-bar button[data-testid="baseButton-primary"] {{
+                background: #EFF6FF !important;
+                color: #2563EB !important;
+                border: 1px solid #BFDBFE !important;
+                font-weight: 800 !important;
+                box-shadow: 0 2px 8px rgba(37,99,235,0.15) !important;
+            }}
+            
+            .omni-nav-bar button[data-testid="baseButton-primary"]:hover {{
+                background: #DBEAFE !important;
+                border-color: #93C5FD !important;
+                transform: translateY(-1px) !important;
+                box-shadow: 0 4px 12px rgba(37,99,235,0.2) !important;
+            }}
+            
+            /* Avatar do usuário */
+            .omni-avatar {{
+                width: 36px !important;
+                height: 36px !important;
+                border-radius: 50% !important;
+                background: linear-gradient(135deg, #3B82F6, #6366F1) !important;
+                color: white !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                font-weight: 800 !important;
+                font-size: 13px !important;
+                box-shadow: 0 2px 4px rgba(59, 130, 246, 0.25) !important;
+            }}
+        </style>
+    """, unsafe_allow_html=True)
 
-    icone = get_base64_image("omni_icone.png")
-    texto = get_base64_image("omni_texto.png")
-
-    ws_name = _get_ws_short()
-    user_name = st.session_state.get("usuario_nome", "Visitante") or "Visitante"
-
-    img_logo = (
-        f'<img src="data:image/png;base64,{icone}" class="omni-logo">'
-        if icone else
-        '<div class="omni-logo">🌐</div>'
-    )
-
-    img_text = (
-        f'<img src="data:image/png;base64,{texto}" style="height:18px;">'
-        if texto else
-        '<span style="font-weight:900;color:#0F172A;font-size:15px;letter-spacing:0.05em;">OMNISFERA</span>'
-    )
-
-    # Configuração dos botões de navegação (mesmos ícones dos cards)
+    # Imagens Base64
+    icone_b64 = get_base64_image("omni_icone.png") or ""
+    texto_b64 = get_base64_image("omni_texto.png") or ""
+    
+    # Configuração dos botões (mesmos ícones dos cards)
     nav_items = [
-        {"key": "Início", "icon": "ri-home-4-fill", "label": "Início", "color": "#0F172A", "bg": "#F1F5F9", "page": "pages/0_Home.py"},
-        {"key": "Estudantes", "icon": "ri-user-star-fill", "label": "Estudantes", "color": "#1E40AF", "bg": "#DBEAFE", "page": "pages/Alunos.py"},
-        {"key": "Estratégias & PEI", "icon": "ri-book-3-fill", "label": "PEI", "color": "#0284C7", "bg": "#E0F2FE", "page": "pages/1_PEI.py"},
-        {"key": "Plano de Ação (AEE)", "icon": "ri-puzzle-fill", "label": "PAE", "color": "#9333EA", "bg": "#F3E8FF", "page": "pages/2_PAE.py"},
-        {"key": "Hub de Recursos", "icon": "ri-rocket-fill", "label": "Hub", "color": "#0891B2", "bg": "#CFFAFE", "page": "pages/3_Hub_Inclusao.py"},
-        {"key": "Diário de Bordo", "icon": "ri-edit-box-fill", "label": "Diário", "color": "#E11D48", "bg": "#FFE4E6", "page": "pages/4_Diario_de_Bordo.py"},
-        {"key": "Evolução & Dados", "icon": "ri-line-chart-fill", "label": "Dados", "color": "#075985", "bg": "#BAE6FD", "page": "pages/5_Monitoramento_Avaliacao.py"},
+        {"key": "Início", "label": "🏠 Início", "page": "pages/0_Home.py" if os.path.exists("pages/0_Home.py") else "Home.py"},
+        {"key": "Estudantes", "label": "👥 Estudantes", "page": "pages/Alunos.py"},
+        {"key": "Estratégias & PEI", "label": "📘 PEI", "page": "pages/1_PEI.py"},
+        {"key": "Plano de Ação (AEE)", "label": "🧩 PAE", "page": "pages/2_PAE.py"},
+        {"key": "Hub de Recursos", "label": "🚀 Hub", "page": "pages/3_Hub_Inclusao.py"},
+        {"key": "Diário de Bordo", "label": "📝 Diário", "page": "pages/4_Diario_de_Bordo.py"},
+        {"key": "Evolução & Dados", "label": "📊 Dados", "page": "pages/5_Monitoramento_Avaliacao.py"},
     ]
 
-    # CSS para botões de navegação integrados
-    nav_buttons_html = ""
-    for item in nav_items:
-        is_active = item["key"] == active_tab
-        active_class = "nav-btn-active" if is_active else ""
-        active_style = f'background: {item["bg"]} !important; color: {item["color"]} !important; border-color: {item["color"]} !important;' if is_active else ""
-        
-        nav_buttons_html += f'''
-        <button class="omni-nav-btn {active_class}" 
-                data-page="{item["page"]}" 
-                data-key="{item["key"]}"
-                style="{active_style}"
-                onclick="window.parent.postMessage({{type: 'streamlit:setFrameHeight', height: 0}}, '*'); window.location.href='?nav_key={item["key"]}'">
-            <i class="{item["icon"]}"></i>
-            <span>{item["label"]}</span>
-        </button>
-        '''
+    # Renderização do Header
+    st.markdown('<div class="omni-nav-bar">', unsafe_allow_html=True)
+    
+    cols = st.columns([1.5, 7, 1.5])
+    
+    with cols[0]:
+        if icone_b64:
+            st.markdown(f'''<div class="nav-group">
+                <img src="data:image/png;base64,{icone_b64}" style="height:35px; object-fit:contain;">
+                {f'<img src="data:image/png;base64,{texto_b64}" style="height:18px; margin-left:8px;">' if texto_b64 else '<span style="font-weight:800; font-size:18px; color:#1E293B; margin-left:8px;">OMNI</span>'}
+            </div>''', unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="nav-group"><span style="font-weight:800; font-size:18px; color:#1E293B;">OMNI</span></div>', unsafe_allow_html=True)
 
-    st.markdown(
-        f"""
-        <style>
-          /* Topbar com navegação integrada */
-          .omni-topbar {{
-            height: 64px !important;
-            flex-direction: column !important;
-            padding: 4px 24px 2px 24px !important;
-            overflow: visible !important;
-          }}
-          .omni-topbar-main {{
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            width: 100% !important;
-            height: 32px !important;
-            flex-shrink: 0 !important;
-          }}
-          .omni-nav-buttons {{
-            display: flex !important;
-            align-items: center !important;
-            gap: 6px !important;
-            flex-wrap: wrap !important;
-            justify-content: center !important;
-            margin-top: -2px !important;
-            width: 100% !important;
-            overflow-x: auto !important;
-            overflow-y: visible !important;
-            scrollbar-width: none !important;
-            padding: 0 !important;
-            height: auto !important;
-            min-height: 28px !important;
-          }}
-          .omni-nav-buttons::-webkit-scrollbar {{
-            display: none !important;
-          }}
-          .omni-nav-btn {{
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 5px !important;
-            padding: 4px 9px !important;
-            border: 1px solid #E2E8F0 !important;
-            background: rgba(255,255,255,0.9) !important;
-            border-radius: 999px !important;
-            font-size: 10px !important;
-            font-weight: 700 !important;
-            color: #64748B !important;
-            cursor: pointer !important;
-            transition: all 0.15s ease !important;
-            white-space: nowrap !important;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
-            line-height: 1 !important;
-            height: 24px !important;
-            overflow: visible !important;
-          }}
-          .omni-nav-btn i {{
-            font-size: 13px !important;
-            line-height: 1 !important;
-            display: inline-block !important;
-            vertical-align: middle !important;
-            overflow: visible !important;
-          }}
-          .omni-nav-btn span {{
-            line-height: 1 !important;
-            display: inline-block !important;
-            vertical-align: middle !important;
-          }}
-          .omni-nav-btn:hover {{
-            background: #ffffff !important;
-            border-color: #CBD5E1 !important;
-            transform: translateY(-1px) !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.08) !important;
-          }}
-          .omni-nav-btn.nav-btn-active {{
-            font-weight: 900 !important;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.12) !important;
-          }}
-        </style>
-        <div class="omni-topbar">
-          <div class="omni-topbar-main">
-            <div class="omni-brand">
-              {img_logo}
-              {img_text}
-            </div>
-            <div class="omni-user-info">
-              <div class="omni-workspace" title="{ws_name}">{ws_name}</div>
-              <div class="omni-avatar" title="{user_name}">{_get_initials(user_name)}</div>
-            </div>
-          </div>
-          <div class="omni-nav-buttons">
-            {nav_buttons_html}
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    with cols[1]:
+        # Botões de navegação usando st.button (Render-safe)
+        c_nav = st.columns(len(nav_items))
+        for i, item in enumerate(nav_items):
+            with c_nav[i]:
+                is_active = item["key"] == active_tab
+                btn_type = "primary" if is_active else "secondary"
+                if st.button(item["label"], key=f"nav_{item['key']}", use_container_width=True, type=btn_type):
+                    st.switch_page(item["page"])
 
-    # Navegação via query params (Render-safe)
-    nav_key = st.query_params.get("nav_key")
-    if nav_key and nav_key != active_tab:
-        routes = {
-            "Início": "pages/0_Home.py" if os.path.exists("pages/0_Home.py") else "Home.py",
-            "Estudantes": "pages/Alunos.py",
-            "Estratégias & PEI": "pages/1_PEI.py",
-            "Plano de Ação (AEE)": "pages/2_PAE.py",
-            "Hub de Recursos": "pages/3_Hub_Inclusao.py",
-            "Diário de Bordo": "pages/4_Diario_de_Bordo.py",
-            "Evolução & Dados": "pages/5_Monitoramento_Avaliacao.py",
-        }
-        target = routes.get(nav_key)
-        if target:
-            if nav_key == "Início" and not os.path.exists(target):
-                target = "Home.py"
-            st.switch_page(target)
+    with cols[2]:
+        user_name = st.session_state.get("usuario_nome", "Visitante") or "Visitante"
+        user_initials = _get_initials(user_name)
+        st.markdown(f'<div class="omni-avatar" title="{user_name}">{user_initials}</div>', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def render_navbar(active_tab: str = "Início"):
     """
