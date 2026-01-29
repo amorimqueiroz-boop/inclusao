@@ -5,6 +5,7 @@
 # --- IMPORTS ---
 import streamlit as st
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 import os
 import re
 import base64
@@ -42,7 +43,7 @@ import omni_utils as ou
 # ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
 st.set_page_config(
     page_title="Omnisfera | Hub de Recursos",
-    page_icon="omni_icone.png" if os.path.exists("omni_icone.png") else "📘",
+    page_icon="omni_icone.png",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -51,16 +52,19 @@ APP_VERSION = "v150.0 (SaaS Design)"
 
 # ✅ UI lockdown (não quebra se faltar)
 try:
-    from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
+    from ui_lockdown import hide_streamlit_chrome_if_needed
     hide_streamlit_chrome_if_needed()
-    hide_default_sidebar_nav()
 except Exception:
     pass
 
-# ✅ Header + Navbar (depois do page_config)
-ou.render_omnisfera_header()
-ou.render_navbar(active_tab="Hub de Recursos")
-ou.inject_compact_app_css()
+# ✅ Header + Navbar (depois do page_config) — protegido para Streamlit Cloud
+try:
+    ou.render_omnisfera_header(active_tab="Hub de Recursos")
+    ou.render_navbar(active_tab="Hub de Recursos")
+    ou.inject_compact_app_css()
+except Exception:
+    st.markdown("**Omnisfera · Hub de Recursos** — use o menu lateral para navegar.")
+    st.divider()
 
 # Adiciona classe no body para cores específicas das abas
 st.markdown("<script>document.body.classList.add('page-teal');</script>", unsafe_allow_html=True)
@@ -126,7 +130,7 @@ ou.inject_unified_ui_css()
 # ==============================================================================
 # HERO - HUB DE INCLUSÃO
 # ==============================================================================
-hora = datetime.now().hour
+hora = datetime.now(ZoneInfo("America/Sao_Paulo")).hour
 saudacao = "Bom dia" if 5 <= hora < 12 else "Boa tarde" if 12 <= hora < 18 else "Boa noite"
 USUARIO_NOME = st.session_state.get("usuario_nome", "Visitante").split()[0]
 WORKSPACE_NAME = st.session_state.get("workspace_name", "Workspace")
@@ -136,7 +140,7 @@ st.markdown(f"""
     <div class="mod-card-rect">
         <div class="mod-bar c-teal"></div>
         <div class="mod-icon-area bg-teal-soft">
-            <i class="ri-lightbulb-flash-fill"></i>
+            <i class="ri-rocket-fill"></i>
         </div>
         <div class="mod-content">
             <div class="mod-title">Hub de Recursos & Inteligência Artificial</div>
@@ -241,7 +245,7 @@ st.markdown("""
     .mod-icon-area i { color: inherit !important; }
     .bg-teal-soft i,
     .mod-icon-area.bg-teal-soft i,
-    .mod-icon-area.bg-teal-soft i.ri-lightbulb-flash-fill {
+    .mod-icon-area.bg-teal-soft i.ri-rocket-fill {
         color: #0D9488 !important;
         font-size: 1.8rem !important;
     }
@@ -625,12 +629,16 @@ def carregar_estudantes_supabase():
         # IMPORTANTE: NÃO usar diagnóstico como fallback para hiperfoco
         hiperfoco_real = ""
         if isinstance(pei_completo, dict):
-            hiperfoco_real = (
+            # Buscar hiperfoco - garantir que NÃO seja o diagnóstico
+            hiperfoco_temp = (
                 pei_completo.get("hiperfoco") or 
                 pei_completo.get("interesses") or 
                 pei_completo.get("habilidades_interesses") or 
                 ""
             )
+            # Se o hiperfoco encontrado for igual ao diagnóstico, descartar
+            if hiperfoco_temp and hiperfoco_temp != diagnostico_real:
+                hiperfoco_real = hiperfoco_temp
         
         # Se não achou no JSON, coloca um padrão (NUNCA usa o diagnóstico)
         if not hiperfoco_real:
@@ -1737,11 +1745,19 @@ def aplicar_estilos():
 
 def render_cabecalho_aluno(aluno):
     """Renderiza o cabeçalho com informações do aluno"""
+    # Garantir que o hiperfoco não seja igual ao diagnóstico
+    hiperfoco_display = aluno.get('hiperfoco', '-') or '-'
+    diagnostico_aluno = aluno.get('diagnosis', '') or ''
+    
+    # Se o hiperfoco for igual ao diagnóstico, mostrar padrão
+    if hiperfoco_display == diagnostico_aluno and hiperfoco_display != '-':
+        hiperfoco_display = "Interesses gerais (A descobrir)"
+    
     st.markdown(f"""
         <div class="student-header">
             <div class="student-info-item"><div class="student-label">Nome</div><div class="student-value">{aluno.get('nome')}</div></div>
             <div class="student-info-item"><div class="student-label">Série</div><div class="student-value">{aluno.get('serie', '-')}</div></div>
-            <div class="student-info-item"><div class="student-label">Hiperfoco</div><div class="student-value">{aluno.get('hiperfoco', '-')}</div></div>
+            <div class="student-info-item"><div class="student-label">Hiperfoco</div><div class="student-value">{hiperfoco_display}</div></div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -1753,18 +1769,25 @@ def criar_seletor_bloom(chave_prefixo):
         st.session_state[f'bloom_memoria_{chave_prefixo}'] = {cat: [] for cat in TAXONOMIA_BLOOM.keys()}
     
     verbos_finais = []
+    categorias_lista = list(TAXONOMIA_BLOOM.keys())
     
     if usar_bloom:
         col_b1, col_b2 = st.columns(2)
         with col_b1:
-            cat_atual = st.selectbox("Categoria Cognitiva:", list(TAXONOMIA_BLOOM.keys()),
-                                    key=f"cat_bloom_{chave_prefixo}")
+            idx_cat = st.selectbox(
+                "Categoria Cognitiva:",
+                range(len(categorias_lista)),
+                format_func=lambda i: categorias_lista[i],
+                key=f"cat_bloom_{chave_prefixo}"
+            )
+            cat_atual = categorias_lista[idx_cat]
         with col_b2:
+            # Chave estável (índice) para evitar problemas com caracteres especiais no nome da categoria
             selecao_atual = st.multiselect(
-                f"Verbos de '{cat_atual}':", 
+                f"Verbos de '{cat_atual}':",
                 TAXONOMIA_BLOOM[cat_atual],
                 default=st.session_state[f'bloom_memoria_{chave_prefixo}'][cat_atual],
-                key=f"ms_bloom_{chave_prefixo}_{cat_atual}"
+                key=f"ms_bloom_{chave_prefixo}_{idx_cat}"
             )
             st.session_state[f'bloom_memoria_{chave_prefixo}'][cat_atual] = selecao_atual
         
@@ -1774,7 +1797,7 @@ def criar_seletor_bloom(chave_prefixo):
         if verbos_finais:
             st.info(f"**Verbos Selecionados:** {', '.join(verbos_finais)}")
         else:
-            st.caption("Nenhum verbo selecionado ainda.")
+            st.caption("Marque a opção acima e escolha verbos em uma ou mais categorias. Eles serão usados na geração.")
     
     return verbos_finais if usar_bloom else None
 
@@ -2523,7 +2546,8 @@ def render_aba_criar_do_zero(aluno, api_key, unsplash_key):
         res = st.session_state['res_create']
         
         st.markdown("---")
-        st.markdown(f"### {icon_title(f'Atividade Criada: {res.get(\"mat_c\", \"\")} - {res.get(\"obj_c\", \"\")}', 'criar_zero', 20, '#06B6D4')}", unsafe_allow_html=True)
+        titulo_atividade = f"Atividade Criada: {res.get('mat_c', '')} - {res.get('obj_c', '')}"
+        st.markdown(f"### {icon_title(titulo_atividade, 'criar_zero', 20, '#06B6D4')}", unsafe_allow_html=True)
         
         # Barra de status
         if res.get('valid'):
@@ -2673,6 +2697,10 @@ def render_aba_roteiro_individual(aluno, api_key):
     with st.expander("📚 BNCC e Habilidades", expanded=True):
         ano_bncc, disciplina_bncc, unidade_bncc, objeto_bncc, habilidades_bncc = criar_dropdowns_bncc_completos_melhorado(key_suffix="roteiro")
     
+    # Taxonomia de Bloom (opcional)
+    with st.expander("🧠 Taxonomia de Bloom (opcional)", expanded=True):
+        verbos_bloom_roteiro = criar_seletor_bloom("roteiro")
+    
     st.markdown("---")
     
     if st.button("📝 GERAR ROTEIRO INDIVIDUAL", type="primary", use_container_width=True):
@@ -2685,7 +2713,7 @@ def render_aba_roteiro_individual(aluno, api_key):
                     materia=disciplina_bncc,
                     assunto=objeto_bncc, # Passa o objeto BNCC como assunto
                     habilidades_bncc=habilidades_bncc,
-                    verbos_bloom=None, # Bloom removido
+                    verbos_bloom=verbos_bloom_roteiro,
                     ano=ano_bncc,
                     unidade_tematica=unidade_bncc,
                     objeto_conhecimento=objeto_bncc
@@ -2852,6 +2880,10 @@ def render_aba_dinamica_inclusiva(aluno, api_key):
             key="din_carac"
         )
     
+    # Taxonomia de Bloom (opcional)
+    with st.expander("🧠 Taxonomia de Bloom (opcional)", expanded=True):
+        verbos_bloom_dinamica = criar_seletor_bloom("dinamica")
+    
     # Botão para gerar
     st.markdown("---")
     
@@ -2866,7 +2898,7 @@ def render_aba_dinamica_inclusiva(aluno, api_key):
                     qtd_alunos=qtd_alunos,
                     caracteristicas_turma=carac_turma,
                     habilidades_bncc=habilidades_bncc,
-                    verbos_bloom=None, # Bloom Removido
+                    verbos_bloom=verbos_bloom_dinamica,
                     ano=ano_bncc,
                     unidade_tematica=unidade_bncc,
                     objeto_conhecimento=objeto_bncc
@@ -2961,6 +2993,10 @@ def render_aba_plano_aula(aluno, api_key):
     with c4:
         recursos_plano = st.multiselect("Recursos Disponíveis:", RECURSOS_DISPONIVEIS, key="plano_rec")
     
+    # Taxonomia de Bloom (opcional)
+    with st.expander("🧠 Taxonomia de Bloom (opcional)", expanded=True):
+        verbos_bloom_plano = criar_seletor_bloom("plano")
+    
     # Botão para gerar
     st.markdown("---")
     
@@ -2976,7 +3012,7 @@ def render_aba_plano_aula(aluno, api_key):
                     qtd_alunos=qtd_alunos_plano,
                     recursos=recursos_plano,
                     habilidades_bncc=habilidades_bncc,
-                    verbos_bloom=None, # Bloom Removido
+                    verbos_bloom=verbos_bloom_plano,
                     ano=ano_bncc,
                     unidade_tematica=unidade_bncc,
                     objeto_conhecimento=objeto_bncc,
@@ -3261,20 +3297,16 @@ aplicar_estilos()
 def main():
     """Função principal da aplicação - executa a lógica do Hub"""
     
-    # Inicializar api_key e unsplash_key antes de usar
-    if 'OPENAI_API_KEY' in st.secrets:
-        api_key = st.secrets['OPENAI_API_KEY']
-    elif 'OPENAI_API_KEY' in st.session_state:
-        api_key = st.session_state['OPENAI_API_KEY']
-    else:
-        api_key = None
+    # Inicializar api_key e unsplash_key antes de usar (Render: env var → Streamlit Cloud: secrets → sessão)
+    api_key = os.environ.get("OPENAI_API_KEY") or ou.get_setting("OPENAI_API_KEY", "") or st.session_state.get("OPENAI_API_KEY")
+    api_key = api_key if api_key else None
     
-    if 'UNSPLASH_ACCESS_KEY' in st.secrets:
-        unsplash_key = st.secrets['UNSPLASH_ACCESS_KEY']
-    elif 'UNSPLASH_ACCESS_KEY' in st.session_state:
-        unsplash_key = st.session_state['UNSPLASH_ACCESS_KEY']
-    else:
-        unsplash_key = None
+    unsplash_key = (
+        os.environ.get("UNSPLASH_ACCESS_KEY")
+        or ou.get_setting("UNSPLASH_ACCESS_KEY", "")
+        or st.session_state.get("UNSPLASH_ACCESS_KEY")
+    )
+    unsplash_key = unsplash_key if unsplash_key else None
     
     # Configurações de API (ocultas - apenas busca dos secrets)
     # O expander foi removido conforme solicitado
@@ -3371,15 +3403,18 @@ def main():
         if not hiperfoco_aluno or hiperfoco_aluno == "Interesses gerais (A descobrir)":
             pei_data_local = aluno.get('pei_data', {}) or {}
             if isinstance(pei_data_local, dict):
-                hiperfoco_aluno = (
+                hiperfoco_temp = (
                     pei_data_local.get('hiperfoco') or 
                     pei_data_local.get('interesses') or 
                     pei_data_local.get('habilidades_interesses') or 
                     ""
                 )
+                # Garantir que o hiperfoco não seja igual ao diagnóstico
+                if hiperfoco_temp and hiperfoco_temp != diagnostico_pei:
+                    hiperfoco_aluno = hiperfoco_temp
         
         # Se ainda não encontrou hiperfoco, mostra padrão
-        if not hiperfoco_aluno:
+        if not hiperfoco_aluno or hiperfoco_aluno == diagnostico_pei:
             hiperfoco_aluno = "Interesses gerais (A descobrir)"
         
         c_diag, c_hip = st.columns(2)
@@ -3421,10 +3456,10 @@ def main():
         st.info("🧸 **Modo Educação Infantil Ativado:** Foco em Experiências, BNCC e Brincar.")
         
         tabs = st.tabs([
-            f"{get_icon('experiencia', 18, '#06B6D4')} Criar Experiência (BNCC)", 
-            f"{get_icon('estudio_visual', 18, '#06B6D4')} Estúdio Visual & CAA", 
-            f"{get_icon('rotina', 18, '#06B6D4')} Rotina & AVD", 
-            f"{get_icon('brincar', 18, '#06B6D4')} Inclusão no Brincar"
+            "🧸 Criar Experiência (BNCC)",
+            "🎨 Estúdio Visual & CAA",
+            "📝 Rotina & AVD",
+            "🤝 Inclusão no Brincar",
         ])
         
         with tabs[0]:
@@ -3442,14 +3477,14 @@ def main():
     else:
         # Modo Padrão (Fundamental / Médio)
         tabs = st.tabs([
-            f"{get_icon('adaptar_prova', 18, '#06B6D4')} Adaptar Prova", 
-            f"{get_icon('adaptar_atividade', 18, '#06B6D4')} Adaptar Atividade", 
-            f"{get_icon('criar_zero', 18, '#06B6D4')} Criar do Zero", 
-            f"{get_icon('estudio_visual', 18, '#06B6D4')} Estúdio Visual & CAA", 
-            f"{get_icon('roteiro', 18, '#06B6D4')} Roteiro Individual", 
-            f"{get_icon('papo_mestre', 18, '#06B6D4')} Papo de Mestre", 
-            f"{get_icon('dinamica', 18, '#06B6D4')} Dinâmica Inclusiva", 
-            f"{get_icon('plano_aula', 18, '#06B6D4')} Plano de Aula DUA"
+            "📄 Adaptar Prova",
+            "✂️ Adaptar Atividade",
+            "✨ Criar do Zero",
+            "🎨 Estúdio Visual & CAA",
+            "📝 Roteiro Individual",
+            "🗣️ Papo de Mestre",
+            "🤝 Dinâmica Inclusiva",
+            "📅 Plano de Aula DUA",
         ])
         
         with tabs[0]:
