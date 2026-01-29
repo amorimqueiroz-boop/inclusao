@@ -187,11 +187,7 @@ def inject_layout_css(topbar_h: int = 56, navbar_h: int = 52, content_gap: int =
   footer {{ visibility: hidden; }}
   header[data-testid="stHeader"] {{ display:none !important; }}
   [data-testid="stToolbar"] {{ display:none !important; }}
-  section[data-testid="stSidebar"] {{ display:none !important; }}
-  [data-testid="stSidebarNav"] {{ display:none !important; }}
   button[data-testid="collapsedControl"] {{ display:none !important; }}
-  [data-testid="stSidebar"] {{ display: none !important; }}
-  [data-testid="stSidebar"] * {{ display: none !important; }}
 
   /* 🔥 CONTEÚDO: começa logo abaixo de topbar+navbar, com gap mínimo */
   /* Nota: padding-top será sobrescrito por forcar_layout_hub() nas páginas */
