@@ -2523,8 +2523,7 @@ def render_aba_criar_do_zero(aluno, api_key, unsplash_key):
         res = st.session_state['res_create']
         
         st.markdown("---")
-        titulo_atividade = f"Atividade Criada: {res.get('mat_c', '')} - {res.get('obj_c', '')}"
-        st.markdown(f"### {icon_title(titulo_atividade, 'criar_zero', 20, '#06B6D4')}", unsafe_allow_html=True)
+        st.markdown(f"### {icon_title(f'Atividade Criada: {res.get(\"mat_c\", \"\")} - {res.get(\"obj_c\", \"\")}', 'criar_zero', 20, '#06B6D4')}", unsafe_allow_html=True)
         
         # Barra de status
         if res.get('valid'):
@@ -3422,10 +3421,10 @@ def main():
         st.info("🧸 **Modo Educação Infantil Ativado:** Foco em Experiências, BNCC e Brincar.")
         
         tabs = st.tabs([
-            "🧸 Criar Experiência (BNCC)",
-            "🎨 Estúdio Visual & CAA",
-            "📝 Rotina & AVD",
-            "🤝 Inclusão no Brincar",
+            f"{get_icon('experiencia', 18, '#06B6D4')} Criar Experiência (BNCC)", 
+            f"{get_icon('estudio_visual', 18, '#06B6D4')} Estúdio Visual & CAA", 
+            f"{get_icon('rotina', 18, '#06B6D4')} Rotina & AVD", 
+            f"{get_icon('brincar', 18, '#06B6D4')} Inclusão no Brincar"
         ])
         
         with tabs[0]:
@@ -3443,14 +3442,14 @@ def main():
     else:
         # Modo Padrão (Fundamental / Médio)
         tabs = st.tabs([
-            "📄 Adaptar Prova",
-            "✂️ Adaptar Atividade",
-            "✨ Criar do Zero",
-            "🎨 Estúdio Visual & CAA",
-            "📝 Roteiro Individual",
-            "🗣️ Papo de Mestre",
-            "🤝 Dinâmica Inclusiva",
-            "📅 Plano de Aula DUA",
+            f"{get_icon('adaptar_prova', 18, '#06B6D4')} Adaptar Prova", 
+            f"{get_icon('adaptar_atividade', 18, '#06B6D4')} Adaptar Atividade", 
+            f"{get_icon('criar_zero', 18, '#06B6D4')} Criar do Zero", 
+            f"{get_icon('estudio_visual', 18, '#06B6D4')} Estúdio Visual & CAA", 
+            f"{get_icon('roteiro', 18, '#06B6D4')} Roteiro Individual", 
+            f"{get_icon('papo_mestre', 18, '#06B6D4')} Papo de Mestre", 
+            f"{get_icon('dinamica', 18, '#06B6D4')} Dinâmica Inclusiva", 
+            f"{get_icon('plano_aula', 18, '#06B6D4')} Plano de Aula DUA"
         ])
         
         with tabs[0]:
