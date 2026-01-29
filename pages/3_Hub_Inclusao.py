@@ -2483,7 +2483,7 @@ def render_aba_criar_do_zero(aluno, api_key, unsplash_key):
         with st.expander("🧠 Taxonomia de Bloom (opcional)", expanded=False):
             if 'bloom_memoria' not in st.session_state:
                 st.session_state.bloom_memoria = {cat: [] for cat in TAXONOMIA_BLOOM.keys()}
-            usar_bloom = st.checkbox("🎯 Usar Taxonomia de Bloom (Revisada)", key=f"usar_bloom_{chave_prefixo}")
+            usar_bloom = st.checkbox(f"{get_icon('configurar', 16, '#06B6D4')} Usar Taxonomia de Bloom (Revisada)", key="usar_bloom")
             if usar_bloom:
                 col_b1, col_b2 = st.columns(2)
                 with col_b1:
@@ -3493,6 +3493,7 @@ main()
 # RODAPÉ COM ASSINATURA
 # ==============================================================================
 ou.render_footer_assinatura()
+
 
 
 
