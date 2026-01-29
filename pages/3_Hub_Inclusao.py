@@ -52,19 +52,16 @@ APP_VERSION = "v150.0 (SaaS Design)"
 
 # ✅ UI lockdown (não quebra se faltar)
 try:
-    from ui_lockdown import hide_streamlit_chrome_if_needed
+    from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
     hide_streamlit_chrome_if_needed()
+    hide_default_sidebar_nav()
 except Exception:
     pass
 
-# ✅ Header + Navbar (depois do page_config) — protegido para Streamlit Cloud
-try:
-    ou.render_omnisfera_header(active_tab="Hub de Recursos")
-    ou.render_navbar(active_tab="Hub de Recursos")
-    ou.inject_compact_app_css()
-except Exception:
-    st.markdown("**Omnisfera · Hub de Recursos** — use o menu lateral para navegar.")
-    st.divider()
+# ✅ Header + Navbar (depois do page_config)
+ou.render_omnisfera_header()
+ou.render_navbar(active_tab="Hub de Recursos")
+ou.inject_compact_app_css()
 
 # Adiciona classe no body para cores específicas das abas
 st.markdown("<script>document.body.classList.add('page-teal');</script>", unsafe_allow_html=True)
@@ -1762,45 +1759,35 @@ def render_cabecalho_aluno(aluno):
     """, unsafe_allow_html=True)
 
 def criar_seletor_bloom(chave_prefixo):
-    """Componente reutilizável para seleção da Taxonomia de Bloom"""
-    usar_bloom = st.checkbox("🎯 Usar Taxonomia de Bloom (Revisada)", key=f"usar_bloom_{chave_prefixo}")
+    """Componente para Taxonomia de Bloom (Ajuste Mínimo)"""
+    # Removido o get_icon de dentro do rótulo para evitar a quebra
+    usar_bloom = st.checkbox("Usar Taxonomia de Bloom (Revisada)", key=f"usar_bloom_{chave_prefixo}")
     
-    if f'bloom_memoria_{chave_prefixo}' not in st.session_state:
-        st.session_state[f'bloom_memoria_{chave_prefixo}'] = {cat: [] for cat in TAXONOMIA_BLOOM.keys()}
+    mem_key = f"bloom_memoria_{chave_prefixo}"
+    if mem_key not in st.session_state:
+        st.session_state[mem_key] = {cat: [] for cat in TAXONOMIA_BLOOM.keys()}
     
     verbos_finais = []
-    categorias_lista = list(TAXONOMIA_BLOOM.keys())
     
     if usar_bloom:
         col_b1, col_b2 = st.columns(2)
         with col_b1:
-            idx_cat = st.selectbox(
-                "Categoria Cognitiva:",
-                range(len(categorias_lista)),
-                format_func=lambda i: categorias_lista[i],
-                key=f"cat_bloom_{chave_prefixo}"
-            )
-            cat_atual = categorias_lista[idx_cat]
+            cat_atual = st.selectbox("Categoria Cognitiva:", list(TAXONOMIA_BLOOM.keys()), key=f"cat_bloom_{chave_prefixo}")
         with col_b2:
-            # Chave estável (índice) para evitar problemas com caracteres especiais no nome da categoria
+            # Rótulo limpo apenas com texto
             selecao_atual = st.multiselect(
-                f"Verbos de '{cat_atual}':",
+                f"Verbos de '{cat_atual}':", 
                 TAXONOMIA_BLOOM[cat_atual],
-                default=st.session_state[f'bloom_memoria_{chave_prefixo}'][cat_atual],
-                key=f"ms_bloom_{chave_prefixo}_{idx_cat}"
+                default=st.session_state[mem_key].get(cat_atual, []),
+                key=f"ms_bloom_{chave_prefixo}_{cat_atual}"
             )
-            st.session_state[f'bloom_memoria_{chave_prefixo}'][cat_atual] = selecao_atual
+            st.session_state[mem_key][cat_atual] = selecao_atual
         
-        for cat in st.session_state[f'bloom_memoria_{chave_prefixo}']:
-            verbos_finais.extend(st.session_state[f'bloom_memoria_{chave_prefixo}'][cat])
-        
-        if verbos_finais:
-            st.info(f"**Verbos Selecionados:** {', '.join(verbos_finais)}")
-        else:
-            st.caption("Marque a opção acima e escolha verbos em uma ou mais categorias. Eles serão usados na geração.")
-    
+        for cat in st.session_state[mem_key]:
+            verbos_finais.extend(st.session_state[mem_key][cat])
+            
     return verbos_finais if usar_bloom else None
-
+    
 # ==============================================================================
 # FUNÇÕES DAS ABAS PRINCIPAIS
 # ==============================================================================
@@ -2697,10 +2684,6 @@ def render_aba_roteiro_individual(aluno, api_key):
     with st.expander("📚 BNCC e Habilidades", expanded=True):
         ano_bncc, disciplina_bncc, unidade_bncc, objeto_bncc, habilidades_bncc = criar_dropdowns_bncc_completos_melhorado(key_suffix="roteiro")
     
-    # Taxonomia de Bloom (opcional)
-    with st.expander("🧠 Taxonomia de Bloom (opcional)", expanded=True):
-        verbos_bloom_roteiro = criar_seletor_bloom("roteiro")
-    
     st.markdown("---")
     
     if st.button("📝 GERAR ROTEIRO INDIVIDUAL", type="primary", use_container_width=True):
@@ -2713,7 +2696,7 @@ def render_aba_roteiro_individual(aluno, api_key):
                     materia=disciplina_bncc,
                     assunto=objeto_bncc, # Passa o objeto BNCC como assunto
                     habilidades_bncc=habilidades_bncc,
-                    verbos_bloom=verbos_bloom_roteiro,
+                    verbos_bloom=None, # Bloom removido
                     ano=ano_bncc,
                     unidade_tematica=unidade_bncc,
                     objeto_conhecimento=objeto_bncc
@@ -2880,10 +2863,6 @@ def render_aba_dinamica_inclusiva(aluno, api_key):
             key="din_carac"
         )
     
-    # Taxonomia de Bloom (opcional)
-    with st.expander("🧠 Taxonomia de Bloom (opcional)", expanded=True):
-        verbos_bloom_dinamica = criar_seletor_bloom("dinamica")
-    
     # Botão para gerar
     st.markdown("---")
     
@@ -2898,7 +2877,7 @@ def render_aba_dinamica_inclusiva(aluno, api_key):
                     qtd_alunos=qtd_alunos,
                     caracteristicas_turma=carac_turma,
                     habilidades_bncc=habilidades_bncc,
-                    verbos_bloom=verbos_bloom_dinamica,
+                    verbos_bloom=None, # Bloom Removido
                     ano=ano_bncc,
                     unidade_tematica=unidade_bncc,
                     objeto_conhecimento=objeto_bncc
@@ -2993,10 +2972,6 @@ def render_aba_plano_aula(aluno, api_key):
     with c4:
         recursos_plano = st.multiselect("Recursos Disponíveis:", RECURSOS_DISPONIVEIS, key="plano_rec")
     
-    # Taxonomia de Bloom (opcional)
-    with st.expander("🧠 Taxonomia de Bloom (opcional)", expanded=True):
-        verbos_bloom_plano = criar_seletor_bloom("plano")
-    
     # Botão para gerar
     st.markdown("---")
     
@@ -3012,7 +2987,7 @@ def render_aba_plano_aula(aluno, api_key):
                     qtd_alunos=qtd_alunos_plano,
                     recursos=recursos_plano,
                     habilidades_bncc=habilidades_bncc,
-                    verbos_bloom=verbos_bloom_plano,
+                    verbos_bloom=None, # Bloom Removido
                     ano=ano_bncc,
                     unidade_tematica=unidade_bncc,
                     objeto_conhecimento=objeto_bncc,
