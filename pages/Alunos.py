@@ -118,9 +118,8 @@ ou.render_navbar(active_tab="Estudantes")
 # ==============================================================================
 
 # Verificação de segurança
-if not st.session_state.autenticado:
-    st.warning("🔒 Acesso restrito. Faça login na Home.")
-    st.stop()
+if not st.session_state.get("autenticado"):
+    ou.render_acesso_negado_e_ir_para_login("Acesso restrito. Faça login na Página Inicial para acessar Estudantes.")
 
 # Helpers API (Local)
 @st.cache_data(ttl=10, show_spinner=False)

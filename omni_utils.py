@@ -438,6 +438,41 @@ def _nav_key(page_path: str) -> str:
     """Extrai a chave de navegação do caminho (ex: pages/0_Home.py -> 0_Home)."""
     return page_path.replace("pages/", "").replace(".py", "")
 
+
+def render_acesso_negado_e_ir_para_login(mensagem: str = "Sessão inválida ou expirada. Por favor, faça login novamente."):
+    """
+    Exibe tela de acesso negado com botão para ir à página de login.
+    Use quando st.session_state.autenticado for False em qualquer página (Hub, PEI, PAE, etc.).
+    Chama st.stop() no final — não executa código após a chamada.
+    """
+    st.markdown(
+        f"""
+        <div style='
+            text-align: center;
+            padding: 3rem 2rem;
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            margin: 2rem auto;
+            max-width: 480px;
+        '>
+            <div style='font-size: 3.5rem; margin-bottom: 1rem;'>🔐</div>
+            <h3 style='color: #1E293B; margin-bottom: 0.75rem;'>Acesso Restrito</h3>
+            <p style='color: #64748B; margin-bottom: 1.5rem; line-height: 1.5;'>{mensagem}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🔓 Ir para Login", use_container_width=True, type="primary", key="btn_acesso_negado_login"):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.switch_page("streamlit_app.py")
+    st.stop()
+
+
 def render_omnisfera_header(active_tab: str = "Início"):
     """
     Injeta CSS para layout do conteúdo.

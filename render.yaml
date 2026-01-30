@@ -1,0 +1,11 @@
+# Render Blueprint — Omnisfera (Streamlit)
+# ENTRADA OBRIGATÓRIA: streamlit_app.py (faz login e redireciona para a Home).
+# NUNCA usar login_view.py como start: é só uma view importada, o processo morre (exit 255).
+
+services:
+  - type: web
+    name: omnisfera
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    # Único comando que mantém o processo vivo no Render:
+    startCommand: streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0

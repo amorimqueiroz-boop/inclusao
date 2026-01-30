@@ -270,13 +270,8 @@ st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 # ==============================================================================
 # VERIFICAÇÃO DE ACESSO
 # ==============================================================================
-def verificar_acesso():
-    """Verifica se o usuário está autenticado"""
-    if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
-        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
-        st.stop()
-
-verificar_acesso()
+if "autenticado" not in st.session_state or not st.session_state.get("autenticado"):
+    ou.render_acesso_negado_e_ir_para_login("Por favor, faça login na Página Inicial para acessar o Hub de Recursos.")
 
 # ==============================================================================
 # CONSTANTES E DADOS GLOBAIS

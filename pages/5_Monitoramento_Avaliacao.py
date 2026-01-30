@@ -372,8 +372,7 @@ def save_assessment(student_id, rubric_data, observation):
 
 # Verificação de autenticação
 if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
-    st.warning("🔒 Acesso restrito. Faça login na Home.")
-    st.stop()
+    ou.render_acesso_negado_e_ir_para_login("Acesso restrito. Faça login na Página Inicial para acessar Evolução & Dados.")
 
 # Espaçamento após hero card (reduzido para aproximar conteúdo)
 st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)

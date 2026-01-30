@@ -127,6 +127,8 @@ if ENV == "TESTE":
         st.session_state.usuario_cargo = "Teste"
 
 HOME_PAGE = "pages/0_Home.py"
+# Chaves de navegação (mesmo padrão do navbar em omni_utils) — login uma vez, navega sem pedir de novo
+VALID_NAV_KEYS = {"0_Home", "Alunos", "1_PEI", "2_PAE", "3_Hub_Inclusao", "4_Diario_de_Bordo", "5_Monitoramento_Avaliacao"}
 
 # ------------------------------------------------------------------------------
 # Router
@@ -153,5 +155,9 @@ else:
                 st.code(str(e))
                 st.stop()
 
-        # Vai para Home real (multipage)
-        st.switch_page(HOME_PAGE)
+        # Se veio com ?nav=X (ex: clique no menu), vai para essa página; senão vai para Home
+        nav_param = st.query_params.get("nav", "").strip()
+        if nav_param and nav_param in VALID_NAV_KEYS:
+            st.switch_page(f"pages/{nav_param}.py")
+        else:
+            st.switch_page(HOME_PAGE)

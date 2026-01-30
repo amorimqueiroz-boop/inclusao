@@ -44,12 +44,8 @@ ou.inject_compact_app_css()
 st.markdown("<script>document.body.classList.add('page-purple');</script>", unsafe_allow_html=True)
 
 # 4. VERIFICAÇÃO DE ACESSO
-def verificar_acesso():
-    if not st.session_state.get("autenticado"):
-        st.error("🚫 Acesso Negado.")
-        st.stop()
-
-verificar_acesso()
+if not st.session_state.get("autenticado"):
+    ou.render_acesso_negado_e_ir_para_login("Por favor, faça login na Página Inicial para acessar o Plano de Ação.")
 
 # ==============================================================================
 # AJUSTE FINO DE LAYOUT (ANTES DO HERO - PADRONIZADO)
@@ -322,10 +318,8 @@ body .mod-card-wrapper,
 
 
 def verificar_acesso():
-    # ✅ mantém o gate (importante)
     if not st.session_state.get("autenticado"):
-        st.error("🔒 Acesso Negado. Por favor, faça login na Página Inicial.")
-        st.stop()
+        ou.render_acesso_negado_e_ir_para_login("Por favor, faça login na Página Inicial para acessar o Plano de Ação.")
 
     # ✅ se quiser esconder footer, ok (não mexe em padding)
     st.markdown(

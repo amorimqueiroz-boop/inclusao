@@ -152,10 +152,8 @@ api_key = os.environ.get("OPENAI_API_KEY") or ou.get_setting("OPENAI_API_KEY", "
 # ==============================================================================
 # 1. GUARDAS (LOGIN + SUPABASE)
 # ==============================================================================
-def verificar_login_app():
-    if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
-        st.error("🔒 Acesso Negado. Faça login na Página Inicial.")
-        st.stop()
+if "autenticado" not in st.session_state or not st.session_state.get("autenticado"):
+    ou.render_acesso_negado_e_ir_para_login("Por favor, faça login na Página Inicial para acessar Estratégias & PEI.")
 
 def verificar_login_supabase():
     # Supabase é necessário para SALVAR/CARREGAR, mas o PEI pode abrir como rascunho.
@@ -165,7 +163,6 @@ def verificar_login_supabase():
     if "supabase_user_id" not in st.session_state:
         st.session_state["supabase_user_id"] = ""
 
-verificar_login_app()
 verificar_login_supabase()
 
 
