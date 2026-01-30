@@ -4,10 +4,10 @@ python-docx
 pypdf
 fpdf
 Pillow
-streamlit-cropper
 requests
 supabase
 pandas
 plotly
 streamlit-option-menu
+streamlit-cropper
 graphviz
