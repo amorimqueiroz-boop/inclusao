@@ -309,8 +309,34 @@ def render_login():
         if len(pin) == 8 and "-" not in pin:
             pin = pin[:4] + "-" + pin[4:]
 
-        # Validação via RPC
-        ws = rpc_workspace_from_pin(pin)
+        # Validação via RPC (com tratamento se Supabase não estiver configurado)
+        try:
+            ws = rpc_workspace_from_pin(pin)
+        except RuntimeError as e:
+            err_msg = str(e)
+            if "SUPABASE_URL" in err_msg or "SUPABASE_ANON_KEY" in err_msg or "não encontrados" in err_msg:
+                st.markdown(
+                    "<div class='err'>"
+                    "Supabase não configurado. Crie o arquivo <code>.streamlit/secrets.toml</code> na pasta do projeto "
+                    "com: <code>SUPABASE_URL</code> e <code>SUPABASE_ANON_KEY</code> (e no Supabase crie a função RPC workspace_from_pin). "
+                    "Veja o arquivo <code>.streamlit/secrets.toml.example</code> se existir."
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
+            elif "supabase" in err_msg.lower() and "não encontrado" in err_msg.lower():
+                st.markdown(
+                    "<div class='err'>Pacote Supabase não instalado. Rode: <code>pip install supabase</code></div>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(f"<div class='err'>{err_msg}</div>", unsafe_allow_html=True)
+            st.stop()
+        except Exception as e:
+            st.markdown(
+                f"<div class='err'>Erro ao conectar com o servidor: {str(e)}</div>",
+                unsafe_allow_html=True,
+            )
+            st.stop()
 
         if not ws:
             st.markdown("<div class='err'>PIN inválido ou escola não encontrada.</div>", unsafe_allow_html=True)

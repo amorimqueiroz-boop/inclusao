@@ -3,8 +3,12 @@ from datetime import date, datetime
 from zoneinfo import ZoneInfo
 import base64
 import os
-import graphviz
 import time
+
+try:
+    import graphviz
+except ImportError:
+    graphviz = None
 
 import omni_utils as ou
 
@@ -1130,25 +1134,31 @@ def render_central_conhecimento():
         st.markdown(f"### {icon_title('O Fluxo da Inclusão (Omnisfera 2025)', 'fluxo', 24, '#2563EB')}", unsafe_allow_html=True)
         st.caption("Visualização do ecossistema escolar atualizado com os novos decretos.")
         
-        try:
-            fluxo = graphviz.Digraph()
-            fluxo.attr(rankdir='LR', bgcolor='transparent', margin='0')
-            fluxo.attr('node', shape='box', style='rounded,filled', fontname='Inter', fontsize='11', height='0.6')
-            
-            fluxo.node('A', '1. ACOLHIMENTO\n(Matrícula Garantida)', fillcolor='#DBEAFE', color='#2563EB', fontcolor='#1E40AF', style='rounded,filled')
-            fluxo.node('B', '2. ESTUDO DE CASO\n(Avaliação Pedagógica)', fillcolor='#2563EB', fontcolor='white', color='#1E3A8A', style='rounded,filled')
-            fluxo.node('C', '3. IDENTIFICAÇÃO\n(Necessidades)', fillcolor='#D1FAE5', color='#10B981', fontcolor='#047857', style='rounded,filled')
-            fluxo.node('D', '4. PLANEJAMENTO\n(PEI + PAEE)', fillcolor='#E9D5FF', color='#8B5CF6', fontcolor='#6D28D9', style='rounded,filled')
-            fluxo.node('E', '5. PRÁTICA\n(Sala + AEE)', fillcolor='#FED7AA', color='#F59E0B', fontcolor='#D97706', style='rounded,filled')
-            
-            fluxo.edge('A', 'B', label=' Equipe')
-            fluxo.edge('B', 'C', label=' Substitui Laudo')
-            fluxo.edge('C', 'D')
-            fluxo.edge('D', 'E', label=' Duplo Fundo')
-            
-            st.graphviz_chart(fluxo, use_container_width=True)
-        except:
-            st.error("Visualizador gráfico indisponível.")
+        if graphviz is None:
+            st.info("Para ver o diagrama do fluxo, instale: **pip install graphviz** (e no Mac: **brew install graphviz**).")
+            st.markdown("""
+            **Fluxo:** 1. Acolhimento (Matrícula Garantida) → 2. Estudo de Caso (Avaliação Pedagógica) → 3. Identificação (Necessidades) → 4. Planejamento (PEI + PAEE) → 5. Prática (Sala + AEE)
+            """)
+        else:
+            try:
+                fluxo = graphviz.Digraph()
+                fluxo.attr(rankdir='LR', bgcolor='transparent', margin='0')
+                fluxo.attr('node', shape='box', style='rounded,filled', fontname='Inter', fontsize='11', height='0.6')
+                
+                fluxo.node('A', '1. ACOLHIMENTO\n(Matrícula Garantida)', fillcolor='#DBEAFE', color='#2563EB', fontcolor='#1E40AF', style='rounded,filled')
+                fluxo.node('B', '2. ESTUDO DE CASO\n(Avaliação Pedagógica)', fillcolor='#2563EB', fontcolor='white', color='#1E3A8A', style='rounded,filled')
+                fluxo.node('C', '3. IDENTIFICAÇÃO\n(Necessidades)', fillcolor='#D1FAE5', color='#10B981', fontcolor='#047857', style='rounded,filled')
+                fluxo.node('D', '4. PLANEJAMENTO\n(PEI + PAEE)', fillcolor='#E9D5FF', color='#8B5CF6', fontcolor='#6D28D9', style='rounded,filled')
+                fluxo.node('E', '5. PRÁTICA\n(Sala + AEE)', fillcolor='#FED7AA', color='#F59E0B', fontcolor='#D97706', style='rounded,filled')
+                
+                fluxo.edge('A', 'B', label=' Equipe')
+                fluxo.edge('B', 'C', label=' Substitui Laudo')
+                fluxo.edge('C', 'D')
+                fluxo.edge('D', 'E', label=' Duplo Fundo')
+                
+                st.graphviz_chart(fluxo, use_container_width=True)
+            except Exception:
+                st.error("Visualizador gráfico indisponível.")
 
         st.divider()
         
@@ -1484,6 +1494,8 @@ def render_resources():
 
 # Renderiza a topbar fixa (OCULTA SIDEBAR NATIVA)
 render_topbar()
+
+# Na Home não exibimos o menu de navegação; apenas nas outras páginas (PEI, PAEE, etc.)
 
 # ==============================================================================
 # FUNÇÃO PARA GERAR MENSAGEM DE BOAS-VINDAS COM IA

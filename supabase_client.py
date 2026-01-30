@@ -1,12 +1,13 @@
 # supabase_client.py
 import os
+from typing import Optional
 import streamlit as st
 
 # 🔒 Nome da função RPC
 RPC_NAME = "workspace_from_pin"
 
 
-def _get_secret(name: str) -> str | None:
+def _get_secret(name: str) -> Optional[str]:
     """Lê env var (Render) e fallback para secrets (Streamlit Cloud)."""
     v = os.environ.get(name)
     if v:
@@ -66,7 +67,7 @@ def get_supabase():
     return get_sb()
 
 
-def rpc_workspace_from_pin(pin: str) -> dict | None:
+def rpc_workspace_from_pin(pin: str) -> Optional[dict]:
     """
     Chama a função:
     public.workspace_from_pin(p_pin text)

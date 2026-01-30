@@ -116,6 +116,16 @@ if "workspace_id" not in st.session_state:
 if "workspace_name" not in st.session_state:
     st.session_state.workspace_name = None
 
+# Em ambiente de TESTE: pula o login e usa sessão fictícia (só local/teste)
+if ENV == "TESTE":
+    st.session_state.autenticado = True
+    st.session_state.workspace_id = st.session_state.workspace_id or "ambiente-teste"
+    st.session_state.workspace_name = st.session_state.workspace_name or "Ambiente de Teste"
+    if "usuario_nome" not in st.session_state or not st.session_state.usuario_nome:
+        st.session_state.usuario_nome = "Visitante (Teste)"
+    if "usuario_cargo" not in st.session_state or not st.session_state.usuario_cargo:
+        st.session_state.usuario_cargo = "Teste"
+
 HOME_PAGE = "pages/0_Home.py"
 
 # ------------------------------------------------------------------------------
@@ -136,9 +146,12 @@ else:
 
             get_sb()  # salva em st.session_state["sb"]
         except Exception as e:
-            st.error("Supabase não inicializou. Verifique Secrets e requirements.")
-            st.code(str(e))
-            st.stop()
+            if ENV == "TESTE":
+                st.session_state["sb"] = None  # em teste, segue sem Supabase
+            else:
+                st.error("Supabase não inicializou. Verifique Secrets e requirements.")
+                st.code(str(e))
+                st.stop()
 
         # Vai para Home real (multipage)
         st.switch_page(HOME_PAGE)

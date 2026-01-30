@@ -1,0 +1,14 @@
+# Configuração do Streamlit - Omnisfera
+# https://docs.streamlit.io/library/advanced-features/configuration
+
+[server]
+# Se a porta 8501 der "Operation not permitted", mude para 8502:
+port = 8501
+# Escuta em localhost (mais seguro para desenvolvimento)
+address = "localhost"
+# Abre o navegador automaticamente ao subir o app
+headless = false
+
+[browser]
+# Abre automaticamente no navegador padrão
+gatherUsageStats = false

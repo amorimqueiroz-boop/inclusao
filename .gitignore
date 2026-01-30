@@ -1,0 +1,14 @@
+# Secrets - nunca commitar credenciais
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.local
+
+# Streamlit
+.streamlit/secrets.toml

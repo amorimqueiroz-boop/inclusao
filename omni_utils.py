@@ -2,7 +2,14 @@
 import os
 import base64
 import requests
-import streamlit as st
+from typing import Optional
+
+try:
+    import streamlit as st
+except ImportError as e:
+    raise ImportError(
+        "O pacote 'streamlit' é obrigatório. Instale com: pip install streamlit"
+    ) from e
 
 # =============================================================================
 # 0) BIBLIOTECA DE ÍCONES FLAT (REMIXICON) - SISTEMA CENTRALIZADO
@@ -142,7 +149,7 @@ def ensure_state():
 # =============================================================================
 # 2) UI COMPONENTS (HEADER & NAVBAR) — PADRÃO ESTÁVEL
 # =============================================================================
-def get_base64_image(path: str) -> str | None:
+def get_base64_image(path: str) -> Optional[str]:
     if not os.path.exists(path):
         return None
     with open(path, "rb") as f:
@@ -416,10 +423,25 @@ def inject_compact_app_css(accent: str = "#0D9488"):
         unsafe_allow_html=True,
     )
 
+# Menu de navegação: (rótulo, caminho, aliases, RemixIcon flat, cor da página = mesma da Home)
+NAV_ITEMS = [
+    ("Início", "pages/0_Home.py", ["Início", "Home"], "ri-home-4-line", "#2563EB"),
+    ("Estudantes", "pages/Alunos.py", ["Estudantes", "Alunos"], "ri-user-star-line", "#2563EB"),
+    ("Estratégias & PEI", "pages/1_PEI.py", ["Estratégias & PEI", "PEI"], "ri-book-open-line", "#0EA5E9"),
+    ("Plano de Ação / PAEE", "pages/2_PAE.py", ["Plano de Ação (AEE)", "Plano de Ação / PAEE", "PAEE", "PAE"], "ri-puzzle-line", "#A855F7"),
+    ("Hub de Recursos", "pages/3_Hub_Inclusao.py", ["Hub de Recursos", "Hub"], "ri-rocket-line", "#06B6D4"),
+    ("Diário de Bordo", "pages/4_Diario_de_Bordo.py", ["Diário de Bordo", "Diário"], "ri-edit-box-line", "#F43F5E"),
+    ("Evolução & Dados", "pages/5_Monitoramento_Avaliacao.py", ["Evolução & Dados", "Dados", "Monitoramento"], "ri-line-chart-line", "#0C4A6E"),
+]
+
+def _nav_key(page_path: str) -> str:
+    """Extrai a chave de navegação do caminho (ex: pages/0_Home.py -> 0_Home)."""
+    return page_path.replace("pages/", "").replace(".py", "")
+
 def render_omnisfera_header(active_tab: str = "Início"):
     """
-    Barra do topo removida. Apenas injeta CSS para layout do conteúdo.
-    Navegação pelo menu lateral do Streamlit.
+    Injeta CSS para layout do conteúdo.
+    Use render_navbar(active_tab) para o menu de navegação no topo.
     """
     st.markdown("""
         <style>
@@ -429,10 +451,240 @@ def render_omnisfera_header(active_tab: str = "Início"):
 
 def render_navbar(active_tab: str = "Início"):
     """
-    Navbar removido - agora integrado na topbar via render_omnisfera_header().
-    Mantido para compatibilidade (não faz nada).
+    Renderiza o menu de navegação no topo com ícones flat (RemixIcon).
+    Navegação via query param ?nav= para funcionar no Render e fora do Streamlit Cloud.
+    active_tab: rótulo da página atual para destacar no menu.
     """
-    pass
+    # Navegação via query param (Render / multipage)
+    nav_param = st.query_params.get("nav")
+    valid_keys = [_nav_key(item[1]) for item in NAV_ITEMS]
+    current_key = None
+    for item in NAV_ITEMS:
+        label, page_path, aliases = item[0], item[1], item[2]
+        if active_tab == label or active_tab in aliases or any(a in active_tab for a in [label] + aliases):
+            current_key = _nav_key(page_path)
+            break
+    if nav_param and nav_param in valid_keys and nav_param != current_key:
+        st.switch_page(f"pages/{nav_param}.py")
+
+    # RemixIcon (ícones flat)
+    st.markdown(
+        '<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">',
+        unsafe_allow_html=True,
+    )
+
+    # HTML do menu com ícones flat e cor da página
+    items_html = []
+    for label, page_path, aliases, icon_class, color in NAV_ITEMS:
+        is_active = (
+            active_tab == label
+            or active_tab in aliases
+            or any(a in active_tab for a in [label] + aliases)
+        )
+        key = _nav_key(page_path)
+        cls = "omni-nav-link active" if is_active else "omni-nav-link"
+        if is_active:
+            style = f"background: {color}; color: white; border-color: {color}; box-shadow: 0 4px 14px {color}44;"
+        else:
+            style = f"border-left: 3px solid {color}; color: #475569;"
+        items_html.append(
+            f'<a class="{cls}" href="?nav={key}" target="_self" style="{style}">'
+            f'<i class="{icon_class}" style="color: inherit;"></i><span>{label}</span></a>'
+        )
+
+    # Logo Omnisfera: ícone girando + texto PNG (assinatura à esquerda, como na Home)
+    logo_b64 = get_base64_image("omni_icone.png")
+    texto_b64 = get_base64_image("omni_texto.png")
+    logo_html = ""
+    if logo_b64:
+        img_icon = f'<img src="data:image/png;base64,{logo_b64}" class="omni-nav-logo-spin" alt="Omnisfera" />'
+        img_text = (
+            f'<img src="data:image/png;base64,{texto_b64}" class="omni-nav-text" alt="Omnisfera" />'
+            if texto_b64 else '<span class="omni-nav-text-fallback">Omnisfera</span>'
+        )
+        logo_html = (
+            f'<a href="?nav=0_Home" target="_self" class="omni-nav-brand" title="Ir para Início">'
+            f'{img_icon}{img_text}'
+            f'</a>'
+        )
+    else:
+        logo_html = '<a href="?nav=0_Home" target="_self" class="omni-nav-brand">🌐</a>'
+
+    # Bloco usuário logado à direita (como na Home)
+    ws_name = st.session_state.get("workspace_name", "")
+    ws_id = st.session_state.get("workspace_id", "")
+    if ws_name:
+        workspace_display = (ws_name[:20] + "...") if len(ws_name) > 20 else ws_name
+    elif ws_id:
+        workspace_display = f"ID: {str(ws_id)[:8]}..."
+    else:
+        workspace_display = "Sem Escola"
+    nome_user = st.session_state.get("usuario_nome", "Visitante").strip().split()[0] or "Visitante"
+    user_initials = _get_initials(st.session_state.get("usuario_nome", "Visitante"))
+    user_block_html = (
+        f'<div class="omni-nav-user">'
+        f'<span class="omni-nav-ws">{workspace_display}</span>'
+        f'<div class="omni-nav-avatar">{user_initials}</div>'
+        f'<span class="omni-nav-name">{nome_user}</span>'
+        f'</div>'
+    )
+
+    st.markdown(
+        f"""
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+        <style>
+            @keyframes omni-spin {{
+                0% {{ transform: rotate(0deg); }}
+                100% {{ transform: rotate(360deg); }}
+            }}
+            .omni-nav-wrap {{
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 14px;
+                flex-wrap: nowrap;
+                background: linear-gradient(180deg, #ffffff 0%, #F8FAFC 100%);
+                border-radius: 14px;
+                padding: 8px 16px;
+                margin-bottom: 2.35rem;
+                margin-top: -1.7rem;
+                box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06), 0 1px 0 rgba(0,0,0,0.04);
+                border: 1px solid rgba(226, 232, 240, 0.8);
+            }}
+            .omni-nav-brand {{
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                text-decoration: none;
+                flex-shrink: 0;
+            }}
+            .omni-nav-logo-spin {{
+                width: 34px;
+                height: 34px;
+                object-fit: contain;
+                animation: omni-spin 45s linear infinite;
+            }}
+            .omni-nav-text {{
+                height: 22px;
+                width: auto;
+                object-fit: contain;
+                vertical-align: middle;
+            }}
+            .omni-nav-text-fallback {{
+                font-family: 'Plus Jakarta Sans', sans-serif;
+                font-weight: 800;
+                font-size: 1rem;
+                color: #2B3674;
+                letter-spacing: 0.02em;
+            }}
+            .omni-nav-flat {{
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 6px;
+                align-items: center;
+                justify-content: center;
+                flex: 1;
+                min-width: 0;
+                font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+            }}
+            .omni-nav-flat a {{
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 7px 12px;
+                border-radius: 10px;
+                font-size: 0.78rem;
+                font-weight: 600;
+                letter-spacing: 0.02em;
+                color: #475569;
+                text-decoration: none;
+                transition: all 0.22s ease;
+                border: 1px solid transparent;
+                white-space: nowrap;
+            }}
+            .omni-nav-flat a:hover:not(.active) {{
+                background: rgba(241, 245, 249, 0.9);
+                color: #1E293B;
+            }}
+            .omni-nav-flat a.active i {{
+                opacity: 1;
+            }}
+            .omni-nav-flat a i {{
+                font-size: 1.05rem;
+                opacity: 0.9;
+            }}
+            @media (max-width: 900px) {{
+                .omni-nav-wrap {{
+                    flex-wrap: wrap;
+                }}
+                .omni-nav-flat a span {{
+                    display: none;
+                }}
+                .omni-nav-flat a {{
+                    padding: 6px 12px;
+                }}
+                .omni-nav-flat a i {{
+                    font-size: 1.15rem;
+                }}
+                .omni-nav-logo-spin {{
+                    width: 30px;
+                    height: 30px;
+                }}
+                .omni-nav-text {{
+                    display: none;
+                }}
+                .omni-nav-text-fallback {{
+                    display: none;
+                }}
+                .omni-nav-name {{ display: none; }}
+                .omni-nav-ws {{ display: none; }}
+            }}
+            .omni-nav-user {{
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-shrink: 0;
+                font-family: 'Plus Jakarta Sans', sans-serif;
+                font-weight: 700;
+                color: #334155;
+                font-size: 0.85rem;
+            }}
+            .omni-nav-ws {{
+                padding: 4px 10px;
+                border-radius: 8px;
+                background: #f1f5f9;
+                color: #475569;
+                font-size: 0.74rem;
+                font-weight: 600;
+                max-width: 100px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                border: 1px solid rgba(226, 232, 240, 0.9);
+            }}
+            .omni-nav-avatar {{
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                background: #e2e8f0;
+                color: #334155;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 800;
+                font-size: 0.72rem;
+                border: 1px solid rgba(226, 232, 240, 0.9);
+            }}
+            .omni-nav-name {{
+                font-weight: 700;
+                color: #334155;
+                white-space: nowrap;
+            }}
+        </style>
+        <div class="omni-nav-wrap">{logo_html}<nav class="omni-nav-flat">{''.join(items_html)}</nav>{user_block_html}</div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # =============================================================================
 # 3) SUPABASE & UTILS (LÓGICA PRESERVADA)
@@ -481,7 +733,7 @@ def supabase_upsert(table: str, row: dict, on_conflict: str):
     data = r.json()
     return data[0] if isinstance(data, list) and data else (data if isinstance(data, dict) else None)
 
-def supabase_workspace_from_pin(pin: str) -> str | None:
+def supabase_workspace_from_pin(pin: str) -> Optional[str]:
     pin = (pin or "").strip()
     if not pin:
         return None

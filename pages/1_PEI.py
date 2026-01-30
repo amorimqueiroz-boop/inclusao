@@ -1,12 +1,22 @@
 # pages/1_PEI.py
 import streamlit as st
 from datetime import date, datetime
+from typing import Optional
 from zoneinfo import ZoneInfo
 from io import BytesIO
 from docx import Document
-from openai import OpenAI
-from pypdf import PdfReader
-from fpdf import FPDF
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
+try:
+    from pypdf import PdfReader
+except ImportError:
+    PdfReader = None
+try:
+    from fpdf import FPDF
+except ImportError:
+    FPDF = None
 import requests
 import base64
 import json
@@ -303,7 +313,7 @@ def db_delete_student(student_id: str):
     return r.json()
 
 
-def db_list_students(search: str | None = None):
+def db_list_students(search: Optional[str] = None):
     """
     Lista estudantes do workspace atual.
     Se search vier preenchido, filtra por nome (ilike).
@@ -530,7 +540,7 @@ def calcular_idade(data_nasc):
     idade = hoje.year - data_nasc.year - ((hoje.month, hoje.day) < (data_nasc.month, data_nasc.day))
     return f"{idade} anos"
 
-def detectar_nivel_ensino(serie_str: str | None):
+def detectar_nivel_ensino(serie_str: Optional[str]):
     if not serie_str:
         return "INDEFINIDO"
     s = serie_str.lower()
@@ -544,7 +554,7 @@ def detectar_nivel_ensino(serie_str: str | None):
         return "EM"
     return "INDEFINIDO"
 
-def get_segmento_info_visual(serie: str | None):
+def get_segmento_info_visual(serie: Optional[str]):
     nivel = detectar_nivel_ensino(serie or "")
     if nivel == "EI":
         return "Educação Infantil", "#4299e1", "Foco: Campos de Experiência (BNCC)."
@@ -556,7 +566,7 @@ def get_segmento_info_visual(serie: str | None):
         return "Ensino Médio / EJA", "#9f7aea", "Foco: Projeto de Vida."
     return "Selecione a Série", "grey", "Aguardando seleção..."
 
-def get_hiperfoco_emoji(texto: str | None):
+def get_hiperfoco_emoji(texto: Optional[str]):
     if not texto:
         return "🚀"
     t = texto.lower()
@@ -620,7 +630,7 @@ def extrair_metas_estruturadas(texto: str):
                 metas["Longo"] = l_clean.split(":")[-1].strip()
     return metas
 
-def get_pro_icon(nome_profissional: str | None):
+def get_pro_icon(nome_profissional: Optional[str]):
     p = (nome_profissional or "").lower()
     if "psic" in p:
         return "🧠"
@@ -690,64 +700,70 @@ def finding_logo():
             return logo_file
     return None
 
-class PDF_Classic(FPDF):
-    def header(self):
-        self.set_fill_color(248, 248, 248)
-        self.rect(0, 0, 210, 40, "F")
-        logo = finding_logo()
-        x_offset = 40 if logo else 12
-        if logo:
-            self.image(logo, 10, 8, 25)
-        self.set_xy(x_offset, 12)
-        self.set_font("Arial", "B", 14)
-        self.set_text_color(50, 50, 50)
-        self.cell(0, 8, "PEI - PLANO DE ENSINO INDIVIDUALIZADO", 0, 1, "L")
-        self.set_xy(x_offset, 19)
-        self.set_font("Arial", "", 9)
-        self.set_text_color(100, 100, 100)
-        self.cell(0, 5, "Documento de Planejamento e Flexibilização Curricular", 0, 1, "L")
-        self.ln(15)
+if FPDF is not None:
+    class PDF_Classic(FPDF):
+        def header(self):
+            self.set_fill_color(248, 248, 248)
+            self.rect(0, 0, 210, 40, "F")
+            logo = finding_logo()
+            x_offset = 40 if logo else 12
+            if logo:
+                self.image(logo, 10, 8, 25)
+            self.set_xy(x_offset, 12)
+            self.set_font("Arial", "B", 14)
+            self.set_text_color(50, 50, 50)
+            self.cell(0, 8, "PEI - PLANO DE ENSINO INDIVIDUALIZADO", 0, 1, "L")
+            self.set_xy(x_offset, 19)
+            self.set_font("Arial", "", 9)
+            self.set_text_color(100, 100, 100)
+            self.cell(0, 5, "Documento de Planejamento e Flexibilização Curricular", 0, 1, "L")
+            self.ln(15)
 
-    def footer(self):
-        self.set_y(-15)
-        self.set_font("Arial", "I", 8)
-        self.set_text_color(150, 150, 150)
-        self.cell(0, 10, f"Página {self.page_no()} | Gerado via Omnisfera", 0, 0, "C")
+        def footer(self):
+            self.set_y(-15)
+            self.set_font("Arial", "I", 8)
+            self.set_text_color(150, 150, 150)
+            self.cell(0, 10, f"Página {self.page_no()} | Gerado via Omnisfera", 0, 0, "C")
 
-    def section_title(self, label):
-        self.ln(6)
-        self.set_fill_color(230, 230, 230)
-        self.rect(10, self.get_y(), 190, 8, "F")
-        self.set_font("ZapfDingbats", "", 10)
-        self.set_text_color(80, 80, 80)
-        self.set_xy(12, self.get_y() + 1)
-        self.cell(5, 6, "o", 0, 0)
-        self.set_font("Arial", "B", 11)
-        self.set_text_color(50, 50, 50)
-        self.cell(0, 6, label.upper(), 0, 1, "L")
-        self.ln(4)
+        def section_title(self, label):
+            self.ln(6)
+            self.set_fill_color(230, 230, 230)
+            self.rect(10, self.get_y(), 190, 8, "F")
+            self.set_font("ZapfDingbats", "", 10)
+            self.set_text_color(80, 80, 80)
+            self.set_xy(12, self.get_y() + 1)
+            self.cell(5, 6, "o", 0, 0)
+            self.set_font("Arial", "B", 11)
+            self.set_text_color(50, 50, 50)
+            self.cell(0, 6, label.upper(), 0, 1, "L")
+            self.ln(4)
 
-    def add_flat_icon_item(self, texto, bullet_type="check"):
-        self.set_font("ZapfDingbats", "", 10)
-        self.set_text_color(80, 80, 80)
-        char = "3" if bullet_type == "check" else "l"
-        self.cell(6, 5, char, 0, 0)
-        self.set_font("Arial", "", 10)
-        self.set_text_color(0)
-        self.multi_cell(0, 5, texto)
-        self.ln(1)
+        def add_flat_icon_item(self, texto, bullet_type="check"):
+            self.set_font("ZapfDingbats", "", 10)
+            self.set_text_color(80, 80, 80)
+            char = "3" if bullet_type == "check" else "l"
+            self.cell(6, 5, char, 0, 0)
+            self.set_font("Arial", "", 10)
+            self.set_text_color(0)
+            self.multi_cell(0, 5, texto)
+            self.ln(1)
 
-class PDF_Simple_Text(FPDF):
-    def header(self):
-        self.set_font("Arial", "B", 16)
-        self.set_text_color(50)
-        self.cell(0, 10, "ROTEIRO DE MISSÃO", 0, 1, "C")
-        self.set_draw_color(150)
-        self.line(10, 25, 200, 25)
-        self.ln(10)
+    class PDF_Simple_Text(FPDF):
+        def header(self):
+            self.set_font("Arial", "B", 16)
+            self.set_text_color(50)
+            self.cell(0, 10, "ROTEIRO DE MISSÃO", 0, 1, "C")
+            self.set_draw_color(150)
+            self.line(10, 25, 200, 25)
+            self.ln(10)
+else:
+    PDF_Classic = None
+    PDF_Simple_Text = None
 
 def gerar_pdf_final(dados: dict):
     """Gera PDF completo do PEI com todas as seções - Documento Oficial"""
+    if PDF_Classic is None:
+        return None
     pdf = PDF_Classic()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=20)
@@ -1052,6 +1068,8 @@ def gerar_pdf_final(dados: dict):
     return pdf.output(dest="S").encode("latin-1", "replace")
 
 def gerar_pdf_tabuleiro_simples(texto: str):
+    if PDF_Simple_Text is None:
+        return None
     pdf = PDF_Simple_Text()
     pdf.add_page()
     pdf.set_font("Arial", size=11)
@@ -1234,7 +1252,8 @@ def ler_pdf(uploaded_file, max_pages=6):
     """
     if not uploaded_file:
         return ""
-    
+    if PdfReader is None:
+        return ""
     try:
         pdf_reader = PdfReader(uploaded_file)
         texto_completo = []
@@ -1260,6 +1279,8 @@ def ler_pdf(uploaded_file, max_pages=6):
 def extrair_dados_pdf_ia(api_key: str, texto_pdf: str):
     if not api_key:
         return None, "Configure a Chave API OpenAI."
+    if OpenAI is None:
+        return None, "Pacote openai não instalado. Rode: pip install openai"
     try:
         client = OpenAI(api_key=api_key)
         prompt = (
@@ -1279,6 +1300,8 @@ def extrair_dados_pdf_ia(api_key: str, texto_pdf: str):
 def consultar_gpt_pedagogico(api_key: str, dados: dict, contexto_pdf: str = "", modo_pratico: bool = False, feedback_usuario: str = ""):
     if not api_key:
         return None, "⚠️ Configure a Chave API OpenAI."
+    if OpenAI is None:
+        return None, "Pacote openai não instalado. Rode: pip install openai"
     try:
         client = OpenAI(api_key=api_key)
 
@@ -1426,6 +1449,8 @@ GUIA PRÁTICO PARA SALA DE AULA.
 def gerar_roteiro_gamificado(api_key: str, dados: dict, pei_tecnico: str, feedback_game: str = ""):
     if not api_key:
         return None, "Configure a chave OpenAI."
+    if OpenAI is None:
+        return None, "Pacote openai não instalado. Rode: pip install openai"
     try:
         client = OpenAI(api_key=api_key)
         serie = dados.get("serie") or ""
@@ -1701,7 +1726,7 @@ section[data-testid="stHeader"] {
 # 9. LOGO E PROGRESSO
 # ============================================================================== 
 
-def get_logo_base64() -> str | None:
+def get_logo_base64() -> Optional[str]:
     """Obtém o logo em base64"""
     for c in ["omni_icone.png", "logo.png", "iconeaba.png"]:
         if os.path.exists(c):

@@ -29,11 +29,20 @@ except ImportError:
     # Fallback se qn não estiver disponível
     qn = lambda x: x, RGBColor
 from docx.oxml.ns import qn
-from fpdf import FPDF
-from pypdf import PdfReader
+try:
+    from fpdf import FPDF
+except ImportError:
+    FPDF = None
+try:
+    from pypdf import PdfReader
+except ImportError:
+    PdfReader = None
 
 # Importações UI
-from streamlit_cropper import st_cropper
+try:
+    from streamlit_cropper import st_cropper
+except ImportError:
+    st_cropper = None
 import omni_utils as ou
 
 # ==============================================================================
@@ -562,6 +571,8 @@ def criar_docx_simples(texto, titulo="Documento"):
 
 def criar_pdf_generico(texto):
     """Cria um PDF simples a partir de texto"""
+    if FPDF is None:
+        return None
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
@@ -2066,14 +2077,15 @@ def render_aba_adaptar_prova(aluno, api_key):
         )
         
         pdf_bytes = criar_pdf_generico(res['txt'])
-        c_down2.download_button(
-            f"{get_icon('download', 18, 'white')} BAIXAR PDF (Visualização)", 
-            pdf_bytes, 
-            "Prova_Adaptada.pdf", 
-            mime="application/pdf", 
-            type="secondary",
-            use_container_width=True
-        )
+        if pdf_bytes:
+            c_down2.download_button(
+                f"{get_icon('download', 18, 'white')} BAIXAR PDF (Visualização)", 
+                pdf_bytes, 
+                "Prova_Adaptada.pdf", 
+                mime="application/pdf", 
+                type="secondary",
+                use_container_width=True
+            )
 
 def render_aba_adaptar_atividade(aluno, api_key):
     """Renderiza a aba de adaptação de atividade"""
@@ -2181,11 +2193,14 @@ def render_aba_adaptar_atividade(aluno, api_key):
     
     if st.session_state.img_raw:
         st.markdown(f"### {icon_title('Passo 1: Recortar a Questão', 'adaptar_atividade', 20, '#06B6D4')}", unsafe_allow_html=True)
-        st.info("💡 **Importante:** Recorte a área da questão completa.")
-        
         img_pil = Image.open(BytesIO(st.session_state.img_raw))
         img_pil.thumbnail((800, 800))
-        cropped_res = st_cropper(img_pil, realtime_update=True, box_color='#FF0000', aspect_ratio=None, key="crop_i")
+        if st_cropper is None:
+            st.warning("Para recortar a imagem, instale: **pip install streamlit-cropper**. Usando a imagem completa.")
+            cropped_res = img_pil
+        else:
+            st.info("💡 **Importante:** Recorte a área da questão completa.")
+            cropped_res = st_cropper(img_pil, realtime_update=True, box_color='#FF0000', aspect_ratio=None, key="crop_i")
         if cropped_res:
             st.image(cropped_res, width=200, caption="Questão recortada")
             
@@ -2200,11 +2215,13 @@ def render_aba_adaptar_atividade(aluno, api_key):
             )
             
             if tem_imagem_na_questao:
-                st.info("💡 Recorte apenas a área da imagem na questão. Esta imagem será inserida na questão adaptada.")
-                # Abrir a imagem original novamente para recortar só a imagem
                 img_pil_original = Image.open(BytesIO(st.session_state.img_raw))
                 img_pil_original.thumbnail((800, 800))
-                imagem_recortada = st_cropper(img_pil_original, realtime_update=True, box_color='#00FF00', aspect_ratio=None, key="crop_img_separada")
+                if st_cropper is None:
+                    imagem_recortada = img_pil_original
+                else:
+                    st.info("💡 Recorte apenas a área da imagem na questão. Esta imagem será inserida na questão adaptada.")
+                    imagem_recortada = st_cropper(img_pil_original, realtime_update=True, box_color='#00FF00', aspect_ratio=None, key="crop_img_separada")
                 if imagem_recortada:
                     st.image(imagem_recortada, width=200, caption="Imagem recortada separadamente")
 
@@ -2377,14 +2394,15 @@ def render_aba_adaptar_atividade(aluno, api_key):
         c_down1.download_button("📥 BAIXAR DOCX (Editável)", docx, "Atividade.docx", "primary", use_container_width=True)
         
         pdf_bytes = criar_pdf_generico(res['txt'])
-        c_down2.download_button(
-            f"{get_icon('download', 18, 'white')} BAIXAR PDF (Visualização)", 
-            pdf_bytes, 
-            "Atividade.pdf", 
-            mime="application/pdf", 
-            type="secondary",
-            use_container_width=True
-        )
+        if pdf_bytes:
+            c_down2.download_button(
+                f"{get_icon('download', 18, 'white')} BAIXAR PDF (Visualização)", 
+                pdf_bytes, 
+                "Atividade.pdf", 
+                mime="application/pdf", 
+                type="secondary",
+                use_container_width=True
+            )
 
 def render_aba_criar_do_zero(aluno, api_key, unsplash_key):
     """Renderiza a aba de criação do zero"""
@@ -2603,13 +2621,14 @@ def render_aba_criar_do_zero(aluno, api_key, unsplash_key):
         
         with col_down2:
             pdf_bytes = criar_pdf_generico(res['txt'])
-            st.download_button(
-                label="📕 Baixar PDF",
-                data=pdf_bytes,
-                file_name=f"Atividade_{mat_c}_{date.today().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
+            if pdf_bytes:
+                st.download_button(
+                    label="📕 Baixar PDF",
+                    data=pdf_bytes,
+                    file_name=f"Atividade_{mat_c}_{date.today().strftime('%Y%m%d')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
         
         with col_down3:
             st.download_button(
@@ -2768,13 +2787,14 @@ def render_aba_roteiro_individual(aluno, api_key):
         
         with col_down2:
             pdf_bytes_roteiro = criar_pdf_generico(res)
-            st.download_button(
-                label="📕 Baixar PDF",
-                data=pdf_bytes_roteiro,
-                file_name=f"Roteiro_{disciplina_bncc}_{date.today().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
+            if pdf_bytes_roteiro:
+                st.download_button(
+                    label="📕 Baixar PDF",
+                    data=pdf_bytes_roteiro,
+                    file_name=f"Roteiro_{disciplina_bncc}_{date.today().strftime('%Y%m%d')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
 
 def render_aba_papo_mestre(aluno, api_key):
     """Renderiza a aba de papo de mestre"""
@@ -2845,13 +2865,14 @@ def render_aba_papo_mestre(aluno, api_key):
         
         with col_down2:
             pdf_bytes_papo = criar_pdf_generico(res)
-            st.download_button(
-                label="📕 Baixar PDF",
-                data=pdf_bytes_papo,
-                file_name=f"Papo_Mestre_{date.today().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
+            if pdf_bytes_papo:
+                st.download_button(
+                    label="📕 Baixar PDF",
+                    data=pdf_bytes_papo,
+                    file_name=f"Papo_Mestre_{date.today().strftime('%Y%m%d')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
 
 def render_aba_dinamica_inclusiva(aluno, api_key):
     """Renderiza a aba de dinâmica inclusiva"""
@@ -2952,13 +2973,14 @@ def render_aba_dinamica_inclusiva(aluno, api_key):
         
         with col_down2:
             pdf_bytes_din = criar_pdf_generico(res)
-            st.download_button(
-                label="📕 Baixar PDF",
-                data=pdf_bytes_din,
-                file_name=f"Dinamica_{disciplina_bncc}_{date.today().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
+            if pdf_bytes_din:
+                st.download_button(
+                    label="📕 Baixar PDF",
+                    data=pdf_bytes_din,
+                    file_name=f"Dinamica_{disciplina_bncc}_{date.today().strftime('%Y%m%d')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
 
 def render_aba_plano_aula(aluno, api_key):
     """Renderiza a aba de plano de aula"""
@@ -3067,13 +3089,14 @@ def render_aba_plano_aula(aluno, api_key):
         
         with col_down2:
             pdf_bytes_plano = criar_pdf_generico(res)
-            st.download_button(
-                label="📕 Baixar PDF",
-                data=pdf_bytes_plano,
-                file_name=f"Plano_Aula_{disciplina_bncc}_{date.today().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
+            if pdf_bytes_plano:
+                st.download_button(
+                    label="📕 Baixar PDF",
+                    data=pdf_bytes_plano,
+                    file_name=f"Plano_Aula_{disciplina_bncc}_{date.today().strftime('%Y%m%d')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
     # ==============================================================================
 # FUNÇÕES DA EDUCAÇÃO INFANTIL
 # ==============================================================================
