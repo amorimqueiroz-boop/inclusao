@@ -2,7 +2,23 @@
 # PARTE 1/4: CONFIGURAÇÕES, ESTILOS E AUTENTICAÇÃO
 # ==============================================================================
 
+# Imports mínimos primeiro — auth no topo para sempre mostrar botão "Ir para Login"
 import streamlit as st
+import omni_utils as ou
+
+# 1. CONFIGURAÇÃO INICIAL (topo absoluto)
+st.set_page_config(
+    page_title="Omnisfera | PAE",
+    page_icon="omni_icone.png",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# 2. VERIFICAÇÃO DE ACESSO LOGO NO INÍCIO
+if not st.session_state.get("autenticado"):
+    ou.render_acesso_negado_e_ir_para_login("Por favor, faça login na Página Inicial para acessar o Plano de Ação.")
+
+# Imports pesados só após auth
 import os
 from openai import OpenAI
 import json
@@ -13,21 +29,11 @@ import base64
 import requests
 import time
 import uuid
-
-import omni_utils as ou  # módulo atualizado
 from omni_utils import get_icon, icon_title
-
-# 1. CONFIGURAÇÃO INICIAL (topo absoluto)
-st.set_page_config(
-    page_title="Omnisfera | PAE",
-    page_icon="omni_icone.png",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
 
 APP_VERSION = "v150.0 (SaaS Design)"
 
-# 2. UI LOCKDOWN (opcional)
+# 3. UI LOCKDOWN (opcional)
 try:
     from ui_lockdown import hide_streamlit_chrome_if_needed, hide_default_sidebar_nav
     hide_streamlit_chrome_if_needed()
@@ -35,17 +41,13 @@ try:
 except Exception:
     pass
 
-# 3. HEADER E NAVBAR (do omni_utils)
+# 4. HEADER E NAVBAR (do omni_utils)
 ou.render_omnisfera_header()
 ou.render_navbar(active_tab="Plano de Ação (AEE)")
 ou.inject_compact_app_css()
 
 # Adiciona classe no body para cores específicas das abas
 st.markdown("<script>document.body.classList.add('page-purple');</script>", unsafe_allow_html=True)
-
-# 4. VERIFICAÇÃO DE ACESSO
-if not st.session_state.get("autenticado"):
-    ou.render_acesso_negado_e_ir_para_login("Por favor, faça login na Página Inicial para acessar o Plano de Ação.")
 
 # ==============================================================================
 # AJUSTE FINO DE LAYOUT (ANTES DO HERO - PADRONIZADO)

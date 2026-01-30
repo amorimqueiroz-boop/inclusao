@@ -26,6 +26,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+# ✅ VERIFICAÇÃO DE ACESSO LOGO NO INÍCIO — login uma vez, navegar sem pedir de novo
+if not st.session_state.get("autenticado"):
+    ou.render_acesso_negado_e_ir_para_login("Acesso restrito. Faça login na Página Inicial para acessar Estudantes.")
+
 APP_VERSION = "v3.7 - Modularizado"
 
 def gap_hub():
@@ -116,11 +120,6 @@ ou.render_navbar(active_tab="Estudantes")
 # ==============================================================================
 # 3. LÓGICA DE DADOS
 # ==============================================================================
-
-# Verificação de segurança
-if not st.session_state.get("autenticado"):
-    ou.render_acesso_negado_e_ir_para_login("Acesso restrito. Faça login na Página Inicial para acessar Estudantes.")
-
 # Helpers API (Local)
 @st.cache_data(ttl=10, show_spinner=False)
 def list_students_rest(workspace_id):

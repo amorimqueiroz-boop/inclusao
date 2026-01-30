@@ -127,11 +127,12 @@ if ENV == "TESTE":
         st.session_state.usuario_cargo = "Teste"
 
 HOME_PAGE = "pages/0_Home.py"
-# Chaves de navegação (mesmo padrão do navbar em omni_utils) — login uma vez, navega sem pedir de novo
+# Login uma vez: após autenticar, a sessão (st.session_state) é preservada ao navegar entre páginas.
+# Chaves de navegação (mesmo padrão do navbar em omni_utils).
 VALID_NAV_KEYS = {"0_Home", "Alunos", "1_PEI", "2_PAE", "3_Hub_Inclusao", "4_Diario_de_Bordo", "5_Monitoramento_Avaliacao"}
 
 # ------------------------------------------------------------------------------
-# Router
+# Router — login uma vez; após autenticar, navegação entre páginas não exige novo login
 # ------------------------------------------------------------------------------
 if not st.session_state.autenticado:
     render_login()

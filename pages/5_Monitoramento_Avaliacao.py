@@ -1,22 +1,13 @@
 # pages/5_Monitoramento_Avaliacao.py
 import streamlit as st
-import pandas as pd
-import requests
-import json
-from datetime import datetime
-from zoneinfo import ZoneInfo
 import os
 import sys
 
-# ==============================================================================
-# 0. IMPORTAÇÃO SEGURA DO OMNI_UTILS
-# ==============================================================================
 # Adiciona o diretório raiz ao path para conseguir importar omni_utils
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 try:
     import omni_utils as ou
-    from omni_utils import get_icon, icon_title
 except ImportError:
     st.error("Erro crítico: O arquivo 'omni_utils.py' não foi encontrado na pasta raiz.")
     st.stop()
@@ -28,6 +19,18 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
+# ✅ VERIFICAÇÃO DE ACESSO LOGO NO INÍCIO — login uma vez, navegar sem pedir de novo
+if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
+    ou.render_acesso_negado_e_ir_para_login("Acesso restrito. Faça login na Página Inicial para acessar Evolução & Dados.")
+
+# Imports pesados só após auth
+import pandas as pd
+import requests
+import json
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from omni_utils import get_icon, icon_title
 
 APP_VERSION = "v150.0 (SaaS Design)"
 
@@ -369,11 +372,6 @@ def save_assessment(student_id, rubric_data, observation):
 # ==============================================================================
 # INTERFACE PRINCIPAL
 # ==============================================================================
-
-# Verificação de autenticação
-if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
-    ou.render_acesso_negado_e_ir_para_login("Acesso restrito. Faça login na Página Inicial para acessar Evolução & Dados.")
-
 # Espaçamento após hero card (reduzido para aproximar conteúdo)
 st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 

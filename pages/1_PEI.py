@@ -1,5 +1,21 @@
 # pages/1_PEI.py
+# Imports mínimos — auth no topo para login uma vez e navegar sem pedir de novo
 import streamlit as st
+import omni_utils as ou
+
+# ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
+st.set_page_config(
+    page_title="Omnisfera | PEI",
+    page_icon="omni_icone.png",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# ✅ VERIFICAÇÃO DE ACESSO LOGO NO INÍCIO
+if "autenticado" not in st.session_state or not st.session_state.get("autenticado"):
+    ou.render_acesso_negado_e_ir_para_login("Por favor, faça login na Página Inicial para acessar Estratégias & PEI.")
+
+# Imports pesados só após auth
 from datetime import date, datetime
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -23,19 +39,7 @@ import json
 import os
 import time
 import re
-
-import omni_utils as ou  # módulo atualizado
 from omni_utils import get_icon, icon_title
-
-
-
-# ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
-st.set_page_config(
-    page_title="Omnisfera | PEI",
-    page_icon="omni_icone.png",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
 
 APP_VERSION = "v150.0 (SaaS Design)"
 
@@ -150,11 +154,8 @@ api_key = os.environ.get("OPENAI_API_KEY") or ou.get_setting("OPENAI_API_KEY", "
 
 
 # ==============================================================================
-# 1. GUARDAS (LOGIN + SUPABASE)
+# 1. GUARDAS (SUPABASE — login já verificado no topo)
 # ==============================================================================
-if "autenticado" not in st.session_state or not st.session_state.get("autenticado"):
-    ou.render_acesso_negado_e_ir_para_login("Por favor, faça login na Página Inicial para acessar Estratégias & PEI.")
-
 def verificar_login_supabase():
     # Supabase é necessário para SALVAR/CARREGAR, mas o PEI pode abrir como rascunho.
     # Então aqui só garantimos chaves mínimas (não bloqueia).

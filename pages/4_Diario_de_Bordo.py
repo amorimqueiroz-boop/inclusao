@@ -2,7 +2,23 @@
 # DIÁRIO DE BORDO AEE - SUPABASE INTEGRATION
 # ==============================================================================
 
+# Imports mínimos — auth no topo para login uma vez e navegar sem pedir de novo
 import streamlit as st
+import omni_utils as ou
+
+# ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
+st.set_page_config(
+    page_title="Omnisfera | Diário de Bordo",
+    page_icon="omni_icone.png",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# ✅ VERIFICAÇÃO DE ACESSO LOGO NO INÍCIO
+if not st.session_state.get("autenticado"):
+    ou.render_acesso_negado_e_ir_para_login("Por favor, faça login na Página Inicial para acessar o Diário de Bordo.")
+
+# Imports pesados só após auth
 import os
 import json
 import pandas as pd
@@ -15,18 +31,7 @@ import plotly.express as px
 import base64
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-
-
-import omni_utils as ou  # módulo atualizado
 from omni_utils import get_icon, icon_title
-
-# ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
-st.set_page_config(
-    page_title="Omnisfera | Diário de Bordo",
-    page_icon="omni_icone.png",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
 
 APP_VERSION = "v150.0 (SaaS Design)"
 
@@ -265,12 +270,6 @@ st.markdown("""
 
 # Espaçamento após hero card
 st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-
-# ==============================================================================
-# VERIFICAÇÃO DE ACESSO
-# ==============================================================================
-if not st.session_state.get("autenticado"):
-    ou.render_acesso_negado_e_ir_para_login("Por favor, faça login na Página Inicial para acessar o Diário de Bordo.")
 
 # ==============================================================================
 # FUNÇÕES SUPABASE (REST)

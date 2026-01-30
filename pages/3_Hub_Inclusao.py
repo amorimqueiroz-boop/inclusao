@@ -2,8 +2,23 @@
 # HUB DE INCLUSÃO - VERSÃO MODULAR E ORGANIZADA
 # ==============================================================================
 
-# --- IMPORTS ---
+# --- IMPORTS MÍNIMOS (auth primeiro, para sempre mostrar botão "Ir para Login") ---
 import streamlit as st
+import omni_utils as ou
+
+# ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
+st.set_page_config(
+    page_title="Omnisfera | Hub de Recursos",
+    page_icon="omni_icone.png",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# ✅ VERIFICAÇÃO DE ACESSO LOGO NO INÍCIO — antes de qualquer import pesado
+if "autenticado" not in st.session_state or not st.session_state.get("autenticado"):
+    ou.render_acesso_negado_e_ir_para_login("Por favor, faça login na Página Inicial para acessar o Hub de Recursos.")
+
+# --- IMPORTS PESADOS (só rodam se estiver autenticado) ---
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 import os
@@ -16,19 +31,14 @@ from PIL import Image
 from io import BytesIO
 from omni_utils import get_icon, icon_title
 
-# Importações OpenAI e ML
 from openai import OpenAI
-
-# Importações para documentos
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Inches, RGBColor
 try:
     from docx.oxml.ns import qn
 except ImportError:
-    # Fallback se qn não estiver disponível
-    qn = lambda x: x, RGBColor
-from docx.oxml.ns import qn
+    qn = lambda x: x
 try:
     from fpdf import FPDF
 except ImportError:
@@ -37,26 +47,14 @@ try:
     from pypdf import PdfReader
 except ImportError:
     PdfReader = None
-
-# Importações UI
 try:
     from streamlit_cropper import st_cropper
 except ImportError:
     st_cropper = None
-import omni_utils as ou
 
 # ==============================================================================
 # CONFIGURAÇÃO INICIAL
 # ==============================================================================
-
-# ✅ set_page_config UMA VEZ SÓ, SEMPRE no topo
-st.set_page_config(
-    page_title="Omnisfera | Hub de Recursos",
-    page_icon="omni_icone.png",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
-
 APP_VERSION = "v150.0 (SaaS Design)"
 
 # ✅ UI lockdown (não quebra se faltar)
@@ -266,12 +264,6 @@ st.markdown("""
 
 # Espaçamento após hero card
 st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-
-# ==============================================================================
-# VERIFICAÇÃO DE ACESSO
-# ==============================================================================
-if "autenticado" not in st.session_state or not st.session_state.get("autenticado"):
-    ou.render_acesso_negado_e_ir_para_login("Por favor, faça login na Página Inicial para acessar o Hub de Recursos.")
 
 # ==============================================================================
 # CONSTANTES E DADOS GLOBAIS

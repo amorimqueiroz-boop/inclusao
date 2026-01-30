@@ -36,6 +36,11 @@ st.set_page_config(
     menu_items=None
 )
 
+# ✅ VERIFICAÇÃO DE ACESSO LOGO NO INÍCIO — login uma vez, navegação entre páginas sem pedir de novo
+if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
+    ou.render_acesso_negado_e_ir_para_login("Sessão inválida ou expirada. Faça login na Página Inicial para continuar.")
+    st.stop()
+
 # ==============================================================================
 # 2. CSS & DESIGN SYSTEM (COM SIDEBAR OCULTADA)
 # ==============================================================================
@@ -772,41 +777,8 @@ def initialize_session_state():
             st.session_state[key] = value
 
 
-# Inicializa estado
+# Inicializa estado (apenas chaves que ainda não existem; login já verificado no topo)
 initialize_session_state()
-
-# Verificação de autenticação
-if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown(
-            f"""
-            <div style='
-                text-align: center; 
-                padding: 3rem; 
-                background: white;
-                border-radius: 20px;
-                border: 1px solid #E2E8F0;
-                box-shadow: 0 20px 40px rgba(0,0,0,0.05);
-                margin: 4rem 0;
-            '>
-                <div style='font-size: 4rem; margin-bottom: 1rem;'>🔐</div>
-                <h3 style='color: #1E293B; margin-bottom: 1rem;'>Acesso Restrito</h3>
-                <p style='color: #64748B; margin-bottom: 1.5rem;'>Sessão inválida ou expirada. Por favor, faça login novamente.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        
-        col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
-        with col_btn2:
-            if st.button("🔓 Fazer Login", use_container_width=True, type="primary"):
-                # Limpa toda a sessão
-                for key in list(st.session_state.keys()):
-                    del st.session_state[key]
-                # Redireciona para o login
-                st.switch_page("streamlit_app.py")
-    st.stop()
 
 # ==============================================================================
 # 5. FUNÇÕES DE RENDERIZAÇÃO
