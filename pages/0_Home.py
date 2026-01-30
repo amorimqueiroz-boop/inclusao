@@ -1412,11 +1412,11 @@ def render_central_conhecimento():
         st.markdown(f"""
         | Passo | Módulo | Função |
         | :--- | :--- | :--- |
-        | 1 | {get_icon('pei', 18, '#0EA5E9')} PEI | **Fundamentar:** Quem é o aluno? |
-        | 2 | {get_icon('pae', 18, '#A855F7')} PAEE | **Estruturar:** Suporte especializado. |
-        | 3 | {get_icon('hub', 18, '#06B6D4')} Hub | **Instrumentalizar:** Criar recursos. |
-        | 4 | {get_icon('diario', 18, '#F43F5E')} Diário | **Registrar:** Execução diária. |
-        | 5 | {get_icon('monitoramento', 18, '#0C4A6E')} Dados | **Validar:** Medir sucesso. |
+        | 1 | 📘 PEI | **Fundamentar:** Quem é o aluno? |
+        | 2 | 📋 PAEE | **Estruturar:** Suporte especializado. |
+        | 3 | 🚀 Hub | **Instrumentalizar:** Criar recursos. |
+        | 4 | 📝 Diário | **Registrar:** Execução diária. |
+        | 5 | 📈 Dados | **Validar:** Medir sucesso. |
         """, unsafe_allow_html=True)
 
 

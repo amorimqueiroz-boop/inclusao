@@ -884,7 +884,7 @@ with tab_novo:
         
         with col_botoes2:
             salvar = st.form_submit_button(
-                f"{get_icon('salvar', 18, 'white')} Salvar Registro",
+                "💾 Salvar Registro",
                 type="primary",
                 use_container_width=True
             )
@@ -923,7 +923,7 @@ with tab_novo:
                     resultado = salvar_registro_diario(registro)
                     
                     if resultado["sucesso"]:
-                        st.success(f"{get_icon('sucesso', 18, '#16A34A')} Registro salvo com sucesso!")
+                        st.success("✅ Registro salvo com sucesso!")
                         
                         # Mostrar resumo
                         with st.expander("📋 Ver Resumo do Registro", expanded=True):
@@ -1279,7 +1279,7 @@ with tab_relatorios:
             # Exportar como CSV
             csv = df.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label=f"{get_icon('download', 18, 'white')} Exportar CSV",
+                label="📥 Exportar CSV",
                 data=csv,
                 file_name=f"diario_bordo_{date.today()}.csv",
                 mime="text/csv",
@@ -1290,7 +1290,7 @@ with tab_relatorios:
             # Exportar como JSON
             json_data = df.to_json(orient='records', indent=2, force_ascii=False)
             st.download_button(
-                label=f"{get_icon('download', 18, 'white')} Exportar JSON",
+                label="📥 Exportar JSON",
                 data=json_data,
                 file_name=f"diario_bordo_{date.today()}.json",
                 mime="application/json",
