@@ -1532,7 +1532,7 @@ Com base no diagnóstico ({dados.get('diagnostico','')}) e nas barreiras citadas
                 )
                 if texto_hab_sel.strip():
                     instrucao_bncc = f"""[MAPEAMENTO_BNCC — REGRA OBRIGATÓRIA]
-Na seção "Avaliação de Repertório", você DEVE citar SOMENTE habilidades que estão na lista abaixo. É PROIBIDO inventar códigos (ex: EF01LP02) ou descrições. Cada habilidade citada deve ser CÓPIA LITERAL de uma linha da lista (mesmo código e mesmo texto). Selecione da lista as que forem relevantes para o estudante e copie o texto exatamente.
+Na seção "Avaliação de Repertório", cite SOMENTE habilidades da lista abaixo. Ao citar cada habilidade, reproduza a linha INTEIRA EXATAMENTE como está na lista: código + descrição COMPLETA, palavra por palavra, sem parafrasear, resumir ou alterar. O código correto sozinho NÃO basta: a descrição deve ser idêntica à da lista. Proibido inventar ou modificar o texto.
 [HABILIDADES_SELECIONADAS_PELO_PROFISSIONAL]
 {texto_hab_sel[:12000]}
 [/HABILIDADES_SELECIONADAS_PELO_PROFISSIONAL]
@@ -1545,7 +1545,7 @@ Na seção "Avaliação de Repertório", você DEVE citar SOMENTE habilidades qu
                 anos_anteriores_txt = (bncc_blocos.get("anos_anteriores") or "").strip()
                 if ano_atual_txt or anos_anteriores_txt:
                     instrucao_bncc = """[MAPEAMENTO_BNCC — REGRA OBRIGATÓRIA]
-Na seção "Avaliação de Repertório", cite SOMENTE habilidades que estão nas listas abaixo. É PROIBIDO inventar ou criar códigos (ex: EF01LP02) ou descrições. Cada habilidade citada deve ser CÓPIA LITERAL de uma linha da lista (mesmo código e mesmo texto). Selecione da lista as que forem relevantes (anos anteriores que merecem atenção; ano atual que são fundamentais) e copie o texto exatamente. Separe por Componente Curricular."""
+Na seção "Avaliação de Repertório", cite SOMENTE habilidades das listas abaixo. Ao citar cada habilidade, reproduza a linha INTEIRA EXATAMENTE como está na lista: código + descrição COMPLETA, palavra por palavra, sem parafrasear, resumir ou alterar. O código correto sozinho NÃO basta: a descrição deve ser idêntica à da lista. Proibido inventar ou modificar o texto. Separe por Componente Curricular."""
                     if anos_anteriores_txt:
                         instrucao_bncc += f"""
 [HABILIDADES_BNCC_ANOS_ANTERIORES]
@@ -1599,7 +1599,7 @@ Construa um quadro claro que demonstre QUAIS componentes curriculares precisam d
         prompt_formatacao = "IMPORTANTE: Use Markdown simples. Use títulos H3 (###). Evite tabelas."
         regra_repertorio = ""
         if nivel_ensino != "EI":
-            regra_repertorio = "REGRA CRÍTICA: Na seção 'Avaliação de Repertório' (item 2), cite SOMENTE habilidades que constam na lista fornecida (MAPEAMENTO_BNCC). Copie o código e a descrição literalmente. NÃO invente códigos nem descrições de habilidades.\n\n"
+            regra_repertorio = "REGRA CRÍTICA (Avaliação de Repertório): Cite SOMENTE habilidades da lista fornecida (MAPEAMENTO_BNCC). Ao citar, reproduza cada habilidade EXATAMENTE como na lista: código e descrição COMPLETA, palavra por palavra. Proibido parafrasear, resumir ou alterar o texto da descrição; deve ser idêntico à lista.\n\n"
 
         prompt_sys = f"""{perfil_ia}
 MISSÃO: Criar PEI Técnico Oficial.
@@ -2942,11 +2942,12 @@ with tab7_hab:
 
     novas_selecoes = []
 
-    # Botão Preenchimento com auxílio (só para ano atual)
+    # Botão Preenchimento com auxílio (só para ano atual) — tratado como seleção do professor
     col_btn_aux, _ = st.columns([1, 2])
     with col_btn_aux:
         if st.button("Preenchimento com auxílio da IA", type="secondary", use_container_width=True, key="btn_auxilio_hab_bncc"):
             st.session_state["_run_auxilio_hab"] = True
+    st.caption("As habilidades sugeridas pela IA são gravadas como se você tivesse escolhido. Na sequência, você pode **excluir** ou **adicionar** outras nas listas abaixo.")
 
     if st.session_state.get("_run_auxilio_hab"):
         st.session_state["_run_auxilio_hab"] = False
@@ -2999,7 +3000,7 @@ HABILIDADES DO ANO ATUAL:
                         if isinstance(item, dict) and item.get("origem") == "anos_anteriores":
                             sug_list.append(item)
                     st.session_state.dados["habilidades_bncc_selecionadas"] = sug_list
-                st.success("Sugestão aplicada (ano atual). Revise as habilidades marcadas abaixo.")
+                st.success("Habilidades sugeridas gravadas como sua seleção. Exclua ou adicione outras nas listas abaixo se quiser.")
                 st.rerun()
             except Exception as e:
                 st.error(f"Erro ao sugerir: {str(e)[:120]}")
