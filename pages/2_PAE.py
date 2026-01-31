@@ -1099,7 +1099,38 @@ def gerar_cronograma_inteligente(api_key, aluno, semanas, foco, metas):
         return None
 
 # ==============================================================================
-# JORNADA GAMIFICADA — ALIMENTADA PELO PLANEJAMENTO DO CICLO
+# EXECUÇÃO E METAS SMART — DESDOBRAR METAS COM IA
+# ==============================================================================
+def desdobrar_metas_smart_ia(api_key, metas_selecionadas, periodo_texto):
+    """Desdobra metas do PEI em formato SMART (Específico, Mensurável, etc.) com IA."""
+    if not api_key or not metas_selecionadas:
+        return metas_selecionadas
+    try:
+        client = OpenAI(api_key=api_key)
+        metas_texto = "\n".join([f"- {m.get('tipo','')}: {m.get('descricao','')}" for m in metas_selecionadas[:10]])
+        prompt = f"""
+        Transforme as metas abaixo em metas SMART (Específicas, Mensuráveis, Atingíveis, Relevantes, Temporais).
+        Período de execução: {periodo_texto}.
+        Para cada meta, retorne uma versão desdobrada em bullet points SMART (1-3 subitens por meta).
+        Formato de resposta: para cada meta original, liste "• [SMART] descrição" em linhas separadas.
+        Não invente metas novas; apenas reescreva/desdobre as dadas.
+        """
+        res = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Você é um especialista em planejamento educacional. Reescreva metas em formato SMART de forma clara e objetiva."},
+                {"role": "user", "content": f"Metas do PEI:\n{metas_texto}\n\n{prompt}"}
+            ],
+            temperature=0.4,
+            max_tokens=800
+        )
+        texto_smart = res.choices[0].message.content.strip()
+        return metas_selecionadas, texto_smart
+    except Exception as e:
+        return metas_selecionadas, ""
+
+# ==============================================================================
+# JORNADA GAMIFICADA — ALIMENTADA PELA ABA EXECUÇÃO E METAS SMART
 # ==============================================================================
 def gerar_roteiro_gamificado_do_ciclo(api_key, aluno, ciclo, feedback_game=""):
     """Gera roteiro gamificado para o estudante a partir do planejamento do ciclo (metas, cronograma, foco)."""
@@ -1114,6 +1145,9 @@ def gerar_roteiro_gamificado_do_ciclo(api_key, aluno, ciclo, feedback_game=""):
         descricao = cfg.get("descricao", "")
         metas_list = cfg.get("metas_selecionadas") or []
         metas_texto = "\n".join([f"- {m.get('tipo','')}: {m.get('descricao','')}" for m in metas_list[:8]])
+        smart_txt = cfg.get("desdobramento_smart_texto", "")
+        if smart_txt:
+            metas_texto += "\n\nMETAS SMART (desdobradas):\n" + smart_txt[:1500]
         cron = ciclo.get("cronograma") or {}
         fases = cron.get("fases") or []
         semanas = cron.get("semanas") or []
@@ -1484,14 +1518,14 @@ api_key = api_key if api_key else None
 
 # Criar abas diferentes para EI e não-EI
 if is_ei:
-    tab_barreiras, tab_projetos, tab_rotina, tab_ponte, tab_planejamento, tab_jornada = st.tabs([
+    tab_barreiras, tab_projetos, tab_rotina, tab_ponte, tab_planejamento, tab_execucao_smart, tab_jornada = st.tabs([
         "BARREIRAS NO BRINCAR", "BANCO DE EXPERIÊNCIAS", "ROTINA & ADAPTAÇÃO",
-        "ARTICULAÇÃO", "PLANEJAMENTO DO CICLO", "JORNADA GAMIFICADA"
+        "ARTICULAÇÃO", "PLANEJAMENTO AEE", "EXECUÇÃO E METAS SMART", "JORNADA GAMIFICADA"
     ])
 else:
-    tab_barreiras, tab_plano, tab_tec, tab_ponte, tab_planejamento, tab_jornada = st.tabs([
+    tab_barreiras, tab_plano, tab_tec, tab_ponte, tab_planejamento, tab_execucao_smart, tab_jornada = st.tabs([
         "MAPEAR BARREIRAS", "PLANO DE HABILIDADES", "TEC. ASSISTIVA",
-        "ARTICULAÇÃO", "PLANEJAMENTO DO CICLO", "JORNADA GAMIFICADA"
+        "ARTICULAÇÃO", "PLANEJAMENTO AEE", "EXECUÇÃO E METAS SMART", "JORNADA GAMIFICADA"
     ])
 
 # ==============================================================================
@@ -1891,7 +1925,7 @@ with tab_planejamento:
     <div class="timeline-header">
       <div>
         <div style="font-size:.78rem;color:#64748B;font-weight:800;letter-spacing:.08em;text-transform:uppercase;">
-          Planejamento do Ciclo AEE
+          Planejamento AEE
         </div>
         <div style="font-size:1.35rem;color:#0F172A;font-weight:900;margin-top:3px;">
           Culminação do PEI → Execução prática
@@ -2194,7 +2228,167 @@ with tab_planejamento:
                         st.rerun()
 
 # ==============================================================================
-# ABA — JORNADA GAMIFICADA (ALIMENTADA PELO PLANEJAMENTO DO CICLO)
+# ABA — EXECUÇÃO E METAS SMART (tempo de revisão; desdobra SMART; alimenta Jornada)
+# ==============================================================================
+st.session_state.setdefault("execucao_smart_ciclos", [])
+st.session_state.setdefault("execucao_smart_ativo", None)
+
+with tab_execucao_smart:
+    st.markdown(f"""
+    <div class="timeline-header">
+      <div>
+        <div style="font-size:.78rem;color:#64748B;font-weight:800;letter-spacing:.08em;text-transform:uppercase;">
+          Execução e Metas SMART
+        </div>
+        <div style="font-size:1.35rem;color:#0F172A;font-weight:900;margin-top:3px;">
+          Execução do PEI no tempo de revisão
+        </div>
+        <div style="font-size:.9rem;color:#64748B;margin-top:6px;">
+          Desdobre as metas SMART e planeje o ciclo de execução. Este planejamento alimenta a Jornada Gamificada.
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:.72rem;color:#94A3B8;font-weight:800;text-transform:uppercase;">Aluno</div>
+        <div style="font-size:1.05rem;color:#0F172A;font-weight:900;">{aluno.get('nome','')}</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_esq, col_dir = st.columns([1.05, 1.35], gap="large")
+    ciclos_es = st.session_state["execucao_smart_ciclos"]
+    ativo_es = st.session_state.get("execucao_smart_ativo")
+    ciclo_ativo_es = next((c for c in ciclos_es if c.get("ciclo_id") == ativo_es), None) if ativo_es and ciclos_es else None
+
+    with col_esq:
+        st.markdown(f"### {icon_title('Histórico de ciclos de execução', 'monitoramento', 20, '#A855F7')}", unsafe_allow_html=True)
+        if ciclo_ativo_es:
+            cfg_es = ciclo_ativo_es.get("config_ciclo") or {}
+            st.markdown(f"""
+            <div style="border:1px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:12px;background:#FFFFFF;">
+              <div style="font-weight:900;color:#0F172A;">Ciclo ativo</div>
+              <div style="margin-top:8px;color:#334155;font-size:.9rem;">
+                <b>Foco:</b> {cfg_es.get("foco_principal","-")}<br/>
+                <b>Período:</b> {_fmt_data_iso(cfg_es.get("data_inicio"))} → {_fmt_data_iso(cfg_es.get("data_fim"))}
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+        if ciclos_es:
+            labels_es = []
+            for c in ciclos_es:
+                cfg = c.get("config_ciclo") or {}
+                labels_es.append(f"{cfg.get('foco_principal','Ciclo')} • {_fmt_data_iso(cfg.get('data_inicio'))} • v{c.get('versao',1)}")
+            idx_es = 0
+            if ativo_es:
+                for i, c in enumerate(ciclos_es):
+                    if c.get("ciclo_id") == ativo_es:
+                        idx_es = i
+                        break
+            escolha_es = st.selectbox(
+                "Selecione um ciclo de execução:",
+                options=list(range(len(ciclos_es))),
+                format_func=lambda i: labels_es[i],
+                index=idx_es,
+                key="execucao_smart_picker"
+            )
+            st.session_state["ciclo_execucao_selecionado"] = ciclos_es[escolha_es]
+        else:
+            st.info("Nenhum ciclo de execução ainda. Gere um abaixo.")
+        st.markdown("---")
+        st.markdown(f"### {icon_title('Gerar novo ciclo de execução (SMART)', 'configurar', 20, '#A855F7')}", unsafe_allow_html=True)
+        pei_data_es = carregar_pei_aluno(aluno["id"])
+        metas_pei_es = extrair_metas_do_pei(pei_data_es)
+        if not metas_pei_es:
+            st.warning("Não há metas no PEI. Complete o PEI primeiro.")
+        else:
+            with st.form("form_execucao_smart"):
+                with st.expander("Metas do PEI (selecionar)", expanded=True):
+                    metas_es = []
+                    for i, meta in enumerate(metas_pei_es):
+                        if st.checkbox(f"{meta['tipo']}: {(meta.get('descricao','')[:60])}...", value=True, key=f"es_meta_{i}"):
+                            metas_es.append({"id": meta["id"], "tipo": meta["tipo"], "descricao": meta["descricao"]})
+                data_ini_es = st.date_input("Data de início (tempo de revisão)", value=date.today(), key="es_data_ini")
+                data_fim_es = st.date_input("Previsão de término", value=date.today() + timedelta(weeks=12), key="es_data_fim")
+                foco_es = st.text_input("Foco do ciclo de execução", value=aluno.get("hiperfoco") or "Execução do PEI", key="es_foco")
+                desc_es = st.text_area("Descrição", height=80, key="es_desc")
+                desdobrar_smart = st.checkbox("Desdobrar metas em SMART com IA", value=True, key="es_desdobrar")
+                usar_ia_cron = st.checkbox("Usar IA para cronograma", value=True, key="es_ia_cron")
+                btn_gerar_es = st.form_submit_button("Gerar preview do ciclo de execução")
+                if btn_gerar_es and metas_es:
+                    periodo_txt = f"{data_ini_es} a {data_fim_es}"
+                    texto_smart = ""
+                    if desdobrar_smart and api_key:
+                        metas_es, texto_smart = desdobrar_metas_smart_ia(api_key, metas_es, periodo_txt)
+                    duracao_es = max(1, (data_fim_es - data_ini_es).days // 7)
+                    ciclo_es_data = {
+                        "ciclo_id": None,
+                        "status": "rascunho",
+                        "tipo": "execucao_smart",
+                        "config_ciclo": {
+                            "duracao_semanas": duracao_es,
+                            "foco_principal": foco_es,
+                            "descricao": desc_es,
+                            "data_inicio": data_ini_es.isoformat(),
+                            "data_fim": data_fim_es.isoformat(),
+                            "metas_selecionadas": metas_es,
+                            "desdobramento_smart_texto": texto_smart,
+                        },
+                        "recursos_incorporados": {},
+                        "versao": 1,
+                    }
+                    if usar_ia_cron and api_key:
+                        cron_es = gerar_cronograma_inteligente(api_key, aluno, duracao_es, foco_es, metas_es)
+                        ciclo_es_data["cronograma"] = cron_es or criar_cronograma_basico(duracao_es, metas_es)
+                    else:
+                        ciclo_es_data["cronograma"] = criar_cronograma_basico(duracao_es, metas_es)
+                    st.session_state["ciclo_execucao_preview"] = ciclo_es_data
+                    st.success("Preview gerado. Veja à direita e salve para usar na Jornada Gamificada.")
+                    st.rerun()
+
+    with col_dir:
+        st.markdown(f"### {icon_title('Visualização', 'visualizar', 20, '#A855F7')}", unsafe_allow_html=True)
+        preview_es = st.session_state.get("ciclo_execucao_preview")
+        sel_es = st.session_state.get("ciclo_execucao_selecionado")
+        ciclo_ver_es = preview_es or sel_es or ciclo_ativo_es
+        if not ciclo_ver_es:
+            st.info("Gere um ciclo de execução à esquerda ou selecione um do histórico.")
+        else:
+            cfg_es = ciclo_ver_es.get("config_ciclo") or {}
+            st.markdown(f"""
+            <div style="border:1px solid #E2E8F0;border-radius:16px;padding:16px;background:#FFFFFF;">
+              <div style="font-weight:900;color:#0F172A;">{cfg_es.get("foco_principal","Ciclo de execução")}</div>
+              <div style="margin-top:8px;color:#334155;">Período: {_fmt_data_iso(cfg_es.get("data_inicio"))} → {_fmt_data_iso(cfg_es.get("data_fim"))}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            with st.expander("Metas (SMART)", expanded=True):
+                for m in (cfg_es.get("metas_selecionadas") or []):
+                    st.markdown(f"**{m.get('tipo','')}**")
+                    st.caption(m.get("descricao", ""))
+                smart_txt = cfg_es.get("desdobramento_smart_texto", "")
+                if smart_txt:
+                    st.markdown("**Desdobramento SMART:**")
+                    st.markdown(smart_txt)
+            cron_es = ciclo_ver_es.get("cronograma") or {}
+            with st.expander("Cronograma", expanded=False):
+                for f in (cron_es.get("fases") or [])[:3]:
+                    st.markdown(f"- **{f.get('nome','')}**: {f.get('objetivo_geral','')}")
+            if preview_es:
+                st.markdown("**Salvar este ciclo** (será usado na Jornada Gamificada)")
+                if st.button("Salvar ciclo de execução", type="primary", use_container_width=True, key="btn_salvar_es"):
+                    ciclo_es_data = dict(preview_es)
+                    ciclo_es_data["ciclo_id"] = str(uuid.uuid4())
+                    ciclo_es_data["criado_em"] = datetime.now().isoformat()
+                    ciclos_es.append(ciclo_es_data)
+                    st.session_state["execucao_smart_ativo"] = ciclo_es_data["ciclo_id"]
+                    st.session_state["execucao_smart_ciclos"] = ciclos_es
+                    st.session_state.pop("ciclo_execucao_preview", None)
+                    st.success("Ciclo salvo. Agora você pode usá-lo na aba Jornada Gamificada.")
+                    st.rerun()
+                if st.button("Descartar preview", use_container_width=True, key="btn_desc_es"):
+                    st.session_state.pop("ciclo_execucao_preview", None)
+                    st.rerun()
+
+# ==============================================================================
+# ABA — JORNADA GAMIFICADA (ALIMENTADA PELA ABA EXECUÇÃO E METAS SMART)
 # ==============================================================================
 with tab_jornada:
     st.markdown(f"""
@@ -2213,16 +2407,17 @@ with tab_jornada:
     </div>
     """, unsafe_allow_html=True)
 
-    st.info("Esta aba cria um material **para o estudante**: uma versão gamificada do **planejamento do ciclo** (metas, cronograma, foco), para imprimir ou entregar à família.")
+    st.info("Esta aba cria um material **para o estudante**: uma versão gamificada do **ciclo de execução** (metas SMART, cronograma), para imprimir ou entregar à família.")
 
-    ciclos_j, ciclo_ativo_id_j = listar_ciclos_aluno(aluno["id"])
-    ciclo_ativo_j = next((c for c in ciclos_j if c.get("ciclo_id") == ciclo_ativo_id_j), None) if ciclo_ativo_id_j and ciclos_j else None
-    ciclo_preview_j = st.session_state.get("ciclo_preview")
-    ciclo_sel_j = st.session_state.get("paee_ciclo_selecionado")
+    ciclos_es_j = st.session_state.get("execucao_smart_ciclos", [])
+    ativo_es_j = st.session_state.get("execucao_smart_ativo")
+    ciclo_ativo_j = next((c for c in ciclos_es_j if c.get("ciclo_id") == ativo_es_j), None) if ativo_es_j and ciclos_es_j else None
+    ciclo_preview_j = st.session_state.get("ciclo_execucao_preview")
+    ciclo_sel_j = st.session_state.get("ciclo_execucao_selecionado")
     ciclo_para_jornada = ciclo_preview_j or ciclo_sel_j or ciclo_ativo_j
 
     if not ciclo_para_jornada:
-        st.warning("Selecione um ciclo na aba **Planejamento do Ciclo** ou gere um preview para criar a Jornada Gamificada.")
+        st.warning("Selecione ou gere um ciclo na aba **Execução e Metas SMART** para criar a Jornada Gamificada.")
         st.stop()
 
     cfg_j = ciclo_para_jornada.get("config_ciclo") or {}
