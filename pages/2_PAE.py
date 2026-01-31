@@ -1596,7 +1596,11 @@ else:
 if is_ei:
     with tab_barreiras:
         st.markdown("<div class='pedagogia-box'><strong>Diagnóstico do Brincar:</strong> Identifique barreiras na interação e no brincar.</div>", unsafe_allow_html=True)
-        
+        if st.session_state.get('status_diagnostico_barreiras', 'rascunho') != 'rascunho':
+            if st.button("Limpar / Abandonar", key="limpar_tab_barreiras_ei", help="Descarta o conteúdo gerado e volta ao início"):
+                st.session_state.status_diagnostico_barreiras = 'rascunho'
+                st.session_state.conteudo_diagnostico_barreiras = ''
+                st.rerun()
         status_atual = st.session_state.get('status_diagnostico_barreiras', 'rascunho')
         
         if status_atual == 'rascunho':
@@ -1648,7 +1652,11 @@ if is_ei:
 else:
     with tab_barreiras:
         st.markdown("<div class='pedagogia-box'><strong>Diagnóstico de Acessibilidade:</strong> O que impede a participação plena do aluno?</div>", unsafe_allow_html=True)
-        
+        if st.session_state.get('status_diagnostico_barreiras', 'rascunho') != 'rascunho':
+            if st.button("Limpar / Abandonar", key="limpar_tab_barreiras", help="Descarta o conteúdo gerado e volta ao início"):
+                st.session_state.status_diagnostico_barreiras = 'rascunho'
+                st.session_state.conteudo_diagnostico_barreiras = ''
+                st.rerun()
         status_atual = st.session_state.get('status_diagnostico_barreiras', 'rascunho')
         
         if status_atual == 'rascunho':
@@ -1701,7 +1709,11 @@ else:
 if is_ei:
     with tab_projetos:
         st.markdown("<div class='pedagogia-box'><strong>Banco de Experiências (BNCC):</strong> Atividades lúdicas alinhadas aos Campos de Experiência.</div>", unsafe_allow_html=True)
-        
+        if st.session_state.get('status_projetos_ei', 'rascunho') != 'rascunho':
+            if st.button("Limpar / Abandonar", key="limpar_tab_projetos_ei", help="Descarta o conteúdo gerado e volta ao início"):
+                st.session_state.status_projetos_ei = 'rascunho'
+                st.session_state.conteudo_projetos_ei = ''
+                st.rerun()
         status_atual = st.session_state.get('status_projetos_ei', 'rascunho')
         
         if status_atual == 'rascunho':
@@ -1750,7 +1762,11 @@ if is_ei:
 else:
     with tab_plano:
         st.markdown("<div class='pedagogia-box'><strong>Treino de Habilidades:</strong> Desenvolvimento de competências específicas no AEE.</div>", unsafe_allow_html=True)
-        
+        if st.session_state.get('status_plano_habilidades', 'rascunho') != 'rascunho':
+            if st.button("Limpar / Abandonar", key="limpar_tab_plano", help="Descarta o conteúdo gerado e volta ao início"):
+                st.session_state.status_plano_habilidades = 'rascunho'
+                st.session_state.conteudo_plano_habilidades = ''
+                st.rerun()
         status_atual = st.session_state.get('status_plano_habilidades', 'rascunho')
         
         if status_atual == 'rascunho':
@@ -1803,7 +1819,11 @@ else:
 if is_ei:
     with tab_rotina:
         st.markdown("<div class='pedagogia-box'><strong>Adaptação de Rotina:</strong> Recursos visuais e sensoriais para rotina da Educação Infantil.</div>", unsafe_allow_html=True)
-        
+        if st.session_state.get('status_tecnologia_assistiva', 'rascunho') != 'rascunho':
+            if st.button("Limpar / Abandonar", key="limpar_tab_rotina_ei", help="Descarta o conteúdo gerado e volta ao início"):
+                st.session_state.status_tecnologia_assistiva = 'rascunho'
+                st.session_state.conteudo_tecnologia_assistiva = ''
+                st.rerun()
         status_atual = st.session_state.get('status_tecnologia_assistiva', 'rascunho')
         
         if status_atual == 'rascunho':
@@ -1854,7 +1874,11 @@ if is_ei:
 else:
     with tab_tec:
         st.markdown("<div class='pedagogia-box'><strong>Tecnologia Assistiva:</strong> Recursos para promover autonomia e participação.</div>", unsafe_allow_html=True)
-        
+        if st.session_state.get('status_tecnologia_assistiva', 'rascunho') != 'rascunho':
+            if st.button("Limpar / Abandonar", key="limpar_tab_tec", help="Descarta o conteúdo gerado e volta ao início"):
+                st.session_state.status_tecnologia_assistiva = 'rascunho'
+                st.session_state.conteudo_tecnologia_assistiva = ''
+                st.rerun()
         status_atual = st.session_state.get('status_tecnologia_assistiva', 'rascunho')
         
         if status_atual == 'rascunho':
@@ -1906,7 +1930,11 @@ else:
 # ==============================================================================
 with tab_ponte:
     st.markdown("<div class='pedagogia-box'><strong>Ponte com a Sala Regular:</strong> Documento colaborativo para articulação entre AEE e sala de aula.</div>", unsafe_allow_html=True)
-    
+    if st.session_state.get('status_documento_articulacao', 'rascunho') != 'rascunho':
+        if st.button("Limpar / Abandonar", key="limpar_tab_ponte", help="Descarta o conteúdo gerado e volta ao início"):
+            st.session_state.status_documento_articulacao = 'rascunho'
+            st.session_state.conteudo_documento_articulacao = ''
+            st.rerun()
     status_atual = st.session_state.get('status_documento_articulacao', 'rascunho')
     
     if status_atual == 'rascunho':
@@ -2285,7 +2313,7 @@ with tab_planejamento:
                         else:
                             st.error(f"❌ Erro ao salvar: {resultado.get('erro','')}")
                 with c2:
-                    if st.button("🧹 Descartar preview", use_container_width=True):
+                    if st.button("Limpar / Abandonar", use_container_width=True, key="limpar_planejamento_preview", help="Descarta o preview e volta ao início"):
                         st.session_state.pop("ciclo_preview", None)
                         st.rerun()
 
@@ -2448,16 +2476,35 @@ with tab_execucao_smart:
                     st.markdown("**Desdobramento SMART (norteador para a escola):**")
                     st.markdown(smart_txt)
             cron_es = ciclo_ver_es.get("cronograma") or {}
-            with st.expander("Planejamento por semanas", expanded=True):
-                semanas_es = cron_es.get("semanas") or []
-                if semanas_es:
-                    for w in semanas_es:
-                        st.markdown(f"**Semana {w.get('numero')} — {w.get('tema', '')}**")
+            ciclo_id_vis = ciclo_ver_es.get("ciclo_id") or "preview"
+            eh_ciclo_salvo = not preview_es and ciclo_id_vis != "preview"
+            with st.expander("Planejamento por semanas" + (" — marque o que foi cumprido" if eh_ciclo_salvo else ""), expanded=True):
+                semanas_list = cron_es.get("semanas") or []
+                if semanas_list:
+                    for i, w in enumerate(semanas_list):
+                        cumprida_atual = w.get("cumprida", False)
+                        if eh_ciclo_salvo:
+                            nova_cumprida = st.checkbox(
+                                f"✓ Cumprida — Semana {w.get('numero')} — {w.get('tema', '')}",
+                                value=cumprida_atual,
+                                key=f"es_cumprida_{ciclo_id_vis}_{i}"
+                            )
+                            if nova_cumprida != cumprida_atual:
+                                semanas_list[i]["cumprida"] = nova_cumprida
+                        else:
+                            if cumprida_atual:
+                                st.markdown(f"✓ **Semana {w.get('numero')} — {w.get('tema', '')}** (cumprida)")
+                            else:
+                                st.markdown(f"**Semana {w.get('numero')} — {w.get('tema', '')}**")
                         st.caption(w.get("objetivo", ""))
                         atv = w.get("atividades") or []
                         if atv:
                             st.markdown("• " + "\n• ".join(atv[:4]))
                         st.markdown("---")
+                    if eh_ciclo_salvo:
+                        total = len(semanas_list)
+                        cumpridas = sum(1 for s in semanas_list if s.get("cumprida"))
+                        st.caption(f"Progresso: {cumpridas}/{total} semanas cumpridas")
                 else:
                     for f in (cron_es.get("fases") or [])[:5]:
                         st.markdown(f"- **{f.get('nome','')}**: {f.get('objetivo_geral','')}")
@@ -2467,13 +2514,15 @@ with tab_execucao_smart:
                     ciclo_es_data = dict(preview_es)
                     ciclo_es_data["ciclo_id"] = str(uuid.uuid4())
                     ciclo_es_data["criado_em"] = datetime.now().isoformat()
+                    for w in (ciclo_es_data.get("cronograma") or {}).get("semanas") or []:
+                        w.setdefault("cumprida", False)
                     ciclos_es.append(ciclo_es_data)
                     st.session_state["execucao_smart_ativo"] = ciclo_es_data["ciclo_id"]
                     st.session_state["execucao_smart_ciclos"] = ciclos_es
                     st.session_state.pop("ciclo_execucao_preview", None)
                     st.success("Ciclo salvo. Agora você pode usá-lo na aba Jornada Gamificada.")
                     st.rerun()
-                if st.button("Descartar preview", use_container_width=True, key="btn_desc_es"):
+                if st.button("Limpar / Abandonar", use_container_width=True, key="btn_desc_es", help="Descarta o preview do ciclo de execução"):
                     st.session_state.pop("ciclo_execucao_preview", None)
                     st.rerun()
 
@@ -2528,6 +2577,13 @@ with tab_jornada:
 
     st.divider()
     status_game = estado.get("status", "rascunho")
+
+    if status_game != "rascunho":
+        if st.button("Limpar / Abandonar", key="limpar_jornada", help="Descarta a missão gerada e volta ao início"):
+            jg[ciclo_id_j]["status"] = "rascunho"
+            jg[ciclo_id_j]["feedback"] = ""
+            jg[ciclo_id_j]["texto"] = ""
+            st.rerun()
 
     if status_game == "rascunho":
         st.markdown("**Como funciona:** A IA usa o planejamento do ciclo (metas, cronograma, foco) para criar uma missão gamificada para o estudante.")

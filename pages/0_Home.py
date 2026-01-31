@@ -711,6 +711,8 @@ footer {
 """,
     unsafe_allow_html=True,
 )
+# Overlay de loading: ícone girando no centro quando st.spinner está ativo (ex.: IA gerando)
+ou.inject_loading_overlay_css()
 
 # ==============================================================================
 # 3. FUNÇÕES AUXILIARES

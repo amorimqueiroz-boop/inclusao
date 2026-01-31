@@ -446,6 +446,85 @@ def inject_compact_app_css(accent: str = "#0D9488"):
         """,
         unsafe_allow_html=True,
     )
+    inject_loading_overlay_css()
+
+
+def inject_loading_overlay_css():
+    """
+    Quando o Streamlit mostra um spinner (ex.: IA gerando algo), transforma em overlay
+    de página cheia com ícone PNG girando no centro (load de página).
+    Como o menu/chrome foi escondido, o spinner padrão fica invisível; este CSS
+    reaproveita o container [data-testid="stSpinner"] e estiliza como overlay central.
+    """
+    icon_b64 = ""
+    try:
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "omni_icone.png")
+        if os.path.exists(icon_path):
+            with open(icon_path, "rb") as f:
+                icon_b64 = base64.b64encode(f.read()).decode("utf-8")
+    except Exception:
+        pass
+
+    if icon_b64:
+        bg_img = f"url('data:image/png;base64,{icon_b64}')"
+        spinner_inner = f"""
+        [data-testid="stSpinner"] > * {{ display: none !important; }}
+        [data-testid="stSpinner"]::after {{
+            content: '' !important;
+            display: block !important;
+            width: 56px !important;
+            height: 56px !important;
+            background-image: {bg_img} !important;
+            background-size: contain !important;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+            animation: omni-spin 0.9s linear infinite !important;
+        }}
+        """
+    else:
+        spinner_inner = """
+        [data-testid="stSpinner"] > * { display: none !important; }
+        [data-testid="stSpinner"]::after {
+            content: '' !important;
+            display: block !important;
+            width: 48px !important;
+            height: 48px !important;
+            border: 4px solid #E2E8F0 !important;
+            border-top-color: #2563EB !important;
+            border-radius: 50% !important;
+            animation: omni-spin 0.8s linear infinite !important;
+        }
+        """
+
+    st.markdown(
+        f"""
+<style>
+  /* Overlay de loading: quando st.spinner está ativo, mostra ícone girando no centro */
+  [data-testid="stSpinner"] {{
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+    z-index: 999999 !important;
+  }}
+  {spinner_inner}
+  @keyframes omni-spin {{
+    to {{ transform: rotate(360deg); }}
+  }}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 def render_omnisfera_header():
     """
