@@ -486,11 +486,11 @@ def render_omnisfera_header(active_tab: str = "Início"):
 
 def render_navbar(active_tab: str = "Início"):
     """
-    Renderiza o menu de navegação no topo com ícones flat (RemixIcon).
-    Navegação via query param ?nav= para funcionar no Render e fora do Streamlit Cloud.
+    Renderiza o menu de navegação no topo com botões Streamlit (st.switch_page).
+    Navegação por botão preserva a sessão — evita recarregar a página e pedir login de novo.
     active_tab: rótulo da página atual para destacar no menu.
     """
-    # Navegação via query param (Render / multipage)
+    # Se a URL veio com ?nav=X (ex.: favorito), redireciona na mesma sessão
     nav_param = st.query_params.get("nav")
     valid_keys = [_nav_key(item[1]) for item in NAV_ITEMS]
     current_key = None
@@ -502,50 +502,13 @@ def render_navbar(active_tab: str = "Início"):
     if nav_param and nav_param in valid_keys and nav_param != current_key:
         st.switch_page(f"pages/{nav_param}.py")
 
-    # RemixIcon (ícones flat)
+    # RemixIcon (usado em outras partes da página)
     st.markdown(
         '<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">',
         unsafe_allow_html=True,
     )
 
-    # HTML do menu com ícones flat e cor da página
-    items_html = []
-    for label, page_path, aliases, icon_class, color in NAV_ITEMS:
-        is_active = (
-            active_tab == label
-            or active_tab in aliases
-            or any(a in active_tab for a in [label] + aliases)
-        )
-        key = _nav_key(page_path)
-        cls = "omni-nav-link active" if is_active else "omni-nav-link"
-        if is_active:
-            style = f"background: {color}; color: white; border-color: {color}; box-shadow: 0 4px 14px {color}44;"
-        else:
-            style = f"border-left: 3px solid {color}; color: #475569;"
-        items_html.append(
-            f'<a class="{cls}" href="?nav={key}" target="_self" style="{style}">'
-            f'<i class="{icon_class}" style="color: inherit;"></i><span>{label}</span></a>'
-        )
-
-    # Logo Omnisfera: ícone girando + texto PNG (assinatura à esquerda, como na Home)
-    logo_b64 = get_base64_image("omni_icone.png")
-    texto_b64 = get_base64_image("omni_texto.png")
-    logo_html = ""
-    if logo_b64:
-        img_icon = f'<img src="data:image/png;base64,{logo_b64}" class="omni-nav-logo-spin" alt="Omnisfera" />'
-        img_text = (
-            f'<img src="data:image/png;base64,{texto_b64}" class="omni-nav-text" alt="Omnisfera" />'
-            if texto_b64 else '<span class="omni-nav-text-fallback">Omnisfera</span>'
-        )
-        logo_html = (
-            f'<a href="?nav=0_Home" target="_self" class="omni-nav-brand" title="Ir para Início">'
-            f'{img_icon}{img_text}'
-            f'</a>'
-        )
-    else:
-        logo_html = '<a href="?nav=0_Home" target="_self" class="omni-nav-brand">🌐</a>'
-
-    # Bloco usuário logado à direita (como na Home)
+    # Bloco usuário logado à direita (HTML)
     ws_name = st.session_state.get("workspace_name", "")
     ws_id = st.session_state.get("workspace_id", "")
     if ws_name:
@@ -564,15 +527,16 @@ def render_navbar(active_tab: str = "Início"):
         f'</div>'
     )
 
+    # CSS do navbar (wrap + botões estilizados como links)
     st.markdown(
-        f"""
+        """
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
         <style>
-            @keyframes omni-spin {{
-                0% {{ transform: rotate(0deg); }}
-                100% {{ transform: rotate(360deg); }}
-            }}
-            .omni-nav-wrap {{
+            @keyframes omni-spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            .omni-nav-wrap {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
@@ -585,168 +549,137 @@ def render_navbar(active_tab: str = "Início"):
                 margin-top: -1.7rem;
                 box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06), 0 1px 0 rgba(0,0,0,0.04);
                 border: 1px solid rgba(226, 232, 240, 0.8);
-            }}
-            .omni-nav-brand {{
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                text-decoration: none;
-                flex-shrink: 0;
-            }}
-            .omni-nav-logo-spin {{
-                width: 34px;
-                height: 34px;
-                object-fit: contain;
+            }
+            .omni-nav-brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+            .omni-nav-logo-spin {
+                width: 34px; height: 34px; object-fit: contain;
                 animation: omni-spin 45s linear infinite;
-            }}
-            .omni-nav-text {{
-                height: 22px;
-                width: auto;
-                object-fit: contain;
-                vertical-align: middle;
-            }}
-            .omni-nav-text-fallback {{
+            }
+            .omni-nav-text { height: 22px; width: auto; vertical-align: middle; }
+            .omni-nav-text-fallback {
                 font-family: 'Plus Jakarta Sans', sans-serif;
-                font-weight: 800;
-                font-size: 1rem;
-                color: #2B3674;
-                letter-spacing: 0.02em;
-            }}
-            .omni-nav-flat {{
-                display: flex;
-                flex-wrap: nowrap;
-                gap: 6px;
-                align-items: center;
-                justify-content: center;
-                flex: 1;
-                min-width: 0;
+                font-weight: 800; font-size: 1rem; color: #2B3674;
+            }
+            .omni-nav-flat {
+                display: flex; flex-wrap: nowrap; gap: 6px;
+                align-items: center; justify-content: center; flex: 1; min-width: 0;
                 font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-            }}
-            .omni-nav-flat a {{
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                padding: 7px 12px;
-                border-radius: 10px;
-                font-size: 0.78rem;
-                font-weight: 600;
-                letter-spacing: 0.02em;
-                color: #475569;
-                text-decoration: none;
-                transition: all 0.22s ease;
-                border: 1px solid transparent;
+            }
+            [data-testid="stVerticalBlock"] > div[style*="flex"] button {
+                font-size: 0.78rem !important; font-weight: 600 !important;
+                padding: 7px 12px !important; border-radius: 10px !important;
                 white-space: nowrap;
-            }}
-            .omni-nav-flat a:hover:not(.active) {{
-                background: rgba(241, 245, 249, 0.9);
-                color: #1E293B;
-            }}
-            .omni-nav-flat a.active i {{
-                opacity: 1;
-            }}
-            .omni-nav-flat a i {{
-                font-size: 1.05rem;
-                opacity: 0.9;
-            }}
-            @media (max-width: 900px) {{
-                .omni-nav-wrap {{
-                    flex-wrap: wrap;
-                }}
-                .omni-nav-flat a span {{
-                    display: none;
-                }}
-                .omni-nav-flat a {{
-                    padding: 6px 12px;
-                }}
-                .omni-nav-flat a i {{
-                    font-size: 1.15rem;
-                }}
-                .omni-nav-logo-spin {{
-                    width: 30px;
-                    height: 30px;
-                }}
-                .omni-nav-text {{
-                    display: none;
-                }}
-                .omni-nav-text-fallback {{
-                    display: none;
-                }}
-                .omni-nav-name {{ display: none; }}
-                .omni-nav-ws {{ display: none; }}
-            }}
-            .omni-nav-user {{
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                flex-shrink: 0;
-                font-family: 'Plus Jakarta Sans', sans-serif;
-                font-weight: 700;
-                color: #334155;
-                font-size: 0.85rem;
-            }}
-            .omni-nav-ws {{
-                padding: 4px 10px;
-                border-radius: 8px;
-                background: #f1f5f9;
-                color: #475569;
-                font-size: 0.74rem;
-                font-weight: 600;
-                max-width: 100px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
+            }
+            .omni-nav-user {
+                display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+                font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
+                color: #334155; font-size: 0.85rem;
+            }
+            .omni-nav-ws {
+                padding: 4px 10px; border-radius: 8px; background: #f1f5f9; color: #475569;
+                font-size: 0.74rem; font-weight: 600; max-width: 100px;
+                overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
                 border: 1px solid rgba(226, 232, 240, 0.9);
-            }}
-            .omni-nav-avatar {{
-                width: 30px;
-                height: 30px;
-                border-radius: 50%;
-                background: #e2e8f0;
-                color: #334155;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 800;
-                font-size: 0.72rem;
+            }
+            .omni-nav-avatar {
+                width: 30px; height: 30px; border-radius: 50%; background: #e2e8f0;
+                color: #334155; display: flex; align-items: center; justify-content: center;
+                font-weight: 800; font-size: 0.72rem;
                 border: 1px solid rgba(226, 232, 240, 0.9);
-            }}
-            .omni-nav-name {{
-                font-weight: 700;
-                color: #334155;
-                white-space: nowrap;
-            }}
+            }
+            .omni-nav-name { font-weight: 700; color: #334155; white-space: nowrap; }
+            @media (max-width: 900px) {
+                .omni-nav-wrap { flex-wrap: wrap; }
+                .omni-nav-name, .omni-nav-ws { display: none; }
+            }
         </style>
-        <div class="omni-nav-wrap">{logo_html}<nav class="omni-nav-flat">{''.join(items_html)}</nav>{user_block_html}</div>
         """,
         unsafe_allow_html=True,
     )
 
+    # Logo (esquerda): botão para Início — preserva sessão
+    logo_b64 = get_base64_image("omni_icone.png")
+    texto_b64 = get_base64_image("omni_texto.png")
+    logo_col, *nav_cols, user_col = st.columns([1, 1, 1, 1, 1, 1, 1, 1])  # 1 logo + 6 nav + 1 user
+    with logo_col:
+        if st.button("🏠 Início", key="nav_btn_0_Home", use_container_width=True):
+            st.switch_page("pages/0_Home.py")
+            st.stop()
+
+    # Nav: um botão por página — clique chama st.switch_page (sem recarregar, sessão mantida)
+    nav_btns = [
+        ("👥 Estudantes", "pages/Alunos.py", "nav_btn_Alunos"),
+        ("📖 Estratégias & PEI", "pages/1_PEI.py", "nav_btn_1_PEI"),
+        ("🧩 Plano de Ação", "pages/2_PAE.py", "nav_btn_2_PAE"),
+        ("🚀 Hub de Recursos", "pages/3_Hub_Inclusao.py", "nav_btn_3_Hub_Inclusao"),
+        ("📝 Diário de Bordo", "pages/4_Diario_de_Bordo.py", "nav_btn_4_Diario_de_Bordo"),
+        ("📈 Evolução & Dados", "pages/5_Monitoramento_Avaliacao.py", "nav_btn_5_Monitoramento_Avaliacao"),
+    ]
+    for (label, page_path, key), col in zip(nav_btns, nav_cols):
+        with col:
+            if st.button(label, key=key, use_container_width=True):
+                st.switch_page(page_path)
+                st.stop()
+
+    # Usuário (direita): só exibição
+    with user_col:
+        st.markdown(user_block_html, unsafe_allow_html=True)
+
 # =============================================================================
-# 3) SUPABASE & UTILS (LÓGICA PRESERVADA)
+# 3) SUPABASE & UTILS — mesma fonte de credenciais do login (supabase_client)
 # =============================================================================
 def _sb_url() -> str:
+    """URL do projeto Supabase (usa mesma fonte que o login)."""
+    try:
+        from supabase_client import get_supabase_rest_credentials
+        url, _ = get_supabase_rest_credentials()
+        return url
+    except ImportError:
+        pass
     url = str(get_setting("SUPABASE_URL", "")).strip()
     if not url:
-        raise RuntimeError("SUPABASE_URL não encontrado nos secrets.")
+        raise RuntimeError("SUPABASE_URL não encontrado. Configure em Secrets.")
     return url.rstrip("/")
 
 def _sb_key() -> str:
-    key = str(get_setting("SUPABASE_SERVICE_KEY", "")).strip()
+    """Chave API Supabase (SERVICE_ROLE > SERVICE_KEY > ANON_KEY — mesma fonte que o login)."""
+    try:
+        from supabase_client import get_supabase_rest_credentials
+        _, key = get_supabase_rest_credentials()
+        return key
+    except ImportError:
+        pass
+    key = (
+        str(get_setting("SUPABASE_SERVICE_ROLE_KEY", "")).strip()
+        or str(get_setting("SUPABASE_SERVICE_KEY", "")).strip()
+        or str(get_setting("SUPABASE_ANON_KEY", "")).strip()
+    )
     if not key:
-        key = str(get_setting("SUPABASE_ANON_KEY", "")).strip()
-    if not key:
-        raise RuntimeError("Key não encontrada.")
+        raise RuntimeError(
+            "Nenhuma chave Supabase encontrada. Configure SUPABASE_ANON_KEY ou SUPABASE_SERVICE_ROLE_KEY em Secrets."
+        )
     return key
 
 def _headers() -> dict:
     key = _sb_key()
     return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
 
+def _supabase_error_msg(table_or_fn: str, status_code: int, text: str) -> str:
+    """Mensagem amigável para erros Supabase (inclui dica de RLS)."""
+    base = f"Supabase ({table_or_fn}): {status_code} — {text[:200]}"
+    if status_code in (401, 403):
+        base += (
+            " Dica: se os dados não aparecem, use SUPABASE_SERVICE_ROLE_KEY em Secrets "
+            "(Project Settings > API no Supabase) para acesso total; ou crie políticas RLS na tabela."
+        )
+    return base
+
+
 def supabase_rpc(fn_name: str, payload: dict):
     url = f"{_sb_url()}/rest/v1/rpc/{fn_name}"
     r = requests.post(url, headers=_headers(), json=payload, timeout=20)
     if r.status_code >= 400:
-        raise RuntimeError(f"RPC {fn_name} erro: {r.status_code} {r.text}")
+        raise RuntimeError(_supabase_error_msg(f"rpc/{fn_name}", r.status_code, r.text))
     return r.json()
 
 def supabase_insert(table: str, row: dict):
@@ -755,7 +688,7 @@ def supabase_insert(table: str, row: dict):
     h["Prefer"] = "return=representation"
     r = requests.post(url, headers=h, json=row, timeout=20)
     if r.status_code >= 400:
-        raise RuntimeError(f"Insert {table} erro: {r.status_code} {r.text}")
+        raise RuntimeError(_supabase_error_msg(table, r.status_code, r.text))
     return r.json()
 
 def supabase_upsert(table: str, row: dict, on_conflict: str):
@@ -764,7 +697,7 @@ def supabase_upsert(table: str, row: dict, on_conflict: str):
     h["Prefer"] = "resolution=merge-duplicates,return=representation"
     r = requests.post(url, headers=h, json=row, timeout=20)
     if r.status_code >= 400:
-        raise RuntimeError(f"Upsert {table} erro: {r.status_code} {r.text}")
+        raise RuntimeError(_supabase_error_msg(table, r.status_code, r.text))
     data = r.json()
     return data[0] if isinstance(data, list) and data else (data if isinstance(data, dict) else None)
 

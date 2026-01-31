@@ -124,21 +124,30 @@ ou.render_navbar(active_tab="Estudantes")
 @st.cache_data(ttl=10, show_spinner=False)
 def list_students_rest(workspace_id):
     try:
-        url = ou.get_setting("SUPABASE_URL").rstrip("/") + "/rest/v1/students"
-        # Usa o header helper do omni_utils
-        headers = ou._headers()
-        params = f"?select=id,name,grade,class_group,diagnosis&workspace_id=eq.{workspace_id}&order=created_at.desc"
-        r = requests.get(url + params, headers=headers, timeout=10)
-        return r.json() if r.status_code == 200 else []
-    except: return []
+        base = ou._sb_url()
+        url = f"{base}/rest/v1/students?select=id,name,grade,class_group,diagnosis&workspace_id=eq.{workspace_id}&order=created_at.desc"
+        r = requests.get(url, headers=ou._headers(), timeout=10)
+        if r.status_code == 200:
+            data = r.json()
+            return data if isinstance(data, list) else []
+        if r.status_code in (401, 403):
+            st.error(
+                "Acesso negado ao Supabase. Para listar os dados, adicione SUPABASE_SERVICE_ROLE_KEY em Secrets "
+                "(Project Settings > API no Supabase) ou crie políticas RLS na tabela students."
+            )
+        return []
+    except Exception as e:
+        st.error(f"Erro ao carregar estudantes: {e}")
+        return []
 
 def delete_student_rest(sid, wid):
     try:
-        url = ou.get_setting("SUPABASE_URL").rstrip("/") + f"/rest/v1/students?id=eq.{sid}&workspace_id=eq.{wid}"
-        headers = ou._headers()
-        requests.delete(url, headers=headers)
+        base = ou._sb_url()
+        url = f"{base}/rest/v1/students?id=eq.{sid}&workspace_id=eq.{wid}"
+        requests.delete(url, headers=ou._headers(), timeout=10)
         return True
-    except: return False
+    except Exception:
+        return False
 
 # ==============================================================================
 # 4. APLICAÇÃO PRINCIPAL

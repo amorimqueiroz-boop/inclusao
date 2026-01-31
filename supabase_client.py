@@ -1,6 +1,6 @@
 # supabase_client.py
 import os
-from typing import Optional
+from typing import Optional, Tuple
 import streamlit as st
 
 # 🔒 Nome da função RPC
@@ -19,6 +19,31 @@ def _get_secret(name: str) -> Optional[str]:
     except Exception:
         pass
     return None
+
+
+def get_supabase_rest_credentials() -> Tuple[str, str]:
+    """
+    Retorna (url, key) para chamadas REST ao Supabase (mesma fonte do login).
+    Usa SERVICE_ROLE_KEY ou SERVICE_KEY se existir (acesso total, ignora RLS);
+    senão usa ANON_KEY (respeita RLS — pode não listar dados se não houver políticas).
+    """
+    url = _get_secret("SUPABASE_URL")
+    if not url:
+        raise RuntimeError(
+            "SUPABASE_URL não encontrado. Configure em Secrets (SUPABASE_URL)."
+        )
+    url = url.rstrip("/")
+    # Ordem: service_role (acesso total) > service_key > anon (respeita RLS)
+    key = (
+        _get_secret("SUPABASE_SERVICE_ROLE_KEY")
+        or _get_secret("SUPABASE_SERVICE_KEY")
+        or _get_secret("SUPABASE_ANON_KEY")
+    )
+    if not key:
+        raise RuntimeError(
+            "Nenhuma chave Supabase encontrada. Configure SUPABASE_ANON_KEY (ou SUPABASE_SERVICE_ROLE_KEY para acesso total aos dados)."
+        )
+    return url, key
 
 
 @st.cache_resource(show_spinner=False)
