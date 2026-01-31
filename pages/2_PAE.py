@@ -2738,20 +2738,20 @@ with tab_jornada:
                     key="btn_jg_pdf"
                 )
         with col_sheets:
-            if st.button("Exportar para Google Sheets", use_container_width=True, key="btn_jg_sheets"):
-                url_sheet, err = ou.exportar_jornada_para_sheets(
-                    novo_texto, "Jornada Gamificada", aluno.get("nome", "")
+            if st.button("Sincronizar na Minha Jornada", use_container_width=True, type="secondary", key="btn_jg_sheets", help="Envia a missão para a planilha em segundo plano e gera o código para o estudante"):
+                url_sheet, err, codigo = ou.exportar_jornada_para_sheets(
+                    novo_texto,
+                    "Jornada Gamificada",
+                    aluno.get("nome", ""),
+                    hiperfoco_estudante=aluno.get("hiperfoco", "") or "",
                 )
-                if url_sheet:
-                    st.success("Planilha criada!")
-                    url_str = str(url_sheet).strip()
-                    st.markdown(
-                        f'<a href="{url_str}" target="_blank" rel="noopener noreferrer" '
-                        'style="display:inline-block;padding:0.5rem 1rem;background:#0D9488;color:white;border-radius:0.5rem;text-decoration:none;font-weight:600;">Abrir planilha</a>',
-                        unsafe_allow_html=True,
-                    )
+                if url_sheet and codigo:
+                    st.success("Sincronizado na Minha Jornada!")
+                    st.markdown("**Código para o estudante (use no app gamificado):**")
+                    st.code(codigo, language=None)
+                    st.caption("Informe este código ao estudante para ele acessar a jornada no app Minha Jornada.")
                 else:
-                    st.warning(err or "Erro ao exportar.")
+                    st.warning(err or "Erro ao sincronizar.")
         with col_csv:
             import io
             import csv
@@ -2768,7 +2768,7 @@ with tab_jornada:
                 use_container_width=True,
                 key="btn_jg_csv"
             )
-        st.caption("Dica: imprima e entregue ao estudante ou à família. Para Google Sheets: use o botão acima ou baixe o CSV e importe em Arquivo > Importar.")
+        st.caption("Dica: imprima e entregue ao estudante ou à família. Use «Sincronizar na Minha Jornada» e informe o código ao estudante para ele acessar no app gamificado.")
         if st.button("Criar Nova Missão (outra origem)", use_container_width=True, key="btn_jg_nova"):
             jg[chave_jornada]["status"] = "rascunho"
             jg[chave_jornada]["feedback"] = ""
