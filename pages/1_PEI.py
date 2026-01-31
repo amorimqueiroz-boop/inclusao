@@ -561,44 +561,71 @@ def carregar_habilidades_bncc_por_serie(serie: str, max_caracteres: int = 11000)
     Retorna texto formatado para injetar no prompt, para a IA usar APENAS essas habilidades
     e não inventar. Se o arquivo não existir ou a série não bater, retorna string vazia.
     """
+    d = carregar_habilidades_bncc_ano_atual_e_anteriores(serie, max_caracteres, max_caracteres)
+    return d.get("ano_atual", "")
+
+
+def carregar_habilidades_bncc_ano_atual_e_anteriores(
+    serie: str,
+    max_ano_atual: int = 10000,
+    max_anos_anteriores: int = 8000,
+) -> dict:
+    """
+    Carrega do bncc.csv as habilidades do ano/série atual e dos anos anteriores.
+    Retorna {"ano_atual": "...", "anos_anteriores": "..."} para injetar no prompt.
+    Cada habilidade vem por escrito com o código (ex: (EF01LP02) Descrição).
+    """
     ano_serie = _extrair_ano_serie_bncc(serie)
     if not ano_serie:
-        return ""
+        return {"ano_atual": "", "anos_anteriores": ""}
+    try:
+        ano_num = int(ano_serie[0])  # 1º -> 1, 2º -> 2, ...
+    except (ValueError, IndexError):
+        return {"ano_atual": "", "anos_anteriores": ""}
     base_dir = os.path.dirname(os.path.abspath(__file__))
     path_csv = os.path.join(base_dir, "bncc.csv")
     if not os.path.exists(path_csv):
-        return ""
-    linhas = []
+        return {"ano_atual": "", "anos_anteriores": ""}
+    anteriores_str = [f"{n}º" for n in range(1, ano_num)]  # 3º -> ["1º", "2º"]
+    linhas_atual = []
+    linhas_anteriores = []
     try:
         with open(path_csv, "r", encoding="utf-8") as f:
-            next(f)  # pula "Lista de questões;;;;"
+            next(f)
             reader = csv.DictReader(f, delimiter=";")
             raw = list(reader)
             if not raw:
-                return ""
-            # CSV: Disciplina;Ano;Unidade Temática;Objeto do Conhecimento;Habilidade
+                return {"ano_atual": "", "anos_anteriores": ""}
             col_disciplina = "Disciplina"
             col_ano = "Ano"
             col_habilidade = "Habilidade"
-            first = raw[0]
-            if col_ano not in first or col_habilidade not in first:
-                return ""
+            if col_ano not in raw[0] or col_habilidade not in raw[0]:
+                return {"ano_atual": "", "anos_anteriores": ""}
             for row in raw:
                 ano_celula = (row.get(col_ano) or "").strip()
-                if ano_serie not in ano_celula:
-                    continue
                 disc = (row.get(col_disciplina) or "").strip()
                 hab = (row.get(col_habilidade) or "").strip()
-                if hab:
-                    linhas.append(f"- {disc}: {hab}")
-        if not linhas:
-            return ""
-        texto = "\n".join(linhas)
-        if len(texto) > max_caracteres:
-            texto = texto[: max_caracteres - 80] + "\n\n[... lista truncada por limite de caracteres ...]"
-        return texto
+                if not hab:
+                    continue
+                linha = f"- {disc}: {hab}"
+                if ano_serie in ano_celula:
+                    linhas_atual.append(linha)
+                elif anteriores_str and any(ant in ano_celula for ant in anteriores_str):
+                    linhas_anteriores.append(linha)
+        def truncar(texto: str, limite: int) -> str:
+            if not texto:
+                return ""
+            if len(texto) <= limite:
+                return texto
+            return texto[: limite - 80] + "\n\n[... lista truncada ...]"
+        texto_atual = "\n".join(linhas_atual) if linhas_atual else ""
+        texto_anteriores = "\n".join(linhas_anteriores) if linhas_anteriores else ""
+        return {
+            "ano_atual": truncar(texto_atual, max_ano_atual),
+            "anos_anteriores": truncar(texto_anteriores, max_anos_anteriores),
+        }
     except Exception:
-        return ""
+        return {"ano_atual": "", "anos_anteriores": ""}
 
 def get_segmento_info_visual(serie: str | None):
     nivel = detectar_nivel_ensino(serie or "")
@@ -1418,24 +1445,36 @@ Com base no diagnóstico ({dados.get('diagnostico','')}) e nas barreiras citadas
 """.strip()
         else:
             perfil_ia = "Especialista em Inclusão Escolar e BNCC."
-            # Carregar habilidades BNCC reais do ano/série do estudante (bncc.csv) para a IA NÃO inventar
-            habilidades_bncc_texto = carregar_habilidades_bncc_por_serie(serie)
-            if habilidades_bncc_texto:
-                instrucao_bncc = f"""[MAPEAMENTO_BNCC] Use APENAS as habilidades BNCC abaixo (ano/série do estudante). NÃO invente outras. Separe por Componente Curricular e cite o código alfanumérico (ex: EF01LP02) tal como na lista.
-[HABILIDADES_BNCC_ANO_SERIE]
-{habilidades_bncc_texto}
-[/HABILIDADES_BNCC_ANO_SERIE]
-[/MAPEAMENTO_BNCC]"""
+            # Carregar habilidades BNCC reais: ano atual e anos anteriores (bncc.csv) para a IA NÃO inventar
+            bncc_blocos = carregar_habilidades_bncc_ano_atual_e_anteriores(serie)
+            ano_atual_txt = (bncc_blocos.get("ano_atual") or "").strip()
+            anos_anteriores_txt = (bncc_blocos.get("anos_anteriores") or "").strip()
+            if ano_atual_txt or anos_anteriores_txt:
+                instrucao_bncc = """[MAPEAMENTO_BNCC] Use APENAS as habilidades BNCC listadas abaixo. NÃO invente outras. Cite cada habilidade por escrito com o código e a descrição completa (ex: (EF01LP02) Descrição da habilidade).
+- Habilidades de anos anteriores: diga PONTUALMENTE quais merecem atenção ou são essenciais para este estudante (com base no diagnóstico e nas barreiras), citando código e descrição.
+- Habilidades do ano/série atual: diga PONTUALMENTE quais são fundamentais para este estudante, citando código e descrição.
+Separe por Componente Curricular."""
+                if anos_anteriores_txt:
+                    instrucao_bncc += f"""
+[HABILIDADES_BNCC_ANOS_ANTERIORES]
+{anos_anteriores_txt}
+[/HABILIDADES_BNCC_ANOS_ANTERIORES]"""
+                if ano_atual_txt:
+                    instrucao_bncc += f"""
+[HABILIDADES_BNCC_ANO_SERIE_ATUAL]
+{ano_atual_txt}
+[/HABILIDADES_BNCC_ANO_SERIE_ATUAL]"""
+                instrucao_bncc += "\n[/MAPEAMENTO_BNCC]"
             else:
-                instrucao_bncc = "[MAPEAMENTO_BNCC] Separe por Componente Curricular. Inclua código alfanumérico (ex: EF01LP02). [/MAPEAMENTO_BNCC]"
+                instrucao_bncc = "[MAPEAMENTO_BNCC] Separe por Componente Curricular. Inclua código alfanumérico (ex: EF01LP02) e a descrição por escrito. [/MAPEAMENTO_BNCC]"
             instrucao_bloom = "[TAXONOMIA_BLOOM] Explique a categoria cognitiva escolhida. [/TAXONOMIA_BLOOM]"
             estrutura_req = f"""
 {prompt_identidade}
 {prompt_diagnostico}
 
 ### 2. 🌟 AVALIAÇÃO DE REPERTÓRIO:
-- Defasagens (anos anteriores)
-- Foco do ano atual
+- Habilidades de anos anteriores que merecem atenção ou são essenciais para este estudante (pontual, com código e descrição).
+- Habilidades do ano/série atual que são fundamentais para este estudante (pontual, com código e descrição).
 {instrucao_bncc}
 {instrucao_bloom}
 

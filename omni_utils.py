@@ -1344,6 +1344,8 @@ select:focus {
         """,
         unsafe_allow_html=True,
     )
+    # Garante overlay de loading (ícone girando) em todas as páginas que usam unified UI
+    inject_loading_overlay_css()
 
 # =============================================================================
 # 4.5) RODAPÉ COM ASSINATURA

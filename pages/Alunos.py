@@ -83,6 +83,9 @@ def forcar_layout_hub():
 # CHAME ESTA FUNÇÃO LOGO NO INÍCIO DO CÓDIGO
 forcar_layout_hub()
 
+# Overlay de loading (ícone girando no centro quando st.spinner está ativo)
+ou.inject_loading_overlay_css()
+
 # 2. CSS Específico desta página (Cards e Tabelas)
 st.markdown("""
 <style>
