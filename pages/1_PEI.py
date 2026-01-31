@@ -168,63 +168,33 @@ verificar_login_supabase()
 
 
 # =============================================================================
-# 2. SUPABASE (CRUD students) — REST (compatível com omni_utils.py)
-#    Remove dependência de: sb / OWNER_ID / supabase-py
+# 2. SUPABASE (CRUD students) — REST via omni_utils (mesma URL/key que login + SERVICE_ROLE)
 # =============================================================================
 
 def _rest_ready(debug: bool = False):
     """
-    Checa se a nuvem está pronta para operar via REST:
-    - autenticado
-    - workspace_id presente
-    - SUPABASE_URL e alguma KEY (SERVICE ou ANON) presentes
+    Checa se a nuvem está pronta: autenticado, workspace_id e credenciais Supabase (omni_utils).
     """
-    details = {}
-    details["autenticado"] = bool(st.session_state.get("autenticado", False))
-    details["has_workspace_id"] = bool(st.session_state.get("workspace_id"))
-
+    details = {
+        "autenticado": bool(st.session_state.get("autenticado", False)),
+        "has_workspace_id": bool(st.session_state.get("workspace_id")),
+        "has_supabase_url": False,
+        "has_supabase_key": False,
+    }
     try:
-        details["has_supabase_url"] = bool(str(os.environ.get("SUPABASE_URL") or ou.get_setting("SUPABASE_URL", "")).strip())
+        ou._sb_url()
+        details["has_supabase_url"] = True
     except Exception:
-        details["has_supabase_url"] = False
-
+        pass
     try:
-        service = str(os.environ.get("SUPABASE_SERVICE_KEY") or ou.get_setting("SUPABASE_SERVICE_KEY", "")).strip()
-        anon = str(os.environ.get("SUPABASE_ANON_KEY") or ou.get_setting("SUPABASE_ANON_KEY", "")).strip()
-        details["has_supabase_key"] = bool(service or anon)
+        ou._sb_key()
+        details["has_supabase_key"] = True
     except Exception:
-        details["has_supabase_key"] = False
-
+        pass
     ok = all(details.values())
     if debug:
         details["missing"] = [k for k, v in details.items() if not v]
     return ok, details
-
-
-def _sb_url() -> str:
-    url = str(os.environ.get("SUPABASE_URL") or ou.get_setting("SUPABASE_URL", "")).strip()
-    if not url:
-        raise RuntimeError("SUPABASE_URL não encontrado nos secrets.")
-    return url.rstrip("/")
-
-
-def _sb_key() -> str:
-    # Preferência: SERVICE_KEY (server-side), fallback: ANON_KEY
-    key = str(os.environ.get("SUPABASE_SERVICE_KEY") or ou.get_setting("SUPABASE_SERVICE_KEY", "")).strip()
-    if not key:
-        key = str(os.environ.get("SUPABASE_ANON_KEY") or ou.get_setting("SUPABASE_ANON_KEY", "")).strip()
-    if not key:
-        raise RuntimeError("SUPABASE_SERVICE_KEY/ANON_KEY não encontrado nos secrets.")
-    return key
-
-
-def _headers() -> dict:
-    key = _sb_key()
-    return {
-        "apikey": key,
-        "Authorization": f"Bearer {key}",
-        "Content-Type": "application/json",
-    }
 
 
 def _http_error(prefix: str, r):
@@ -245,8 +215,8 @@ def db_create_student(payload: dict):
     row = dict(payload or {})
     row["workspace_id"] = ws_id
 
-    url = f"{_sb_url()}/rest/v1/students"
-    h = _headers()
+    url = f"{ou._sb_url()}/rest/v1/students"
+    h = ou._headers().copy()
     h["Prefer"] = "return=representation"
 
     r = requests.post(url, headers=h, json=row, timeout=20)
@@ -273,8 +243,8 @@ def db_update_student(student_id: str, payload: dict):
     ws_id = st.session_state.get("workspace_id")
     row = dict(payload or {})
 
-    url = f"{_sb_url()}/rest/v1/students?id=eq.{student_id}&workspace_id=eq.{ws_id}"
-    h = _headers()
+    url = f"{ou._sb_url()}/rest/v1/students?id=eq.{student_id}&workspace_id=eq.{ws_id}"
+    h = ou._headers().copy()
     h["Prefer"] = "return=representation"
 
     r = requests.patch(url, headers=h, json=row, timeout=20)
@@ -300,9 +270,8 @@ def db_delete_student(student_id: str):
 
     ws_id = st.session_state.get("workspace_id")
 
-    url = f"{_sb_url()}/rest/v1/students?id=eq.{student_id}&workspace_id=eq.{ws_id}"
-    h = _headers()
-    h["Prefer"] = "return=representation"
+    url = f"{ou._sb_url()}/rest/v1/students?id=eq.{student_id}&workspace_id=eq.{ws_id}"
+    h = ou._headers()
 
     r = requests.delete(url, headers=h, timeout=20)
     if r.status_code >= 400:
@@ -321,14 +290,14 @@ def db_list_students(search: Optional[str] = None):
         return []
 
     ws_id = st.session_state.get("workspace_id")
-    base = f"{_sb_url()}/rest/v1/students?select=*&workspace_id=eq.{ws_id}&order=created_at.desc"
+    base = f"{ou._sb_url()}/rest/v1/students?select=*&workspace_id=eq.{ws_id}&order=created_at.desc"
 
     if search:
         s = str(search).strip()
         if s:
             base += f"&name=ilike.*{s}*"
 
-    r = requests.get(base, headers=_headers(), timeout=20)
+    r = requests.get(base, headers=ou._headers(), timeout=20)
     if r.status_code >= 400:
         _http_error("List students falhou", r)
 
@@ -340,9 +309,9 @@ def db_update_pei_content(student_id: str, pei_dict: dict):
     Salva o dicionário completo do PEI na coluna 'pei_data' do Supabase.
     """
     # URL para atualizar o estudante específico
-    url = f"{_sb_url()}/rest/v1/students?id=eq.{student_id}"
+    url = f"{ou._sb_url()}/rest/v1/students?id=eq.{student_id}"
     
-    h = _headers()
+    h = ou._headers().copy()
     h["Prefer"] = "return=representation"
     
     # Prepara o JSON. Convertemos para string/dict puro para garantir que datas não quebrem
@@ -1941,13 +1910,9 @@ with tab0:
 
             def _cloud_ready_check():
                 try:
-                    url = str(ou.get_setting("SUPABASE_URL", "")).strip()
-                    key = str(
-                        ou.get_setting("SUPABASE_SERVICE_KEY", "")
-                        or ou.get_setting("SUPABASE_ANON_KEY", "")
-                        or ""
-                    ).strip()
-                    return bool(url and key)
+                    ou._sb_url()
+                    ou._sb_key()
+                    return True
                 except Exception:
                     return False
 
@@ -3222,16 +3187,13 @@ with tab8:
                 unsafe_allow_html=True
             )
 
-            # Helper interno de verificação
+            # Helper interno de verificação (usa credenciais unificadas: SERVICE_ROLE ou ANON)
             def _cloud_ready_check():
                 try:
-                    url = str(ou.get_setting("SUPABASE_URL", "")).strip()
-                    key = str(
-                        ou.get_setting("SUPABASE_SERVICE_KEY", "")
-                        or ou.get_setting("SUPABASE_ANON_KEY", "")
-                    ).strip()
-                    return bool(url and key)
-                except:
+                    ou._sb_url()
+                    ou._sb_key()
+                    return True
+                except Exception:
                     return False
 
             if st.button("🔗 Sincronizar Tudo", type="primary", use_container_width=True, key="btn_sync_final_fix"):
