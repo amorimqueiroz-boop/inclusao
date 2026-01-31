@@ -629,25 +629,32 @@ def render_navbar(active_tab: str = "Início"):
 # 3) SUPABASE & UTILS — mesma fonte de credenciais do login (supabase_client)
 # =============================================================================
 def _sb_url() -> str:
-    """URL do projeto Supabase (usa mesma fonte que o login)."""
+    """
+    URL do projeto Supabase.
+    Tenta supabase_client (mesma fonte do login); se falhar, usa get_setting (comportamento anterior).
+    """
     try:
         from supabase_client import get_supabase_rest_credentials
         url, _ = get_supabase_rest_credentials()
-        return url
-    except ImportError:
+        return url.rstrip("/") if url else ""
+    except Exception:
         pass
     url = str(get_setting("SUPABASE_URL", "")).strip()
     if not url:
-        raise RuntimeError("SUPABASE_URL não encontrado. Configure em Secrets.")
+        raise RuntimeError("SUPABASE_URL não encontrado. Configure em Secrets (SUPABASE_URL).")
     return url.rstrip("/")
 
 def _sb_key() -> str:
-    """Chave API Supabase (SERVICE_ROLE > SERVICE_KEY > ANON_KEY — mesma fonte que o login)."""
+    """
+    Chave API Supabase (SERVICE_ROLE > SERVICE_KEY > ANON_KEY).
+    Tenta supabase_client; se falhar, usa get_setting (comportamento anterior).
+    """
     try:
         from supabase_client import get_supabase_rest_credentials
         _, key = get_supabase_rest_credentials()
-        return key
-    except ImportError:
+        if key:
+            return key
+    except Exception:
         pass
     key = (
         str(get_setting("SUPABASE_SERVICE_ROLE_KEY", "")).strip()
@@ -656,7 +663,7 @@ def _sb_key() -> str:
     )
     if not key:
         raise RuntimeError(
-            "Nenhuma chave Supabase encontrada. Configure SUPABASE_ANON_KEY ou SUPABASE_SERVICE_ROLE_KEY em Secrets."
+            "Nenhuma chave Supabase encontrada. Configure SUPABASE_ANON_KEY (ou SUPABASE_SERVICE_ROLE_KEY) em Secrets."
         )
     return key
 

@@ -36,7 +36,19 @@ st.set_page_config(
     menu_items=None
 )
 
-# ✅ VERIFICAÇÃO DE ACESSO LOGO NO INÍCIO — login uma vez, navegação entre páginas sem pedir de novo
+# Em TESTE (local): preenche sessão como o streamlit_app, para abrir a Home direto (Run local)
+try:
+    _env = (os.environ.get("ENV") or ou.get_setting("ENV", "PRODUCAO")).strip().upper()
+    if _env == "TESTE":
+        st.session_state.autenticado = True
+        st.session_state.workspace_id = st.session_state.get("workspace_id") or "ambiente-teste"
+        st.session_state.workspace_name = st.session_state.get("workspace_name") or "Ambiente de Teste"
+        st.session_state.usuario_nome = st.session_state.get("usuario_nome") or "Visitante (Teste)"
+        st.session_state.usuario_cargo = st.session_state.get("usuario_cargo") or "Teste"
+except Exception:
+    pass
+
+# ✅ VERIFICAÇÃO DE ACESSO — login uma vez, navegação entre páginas sem pedir de novo
 if not st.session_state.get("autenticado") or not st.session_state.get("workspace_id"):
     ou.render_acesso_negado_e_ir_para_login("Sessão inválida ou expirada. Faça login na Página Inicial para continuar.")
     st.stop()
